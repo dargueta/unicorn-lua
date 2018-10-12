@@ -1,0 +1,6 @@
+local lib = require 'unicorn.arm'
+local lib = require 'unicorn.arm64'
+local lib = require 'unicorn.m68k'
+local lib = require 'unicorn.mips'
+local lib = require 'unicorn.sparc'
+local lib = require 'unicorn.x86'
