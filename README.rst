@@ -7,20 +7,31 @@ This is in a *highly* experimental phase right now and **should not** be used in
 anything requiring reliability.
 
 
-This is only tested on Lua 5.3. I cannot guarantee the library will behave as
-expected on Lua 5.2, particularly because all numbers in Lua 5.2 are floats. [#]_
-Don't even try 5.1.
+At the moment I'm only testing this on Lua 5.3 with an unmodified ``luaconf.h``).
+I cannot guarantee the library will behave as expected on all platforms or older
+5.x versions of Lua.
+
 
 Known Limitations
 -----------------
 
-* Because numbers in Lua are always signed, addresses on 64-bit Lua are limited
-  to [0, 2\ :sup:`63`) or [0, 2\ :sup:`31`) on 32-bit Lua.
-* Reading a register may give you different numbers depending on whether you're
-  running 64-bit or 32-bit Lua. For example, a 32-bit register containing the
-  value 0xffffffff will be -1 on 32-bit Lua, and 2\ :sup:`32` - 1 on 64-bit Lua.
-* I haven't tested this yet but I suspect running this on a system where the
-  emulated CPU's endianness differs from the host machine's will behave oddly.
+The following notes assume Lua was compiled with 64-bit integers and double-precision
+floats. They're significant limitations and I intend to fix these ASAP.
+
+* Because numbers in Lua are always signed, addresses on Lua are limited to
+  [0, 2\ :sup:`63`). In theory this should be fine since most processors can't
+  handle addresses over 2\ :sup:`48`. [#]_
+* You must be careful when reading from/writing to registers with 64 bits or
+  more. To avoid loss of precision due to automatic conversion to floating-point
+  numbers, if you want to set the most significant bit you'll need to pass a
+  *negative* number.
+
+.. code-block:: lua
+
+    -- Correct way to write 0x8000000000000000 to RAX.  :(
+    uc:reg_write(x86.UC_REG_RAX, -9223372036854775808)
+
+This is horrific and I intend to fix it soon.
 
 License
 -------
@@ -29,4 +40,4 @@ I'm releasing this under the terms of the
 `3-Clause BSD License <https://opensource.org/licenses/BSD-3-Clause>`_. For the
 full legal text, see ``LICENSE.txt``.
 
-.. [#] Integer support was only added in 5.3.
+.. [#] At the time of writing (October 2018)
