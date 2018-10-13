@@ -18,6 +18,26 @@ static const char *kEngineMetatableName = "unicornlua__engine_meta";
 static const char *kContextMetatableName = "unicornlua__context_meta";
 
 
+static uc_engine *_safe_get_engine(lua_State *L, int index) {
+    uc_engine *engine;
+
+    engine = *(uc_engine **)luaL_checkudata((L), (index), kEngineMetatableName);
+    if (engine == NULL)
+        luaL_error(L, "Attempted to use closed engine.");
+    return engine;
+}
+
+
+static uc_context *_safe_get_context(lua_State *L, int index) {
+    uc_context *context;
+
+    context = *(uc_context **)luaL_checkudata((L), (index), kContextMetatableName);
+    if (context == NULL)
+        luaL_error(L, "Attempted to use closed context.");
+    return context;
+}
+
+
 static int _crash_on_error(lua_State *L, int error) {
     const char *message;
 
@@ -84,30 +104,25 @@ int uc_lua__strerror(lua_State *L) {
 
 
 int uc_lua__close(lua_State *L) {
-    uc_engine *engine;
+    uc_engine **engine;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = (uc_engine **)luaL_checkudata((L), (index), kEngineMetatableName);
 
-#if 0
     /* If the engine is already closed, don't try closing it again. Since the
      * engine is automatically closed when it gets garbage collected, if the
      * user manually closes it first this will result in an attempt to close an
      * already-closed engine. Hence, this flag.
      */
-    lua_getfield(L, 1, "__is_closed");
-    if (lua_toboolean(L, -1))
+    if (*engine == NULL)
         return 0;
 
-    lua_pop(L, 1);
-#endif
-    error = uc_close(engine);
+    error = uc_close(*engine);
     if (error != UC_ERR_OK)
         return _crash_on_error(L, error);
-#if 0
-    lua_pushboolean(L, 1);
-    lua_setfield(L, -2, "__is_closed");
-#endif
+
+    /* Clear out the engine pointer so we know it's closed now. */
+    *engine = NULL;
     return 0;
 }
 
@@ -117,7 +132,7 @@ int uc_lua__query(lua_State *L) {
     int query_type, error;
     size_t result;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     query_type = luaL_checkinteger(L, 1);
 
     error = uc_query(engine, query_type, &result);
@@ -132,7 +147,7 @@ int uc_lua__query(lua_State *L) {
 int uc_lua__errno(lua_State *L) {
     uc_engine *engine;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     lua_pushinteger(L, uc_errno(engine));
     return 1;
 }
@@ -143,7 +158,7 @@ int uc_lua__reg_write(lua_State *L) {
     int register_id, error;
     lua_Integer value;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     register_id = luaL_checkinteger(L, 2);
     value = luaL_checkinteger(L, 3);
 
@@ -160,7 +175,7 @@ int uc_lua__reg_read(lua_State *L) {
     int register_id, error;
     lua_Integer value;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     register_id = luaL_checkinteger(L, 2);
 
     error = uc_reg_read(engine, register_id, &value);
@@ -178,7 +193,7 @@ int uc_lua__reg_write_batch(lua_State *L) {
     lua_Integer *values;
     void **p_values;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
 
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
@@ -220,7 +235,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
     lua_Integer *values;
     void **p_values;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
 
     /* Second argument is a table a list of the register IDs to read. Get the
      * length. */
@@ -265,7 +280,7 @@ int uc_lua__mem_write(lua_State *L) {
     size_t length;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     address = (lua_Unsigned)luaL_checkinteger(L, 2);
     data = (const void *)luaL_checklstring(L, 3, &length);
 
@@ -283,7 +298,7 @@ int uc_lua__mem_read(lua_State *L) {
     lua_Integer length;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     address = (lua_Unsigned)luaL_checkinteger(L, 2);
     length = luaL_checkinteger(L, 3);
 
@@ -307,7 +322,7 @@ int uc_lua__emu_start(lua_State *L) {
     lua_Unsigned start, end, timeout, n_instructions;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     start = (lua_Unsigned)luaL_checkinteger(L, 2);
     end = (lua_Unsigned)luaL_checkinteger(L, 3);
     timeout = (lua_Unsigned)luaL_optinteger(L, 4, 0);
@@ -324,7 +339,7 @@ int uc_lua__emu_stop(lua_State *L) {
     uc_engine *engine;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
 
     error = uc_emu_stop(engine);
     if (error != UC_ERR_OK)
@@ -348,7 +363,7 @@ int uc_lua__mem_map(lua_State *L) {
     lua_Unsigned address, size, perms;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     address = (lua_Unsigned)luaL_checkinteger(L, 2);
     size = (lua_Unsigned)luaL_checkinteger(L, 3);
     perms = (lua_Unsigned)luaL_optinteger(L, 4, UC_PROT_ALL);
@@ -365,7 +380,7 @@ int uc_lua__mem_unmap(lua_State *L) {
     lua_Unsigned address, size;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     address = (lua_Unsigned)luaL_checkinteger(L, 2);
     size = (lua_Unsigned)luaL_checkinteger(L, 3);
 
@@ -380,7 +395,7 @@ int uc_lua__mem_protect(lua_State *L) {
     lua_Unsigned address, size, perms;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     address = (lua_Unsigned)luaL_checkinteger(L, 2);
     size = (lua_Unsigned)luaL_checkinteger(L, 3);
     perms = (lua_Unsigned)luaL_checkinteger(L, 4);
@@ -397,7 +412,7 @@ int uc_lua__mem_regions(lua_State *L) {
     uint32_t n_regions, i;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
     regions = NULL;
     n_regions = 0;
 
@@ -441,7 +456,7 @@ int uc_lua__context_alloc(lua_State *L) {
     uc_context **context;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
+    engine = _safe_get_engine(L, 1);
 
     context = (uc_context **)lua_newuserdata(L, sizeof(*context));
     luaL_setmetatable(L, kContextMetatableName);
@@ -463,8 +478,8 @@ int uc_lua__context_save(lua_State *L) {
 
     uc_lua__context_alloc(L);
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
-    context = (uc_context *)luaL_checkudata(L, 2, kContextMetatableName);
+    engine = _safe_get_engine(L, 1);
+    context = _safe_get_context(L, 2);
 
     error = uc_context_save(engine, context);
     if (error != UC_ERR_OK)
@@ -479,7 +494,7 @@ int uc_lua__context_update(lua_State *L) {
     uc_context *context;
     int error;
 
-    context = (uc_context *)luaL_checkudata(L, 1, kContextMetatableName);
+    context = _safe_get_context(L, 1);
     lua_getfield(L, -1, "__engine");
     engine = lua_touserdata(L, -1);
 
@@ -495,8 +510,8 @@ int uc_lua__context_restore(lua_State *L) {
     uc_context *context;
     int error;
 
-    engine = *(uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
-    context = (uc_context *)luaL_checkudata(L, 2, kContextMetatableName);
+    engine = _safe_get_engine(L, 1);
+    context = _safe_get_context(L, 2);
 
     error = uc_context_restore(engine, context);
     if (error != UC_ERR_OK)
