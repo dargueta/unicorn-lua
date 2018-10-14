@@ -5,6 +5,7 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/numbers.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/constants/arm.h"
 #include "unicornlua/constants/arm64.h"
@@ -281,7 +282,7 @@ int uc_lua__mem_write(lua_State *L) {
     int error;
 
     engine = _safe_get_engine(L, 1);
-    address = (lua_Unsigned)luaL_checkinteger(L, 2);
+    address = uc_lua__cast_unsigned(L, 2);
     data = (const void *)luaL_checklstring(L, 3, &length);
 
     error = uc_mem_write(engine, address, data, length);
@@ -293,17 +294,13 @@ int uc_lua__mem_write(lua_State *L) {
 
 int uc_lua__mem_read(lua_State *L) {
     uc_engine *engine;
-    lua_Unsigned address;
+    lua_Unsigned address, length;
     void *data;
-    lua_Integer length;
     int error;
 
     engine = _safe_get_engine(L, 1);
-    address = (lua_Unsigned)luaL_checkinteger(L, 2);
-    length = luaL_checkinteger(L, 3);
-
-    if (length < 0)
-        return luaL_error(L, "Read length must be > 0, not %d", length);
+    address = uc_lua__cast_unsigned(L, 2);
+    length = uc_lua__cast_unsigned(L, 3);
 
     data = _safe_realloc(L, NULL, length);
 
@@ -323,8 +320,8 @@ int uc_lua__emu_start(lua_State *L) {
     int error;
 
     engine = _safe_get_engine(L, 1);
-    start = (lua_Unsigned)luaL_checkinteger(L, 2);
-    end = (lua_Unsigned)luaL_checkinteger(L, 3);
+    start = uc_lua__cast_unsigned(L, 2);
+    end = uc_lua__cast_unsigned(L, 3);
     timeout = (lua_Unsigned)luaL_optinteger(L, 4, 0);
     n_instructions = (lua_Unsigned)luaL_optinteger(L, 5, 0);
 
@@ -364,8 +361,8 @@ int uc_lua__mem_map(lua_State *L) {
     int error;
 
     engine = _safe_get_engine(L, 1);
-    address = (lua_Unsigned)luaL_checkinteger(L, 2);
-    size = (lua_Unsigned)luaL_checkinteger(L, 3);
+    address = uc_lua__cast_unsigned(L, 2);
+    size = uc_lua__cast_unsigned(L, 3);
     perms = (lua_Unsigned)luaL_optinteger(L, 4, UC_PROT_ALL);
 
     error = uc_mem_map(engine, address, size, perms);
@@ -381,8 +378,8 @@ int uc_lua__mem_unmap(lua_State *L) {
     int error;
 
     engine = _safe_get_engine(L, 1);
-    address = (lua_Unsigned)luaL_checkinteger(L, 2);
-    size = (lua_Unsigned)luaL_checkinteger(L, 3);
+    address = uc_lua__cast_unsigned(L, 2);
+    size = uc_lua__cast_unsigned(L, 3);
 
     error = uc_mem_unmap(engine, address, size);
     if (error != UC_ERR_OK)
