@@ -157,11 +157,11 @@ int uc_lua__errno(lua_State *L) {
 int uc_lua__reg_write(lua_State *L) {
     uc_engine *engine;
     int register_id, error;
-    lua_Integer value;
+    lua_Unsigned value;
 
     engine = _safe_get_engine(L, 1);
     register_id = luaL_checkinteger(L, 2);
-    value = luaL_checkinteger(L, 3);
+    value = uc_lua__cast_unsigned(L, 3);
 
     error = uc_reg_write(engine, register_id, &value);
     if (error != UC_ERR_OK)
@@ -174,7 +174,7 @@ int uc_lua__reg_write(lua_State *L) {
 int uc_lua__reg_read(lua_State *L) {
     uc_engine *engine;
     int register_id, error;
-    lua_Integer value;
+    lua_Unsigned value;
 
     engine = _safe_get_engine(L, 1);
     register_id = luaL_checkinteger(L, 2);
@@ -191,7 +191,7 @@ int uc_lua__reg_read(lua_State *L) {
 int uc_lua__reg_write_batch(lua_State *L) {
     uc_engine *engine;
     int n_registers, error, *registers, i;
-    lua_Integer *values;
+    lua_Unsigned *values;
     void **p_values;
 
     engine = _safe_get_engine(L, 1);
@@ -211,7 +211,7 @@ int uc_lua__reg_write_batch(lua_State *L) {
             L, values, (n_registers + 1) * sizeof(*values));
 
         registers[n_registers] = luaL_checkinteger(L, -2);
-        values[n_registers] = luaL_checkinteger(L, -1);
+        values[n_registers] = uc_lua__cast_unsigned(L, -1);
         lua_pop(L, 1);
     }
 
@@ -314,6 +314,7 @@ int uc_lua__mem_read(lua_State *L) {
     return 1;
 }
 
+
 int uc_lua__emu_start(lua_State *L) {
     uc_engine *engine;
     lua_Unsigned start, end, timeout, n_instructions;
@@ -393,9 +394,9 @@ int uc_lua__mem_protect(lua_State *L) {
     int error;
 
     engine = _safe_get_engine(L, 1);
-    address = (lua_Unsigned)luaL_checkinteger(L, 2);
-    size = (lua_Unsigned)luaL_checkinteger(L, 3);
-    perms = (lua_Unsigned)luaL_checkinteger(L, 4);
+    address = uc_lua__cast_unsigned(L, 2);
+    size = uc_lua__cast_unsigned(L, 3);
+    perms = uc_lua__cast_unsigned(L, 4);
 
     error = uc_mem_protect(engine, address, size, perms);
     if (error != UC_ERR_OK)
