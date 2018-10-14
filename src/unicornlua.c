@@ -22,7 +22,7 @@ static const char *kContextMetatableName = "unicornlua__context_meta";
 static uc_engine *_safe_get_engine(lua_State *L, int index) {
     uc_engine *engine;
 
-    engine = *(uc_engine **)luaL_checkudata((L), (index), kEngineMetatableName);
+    engine = *(uc_engine **)luaL_checkudata(L, index, kEngineMetatableName);
     if (engine == NULL)
         luaL_error(L, "Attempted to use closed engine.");
     return engine;
@@ -32,7 +32,7 @@ static uc_engine *_safe_get_engine(lua_State *L, int index) {
 static uc_context *_safe_get_context(lua_State *L, int index) {
     uc_context *context;
 
-    context = *(uc_context **)luaL_checkudata((L), (index), kContextMetatableName);
+    context = *(uc_context **)luaL_checkudata(L, index, kContextMetatableName);
     if (context == NULL)
         luaL_error(L, "Attempted to use closed context.");
     return context;
@@ -108,12 +108,13 @@ int uc_lua__close(lua_State *L) {
     uc_engine **engine;
     int error;
 
+    /* Deliberately not using _safe_get_engine, see below. */
     engine = (uc_engine **)luaL_checkudata((L), (index), kEngineMetatableName);
 
     /* If the engine is already closed, don't try closing it again. Since the
      * engine is automatically closed when it gets garbage collected, if the
      * user manually closes it first this will result in an attempt to close an
-     * already-closed engine. Hence, this flag.
+     * already-closed engine.
      */
     if (*engine == NULL)
         return 0;
