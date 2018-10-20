@@ -20,45 +20,8 @@ Signedness
 ~~~~~~~~~~
 
 Because numbers in Lua are always signed, values above ``LUA_MAXINTEGER`` [1]_
-such as addresses or register values cannot be passed to functions as normal
-integers, as you'll end up with stuff like this:
-
-.. code-block::
-
-    Lua 5.3.5  Copyright (C) 1994-2018 Lua.org, PUC-Rio
-    > i = 0x8000000000000000
-    > i
-    -9223372036854775808
-
-Passing Arguments
-^^^^^^^^^^^^^^^^^
-
-Arguments with values above ``LUA_MAXINTEGER`` must be passed to functions as
-*strings* to avoid loss of precision:
-
-.. code-block:: lua
-
-    -- Correct way to write 0x8000000000000000 to RAX.  :(
-    uc:reg_write(x86.UC_REG_RAX, '0x8000000000000000')
-
-This library accepts a decimal or hexadecimal string for any memory address or
-register value. Unfortunately, these values *must* be unsigned, so the following
-will trigger an exception:
-
-.. code-block:: lua
-
-    -- Wrong way to set all bits
-    uc:reg_write(x86.UC_REG_RAX, -1)
-    uc:reg_write(x86.UC_REG_RAX, '-1')
-
-    -- Correct way to set all bits
-    uc:reg_write(x86.UC_REG_RAX, '0xffffffffffffffff')
-
-Return Values
-^^^^^^^^^^^^^
-
-Function return values are outside my control; Lua returns them to the script as
-signed integers:
+such as addresses or register values will be returned from functions as negative
+numbers, e.g.
 
 .. code-block:: lua
 
@@ -66,6 +29,9 @@ signed integers:
 
     -- Returns -1 not 2^64 - 1
     uc:reg_read(x86.UC_REG_RAX)
+
+This doesn't affect how arguments are passed *to* the library, only return values
+*from* the library.
 
 License
 -------
