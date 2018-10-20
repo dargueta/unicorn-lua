@@ -21,7 +21,14 @@ Signedness
 
 Because numbers in Lua are always signed, values above ``LUA_MAXINTEGER`` [1]_
 such as addresses or register values cannot be passed to functions as normal
-integers. Lua will quietly convert these to floats and you may lose precision.
+integers, as you'll end up with stuff like this:
+
+.. code-block::
+
+    Lua 5.3.5  Copyright (C) 1994-2018 Lua.org, PUC-Rio
+    > i = 0x8000000000000000
+    > i
+    -9223372036854775808
 
 Passing Arguments
 ^^^^^^^^^^^^^^^^^
