@@ -1,12 +1,10 @@
 #ifndef INCLUDE_UNICORNLUA_NUMBERS_H_
 #define INCLUDE_UNICORNLUA_NUMBERS_H_
 
-#include <limits.h>
-
 #include <lua.h>
 
 
-if LUA_INT_TYPE == LUA_INT_INT
+#if LUA_INT_TYPE == LUA_INT_INT
     #define UC_LUA_STRTOINT         strtol
     #define UC_LUA_STRTOUNSIGNED    strtoul
 #elif LUA_INT_TYPE == LUA_INT_LONG
@@ -28,7 +26,7 @@ if LUA_INT_TYPE == LUA_INT_INT
     #define UC_LUA_STRTOFLOAT   strtold
 #else
     #error "Unexpected value for LUA_FLOAT_TYPE"
-#elif
+#endif
 
 
 /**

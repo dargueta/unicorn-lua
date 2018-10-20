@@ -9,7 +9,8 @@ _CONSTANTS_HEADERS=$(wildcard $(CONST_HDR_BASE)/*.h)
 _CONSTANTS_SOURCES=$(wildcard $(CONST_SRC_BASE)/*.c)
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
-SOURCES=$(wildcard $(SRC_BASE)/*.c) $(_CONSTANTS_SOURCES)
+GLOBAL_SOURCES=$(wildcard $(SRC_BASE)/*.c)
+SOURCES=$(GLOBAL_SOURCES) $(_CONSTANTS_SOURCES)
 HEADERS=$(GLOBAL_HEADERS) $(_CONSTANTS_HEADERS)
 OBJECTS=$(SOURCES:%.c=%.o)
 
@@ -21,7 +22,7 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 # FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS=-Wall -O0 -ggdb -Werror -pedantic -pedantic-errors -I$(INCLUDE_BASE) -I/usr/local/Cellar/lua/5.3.5_1/include/lua/
+CFLAGS=-Wall -O0 -ggdb -Wall -Werror -pedantic -pedantic-errors -I$(INCLUDE_BASE) -I/usr/include/lua5.3 -Ilibunicorn/include
 
 OS=$(shell uname)
 
@@ -41,6 +42,7 @@ endif
 .PHONY: all
 all: $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
 
+
 .PHONY: clean
 clean:
 	rm -rf bin
@@ -56,31 +58,41 @@ tests_c: $(SHARED_LIB_FILE)
 
 export LUA_CPATH=$(OBJECT_BASE)/?.dylib
 
+
 .PHONY: tests_lua
 tests_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
+
 
 .PHONY: test
 tests: tests_c tests_lua
 
+
 %.o : %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+
 %.h: ;
+
 
 %.lua:
 	lua $@
 
-$(SRC_BASE)/src/unicornlua.o: $(SRC_BASE)/unicornlua.c
-$(CONST_SRC_BASE)/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
-$(CONST_SRC_BASE)/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
-$(CONST_SRC_BASE)/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
-$(CONST_SRC_BASE)/m68k.o: $(CONST_SRC_BASE)/m68k.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/m68k.h
-$(CONST_SRC_BASE)/mips.o: $(CONST_SRC_BASE)/mips.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/mips.h
-$(CONST_SRC_BASE)/sparc.o: $(CONST_SRC_BASE)/sparc.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/sparc.h
-$(CONST_SRC_BASE)/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/x86.h
+
+$(OBJECT_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
+$(OBJECT_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_BASE)/numbers.o: $(SRC_BASE)/numbers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
+$(OBJECT_BASE)/constants/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
+$(OBJECT_BASE)/constants/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
+$(OBJECT_BASE)/constants/m68k.o: $(CONST_SRC_BASE)/m68k.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/m68k.h
+$(OBJECT_BASE)/constants/mips.o: $(CONST_SRC_BASE)/mips.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/mips.h
+$(OBJECT_BASE)/constants/sparc.o: $(CONST_SRC_BASE)/sparc.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/sparc.h
+$(OBJECT_BASE)/constants/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/x86.h
 
 $(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
 	$(AR) -rc $@ $^
 
 $(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS)
-	ld $(LDFLAGS) -llua -lc -lunicorn -o $@ $^
+	$(LD) $(LDFLAGS) -llua5.3 -lc -lunicorn -o $@ $^

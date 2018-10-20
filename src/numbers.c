@@ -1,6 +1,8 @@
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include <lauxlib.h>
 #include <lua.h>
 
 #include "unicornlua/numbers.h"
@@ -10,7 +12,8 @@
  * Cast a decimal or hexadecimal string to an integer, or throw an error.
  */
 static lua_Integer _safe_strtoint(lua_State *L, int index) {
-    const char *string, *end;
+    const char *string;
+    char *end;      /* Acually used as a const char */
     lua_Integer return_value;
 
     string = lua_tostring(L, index);
@@ -25,7 +28,7 @@ static lua_Integer _safe_strtoint(lua_State *L, int index) {
     else if (*end == '\0')
         /* Conversion function hit the end of the string, which means it's
          * valid. */
-        return return_value
+        return return_value;
 
     /* Conversion did not hit the end of the string, so it must not be decimal.
      * (Unless there's trailing whitespace in which case that's your own fault.)
@@ -54,8 +57,9 @@ static lua_Integer _safe_strtoint(lua_State *L, int index) {
  * to an unsigned integer gives 0xffffffffffffffff. This is an easy attack
  * vector for buffer overflows.
  */
-static lua_Unsigned _safe_strtounsigned(lua_State *L, int index) {
-    const char *string, *end;
+lua_Unsigned _safe_strtounsigned(lua_State *L, int index) {
+    const char *string;
+    char *end;      /* Acually used as a const char */
     lua_Integer return_value;
 
     string = lua_tostring(L, index);
@@ -66,7 +70,7 @@ static lua_Unsigned _safe_strtounsigned(lua_State *L, int index) {
     if (errno != 0)
         return luaL_error(L, strerror(errno));
     else if (*end == '\0')
-        return return_value
+        return return_value;
 
     errno = 0;
     end = NULL;
@@ -98,7 +102,7 @@ lua_Integer uc_lua__cast_integer(lua_State *L, int index) {
         case LUA_TSTRING:
             return _safe_strtoint(L, index);
         default:
-            return luaL_error("Invalid data type: %s", lua_typename(L, index));
+            return luaL_error(L, "Invalid data type: %s", lua_typename(L, index));
     }
 }
 
@@ -119,8 +123,8 @@ lua_Unsigned uc_lua__cast_unsigned(lua_State *L, int index) {
         case LUA_TNUMBER:
             return (lua_Unsigned)lua_tonumber(L, index);
         case LUA_TSTRING:
-            return (lua_Unsigned)_safe_strtouint(L, index);
+            return (lua_Unsigned)_safe_strtounsigned(L, index);
         default:
-            return luaL_error("Invalid data type: %s", lua_typename(L, index));
+            return luaL_error(L, "Invalid data type: %s", lua_typename(L, index));
     }
 }
