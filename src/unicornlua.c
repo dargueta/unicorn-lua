@@ -177,8 +177,6 @@ int uc_lua__context_alloc(lua_State *L) {
     if (error != UC_ERR_OK)
         return uc_lua__crash_on_error(L, error);
 
-    lua_pushlightuserdata(L, engine);
-    lua_setfield(L, -2, "__engine");
     return 1;
 }
 
@@ -188,9 +186,12 @@ int uc_lua__context_save(lua_State *L) {
     uc_context *context;
     int error;
 
-    uc_lua__context_alloc(L);
-
     engine = uc_lua__toengine(L, 1);
+
+    if (lua_gettop(L) < 2)
+        /* Caller didn't pass a context to update, so create a new one. */
+        uc_lua__context_alloc(L);
+
     context = uc_lua__tocontext(L, 2);
 
     error = uc_context_save(engine, context);
@@ -198,23 +199,6 @@ int uc_lua__context_save(lua_State *L) {
         return uc_lua__crash_on_error(L, error);
 
     return 1;
-}
-
-
-int uc_lua__context_update(lua_State *L) {
-    uc_engine *engine;
-    uc_context *context;
-    int error;
-
-    context = uc_lua__tocontext(L, 1);
-    lua_getfield(L, -1, "__engine");
-    engine = lua_touserdata(L, -1);
-
-    error = uc_context_save(engine, context);
-    if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
-
-    return 0;
 }
 
 
@@ -277,12 +261,6 @@ static const luaL_Reg kContextMetamethods[] = {
 };
 
 
-static const luaL_Reg kContextInstanceMethods[] = {
-    {"update", uc_lua__context_update},
-    {NULL, NULL}
-};
-
-
 static int _load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
     int i;
 
@@ -307,10 +285,6 @@ int luaopen_unicorn(lua_State *L) {
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);
-
-    lua_createtable(L, 0, 0);
-    luaL_setfuncs(L, kContextInstanceMethods, 0);
-    lua_setfield(L, -2, "__index");
 
     luaL_newlib(L, kUnicornLibraryFunctions);
     _load_int_constants(L, kGlobalsConstants);
