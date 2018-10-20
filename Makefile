@@ -22,7 +22,7 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 # FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS=-Wall -O0 -ggdb -Wall -Werror -pedantic -pedantic-errors -I$(INCLUDE_BASE) -I/usr/include/lua5.3 -Ilibunicorn/include
+CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua5.3 -Ilibunicorn/include
 
 OS=$(shell uname)
 
@@ -78,18 +78,18 @@ tests: tests_c tests_lua
 	lua $@
 
 
-$(OBJECT_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
-$(OBJECT_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_BASE)/numbers.o: $(SRC_BASE)/numbers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
-$(OBJECT_BASE)/constants/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
-$(OBJECT_BASE)/constants/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
-$(OBJECT_BASE)/constants/m68k.o: $(CONST_SRC_BASE)/m68k.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/m68k.h
-$(OBJECT_BASE)/constants/mips.o: $(CONST_SRC_BASE)/mips.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/mips.h
-$(OBJECT_BASE)/constants/sparc.o: $(CONST_SRC_BASE)/sparc.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/sparc.h
-$(OBJECT_BASE)/constants/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/x86.h
+$(SRC_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
+$(SRC_BASE)/constants/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
+$(SRC_BASE)/constants/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
+$(SRC_BASE)/constants/m68k.o: $(CONST_SRC_BASE)/m68k.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/m68k.h
+$(SRC_BASE)/constants/mips.o: $(CONST_SRC_BASE)/mips.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/mips.h
+$(SRC_BASE)/constants/sparc.o: $(CONST_SRC_BASE)/sparc.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/sparc.h
+$(SRC_BASE)/constants/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/x86.h
+$(SRC_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/numbers.o: $(SRC_BASE)/numbers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
+$(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 
 $(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
 	$(AR) -rc $@ $^
