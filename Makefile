@@ -22,7 +22,7 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 # FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua5.3 -Ilibunicorn/include
+CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua5.3
 
 OS=$(shell uname)
 
@@ -38,6 +38,7 @@ else
 	LDFLAGS=-shared
 endif
 
+LDFLAGS += -lunicorn
 
 .PHONY: all
 all: $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
@@ -53,18 +54,17 @@ clean:
 	find . -name '*.dylib' -delete
 
 
-.PHONY: tests_c
-tests_c: $(SHARED_LIB_FILE)
-
-export LUA_CPATH=$(OBJECT_BASE)/?.dylib
+.PHONY: test_c
+test_c: $(SHARED_LIB_FILE)
 
 
-.PHONY: tests_lua
-tests_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
+.PHONY: test_lua
+test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
+	busted -p '.lua' --cpath="./$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
 
 
 .PHONY: test
-tests: tests_c tests_lua
+test: test_c test_lua
 
 
 %.o : %.c
@@ -72,10 +72,6 @@ tests: tests_c tests_lua
 
 
 %.h: ;
-
-
-%.lua:
-	lua $@
 
 
 $(SRC_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
@@ -91,8 +87,10 @@ $(SRC_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HE
 $(SRC_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
 $(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 
+
 $(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
 	$(AR) -rc $@ $^
 
+
 $(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS)
-	$(LD) $(LDFLAGS) -llua5.3 -lc -lunicorn -o $@ $^
+	$(LD) $(LDFLAGS) -llua5.3 -o $@ $^

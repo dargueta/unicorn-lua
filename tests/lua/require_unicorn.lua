@@ -1,2 +1,1 @@
--- Just load the library and make sure that doesn't crash.
-local unicorn = require 'unicorn'
+describe("Load the library, ensure it doesn't crash.", function () require 'unicorn' end)

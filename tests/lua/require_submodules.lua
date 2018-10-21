@@ -1,6 +1,8 @@
-local lib_arm = require 'unicorn.arm'
-local lib_arm64 = require 'unicorn.arm64'
-local lib_m68k = require 'unicorn.m68k'
-local lib_mips = require 'unicorn.mips'
-local lib_sparc = require 'unicorn.sparc'
-local lib_x86 = require 'unicorn.x86'
+describe('Test submodule require()', function ()
+    describe('arm', function() require 'unicorn.arm' end)
+    describe('arm64', function () require 'unicorn.arm64' end)
+    describe('m68k', function () require 'unicorn.m68k' end)
+    describe('mips', function () require 'unicorn.mips' end)
+    describe('sparc', function () require 'unicorn.sparc' end)
+    describe('x86', function () require 'unicorn.x86' end)
+end)
