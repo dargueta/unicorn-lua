@@ -25,13 +25,28 @@ numbers, e.g.
 
 .. code-block:: lua
 
-    uc:reg_write(x86.UC_REG_RAX, '0xffffffffffffffff')
+    uc:reg_write(x86.UC_REG_RAX, 0xffffffffffffffff)
 
     -- Returns -1 not 2^64 - 1
     uc:reg_read(x86.UC_REG_RAX)
 
 This doesn't affect how arguments are passed *to* the library, only return values
 *from* the library.
+
+Development
+-----------
+
+This project has the following dependencies. Ensure you have them installed
+before using.
+
+* For running: `Unicorn CPU Emulator <http://www.unicorn-engine.org/>`_
+* For unit testing: `busted <http://olivinelabs.com/busted/>`_
+
+To run unit tests, do:
+
+.. code-block:: sh
+
+    make test
 
 License
 -------
