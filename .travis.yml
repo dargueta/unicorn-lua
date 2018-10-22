@@ -3,6 +3,7 @@ language: c
 env:
   global:
     - LUAROCKS=3.0.3
+    - UNICORN_VERSION_TAG=1.0.1
   matrix:
     - LUA=lua5.1
     - LUA=lua5.2
@@ -20,4 +21,7 @@ before_install:
   - sudo apt-get install luarocks
   - sudo luarocks install busted
 
-script: make && make test
+  # Get Unicorn on our machine. It's not in a Debian package so we have to build
+  # it from the source.
+  - bash .travis/set_up_unicorn.sh
+

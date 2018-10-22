@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Do we have Lua?
+which lua
+if [ $? -ne 0 ]; then
+    echo "Lua doesn't appear to be installed."
+    exit 1
+fi
+
+rm -f Makefile.in
+
+if [ -z ${LUA} ]; then
+    echo "LUA_VERSION=$(lua -e 'print(_VERSION)' | cut -f2 -d' ')" >> Makefile.in
+else
+    echo "LUA_VERSION=${LUA}" >> Makefile.in
+fi
+
+# echo "C_SOURCE_FILES=$(find src/ -name '*.c' -printf '%H%P ')" >> Makefile.in
+# echo "C_HEADER_FILES=$(find include/ -name '*.h' -printf '%H%P ')" >> Makefile.in
+# echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -printf '%H%P ')" >> Makefile.in

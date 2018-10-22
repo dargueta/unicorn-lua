@@ -1,3 +1,5 @@
+include Makefile.in
+
 INCLUDE_BASE=include
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
 SRC_BASE=src
@@ -22,7 +24,7 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 # FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua5.3
+CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua$(LUA_VERSION)
 
 OS=$(shell uname)
 
@@ -93,4 +95,4 @@ $(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
 
 
 $(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS)
-	$(LD) $(LDFLAGS) -llua5.3 -o $@ $^
+	$(LD) $(LDFLAGS) -llua$(LUA_VERSION) -o $@ $^
