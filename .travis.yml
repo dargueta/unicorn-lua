@@ -1,0 +1,23 @@
+language: c
+
+env:
+  global:
+    - LUAROCKS=3.0.3
+  matrix:
+    - LUA=lua5.1
+    - LUA=lua5.2
+    - LUA=lua5.3
+    - LUA=luajit
+    - LUA=luajit2.0
+    - LUA=luajit2.1
+
+branches:
+  only:
+    - master
+
+before_install:
+  - source .travis/setenv_lua.sh
+  - sudo apt-get install luarocks
+  - sudo luarocks install busted
+
+script: make && make test

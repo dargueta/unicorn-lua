@@ -1,6 +1,16 @@
 unicorn-lua
 ===========
 
+|build-status| |lua-versions|
+
+.. |build-status| image:: https://travis-ci.org/dargueta/unicorn-lua.svg?branch=master
+   :alt: Build status
+   :target: https://travis-ci.org/dargueta/unicorn-lua
+
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.2%2C%205.3-blue.svg
+   :alt: Lua versions
+   :target: https://www.lua.org
+
 An attempt at making Lua bindings for the `Unicorn CPU Emulator <http://www.unicorn-engine.org/>`_.
 
 This is in a *highly* experimental phase right now and **should not** be used in
