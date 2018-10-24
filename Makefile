@@ -43,7 +43,7 @@ LDFLAGS += -lunicorn -llua
 
 .PHONY: all
 all: $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
-
+	mkdir -p $(OBJECT_BASE)
 
 .PHONY: clean
 clean:
