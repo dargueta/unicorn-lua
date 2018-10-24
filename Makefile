@@ -23,8 +23,7 @@ TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
-# FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS += -Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE)
+CFLAGS += -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE)
 
 OS=$(shell uname)
 
