@@ -24,7 +24,7 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 # FIXME: Lua search path is a temporary hack for search path issues
-CFLAGS=-Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE) -I/usr/include/lua$(LUA_VERSION)
+CFLAGS += -Wall -Werror -pedantic -pedantic-errors -fpic -I$(INCLUDE_BASE)
 
 OS=$(shell uname)
 
@@ -40,7 +40,7 @@ else
 	LDFLAGS=-shared
 endif
 
-LDFLAGS += -lunicorn
+LDFLAGS += -lunicorn -llua
 
 .PHONY: all
 all: $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
@@ -54,6 +54,7 @@ clean:
 	find . -name '*.a' -delete
 	find . -name '*.so' -delete
 	find . -name '*.dylib' -delete
+	rm Makefile.in
 
 
 .PHONY: test_c
@@ -95,4 +96,4 @@ $(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
 
 
 $(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS)
-	$(LD) $(LDFLAGS) -llua$(LUA_VERSION) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
