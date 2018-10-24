@@ -1,7 +1,7 @@
 #!/bin/sh
 
 REPO_DIR=$1
-LUA_DIRNAME=lua-${LUA_TEST_VERSION}
+LUA_DIRNAME=lua-${LUA_VERSION}
 TGZ_FILENAME=${LUA_DIRNAME}.tar.gz
 
 set +e

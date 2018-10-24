@@ -4,19 +4,24 @@ set +e
 
 rm -f Makefile.in
 
-if [ -n "${TRAVIS}" ]; then
-    .travis/init_lua.sh "${HOME}/install/lua"
-    .travis/init_unicorn.sh "${HOME}/install/unicorn"
-    echo "CFLAGS += -I${HOME}/install/lua/src -I${HOME}/install/unicorn" >> Makefile.in
-    echo "LDFLAGS += -L${HOME}/install/lua/bin -L${HOME}/install/unicorn" >> Makefile.in
+if [ -z "${LUA_VERSION}" ]; then
+    LUA_VERSION=$(lua -v | cut -f2 -d' ')
 fi
 
-if [ -z "${LUA_TEST_VERSION}" ]; then
-    echo "LUA_VERSION=$(lua -e 'print(_VERSION)' | cut -f2 -d' ')" >> Makefile.in
-else
-    echo "LUA_VERSION=${LUA_TEST_VERSION}" >> Makefile.in
+echo "LUA_VERSION=${LUA_VERSION}" >> Makefile.in
+
+mkdir -p .downloaded
+
+if [ ! -e .downloaded/unicorn ]; then
+    .travis/init_unicorn.sh .downloaded/unicorn ${UNICORN_VERSION:-1.0.1}
 fi
 
+if [ ! -e .downloaded/lua-${LUA_VERSION} ]; then
+    .travis/init_lua.sh .downloaded/lua-${LUA_VERSION}
+fi
+
+echo "CFLAGS += -I.downloaded/lua-${LUA_VERSION}/src -I.downloaded/unicorn/include" >> Makefile.in
+echo "LDFLAGS += -L.downloaded/lua-${LUA_VERSION}/src -L.downloaded/unicorn" >> Makefile.in
 echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
 echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
 echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -print0 | xargs -0 echo)" >> Makefile.in

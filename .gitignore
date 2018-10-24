@@ -2,5 +2,6 @@
 *.so
 *.a
 .git/
-libunicorn/
 bin/
+.downloaded/
+

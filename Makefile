@@ -29,32 +29,30 @@ OS=$(shell uname)
 
 ifeq ($(OS), Darwin)
 	LDEXT=dylib
-	LDFLAGS=-dylib
+	LDFLAGS += -dylib
 else ifeq ($(OS), Windows_NT)
 	# TODO
 	LDEXT=dll
-	LDFLAGS=-shared
+	LDFLAGS += -shared
 else
 	LDEXT=so
-	LDFLAGS=-shared
+	LDFLAGS += -shared
 endif
 
-LDFLAGS += -lunicorn -llua
+LDFLAGS += -lunicorn -l:lua
+
 
 .PHONY: all
-all: $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
-	mkdir -p $(OBJECT_BASE)
+all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
 
 .PHONY: clean
 clean:
-	rm -rf bin
-	mkdir bin
+	rm -rf $(OBJECT_BASE)
 	find . -name '*.o' -delete
 	find . -name '*.a' -delete
 	find . -name '*.so' -delete
 	find . -name '*.dylib' -delete
 	rm Makefile.in
-
 
 .PHONY: test_c
 test_c: $(SHARED_LIB_FILE)
@@ -76,6 +74,10 @@ test: test_c test_lua
 %.h: ;
 
 
+$(OBJECT_BASE) :
+	mkdir -p $(OBJECT_BASE)
+
+
 $(SRC_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
 $(SRC_BASE)/constants/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
 $(SRC_BASE)/constants/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
@@ -90,9 +92,9 @@ $(SRC_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
 $(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 
 
-$(OBJECT_BASE)/unicornlua.a: $(OBJECTS)
+$(OBJECT_BASE)/unicornlua.a: $(OBJECTS) | $(OBJECT_BASE)
 	$(AR) -rc $@ $^
 
 
-$(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS)
+$(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS) | $(OBJECT_BASE)
 	$(LD) $(LDFLAGS) -o $@ $^
