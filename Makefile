@@ -39,7 +39,7 @@ else
 	LDFLAGS += -shared
 endif
 
-LDFLAGS += -lunicorn -l:lua
+LDFLAGS += -lunicorn -llua
 
 
 .PHONY: all
@@ -52,7 +52,7 @@ clean:
 	find . -name '*.a' -delete
 	find . -name '*.so' -delete
 	find . -name '*.dylib' -delete
-	rm Makefile.in
+	rm -f Makefile.in
 
 .PHONY: test_c
 test_c: $(SHARED_LIB_FILE)

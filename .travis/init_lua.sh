@@ -1,6 +1,8 @@
 #!/bin/sh
 
-REPO_DIR=$1
+LUA_VERSION=$1
+REPO_DIR=$2
+
 LUA_DIRNAME=lua-${LUA_VERSION}
 TGZ_FILENAME=${LUA_DIRNAME}.tar.gz
 
@@ -16,4 +18,4 @@ rm lua.tar ${TGZ_FILENAME}
 mv ${LUA_DIRNAME} ${REPO_DIR}
 
 cd ${REPO_DIR}
-make linux
+make linux local

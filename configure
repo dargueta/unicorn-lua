@@ -4,24 +4,27 @@ set +e
 
 rm -f Makefile.in
 
-if [ -z "${LUA_VERSION}" ]; then
-    LUA_VERSION=$(lua -v | cut -f2 -d' ')
-fi
 
-echo "LUA_VERSION=${LUA_VERSION}" >> Makefile.in
+lua_version=${LUA_VERSION:-$(lua -v | cut -f2 -d' ')}
+unicorn_version=${UNICORN_VERSION:-1.0.1}
+
+echo "Using Lua ${lua_version}"
+echo "Using Unicorn ${unicorn_version}"
+
+echo "LUA_VERSION=${lua_version}" >> Makefile.in
 
 mkdir -p .downloaded
 
 if [ ! -e .downloaded/unicorn ]; then
-    .travis/init_unicorn.sh .downloaded/unicorn ${UNICORN_VERSION:-1.0.1}
+    .travis/init_unicorn.sh .downloaded/unicorn ${unicorn_version}
 fi
 
-if [ ! -e .downloaded/lua-${LUA_VERSION} ]; then
-    .travis/init_lua.sh .downloaded/lua-${LUA_VERSION}
+if [ ! -e .downloaded/lua-${lua_version} ]; then
+    .travis/init_lua.sh ${lua_version} .downloaded/lua-${lua_version}
 fi
 
-echo "CFLAGS += -I.downloaded/lua-${LUA_VERSION}/src -I.downloaded/unicorn/include" >> Makefile.in
-echo "LDFLAGS += -L.downloaded/lua-${LUA_VERSION}/src -L.downloaded/unicorn" >> Makefile.in
+echo "CFLAGS += -I.downloaded/lua-${lua_version}/src -I.downloaded/unicorn/include" >> Makefile.in
+echo "LDFLAGS += -L.downloaded/lua-${lua_version}/install/lib -L.downloaded/unicorn" >> Makefile.in
 echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
 echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
 echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -print0 | xargs -0 echo)" >> Makefile.in
