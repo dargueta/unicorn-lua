@@ -133,7 +133,8 @@ int uc_lua__mem_regions(lua_State *L) {
              * lua_settable expects the value on top, we need to push the key
              * and then swap the two. */
             lua_pushinteger(L, i + 1);
-            lua_rotate(L, lua_gettop(L) - 2, 1);
+            lua_insert(L, lua_gettop(L) - 1);
+
             lua_settable(L, -2);
         #endif
     }
