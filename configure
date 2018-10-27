@@ -22,7 +22,6 @@ init_unicorn() {
     git checkout ${unicorn_version}
 
     ./make.sh
-    sudo ./make.sh install
     popd
 }
 
@@ -58,10 +57,23 @@ init_luarocks() {
     pushd ${luarocks_downloaded_path}
     mkdir -p ${luarocks_downloaded_path}/install
 
-    ./configure --lua-version=${lua_short_version} \
-                --with-lua-bin=${lua_downloaded_path}/install/bin \
-                --with-lua-include=${lua_downloaded_path}/install/include \
-                --with-lua-lib=${lua_downloaded_path}/install/lib \
+    local bin_path
+    local include_path
+    local lib_path
+
+    # Lua 5.1 stores its built stuff in a different directory than 5.2+
+    if [ ${lua_short_version} = '5.1' ]; then
+        bin_path=${lua_downloaded_path}/bin
+        include_path=${lua_downloaded_path}/include
+        lib_path=${lua_downloaded_path}/lib
+    else
+        bin_path=${lua_downloaded_path}/install/bin
+        include_path=${lua_downloaded_path}/install/include
+        lib_path=${lua_downloaded_path}/install/lib
+    fi
+
+    ./configure --lua-version=${lua_short_version} --with-lua-bin=${bin_path} \
+                --with-lua-include=${include_path} --with-lua-lib=${lib_path} \
                 --prefix=${luarocks_downloaded_path}/install
     make bootstrap
 
