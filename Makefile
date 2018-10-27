@@ -7,23 +7,14 @@ CONST_SRC_BASE=$(SRC_BASE)/constants
 CONST_HDR_BASE=$(INCLUDE_UC_BASE)/constants
 OBJECT_BASE=bin
 
-_CONSTANTS_HEADERS=$(wildcard $(CONST_HDR_BASE)/*.h)
-_CONSTANTS_SOURCES=$(wildcard $(CONST_SRC_BASE)/*.c)
-
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
-GLOBAL_SOURCES=$(wildcard $(SRC_BASE)/*.c)
-SOURCES=$(GLOBAL_SOURCES) $(_CONSTANTS_SOURCES)
-HEADERS=$(GLOBAL_HEADERS) $(_CONSTANTS_HEADERS)
-OBJECTS=$(SOURCES:%.c=%.o)
+OBJECTS=$(C_SOURCES:%.c=%.o)
 
 TESTS_BASE=tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
-ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
-SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
-
-CFLAGS += -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE)
+CFLAGS += -c -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE)
 
 OS=$(shell uname)
 
@@ -41,6 +32,8 @@ endif
 
 LDFLAGS += -lunicorn -llua
 
+ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
+SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
 
 .PHONY: all
 all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
@@ -48,11 +41,14 @@ all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
 .PHONY: clean
 clean:
 	rm -rf $(OBJECT_BASE)
-	rm -rf .downloaded
 	find . -name '*.o' -delete
 	find . -name '*.a' -delete
 	find . -name '*.so' -delete
 	find . -name '*.dylib' -delete
+
+.PHONY: sterile
+sterile: clean
+	rm -rf .downloaded
 	rm -f Makefile.in
 
 .PHONY: test_c
@@ -61,7 +57,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	$(LUAROCKS_EXE_PATH)/busted -p '.lua' --cpath="./$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
+	$(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' --cpath="./$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
 
 
 .PHONY: test
@@ -69,7 +65,7 @@ test: test_c test_lua
 
 
 %.o : %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 
 %.h: ;
@@ -89,7 +85,7 @@ $(SRC_BASE)/constants/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_H
 $(SRC_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/numbers.o: $(SRC_BASE)/numbers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/unicornlua.o: $(GLOBAL_SOURCES)
+$(SRC_BASE)/unicornlua.o: $(C_SOURCES)
 $(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 
 
