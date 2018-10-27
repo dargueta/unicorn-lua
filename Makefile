@@ -48,6 +48,7 @@ all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
 .PHONY: clean
 clean:
 	rm -rf $(OBJECT_BASE)
+	rm -rf .downloaded
 	find . -name '*.o' -delete
 	find . -name '*.a' -delete
 	find . -name '*.so' -delete
@@ -60,7 +61,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	busted -p '.lua' --cpath="./$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
+	$(LUAROCKS_EXE_PATH)/busted -p '.lua' --cpath="./$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
 
 
 .PHONY: test
