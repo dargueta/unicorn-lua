@@ -4,4 +4,5 @@
 .git/
 bin/
 .downloaded/
+Makefile.in
 
