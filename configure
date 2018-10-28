@@ -4,9 +4,9 @@ set -e
 
 PARSED_OPTIONS=$(getopt -o '' -l 'lua-version:,unicorn-version:,luarocks-version:' -- "$@")
 
-LUA_VERSION='?'
-LUAROCKS_VERSION=3.0.3
-UNICORN_VERSION=1.0.1
+LUA_VERSION=${LUA_VERSION:-?}
+LUAROCKS_VERSION=${LUAROCKS_VERSION:-3.0.3}
+UNICORN_VERSION=${UNICORN_VERSION:-1.0.1}
 
 eval set -- "$PARSED_OPTIONS"
 
@@ -49,9 +49,9 @@ fi
 
 LUA_SHORT_VERSION=$(echo ${LUA_VERSION} | cut -f1-2 -d'.')
 
-LUA_DIRECTORY=".downloaded/lua-${LUA_VERSION}"
-UNICORN_DIRECTORY=".downloaded/unicorn-${UNICORN_VERSION}"
-LUAROCKS_DIRECTORY=".downloaded/luarocks-${LUAROCKS_VERSION}"
+LUA_DIRECTORY="$(pwd)/.downloaded/lua-${LUA_VERSION}"
+UNICORN_DIRECTORY="$(pwd)/.downloaded/unicorn-${UNICORN_VERSION}"
+LUAROCKS_DIRECTORY="$(pwd)/.downloaded/luarocks-${LUAROCKS_VERSION}"
 LUAROCKS_BIN_PATH="${LUAROCKS_DIRECTORY}/install/bin"
 LUAROCKS_ROCKS_PATH="${LUAROCKS_DIRECTORY}/install/rocks"
 

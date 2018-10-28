@@ -8,7 +8,7 @@ CONST_HDR_BASE=$(INCLUDE_UC_BASE)/constants
 OBJECT_BASE=bin
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
-OBJECTS=$(C_SOURCES:%.c=%.o)
+OBJECTS=$(C_SOURCE_FILES:%.c=%.o)
 
 TESTS_BASE=tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
@@ -31,7 +31,7 @@ else
 	LDFLAGS += -shared
 endif
 
-LDFLAGS += -lunicorn -llua -lpthread
+LDFLAGS += -lunicorn -lpthread
 
 ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
@@ -58,7 +58,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	PATH="$(PATH):$(UNICORN_LIB_PATH):$(OBJECT_BASE)" $(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' tests/lua
+	PATH="$(PATH):$(UNICORN_LIB_PATH):$(OBJECT_BASE)" $(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' --cpath="$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
 
 
 .PHONY: test
