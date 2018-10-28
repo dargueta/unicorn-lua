@@ -1,3 +1,5 @@
+-- Adapted directly from the Python tutorial on the Unicorn Engine's website.
+
 describe('[x86] Basic register read/write', function ()
     local unicorn = require 'unicorn'
     local x86 = require 'unicorn.x86'
