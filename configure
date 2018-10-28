@@ -13,10 +13,15 @@ luarocks_downloaded_path="$(pwd)/.downloaded/luarocks-${luarocks_version}"
 luarocks_bin_path="${luarocks_downloaded_path}/install/bin"
 luarocks_rocks_path="${luarocks_downloaded_path}/install/rocks"
 
-lua_bin_path=${lua_downloaded_path}/install/bin
-lua_include_path=${lua_downloaded_path}/install/include
-lua_lib_path=${lua_downloaded_path}/install/lib
-
+if [[ ${lua_short_version} = '5.1' ]]; then
+    lua_bin_path=${lua_downloaded_path}/bin
+    lua_include_path=${lua_downloaded_path}/include
+    lua_lib_path=${lua_downloaded_path}/lib
+else
+    lua_bin_path=${lua_downloaded_path}/install/bin
+    lua_include_path=${lua_downloaded_path}/install/include
+    lua_lib_path=${lua_downloaded_path}/install/lib
+fi
 
 init_unicorn() {
     git clone --depth 1 https://github.com/unicorn-engine/unicorn.git ${unicorn_downloaded_path}
@@ -44,7 +49,7 @@ init_lua() {
     mv ${target_dirname} ${lua_downloaded_path}
 
     pushd ${lua_downloaded_path}
-    make linux install INSTALL_TOP=${lua_downloaded_path}/install
+    make linux local
     popd
 }
 
@@ -99,12 +104,20 @@ rm -f Makefile.in
 
 echo "LUA_VERSION=${lua_version}" >> Makefile.in
 echo "LUA_SHORT_VERSION=${lua_short_version}" >> Makefile.in
+
+echo "LUA_DIRECTORY=${lua_downloaded_path}" >> Makefile.in
+echo "LUA_INSTALL_DIRECTORY=${lua_downloaded_path}/install" >> Makefile.in
 echo "LUA_LIB_PATH=${lua_lib_path}" >> Makefile.in
-echo "LUA_HEADERS_PATH=${lua_include_path}" >> Makefile.in
+echo "LUA_INCLUDE_PATH=${lua_include_path}" >> Makefile.in
+
+echo "UNICORN_DIRECTORY=${unicorn_downloaded_path}" >> Makefile.in
+echo "UNICORN_LIB_PATH=${unicorn_downloaded_path}" >> Makefile.in
+echo "UNICORN_INCLUDE_PATH=${unicorn_downloaded_path}/include" >> Makefile.in
+
+echo "LUAROCKS_DIRECTORY=${luarocks_downloaded_path}" >> Makefile.in
 echo "LUAROCKS_BIN_PATH=${luarocks_bin_path}" >> Makefile.in
 echo "LUAROCKS_ROCKS_PATH=${luarocks_rocks_path}" >> Makefile.in
-echo "CFLAGS += -I${lua_include_path} -I${unicorn_downloaded_path}/include" >> Makefile.in
-echo "LDFLAGS += -L${lua_lib_path} -L${unicorn_downloaded_path}" >> Makefile.in
+
 echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
 echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
 echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -print0 | xargs -0 echo)" >> Makefile.in

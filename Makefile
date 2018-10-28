@@ -14,7 +14,8 @@ TESTS_BASE=tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
-CFLAGS += -c -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE)
+CFLAGS += -c -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 OS=$(shell uname)
 
@@ -30,7 +31,7 @@ else
 	LDFLAGS += -shared
 endif
 
-LDFLAGS += -lunicorn -llua
+LDFLAGS += -lunicorn -llua -lpthread
 
 ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
