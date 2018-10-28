@@ -3,6 +3,8 @@
 
 #include <lua.h>
 
+#include "unicornlua/compat.h"
+
 
 #if LUA_INT_TYPE == LUA_INT_INT
     #define UC_LUA_STRTOINT         strtol

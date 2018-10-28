@@ -2,6 +2,7 @@
 #include <lua.h>
 #include <unicorn/unicorn.h>
 
+#include "unicornlua/compat.h"
 #include "unicornlua/numbers.h"
 #include "unicornlua/utils.h"
 
@@ -92,7 +93,14 @@ int uc_lua__reg_read_batch(lua_State *L) {
 
     /* Second argument is a table a list of the register IDs to read. Get the
      * length. */
-    lua_len(L, 2);
+    #if LUA_VERSION_NUM >= 502
+        /* Lua 5.2+ */
+        lua_len(L, 2);
+    #else
+        /* Lua 5.1 */
+        lua_pushinteger(L, (lua_Integer)lua_objlen(L, 2));
+    #endif
+
     n_registers = lua_tointeger(L, -1);
     lua_pop(L, 1);
 
