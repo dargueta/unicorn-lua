@@ -2,35 +2,78 @@
 
 set -e
 
-lua_version=${LUA_VERSION:-$(lua -v | cut -f2 -d' ')}
-lua_short_version=$(echo ${lua_version} | cut -f1-2 -d'.')
-unicorn_version=${UNICORN_VERSION:-1.0.1}
-luarocks_version=${LUAROCKS_VERSION:-3.0.3}
+PARSED_OPTIONS=$(getopt -o '' -l 'lua-version:,unicorn-version:,luarocks-version:' -- "$@")
 
-lua_downloaded_path="$(pwd)/.downloaded/lua-${lua_version}"
-unicorn_downloaded_path="$(pwd)/.downloaded/unicorn-${unicorn_version}"
-luarocks_downloaded_path="$(pwd)/.downloaded/luarocks-${luarocks_version}"
-luarocks_bin_path="${luarocks_downloaded_path}/install/bin"
-luarocks_rocks_path="${luarocks_downloaded_path}/install/rocks"
+LUA_VERSION='?'
+LUAROCKS_VERSION=3.0.3
+UNICORN_VERSION=1.0.1
 
-if [[ ${lua_short_version} = '5.1' ]]; then
-    lua_bin_path=${lua_downloaded_path}/bin
-    lua_include_path=${lua_downloaded_path}/include
-    lua_lib_path=${lua_downloaded_path}/lib
-else
-    lua_bin_path=${lua_downloaded_path}/install/bin
-    lua_include_path=${lua_downloaded_path}/install/include
-    lua_lib_path=${lua_downloaded_path}/install/lib
+eval set -- "$PARSED_OPTIONS"
+
+while true; do
+    case "$1" in
+        --lua-version)
+            LUA_VERSION="$2"
+            shift 2
+            ;;
+        --unicorn-version)
+            UNICORN_VERSION="$2"
+            shift 2
+            ;;
+        --luarocks-version)
+            LUAROCKS_VERSION="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+
+# Lua version wasn't explicitly set in an argument. Default to the system Lua
+# version, or if the system doesn't have Lua installed, choose the latest
+# version.
+if [[ ${LUA_VERSION} = '?' ]]; then
+    if [[ -n $(which lua) ]]; then
+        LUA_VERSION=$(lua -v | cut -f2 -d' ')
+    else
+        LUA_VERSION=5.3.5
+    fi
 fi
 
-init_unicorn() {
-    git clone --depth 1 https://github.com/unicorn-engine/unicorn.git ${unicorn_downloaded_path}
 
-    pushd ${unicorn_downloaded_path}
+LUA_SHORT_VERSION=$(echo ${LUA_VERSION} | cut -f1-2 -d'.')
+
+LUA_DIRECTORY=".downloaded/lua-${LUA_VERSION}"
+UNICORN_DIRECTORY=".downloaded/unicorn-${UNICORN_VERSION}"
+LUAROCKS_DIRECTORY=".downloaded/luarocks-${LUAROCKS_VERSION}"
+LUAROCKS_BIN_PATH="${LUAROCKS_DIRECTORY}/install/bin"
+LUAROCKS_ROCKS_PATH="${LUAROCKS_DIRECTORY}/install/rocks"
+
+if [[ ${LUA_SHORT_VERSION} = '5.1' ]]; then
+    LUA_BIN_PATH=${LUA_DIRECTORY}/bin
+    LUA_INCLUDE_PATH=${LUA_DIRECTORY}/include
+    LUA_LIB_PATH=${LUA_DIRECTORY}/lib
+else
+    LUA_BIN_PATH=${LUA_DIRECTORY}/install/bin
+    LUA_INCLUDE_PATH=${LUA_DIRECTORY}/install/include
+    LUA_LIB_PATH=${LUA_DIRECTORY}/install/lib
+fi
+
+
+init_unicorn() {
+    git clone --depth 1 https://github.com/unicorn-engine/unicorn.git ${UNICORN_DIRECTORY}
+
+    pushd ${UNICORN_DIRECTORY}
 
     # fetch is required to be able to check out a tag.
     git fetch --all --tags --prune
-    git checkout ${unicorn_version}
+    git checkout ${UNICORN_VERSION}
 
     ./make.sh
     popd
@@ -38,85 +81,86 @@ init_unicorn() {
 
 
 init_lua() {
-    local tgz_filename="lua-${lua_version}.tar.gz"
-    local target_dirname=$(basename $lua_downloaded_path)
+    local tgz_filename="lua-${LUA_VERSION}.tar.gz"
+    local target_dirname=$(basename $LUA_DIRECTORY)
 
     curl -sO http://www.lua.org/ftp/${tgz_filename}
     gunzip -c ${tgz_filename} > lua.tar
     tar -xf lua.tar
     rm lua.tar ${tgz_filename}
 
-    mv ${target_dirname} ${lua_downloaded_path}
+    mv ${target_dirname} ${LUA_DIRECTORY}
 
-    pushd ${lua_downloaded_path}
+    pushd ${LUA_DIRECTORY}
     make linux local
     popd
 }
 
 
 init_luarocks() {
-    local tgz_filename=luarocks-${luarocks_version}.tar.gz
-    local target_dirname=$(basename $luarocks_downloaded_path)
+    local tgz_filename=luarocks-${LUAROCKS_VERSION}.tar.gz
+    local target_dirname=$(basename ${LUAROCKS_DIRECTORY})
 
     curl -sO http://luarocks.github.io/luarocks/releases/${tgz_filename}
     gunzip -c < ${tgz_filename} > luarocks.tar
     tar -xf luarocks.tar
     rm luarocks.tar ${tgz_filename}
 
-    mv ${target_dirname} ${luarocks_downloaded_path}
+    mv ${target_dirname} ${LUAROCKS_DIRECTORY}
 
-    pushd ${luarocks_downloaded_path}
-    mkdir -p ${luarocks_downloaded_path}/install
+    pushd ${LUAROCKS_DIRECTORY}
+    mkdir -p ${LUAROCKS_DIRECTORY}/install
 
-    ./configure --lua-version=${lua_short_version} --with-lua-bin=${lua_bin_path} \
-                --with-lua=${lua_bin_path} --with-lua-include=${lua_include_path} \
-                --with-lua-lib=${lua_lib_path} \
-                --rocks-tree=${luarocks_downloaded_path}/install/rocks \
-                --prefix=${luarocks_downloaded_path}/install
+    ./configure --lua-version=${LUA_SHORT_VERSION} --with-lua-bin=${LUA_BIN_PATH} \
+                --with-lua=${LUA_BIN_PATH} --with-lua-include=${LUA_INCLUDE_PATH} \
+                --with-lua-lib=${LUA_LIB_PATH} --rocks-tree=${LUAROCKS_ROCKS_PATH} \
+                --prefix=${LUAROCKS_DIRECTORY}/install
     make install
 
     popd
 }
 
-echo "Using Lua ${lua_version}"
-echo "Using Unicorn ${unicorn_version}"
-echo "Using Luarocks ${luarocks_version}"
+echo "Using Lua ${LUA_VERSION}"
+echo "Using Unicorn ${UNICORN_VERSION}"
+echo "Using Luarocks ${LUAROCKS_VERSION}"
 
 mkdir -p .downloaded
 
-if [ ! -e ${unicorn_downloaded_path} ]; then
+if [ ! -e ${UNICORN_DIRECTORY} ]; then
     init_unicorn
 fi
 
-if [ ! -e ${lua_downloaded_path} ]; then
+if [ ! -e ${LUA_DIRECTORY} ]; then
     init_lua
 fi
 
 # Always rebuild LuaRocks because the Lua version might've changed. It doesn't
 # take too long anyway.
-rm -rf ${luarocks_downloaded_path}
+rm -rf ${LUAROCKS_DIRECTORY}
 init_luarocks
 
-echo "Using Lua lib directory: ${lua_lib_path}"
-LUA_LIBDIR=${lua_lib_path} ${luarocks_bin_path}/luarocks install busted
+# Install `busted`, needed for testing. Not sure why we need LUA_LIBDIR here.
+LUA_LIBDIR=${LUA_LIB_PATH} ${LUAROCKS_BIN_PATH}/luarocks install busted
 
 rm -f Makefile.in
 
-echo "LUA_VERSION=${lua_version}" >> Makefile.in
-echo "LUA_SHORT_VERSION=${lua_short_version}" >> Makefile.in
+echo "LUA_VERSION=${LUA_VERSION}" >> Makefile.in
+echo "LUA_SHORT_VERSION=${LUA_SHORT_VERSION}" >> Makefile.in
 
-echo "LUA_DIRECTORY=${lua_downloaded_path}" >> Makefile.in
-echo "LUA_INSTALL_DIRECTORY=${lua_downloaded_path}/install" >> Makefile.in
-echo "LUA_LIB_PATH=${lua_lib_path}" >> Makefile.in
-echo "LUA_INCLUDE_PATH=${lua_include_path}" >> Makefile.in
+echo "LUA_DIRECTORY=${LUA_DIRECTORY}" >> Makefile.in
+echo 'LUA_INSTALL_DIRECTORY=$(LUA_DIRECTORY)/install' >> Makefile.in
+echo "LUA_LIB_PATH=${LUA_LIB_PATH}" >> Makefile.in
+echo "LUA_INCLUDE_PATH=${LUA_INCLUDE_PATH}" >> Makefile.in
 
-echo "UNICORN_DIRECTORY=${unicorn_downloaded_path}" >> Makefile.in
-echo "UNICORN_LIB_PATH=${unicorn_downloaded_path}" >> Makefile.in
-echo "UNICORN_INCLUDE_PATH=${unicorn_downloaded_path}/include" >> Makefile.in
+echo "UNICORN_DIRECTORY=${UNICORN_DIRECTORY}" >> Makefile.in
+echo 'UNICORN_LIB_PATH=$(UNICORN_DIRECTORY)' >> Makefile.in
+echo 'UNICORN_INCLUDE_PATH=$(UNICORN_DIRECTORY)/include' >> Makefile.in
 
-echo "LUAROCKS_DIRECTORY=${luarocks_downloaded_path}" >> Makefile.in
-echo "LUAROCKS_BIN_PATH=${luarocks_bin_path}" >> Makefile.in
-echo "LUAROCKS_ROCKS_PATH=${luarocks_rocks_path}" >> Makefile.in
+echo "LUAROCKS_DIRECTORY=${LUAROCKS_DIRECTORY}" >> Makefile.in
+echo "LUAROCKS_BIN_PATH=${LUAROCKS_BIN_PATH}" >> Makefile.in
+echo "LUAROCKS_ROCKS_PATH=${LUAROCKS_ROCKS_PATH}" >> Makefile.in
+
+echo 'BUSTED_EXE=$(LUAROCKS_ROCKS_PATH)/bin/busted' >> Makefile.in
 
 echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
 echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
