@@ -58,7 +58,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	PATH="$(PATH):$(UNICORN_LIB_PATH):$(OBJECT_BASE)" $(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' --cpath="$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
+	PATH="$(PATH):$(OBJECT_BASE)" LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)" $(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' --cpath="$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
 
 
 .PHONY: test
