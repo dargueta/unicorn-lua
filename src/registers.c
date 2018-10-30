@@ -1,8 +1,7 @@
-#include <lauxlib.h>
-#include <lua.h>
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/compat.h"
+#include "unicornlua/lua.h"
 #include "unicornlua/numbers.h"
 #include "unicornlua/utils.h"
 

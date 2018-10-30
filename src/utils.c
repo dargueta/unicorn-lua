@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
-#include <lauxlib.h>
-#include <lua.h>
 #include <unicorn/unicorn.h>
+
+#include "unicornlua/lua.h"
 
 extern const char *kEngineMetatableName;
 extern const char *kContextMetatableName;

@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <lauxlib.h>
-#include <lua.h>
-
 #include "unicornlua/compat.h"
+#include "unicornlua/lua.h"
 #include "unicornlua/numbers.h"
 
 

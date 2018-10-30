@@ -7,7 +7,7 @@
 #ifndef INCLUDE_UNICORNLUA_REGISTERS_H_
 #define INCLUDE_UNICORNLUA_REGISTERS_H_
 
-#include <lua.h>
+#include "unicornlua/lua.h"
 
 int uc_lua__reg_write(lua_State *L);
 int uc_lua__reg_read(lua_State *L);

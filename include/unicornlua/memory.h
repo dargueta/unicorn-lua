@@ -7,7 +7,8 @@
 #ifndef INCLUDE_UNICORNLUA_MEMORY_H_
 #define INCLUDE_UNICORNLUA_MEMORY_H_
 
-#include <lua.h>
+#include "unicornlua/lua.h"
+
 
 /**
  * Write data to a location in a machine's memory.

@@ -5,11 +5,10 @@
 #ifndef INCLUDE_UNICORNLUA_UNICORNLUA_H_
 #define INCLUDE_UNICORNLUA_UNICORNLUA_H_
 
-#include <lauxlib.h>
-#include <lua.h>
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/compat.h"
+#include "unicornlua/lua.h"
 
 
 #if UC_VERSION_MAJOR != 1

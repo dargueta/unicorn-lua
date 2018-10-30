@@ -7,6 +7,11 @@
 #ifndef INCLUDE_UNICORNLUA_UTILS_H_
 #define INCLUDE_UNICORNLUA_UTILS_H_
 
+#include <unicorn/unicorn.h>
+
+#include "unicornlua/lua.h"
+
+
 /**
  * Throw a Lua error with a message derived from the given Unicorn error code.
  *

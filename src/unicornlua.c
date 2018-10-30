@@ -1,10 +1,9 @@
 #include <stdlib.h>
 
-#include <lauxlib.h>
-#include <lua.h>
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 #include "unicornlua/numbers.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"

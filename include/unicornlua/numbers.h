@@ -1,9 +1,8 @@
 #ifndef INCLUDE_UNICORNLUA_NUMBERS_H_
 #define INCLUDE_UNICORNLUA_NUMBERS_H_
 
-#include <lua.h>
-
 #include "unicornlua/compat.h"
+#include "unicornlua/lua.h"
 
 
 #if LUA_INT_TYPE == LUA_INT_INT

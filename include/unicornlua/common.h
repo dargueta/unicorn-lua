@@ -1,7 +1,7 @@
 #ifndef INCLUDE_UNICORNLUA_COMMON_H_
 #define INCLUDE_UNICORNLUA_COMMON_H_
 
-#include <lua.h>
+#include "unicornlua/lua.h"
 
 struct NamedIntConst {
     const char *name;
