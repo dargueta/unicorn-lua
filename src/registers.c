@@ -92,13 +92,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
 
     /* Second argument is a table a list of the register IDs to read. Get the
      * length. */
-    #if LUA_VERSION_NUM >= 502
-        /* Lua 5.2+ */
-        lua_len(L, 2);
-    #else
-        /* Lua 5.1 */
-        lua_pushinteger(L, (lua_Integer)lua_objlen(L, 2));
-    #endif
+    lua_len(L, 2);
 
     n_registers = lua_tointeger(L, -1);
     lua_pop(L, 1);
@@ -110,12 +104,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
     p_values = (void **)lua_newuserdata(L, n_registers * sizeof(*p_values));
 
     for (i = 0; i < n_registers; ++i) {
-        #if LUA_VERSION_NUM >= 503
-            lua_geti(L, 2, i + 1);
-        #else
-            lua_pushinteger(L, i + 1);
-            lua_gettable(L, 2);
-        #endif
+        lua_geti(L, 2, i + 1);
         registers[i] = lua_tointeger(L, -1);
         lua_pop(L, 1);
 

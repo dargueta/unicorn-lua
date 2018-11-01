@@ -124,19 +124,7 @@ int uc_lua__mem_regions(lua_State *L) {
         lua_pushinteger(L, regions[i].perms);
         lua_setfield(L, -1, "perms");
 
-        #if LUA_VERSION_NUM >= 503
-            lua_seti(L, -2, i + 1);
-        #else
-            /* lua_seti was added in Lua 5.3, so we need to do this manually.
-             *
-             * Permission entry is at TOS, array is right below it. Because
-             * lua_settable expects the value on top, we need to push the key
-             * and then swap the two. */
-            lua_pushinteger(L, i + 1);
-            lua_insert(L, lua_gettop(L) - 1);
-
-            lua_settable(L, -2);
-        #endif
+        lua_seti(L, -2, i + 1);
     }
 
     uc_free(regions);
