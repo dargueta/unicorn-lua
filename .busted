@@ -1,0 +1,10 @@
+return {
+  _all = {
+    cpath='bin/?.so;bin/?.dylib;bin/?.dll',
+    verbose = true,
+  },
+  default = {
+    pattern = 'lua',
+    ROOT = {'./tests/lua'},
+  }
+}

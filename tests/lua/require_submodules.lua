@@ -1,8 +1,0 @@
-describe('Test require() for submodules', function ()
-    describe('[arm] require', function() require 'unicorn.arm' end)
-    describe('[arm64] require', function () require 'unicorn.arm64' end)
-    describe('[m68k] require', function () require 'unicorn.m68k' end)
-    describe('[mips] require', function () require 'unicorn.mips' end)
-    describe('[sparc] require', function () require 'unicorn.sparc' end)
-    describe('[x86] require', function () require 'unicorn.x86' end)
-end)

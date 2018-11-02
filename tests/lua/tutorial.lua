@@ -1,6 +1,7 @@
 -- Adapted directly from the Python tutorial on the Unicorn Engine's website.
 
 describe('[x86] Basic register read/write', function ()
+  it('Do tutorial from website', function ()
     local unicorn = require 'unicorn'
     local x86 = require 'unicorn.x86'
 
@@ -28,6 +29,7 @@ describe('[x86] Basic register read/write', function ()
     local r_edx = mu:reg_read(x86.UC_X86_REG_EDX)
 
     -- make sure we got the right values
-    assert(r_ecx == 0x1235, "Wrong value for ECX")
-    assert(r_edx == 0x788f, "Wrong value for EDX")
+    assert.are.equals(r_ecx, 0x1235)
+    assert.are.equals(r_edx, 0x788f)
+  end)
 end)
