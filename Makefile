@@ -42,10 +42,7 @@ all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
 .PHONY: clean
 clean:
 	rm -rf $(OBJECT_BASE)
-	find . -name '*.o' -delete
-	find . -name '*.a' -delete
-	find . -name '*.so' -delete
-	find . -name '*.dylib' -delete
+	find $(SRC_BASE) -name '*.o' -delete
 
 .PHONY: sterile
 sterile: clean
@@ -58,7 +55,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	PATH="$(PATH):$(OBJECT_BASE)" LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)" $(LUAROCKS_ROCKS_PATH)/bin/busted -p '.lua' --cpath="$(OBJECT_BASE)/?.$(LDEXT)" tests/lua
+	$(BUSTED_EXE)
 
 
 .PHONY: test
