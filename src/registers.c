@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/compat.h"
@@ -26,7 +28,7 @@ int uc_lua__reg_write(lua_State *L) {
 int uc_lua__reg_read(lua_State *L) {
     uc_engine *engine;
     int register_id, error;
-    lua_Unsigned value;
+    lua_Unsigned value = 0;
 
     engine = uc_lua__toengine(L, 1);
     register_id = luaL_checkinteger(L, 2);
@@ -111,6 +113,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
         p_values[i] = &values[i];
     }
 
+    memset(values, 0, n_registers * sizeof(*values));
     error = uc_reg_read_batch(engine, registers, p_values, n_registers);
 
     if (error != UC_ERR_OK)
