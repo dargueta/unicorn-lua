@@ -4,7 +4,6 @@
 
 #include "unicornlua/compat.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/numbers.h"
 #include "unicornlua/utils.h"
 
 
@@ -15,7 +14,7 @@ int uc_lua__reg_write(lua_State *L) {
 
     engine = uc_lua__toengine(L, 1);
     register_id = luaL_checkinteger(L, 2);
-    value = uc_lua__cast_unsigned(L, 3);
+    value = (lua_Unsigned)lua_tointeger(L, 3);
 
     error = uc_reg_write(engine, register_id, &value);
     if (error != UC_ERR_OK)
@@ -65,7 +64,7 @@ int uc_lua__reg_write_batch(lua_State *L) {
             L, values, (n_registers + 1) * sizeof(*values));
 
         registers[n_registers] = luaL_checkinteger(L, -2);
-        values[n_registers] = uc_lua__cast_unsigned(L, -1);
+        values[n_registers] = (lua_Unsigned)lua_tointeger(L, -1);
         lua_pop(L, 1);
     }
 

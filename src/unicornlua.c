@@ -4,7 +4,6 @@
 
 #include "unicornlua/common.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/numbers.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 #include "unicornlua/constants/arm.h"
@@ -118,8 +117,8 @@ int uc_lua__emu_start(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    start = uc_lua__cast_unsigned(L, 2);
-    end = uc_lua__cast_unsigned(L, 3);
+    start = (lua_Unsigned)lua_tointeger(L, 2);
+    end = (lua_Unsigned)lua_tointeger(L, 3);
     timeout = (lua_Unsigned)luaL_optinteger(L, 4, 0);
     n_instructions = (lua_Unsigned)luaL_optinteger(L, 5, 0);
 

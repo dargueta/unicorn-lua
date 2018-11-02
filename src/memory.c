@@ -2,7 +2,6 @@
 
 #include "unicornlua/compat.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/numbers.h"
 #include "unicornlua/utils.h"
 
 
@@ -14,7 +13,7 @@ int uc_lua__mem_write(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    address = uc_lua__cast_unsigned(L, 2);
+    address = (lua_Unsigned)lua_tointeger(L, 2);
     data = (const void *)luaL_checklstring(L, 3, &length);
 
     error = uc_mem_write(engine, address, data, length);
@@ -32,8 +31,8 @@ int uc_lua__mem_read(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    address = uc_lua__cast_unsigned(L, 2);
-    length = uc_lua__cast_unsigned(L, 3);
+    address = (lua_Unsigned)lua_tointeger(L, 2);
+    length = (lua_Unsigned)lua_tointeger(L, 3);
 
     data = uc_lua__realloc(L, NULL, length);
 
@@ -54,8 +53,8 @@ int uc_lua__mem_map(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    address = uc_lua__cast_unsigned(L, 2);
-    size = uc_lua__cast_unsigned(L, 3);
+    address = (lua_Unsigned)lua_tointeger(L, 2);
+    size = (lua_Unsigned)lua_tointeger(L, 3);
     perms = (lua_Unsigned)luaL_optinteger(L, 4, UC_PROT_ALL);
 
     error = uc_mem_map(engine, address, size, perms);
@@ -71,8 +70,8 @@ int uc_lua__mem_unmap(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    address = uc_lua__cast_unsigned(L, 2);
-    size = uc_lua__cast_unsigned(L, 3);
+    address = (lua_Unsigned)lua_tointeger(L, 2);
+    size = (lua_Unsigned)lua_tointeger(L, 3);
 
     error = uc_mem_unmap(engine, address, size);
     if (error != UC_ERR_OK)
@@ -86,9 +85,9 @@ int uc_lua__mem_protect(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    address = uc_lua__cast_unsigned(L, 2);
-    size = uc_lua__cast_unsigned(L, 3);
-    perms = uc_lua__cast_unsigned(L, 4);
+    address = (lua_Unsigned)lua_tointeger(L, 2);
+    size = (lua_Unsigned)lua_tointeger(L, 3);
+    perms = (lua_Unsigned)lua_tointeger(L, 4);
 
     error = uc_mem_protect(engine, address, size, perms);
     if (error != UC_ERR_OK)
