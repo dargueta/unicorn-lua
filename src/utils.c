@@ -8,7 +8,6 @@ extern const char *kEngineMetatableName;
 extern const char *kContextMetatableName;
 
 
-/** TODO (dargueta): Make this attribute work on Microsoft compilers. */
 int uc_lua__crash_on_error(lua_State *L, int error) {
     const char *message;
 

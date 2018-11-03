@@ -113,14 +113,15 @@ int uc_lua__errno(lua_State *L) {
 
 int uc_lua__emu_start(lua_State *L) {
     uc_engine *engine;
-    lua_Unsigned start, end, timeout, n_instructions;
+    uint64_t start, end, timeout;
+    size_t n_instructions;
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    start = (lua_Unsigned)luaL_checkinteger(L, 2);
-    end = (lua_Unsigned)luaL_checkinteger(L, 3);
-    timeout = (lua_Unsigned)luaL_optinteger(L, 4, 0);
-    n_instructions = (lua_Unsigned)luaL_optinteger(L, 5, 0);
+    start = (uint64_t)luaL_checkinteger(L, 2);
+    end = (uint64_t)luaL_checkinteger(L, 3);
+    timeout = (uint64_t)luaL_optinteger(L, 4, 0);
+    n_instructions = (size_t)luaL_optinteger(L, 5, 0);
 
     error = uc_emu_start(engine, start, end, timeout, n_instructions);
     if (error != UC_ERR_OK)
