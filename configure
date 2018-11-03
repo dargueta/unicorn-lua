@@ -148,7 +148,6 @@ echo "LUA_VERSION=${LUA_VERSION}" >> Makefile.in
 echo "LUA_SHORT_VERSION=${LUA_SHORT_VERSION}" >> Makefile.in
 
 echo "LUA_DIRECTORY=${LUA_DIRECTORY}" >> Makefile.in
-echo 'LUA_INSTALL_DIRECTORY=$(LUA_DIRECTORY)/install' >> Makefile.in
 echo "LUA_LIB_PATH=${LUA_LIB_PATH}" >> Makefile.in
 echo "LUA_INCLUDE_PATH=${LUA_INCLUDE_PATH}" >> Makefile.in
 
