@@ -5,7 +5,7 @@ describe('[x86] Basic register read/write', function ()
     local unicorn = require 'unicorn'
     local x86 = require 'unicorn.x86'
 
-    local X86_CODE32 = "\x41\x4a" -- INC ecx; DEC edx
+    local X86_CODE32 = "\065\074" -- INC ecx; DEC edx
     local ADDRESS = 0x1000000
 
     -- Initialize emulator in X86-32bit mode
