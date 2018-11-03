@@ -7,7 +7,7 @@ unicorn-lua
    :alt: Build status
    :target: https://travis-ci.org/dargueta/unicorn-lua
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.2%2C%205.3-blue.svg
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%2C%205.2%2C%205.3-blue.svg
    :alt: Lua versions
    :target: https://www.lua.org
 
@@ -16,9 +16,9 @@ An attempt at making Lua bindings for the `Unicorn CPU Emulator <http://www.unic
 This is in a *highly* experimental phase right now and **should not** be used in
 anything requiring reliability.
 
-At the moment I'm only testing this on Lua 5.3 with an unmodified ``luaconf.h``.
-I cannot guarantee the library will behave as expected on all platforms or older
-5.x versions of Lua.
+At the moment I'm only testing this on unmodified Lua 5.1 - 5.3 on Linux systems.
+I cannot guarantee the library will behave as expected on all host platforms,
+though I will try.
 
 Known Limitations
 -----------------
@@ -40,8 +40,18 @@ numbers, e.g.
     -- Returns -1 not 2^64 - 1
     uc:reg_read(x86.UC_REG_RAX)
 
-This doesn't affect how arguments are passed *to* the library, only return values
+This doesn't affect how arguments are passed *to* the library, only values returned
 *from* the library.
+
+Big-Endian Hosts
+~~~~~~~~~~~~~~~~
+
+Reading from/writing to registers on a big-endian host system won't work for
+registers that aren't the same size as a Lua integer. This is because the library
+currently has no concept of register sizes and thus doesn't know how to do
+typecasts. Due to how byte order works this doesn't matter on a little-endian
+system, but will result in things like a 16-bit register getting returned to
+Lua as 0x7fff000000000000 instead of 0x7fff.
 
 Development
 -----------
