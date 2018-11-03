@@ -117,8 +117,8 @@ int uc_lua__emu_start(lua_State *L) {
     int error;
 
     engine = uc_lua__toengine(L, 1);
-    start = (lua_Unsigned)lua_tointeger(L, 2);
-    end = (lua_Unsigned)lua_tointeger(L, 3);
+    start = (lua_Unsigned)luaL_checkinteger(L, 2);
+    end = (lua_Unsigned)luaL_checkinteger(L, 3);
     timeout = (lua_Unsigned)luaL_optinteger(L, 4, 0);
     n_instructions = (lua_Unsigned)luaL_optinteger(L, 5, 0);
 
