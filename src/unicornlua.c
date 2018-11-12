@@ -50,6 +50,13 @@ int uc_lua__open(lua_State *L) {
         return uc_lua__crash_on_error(L, error_code);
 
     luaL_setmetatable(L, kEngineMetatableName);
+
+    /* Create an entry in the registry for this engine, and have it point to a
+     * table that will be used to hold the engine's hooks. */
+    lua_pushlightuserdata(L, engine);
+    lua_newtable(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
+
     return 1;
 }
 
@@ -62,6 +69,7 @@ int uc_lua__strerror(lua_State *L) {
 
 int uc_lua__close(lua_State *L) {
     uc_engine **engine;
+    uc_hook hook;
     int error;
 
     /* Deliberately not using uc_lua__toengine, see below. */
@@ -74,6 +82,32 @@ int uc_lua__close(lua_State *L) {
      */
     if (*engine == NULL)
         return 0;
+
+    /* When we created this engine, we associated a table with it in the Lua
+     * registry to hold its associated hooks. Remove all hooks and delete that
+     * table from the registry. */
+    lua_pushlightuserdata(L, *engine);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    /* The table holding the hooks is at the top of the stack now. Iterate
+     * through it and release each hook individually. */
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        /* The key is the hook, value is a Lua function. Once we delete the
+         * hook table the functions will be garbage collected if possible. */
+        hook = (uc_hook)lua_tointeger(L, -2);
+        error = uc_hook_del(*engine, hook);
+        if (error)
+            return uc_lua__crash_on_error(L, error);
+
+        /* Pop the value off, keeping the hook ID for the next iteration. */
+        lua_pop(L, 1);
+    }
+
+    /* All hooks removed. Delete the table to release the hook callbacks. */
+    lua_pushlightuserdata(L, *engine);
+    lua_pushnil(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
 
     error = uc_close(*engine);
     if (error != UC_ERR_OK)
