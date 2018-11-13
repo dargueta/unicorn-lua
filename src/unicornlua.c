@@ -43,6 +43,8 @@ int uc_lua__open(lua_State *L) {
     architecture = luaL_checkinteger(L, 1);
     mode = luaL_checkinteger(L, 2);
 
+    /* Need to create regular userdata because light userdata can't have a
+     * metatable. */
     engine = lua_newuserdata(L, sizeof(*engine));
 
     error_code = uc_open(architecture, mode, engine);
@@ -53,7 +55,7 @@ int uc_lua__open(lua_State *L) {
 
     /* Create an entry in the registry for this engine, and have it point to a
      * table that will be used to hold the engine's hooks. */
-    lua_pushlightuserdata(L, engine);
+    lua_pushlightuserdata(L, *engine);
     lua_newtable(L);
     lua_settable(L, LUA_REGISTRYINDEX);
 
