@@ -35,10 +35,10 @@ numbers, e.g.
 
 .. code-block:: lua
 
-    uc:reg_write(x86.UC_REG_RAX, 0xffffffffffffffff)
+    uc:reg_write(x86.UC_X86_REG_RAX, 0xffffffffffffffff)
 
     -- Returns -1 not 2^64 - 1
-    uc:reg_read(x86.UC_REG_RAX)
+    uc:reg_read(x86.UC_X86_REG_RAX)
 
 This doesn't affect how arguments are passed *to* the library, only values returned
 *from* the library.
