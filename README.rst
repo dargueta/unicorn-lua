@@ -26,6 +26,24 @@ Known Limitations
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
 
+64-bit Integers
+~~~~~~~~~~~~~~~
+
+64-bit integers *do not* fully work on Lua 5.2 or 5.1. This is because Lua only
+added direct support for integers in 5.3; Lua 5.1 and 5.2 use floating-point
+numbers, which provide at most 17 `digits of precision <https://en.wikipedia.org/wiki/Double-precision_floating-point_format>`_.
+Thus, values over 53 bits cannot be represented accurately.
+
+We can work around this limitation by
+
+* Using libraries such as `BigInt <https://luarocks.org/modules/jorj/bigint>`_.
+  This could quickly become cumbersome, and the performance impact is unknown.
+* Providing special read and write functions for 64-bit integers. This is the
+  least disruptive but also makes the API irregular.
+
+I don't intend to fix this at the moment, as I want to focus on getting the API
+complete first.
+
 Signedness
 ~~~~~~~~~~
 

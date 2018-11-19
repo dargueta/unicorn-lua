@@ -161,6 +161,13 @@ echo "LUAROCKS_ROCKS_PATH=${LUAROCKS_ROCKS_PATH}" >> Makefile.in
 
 echo 'BUSTED_EXE=$(LUAROCKS_ROCKS_PATH)/bin/busted' >> Makefile.in
 
+# Only skip over the 64-bit tests if we're on Lua < 5.3
+if [[ "${LUA_SHORT_VERSION}" != '5.3' ]]; then
+    echo 'BUSTED_CLI_ARGS=--exclude-tags="int64only"' >> Makefile.in
+else
+    echo 'BUSTED_CLI_ARGS=' >> Makefile.in
+fi
+
 echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
 echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
 echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -print0 | xargs -0 echo)" >> Makefile.in

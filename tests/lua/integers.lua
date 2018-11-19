@@ -62,7 +62,7 @@ describe('[x86] Integer accuracy', function ()
     end)
   end)
 
-  describe('64-bit value', function ()
+  describe('64-bit value    #int64only', function ()
     it('64-bit register, MSB clear', function ()
       local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
       uc:reg_write(x86.UC_X86_REG_RAX, 0x17f8057f18a)
