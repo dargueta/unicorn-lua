@@ -19,11 +19,8 @@
 
 /* Compatibility stuff for Lua < 5.2 */
 #if LUA_VERSION_NUM < 502
-    #include <stddef.h>
-
-    /* An integer is defined as a ptrdiff_t on Lua 5.1. This is probably the
-     * closest thing to an unsigned ptrdiff_t we can get to. */
-    typedef size_t lua_Unsigned;
+    /* This is more or less how lua_Unsigned is defined in Lua 5.2. */
+    typedef LUAI_UINT32 lua_Unsigned;
 
     /* Copied and pasted from the 5.3 implementation. */
     LUALIB_API void luaL_setmetatable(lua_State *L, const char *tname);
