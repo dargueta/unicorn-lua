@@ -190,7 +190,7 @@ int uc_lua__hook_del(lua_State *L) {
 
 
 int uc_lua__free(lua_State *L) {
-    int error = uc_free(lua_touserdata(L, 1));
+    int error = uc_free(*(void **)lua_touserdata(L, 1));
 
     if (error != UC_ERR_OK)
         return uc_lua__crash_on_error(L, error);
