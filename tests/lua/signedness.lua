@@ -1,7 +1,7 @@
 local unicorn = require 'unicorn'
 local x86 = require 'unicorn.x86'
 
-describe('Signedness tests', function ()
+describe('[x86] Signedness tests', function ()
   -- While this behavior is undesirable, we do need to test it to ensure
   -- compatibility with client code until we fix it.
   it('Returns 2^64 - 1 as -1', function ()

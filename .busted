@@ -2,6 +2,7 @@ return {
   _all = {
     cpath='bin/?.so;bin/?.dylib;bin/?.dll',
     verbose = true,
+    shuffle = true,
   },
   default = {
     pattern = 'lua',
