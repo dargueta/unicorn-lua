@@ -71,6 +71,72 @@ typecasts. Due to how byte order works this doesn't matter on a little-endian
 system, but will result in things like a 16-bit register getting returned to
 Lua as 0x7fff000000000000 instead of 0x7fff.
 
+General Usage
+-------------
+
+``unicorn`` tries to mirror the organization and naming conventions of the
+`Python binding`_ as much as possible. For example, architecture-specific
+constants are defined in submodules like ``unicorn.x86``; a few global functions
+are defined in ``unicorn``, and the rest are instance methods of the engine.
+
+Quick Example
+~~~~~~~~~~~~~
+
+This is a short example to show how a some of the features can be used to emulate
+the BIOS setting up a system when booting.
+
+.. code-block:: lua
+
+    local unicorn = require 'unicorn'
+
+    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+
+    -- Map in 1 MiB of RAM for the processor with full read/write/execute
+    -- permissions. We could pass permissions as a third argument if we want.
+    uc:mem_map(0, 0x100000)
+
+    -- Revoke write access to the VGA and BIOS ROM shadow areas.
+    uc:mem_protect(0xC0000, 32 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
+    uc:mem_protect(0xF0000, 64 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
+
+    -- Create a hook for the VGA driver that's called whenever VGA memory is
+    -- accessed by client code. We only really care about writes, but there's no
+    -- way to indicate that in the API.
+    uc:add_memory_access_hook(0xA0000, 128 * 1024, vga_write_callback)
+
+    -- Install interrupt hooks so the CPU can perform I/O and other operations.
+    -- We'll handle all of that in Lua.
+    uc:add_interrupt_hook(0x10, vga_interrupt_hook)
+    uc:add_interrupt_hook(0x13, disk_io_interrupt_hook)
+    -- etc.
+
+    -- Load the boot sector of the hard drive into 0x7C000
+    local fdesc = io.open('hard-drive.img')
+    local boot_sector = fdesc:read(512)
+    uc:mem_write(0x7C000, boot_sector)
+    fdesc:close()
+
+    -- Start emulation at the boot sector we just loaded, stopping if execution
+    -- hits the address 0x100000. Since this is beyond the range we have mapped
+    -- in, the CPU will run forever until the code shuts it down, just like a
+    -- real system.
+    uc:emu_start(0x7C000, 0x100000)
+
+
+Missing Features
+~~~~~~~~~~~~~~~~
+
+Hooks aren't implemented yet.
+
+Deviations from the Python Library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Because ``end`` is a Lua keyword, ``mem_regions()`` returns tables whose record
+names are ``begins``, ``ends``, and ``perms`` rather than ``begin``, ``end``,
+``perms``.
+
+.. _Python binding: http://www.unicorn-engine.org/docs/tutorial.html
+
 Development
 -----------
 
