@@ -31,10 +31,10 @@ to the nature of Lua, or I haven't gotten around to fixing yet.
 
 64-bit integers *do not* fully work on Lua 5.2 or 5.1. This is because Lua only
 added direct support for integers in 5.3; Lua 5.1 and 5.2 use floating-point
-numbers, which provide at most 17 `digits of precision <https://en.wikipedia.org/wiki/Double-precision_floating-point_format>`_.
-Thus, values over 53 bits cannot be represented accurately.
+numbers, which provide at most 17 `digits of precision`_. Thus, values over 53
+bits cannot be represented accurately.
 
-We can work around this limitation by
+We can work around this limitation by:
 
 * Using libraries such as `BigInt <https://luarocks.org/modules/jorj/bigint>`_.
   This could quickly become cumbersome, and the performance impact is unknown.
@@ -43,6 +43,8 @@ We can work around this limitation by
 
 I don't intend to fix this at the moment, as I want to focus on getting the API
 complete first.
+
+.. _digits of precision: https://en.wikipedia.org/wiki/Double-precision_floating-point_format
 
 Signedness
 ~~~~~~~~~~
@@ -71,6 +73,19 @@ typecasts. Due to how byte order works this doesn't matter on a little-endian
 system, but will result in things like a 16-bit register getting returned to
 Lua as 0x7fff000000000000 instead of 0x7fff.
 
+Emergency Collection and Memory Leaks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If Lua doesn't have enough available memory to do a proper garbage collection
+cycle, the collector will run in "emergency mode." [2]_ In this mode, finalizers
+are *not* run, so you could end up in a situation where hooks, contexts, and
+other resources held by a disused engine aren't released and never can be.
+
+This rarely happens and most user code will probably be able to let the library
+do its own memory management. If you like to be safe, call the ``close()`` method
+on an engine after you're done using it to reduce the risk of an emergency
+collection leaking resources.
+
 General Usage
 -------------
 
@@ -78,6 +93,8 @@ General Usage
 `Python binding`_ as much as possible. For example, architecture-specific
 constants are defined in submodules like ``unicorn.x86``; a few global functions
 are defined in ``unicorn``, and the rest are instance methods of the engine.
+
+.. _Python binding: http://www.unicorn-engine.org/docs/tutorial.html
 
 Quick Example
 ~~~~~~~~~~~~~
@@ -135,8 +152,6 @@ Because ``end`` is a Lua keyword, ``mem_regions()`` returns tables whose record
 names are ``begins``, ``ends``, and ``perms`` rather than ``begin``, ``end``,
 ``perms``.
 
-.. _Python binding: http://www.unicorn-engine.org/docs/tutorial.html
-
 Development
 -----------
 
@@ -161,3 +176,4 @@ full legal text, see ``LICENSE.txt``.
 
 .. [1] Typically 2\ :sup:`63` - 1 on 64-bit machines and 2\ :sup:`31` - 1 on
        32-bit machines.
+.. [2] *Programming in Lua*, 4th Edition. Forgot the page.
