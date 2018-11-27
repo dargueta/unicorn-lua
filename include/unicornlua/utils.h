@@ -34,18 +34,6 @@ void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
 
 
 /**
- * Return the value on the stack at @a index as a uc_engine pointer.
- *
- * If the value at @a index is @e not a uc_engine struct, or the engine has
- * already been closed, a Lua error will be thrown.
- *
- * @param L         A pointer to the current Lua state.
- * @param index     The index of the value to return.
- */
-uc_engine *uc_lua__toengine(lua_State *L, int index);
-
-
-/**
  * Return the value on the stack at @a index as a uc_context pointer.
  *
  * If the value at @a index is @e not a uc_context struct, or the context has

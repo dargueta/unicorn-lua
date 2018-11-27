@@ -18,30 +18,6 @@ int uc_lua__crash_on_error(lua_State *L, int error) {
 }
 
 
-void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine) {
-    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-
-    lua_pushlightuserdata(L, (void *)engine);
-    lua_gettable(L, -2);
-
-    if (lua_isnil(L, -1))
-        luaL_error(L, "No engine object is registered for pointer %p.", engine);
-
-    /* Remove the engine pointer map from the stack. */
-    lua_remove(L, -2);
-}
-
-
-uc_engine *uc_lua__toengine(lua_State *L, int index) {
-    uc_engine *engine;
-
-    engine = *(uc_engine **)luaL_checkudata(L, index, kEngineMetatableName);
-    if (engine == NULL)
-        luaL_error(L, "Attempted to use closed engine.");
-    return engine;
-}
-
-
 uc_context *uc_lua__tocontext(lua_State *L, int index) {
     uc_context *context;
 

@@ -3,6 +3,7 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
@@ -14,9 +15,7 @@
 #include "unicornlua/constants/sparc.h"
 #include "unicornlua/constants/x86.h"
 
-const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kContextMetatableName = "unicornlua__context_meta";
-const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 const char * const kHookMapName = "unicornlua__hook_map";
 
 
@@ -40,35 +39,16 @@ int uc_lua__arch_supported(lua_State *L) {
 
 int uc_lua__open(lua_State *L) {
     int architecture, mode, error_code;
-    uc_engine **engine;
+    uc_engine *engine;
 
     architecture = luaL_checkinteger(L, 1);
     mode = luaL_checkinteger(L, 2);
 
-    /* Need to create regular userdata because light userdata can't have a
-     * metatable. */
-    engine = lua_newuserdata(L, sizeof(*engine));
-
-    error_code = uc_open(architecture, mode, engine);
+    error_code = uc_open(architecture, mode, &engine);
     if (error_code != UC_ERR_OK)
         return uc_lua__crash_on_error(L, error_code);
 
-    luaL_setmetatable(L, kEngineMetatableName);
-
-    /* Add a mapping of the engine pointer to the engine object so that hook
-     * callbacks can get the engine object knowing only the pointer. */
-    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, *engine);
-    lua_pushvalue(L, -2);   /* Duplicate engine object as value */
-    lua_settable(L, -3);
-    lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
-
-    /* Create an entry in the registry for this engine, and have it point to a
-     * table that will be used to hold the engine's hooks. */
-    lua_pushlightuserdata(L, *engine);
-    lua_newtable(L);
-    lua_settable(L, LUA_REGISTRYINDEX);
-
+    uc_lua__create_engine_object(L, engine);
     return 1;
 }
 
@@ -80,53 +60,7 @@ int uc_lua__strerror(lua_State *L) {
 
 
 int uc_lua__close(lua_State *L) {
-    uc_engine **engine;
-    uc_hook hook;
-    int error;
-
-    /* Deliberately not using uc_lua__toengine, see below. */
-    engine = (uc_engine **)luaL_checkudata(L, 1, kEngineMetatableName);
-
-    /* If the engine is already closed, don't try closing it again. Since the
-     * engine is automatically closed when it gets garbage collected, if the
-     * user manually closes it first this will result in an attempt to close an
-     * already-closed engine.
-     */
-    if (*engine == NULL)
-        return 0;
-
-    /* When we created this engine, we associated a table with it in the Lua
-     * registry to hold its associated hooks. Remove all hooks and delete that
-     * table from the registry. */
-    lua_pushlightuserdata(L, *engine);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    /* The table holding the hooks is at the top of the stack now. Iterate
-     * through it and release each hook individually. */
-    lua_pushnil(L);
-    while (lua_next(L, -2) != 0) {
-        /* The key is the hook, value is a Lua function. Once we delete the
-         * hook table the functions will be garbage collected if possible. */
-        hook = (uc_hook)lua_tointeger(L, -2);
-        error = uc_hook_del(*engine, hook);
-        if (error)
-            return uc_lua__crash_on_error(L, error);
-
-        /* Pop the value off, keeping the hook ID for the next iteration. */
-        lua_pop(L, 1);
-    }
-
-    /* All hooks removed. Delete the table to release the hook callbacks. */
-    lua_pushlightuserdata(L, *engine);
-    lua_pushnil(L);
-    lua_settable(L, LUA_REGISTRYINDEX);
-
-    error = uc_close(*engine);
-    if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
-
-    /* Clear out the engine pointer so we know it's closed now. */
-    *engine = NULL;
+    uc_lua__free_engine_object(L, 1);
     return 0;
 }
 
@@ -271,35 +205,6 @@ static const luaL_Reg kUnicornLibraryFunctions[] = {
 };
 
 
-static const luaL_Reg kEngineMetamethods[] = {
-    {"__gc", uc_lua__close},
-    {NULL, NULL}
-};
-
-static const luaL_Reg kEngineInstanceMethods[] = {
-    {"close", uc_lua__close},
-    {"context_restore", uc_lua__context_restore},
-    {"context_save", uc_lua__context_save},
-    {"emu_start", uc_lua__emu_start},
-    {"emu_stop", uc_lua__emu_stop},
-    {"errno", uc_lua__errno},
-    {"hook_add", uc_lua__hook_add},
-    {"hook_del", uc_lua__hook_del},
-    {"mem_map", uc_lua__mem_map},
-    {"mem_protect", uc_lua__mem_protect},
-    {"mem_read", uc_lua__mem_read},
-    {"mem_regions", uc_lua__mem_regions},
-    {"mem_unmap", uc_lua__mem_unmap},
-    {"mem_write", uc_lua__mem_write},
-    {"query", uc_lua__query},
-    {"reg_read", uc_lua__reg_read},
-    {"reg_read_batch", uc_lua__reg_read_batch},
-    {"reg_write", uc_lua__reg_write},
-    {"reg_write_batch", uc_lua__reg_write_batch},
-    {NULL, NULL}
-};
-
-
 static const luaL_Reg kContextMetamethods[] = {
     {"__gc", uc_lua__free},
     {NULL, NULL}
@@ -321,22 +226,12 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
 
 
 int luaopen_unicorn(lua_State *L) {
-    /* Create a table with weak values where the engine pointer to engine object
-     * mappings will be stored. */
-    uc_lua__create_weak_table(L, "v");
-    lua_setfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+    uc_lua__init_engine_lib(L);
 
     /* Create a table with weak keys mapping the engine object to a table with
      * all of its hooks. */
     uc_lua__create_weak_table(L, "k");
     lua_setfield(L, LUA_REGISTRYINDEX, kHookMapName);
-
-    luaL_newmetatable(L, kEngineMetatableName);
-    luaL_setfuncs(L, kEngineMetamethods, 0);
-
-    lua_newtable(L);
-    luaL_setfuncs(L, kEngineInstanceMethods, 0);
-    lua_setfield(L, -2, "__index");
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);

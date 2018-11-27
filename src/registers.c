@@ -3,6 +3,7 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/compat.h"
+#include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/utils.h"
 
