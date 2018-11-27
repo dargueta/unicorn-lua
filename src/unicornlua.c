@@ -16,6 +16,8 @@
 
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kContextMetatableName = "unicornlua__context_meta";
+const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
+const char * const kHookMapName = "unicornlua__hook_map";
 
 
 int uc_lua__version(lua_State *L) {
@@ -52,6 +54,14 @@ int uc_lua__open(lua_State *L) {
         return uc_lua__crash_on_error(L, error_code);
 
     luaL_setmetatable(L, kEngineMetatableName);
+
+    /* Add a mapping of the engine pointer to the engine object so that hook
+     * callbacks can get the engine object knowing only the pointer. */
+    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+    lua_pushlightuserdata(L, *engine);
+    lua_pushvalue(L, -2);   /* Duplicate engine object as value */
+    lua_settable(L, -3);
+    lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
 
     /* Create an entry in the registry for this engine, and have it point to a
      * table that will be used to hold the engine's hooks. */
@@ -311,10 +321,20 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
 
 
 int luaopen_unicorn(lua_State *L) {
+    /* Create a table with weak values where the engine pointer to engine object
+     * mappings will be stored. */
+    uc_lua__create_weak_table(L, "v");
+    lua_setfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+
+    /* Create a table with weak keys mapping the engine object to a table with
+     * all of its hooks. */
+    uc_lua__create_weak_table(L, "k");
+    lua_setfield(L, LUA_REGISTRYINDEX, kHookMapName);
+
     luaL_newmetatable(L, kEngineMetatableName);
     luaL_setfuncs(L, kEngineMetamethods, 0);
 
-    lua_createtable(L, 0, 0);
+    lua_newtable(L);
     luaL_setfuncs(L, kEngineInstanceMethods, 0);
     lua_setfield(L, -2, "__index");
 
