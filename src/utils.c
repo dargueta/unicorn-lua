@@ -45,3 +45,16 @@ void uc_lua__create_weak_table(lua_State *L, const char *mode) {
     lua_setfield(L, -2, "__mode");
     lua_setmetatable(L, -2);
 }
+
+
+void lua_movetotop(lua_State *L, int index) {
+    index = lua_absindex(L, index);
+    lua_pushvalue(L, index);
+    lua_remove(L, index);
+}
+
+
+int luaL_checkboolean(lua_State *L, int index) {
+    luaL_checktype(L, index, LUA_TBOOLEAN);
+    return lua_toboolean(L, index);
+}
