@@ -8,15 +8,17 @@
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
+static int _engine_gc_metamethod(lua_State *L);
+
 
 const luaL_Reg kEngineMetamethods[] = {
-    {"__gc", uc_lua__close},
+    {"__gc", _engine_gc_metamethod},
     {NULL, NULL}
 };
 
 
 const luaL_Reg kEngineInstanceMethods[] = {
-    {"close", uc_lua__close},
+    {"close", _engine_gc_metamethod},
     {"context_restore", uc_lua__context_restore},
     {"context_save", uc_lua__context_save},
     {"emu_start", uc_lua__emu_start},
@@ -44,6 +46,12 @@ typedef struct {
 } UCLuaEngine;
 
 
+static int _engine_gc_metamethod(lua_State *L) {
+    uc_lua__free_engine_object(L, 1);
+    return 0;
+}
+
+
 void uc_lua__init_engines_lib(lua_State *L) {
     /* Create a table with weak values where the engine pointer to engine object
      * mappings will be stored. */
@@ -56,6 +64,9 @@ void uc_lua__init_engines_lib(lua_State *L) {
     lua_newtable(L);
     luaL_setfuncs(L, kEngineInstanceMethods, 0);
     lua_setfield(L, -2, "__index");
+
+    /* Remove the metatables from the stack. */
+    lua_pop(L, 2);
 }
 
 
