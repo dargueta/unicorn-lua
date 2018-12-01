@@ -55,4 +55,13 @@ LUALIB_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
   lua_pop(L, nup);  /* remove upvalues */
 }
 
+
+LUA_API void lua_absindex(lua_State *L, int index) {
+    int top = lua_gettop(L);
+
+    if ((index > 0) || (index <= LUA_REGISTRYINDEX))
+        return index;
+    return index + top;
+}
+
 #endif
