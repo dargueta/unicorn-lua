@@ -47,7 +47,7 @@ void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
  *
  * @param L         A pointer to the current Lua state.
  */
-void uc_lua__init_engine_lib(lua_State *L);
+void uc_lua__init_engines_lib(lua_State *L);
 
 
 /**

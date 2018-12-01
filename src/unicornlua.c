@@ -4,6 +4,7 @@
 
 #include "unicornlua/common.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
@@ -16,7 +17,6 @@
 #include "unicornlua/constants/x86.h"
 
 const char * const kContextMetatableName = "unicornlua__context_meta";
-const char * const kHookMapName = "unicornlua__hook_map";
 
 
 int uc_lua__version(lua_State *L) {
@@ -123,16 +123,6 @@ int uc_lua__emu_stop(lua_State *L) {
 }
 
 
-int uc_lua__hook_add(lua_State *L) {
-    return luaL_error(L, "Not implemented yet.");
-}
-
-
-int uc_lua__hook_del(lua_State *L) {
-    return luaL_error(L, "Not implemented yet.");
-}
-
-
 int uc_lua__free(lua_State *L) {
     int error = uc_free(*(void **)lua_touserdata(L, 1));
 
@@ -226,12 +216,8 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
 
 
 int luaopen_unicorn(lua_State *L) {
-    uc_lua__init_engine_lib(L);
-
-    /* Create a table with weak keys mapping the engine object to a table with
-     * all of its hooks. */
-    uc_lua__create_weak_table(L, "k");
-    lua_setfield(L, LUA_REGISTRYINDEX, kHookMapName);
+    uc_lua__init_engines_lib(L);
+    uc_lua__init_hooks_lib(L);
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);

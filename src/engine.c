@@ -44,7 +44,7 @@ typedef struct {
 } UCLuaEngine;
 
 
-void uc_lua__init_engine_lib(lua_State *L) {
+void uc_lua__init_engines_lib(lua_State *L) {
     /* Create a table with weak values where the engine pointer to engine object
      * mappings will be stored. */
     uc_lua__create_weak_table(L, "v");
@@ -99,12 +99,6 @@ void uc_lua__free_engine_object(lua_State *L, int index) {
     engine_object->engine = NULL;
 }
 
-/**
- * Given a uc_engine pointer, find the corresponding Lua object and push it.
- *
- * @param L         A pointer to the current Lua state.
- * @param engine    A pointer to the engine we want to get the Lua object for.
- */
 
 void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine) {
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
