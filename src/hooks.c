@@ -51,6 +51,14 @@ static void _get_hook_table_for_engine(lua_State *L, int index) {
     lua_pushvalue(L, index);
     lua_gettable(L, -2);
 
+    if (lua_isnil(L, -1)) {
+        /* Remove nil and engine hook table from stack. */
+        lua_pop(L, 2);
+        luaL_error(L, "Engine at index %d has no hook table.",
+                   lua_absindex(L, index));
+        return;
+    }
+
     /* Engine hook table at TOS, remove the engine/hook map right below it */
     lua_remove(L, -2);
 }
