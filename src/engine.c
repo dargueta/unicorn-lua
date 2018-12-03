@@ -81,8 +81,8 @@ void uc_lua__create_engine_object(lua_State *L, const uc_engine *engine) {
     /* Add a mapping of the engine pointer to the engine object so that hook
      * callbacks can get the engine object knowing only the pointer. */
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine_object->engine);
-    lua_pushvalue(L, -2);   /* Duplicate engine object as value */
+    lua_pushlightuserdata(L, (void *)engine);
+    lua_pushvalue(L, -3);   /* Duplicate engine object as value */
     lua_settable(L, -3);
     lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
 }
@@ -113,12 +113,14 @@ void uc_lua__free_engine_object(lua_State *L, int index) {
 
 void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine) {
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-
     lua_pushlightuserdata(L, (void *)engine);
     lua_gettable(L, -2);
 
-    if (lua_isnil(L, -1))
+    if (lua_isnil(L, -1)) {
+        /* Remove nil and engine pointer map at TOS */
+        lua_pop(L, 2);
         luaL_error(L, "No engine object is registered for pointer %p.", engine);
+    }
 
     /* Remove the engine pointer map from the stack. */
     lua_remove(L, -2);
