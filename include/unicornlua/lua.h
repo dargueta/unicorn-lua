@@ -40,3 +40,14 @@ void lua_movetotop(lua_State *L, int index);
  * A luaL_check* function for booleans, which normal Lua doesn't provide.
  */
 int luaL_checkboolean(lua_State *L, int index);
+
+
+/**
+ * A luaL_check* function for light userdata, which Lua doesn't provide.
+ *
+ * This is intended to be like @ref luaL_checkudata but only verifying the type,
+ * as light userdata can't have a metatable.
+ *
+ * @return The light userdata pointer.
+ */
+void *luaL_checklightuserdata(lua_State *L, int index);

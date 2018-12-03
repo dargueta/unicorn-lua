@@ -349,8 +349,8 @@ int uc_lua__hook_add(lua_State *L) {
     if (error != UC_ERR_OK)
         return uc_lua__crash_on_error(L, error);
 
-    /* Return the hook ID as light userdata. Lua code can use this to remove a
-     * hook before the engine is closed. */
+    /* Return the hook struct as light userdata. Lua code can use this to remove
+     * a hook before the engine is closed. */
     lua_pushlightuserdata(L, (void *)hook_info);
     return 1;
 }
@@ -360,7 +360,7 @@ int uc_lua__hook_del(lua_State *L) {
     int error;
     HookInfo *hook_info;
 
-    hook_info = (HookInfo *)luaL_checkudata(L, 2, kHookMetatableName);
+    hook_info = (HookInfo *)luaL_checklightuserdata(L, 2);
 
     /* Remove the hard reference to the hook's callback function, and overwrite
      * the reference ID in the C struct. This way, accidental reuse of the hook
