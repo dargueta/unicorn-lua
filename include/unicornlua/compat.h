@@ -36,7 +36,7 @@
     /**
      * Implementation of Lua 5.2+ @e lua_absindex.
      */
-    LUA_API void lua_absindex(lua_State *L, int index);
+    LUA_API int lua_absindex(lua_State *L, int index);
 
     /* Copied and pasted from the 5.3 implementation. */
     LUALIB_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);

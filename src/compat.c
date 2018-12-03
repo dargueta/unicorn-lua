@@ -56,7 +56,7 @@ LUALIB_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
 }
 
 
-LUA_API void lua_absindex(lua_State *L, int index) {
+LUA_API int lua_absindex(lua_State *L, int index) {
     int top = lua_gettop(L);
 
     if ((index > 0) || (index <= LUA_REGISTRYINDEX))

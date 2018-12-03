@@ -19,6 +19,7 @@
     }
 #endif
 
+#include "unicornlua/compat.h"
 
 #ifndef lua_swaptoptwo
 /**

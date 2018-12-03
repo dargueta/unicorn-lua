@@ -4,9 +4,9 @@
 
 #include "unicornlua/lua.h"
 
-extern const char *kEngineMetatableName;
-extern const char *kContextMetatableName;
-extern const char *kEnginePointerMapName;
+extern const char * const kEngineMetatableName;
+extern const char * const kContextMetatableName;
+extern const char * const kEnginePointerMapName;
 
 
 int uc_lua__crash_on_error(lua_State *L, int error) {
