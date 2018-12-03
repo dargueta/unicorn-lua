@@ -40,6 +40,9 @@ void uc_lua__init_hooks_lib(lua_State *L) {
 
     luaL_newmetatable(L, kHookMetatableName);
     luaL_setfuncs(L, kHookMetamethods, 0);
+
+    /* Remove the metatable from the stack. */
+    lua_pop(L, 1);
 }
 
 
@@ -47,17 +50,27 @@ static void _get_hook_table_for_engine(lua_State *L, int index) {
     lua_getfield(L, LUA_REGISTRYINDEX, kHookMapName);
     lua_pushvalue(L, index);
     lua_gettable(L, -2);
+
+    /* Engine hook table at TOS, remove the engine/hook map right below it */
+    lua_remove(L, -2);
 }
 
 
 void uc_lua__attach_hook_table(lua_State *L, int index) {
-    _get_hook_table_for_engine(L, index);
+    /* Attempt to get a hook table for this engine, leaving the table on the
+     * stack. We don't use _get_hook_table_for_engine() because that removes the
+     * hook map and we'll need it later. */
+    lua_getfield(L, LUA_REGISTRYINDEX, kHookMapName);
+    lua_pushvalue(L, index);
+    lua_gettable(L, -2);
+
     if (!lua_isnil(L, -1))
         luaL_error(L, "Refusing to create hook table; engine already has one.");
 
     lua_pushvalue(L, index);
     lua_newtable(L);
     lua_settable(L, -3);
+    lua_pop(L, 1);      /* Remove engine's hook table */
 }
 
 
@@ -65,6 +78,10 @@ static HookInfo *_create_hook_object(lua_State *L, int index) {
     HookInfo *hook_info;
 
     _get_hook_table_for_engine(L, index);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        luaL_error(L, "Cannot create hook object: engine doesn't appear to have a table.");
+    }
 
     hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
     luaL_setmetatable(L, kHookMetatableName);
