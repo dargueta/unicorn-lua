@@ -106,6 +106,14 @@ void uc_lua__free_engine_object(lua_State *L, int index) {
     if (error != UC_ERR_OK)
         uc_lua__crash_on_error(L, error);
 
+    /* Garbage collection should remove the engine object from the pointer map
+     * table but it might not be doing it soon enough. */
+    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+    lua_pushlightuserdata(L, (void *)engine_object->engine);
+    lua_pushnil(L);
+    lua_settable(L, -3);
+    lua_pop(L, 1);          /* Remove pointer map */
+
     /* Clear out the engine pointer so we know it's closed now. */
     engine_object->engine = NULL;
 }
