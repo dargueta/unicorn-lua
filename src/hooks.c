@@ -21,7 +21,7 @@ typedef struct {
 
 static void _get_callback_for_hook(const HookInfo *hook_data);
 static void _get_hook_table_for_engine(lua_State *L, int index);
-static HookInfo *_create_hook_object(lua_State *L, int index);
+static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index);
 static int _remove_hook(lua_State *L);
 static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
@@ -65,6 +65,8 @@ static void _get_hook_table_for_engine(lua_State *L, int index) {
 
 
 void uc_lua__attach_hook_table(lua_State *L, int index) {
+    index = lua_absindex(L, index);
+
     /* Attempt to get a hook table for this engine, leaving the table on the
      * stack. We don't use _get_hook_table_for_engine() because that removes the
      * hook map and we'll need it later. */
@@ -73,35 +75,38 @@ void uc_lua__attach_hook_table(lua_State *L, int index) {
     lua_gettable(L, -2);
 
     if (!lua_isnil(L, -1))
-        luaL_error(L, "Refusing to create hook table; engine already has one.");
+        luaL_error(L, "Refusing to create hook table for engine at index %d; "
+                      "it already has one.", index);
 
+    /* Remove the nil at TOS */
+    lua_pop(L, 1);
+
+    /* Engine/hook map at TOS, create a new table for the engine's hooks and set
+     * it. */
     lua_pushvalue(L, index);
     lua_newtable(L);
     lua_settable(L, -3);
-    lua_pop(L, 1);      /* Remove engine's hook table */
+
+    lua_pop(L, 1);      /* Remove engine/hook table at TOS. */
 }
 
 
-static HookInfo *_create_hook_object(lua_State *L, int index) {
+static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
     HookInfo *hook_info;
 
-    _get_hook_table_for_engine(L, index);
-    if (lua_isnil(L, -1)) {
-        lua_pop(L, 1);
-        luaL_error(L, "Cannot create hook object: engine doesn't appear to have a table.");
-    }
+    _get_hook_table_for_engine(L, eng_index);
 
     hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
     luaL_setmetatable(L, kHookMetatableName);
 
     hook_info->L = L;
-    hook_info->engine = uc_lua__toengine(L, index);
+    hook_info->engine = uc_lua__toengine(L, eng_index);
     hook_info->hook = 0;
 
     /* Push a copy of the callback function on the top of the stack and store a
      * reference to it in the registry. This will make it easy for C callbacks
      * to find the right Lua function to call. */
-    lua_movetotop(L, -3);
+    lua_pushvalue(L, cb_index);
     hook_info->callback_func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
     /* Callback function popped off the top. Hook object at TOS, followed by the
@@ -305,8 +310,6 @@ int uc_lua__hook_add(lua_State *L) {
     void *c_callback;
 
     n_args = lua_gettop(L);
-    if ((n_args < 3) || (n_args > 6))
-        luaL_error(L, "Expected 3-6 arguments, got %d.", n_args);
 
     engine = uc_lua__toengine(L, 1);
     hook_type = luaL_checkinteger(L, 2);
@@ -336,11 +339,7 @@ int uc_lua__hook_add(lua_State *L) {
     }
 
     extra_argument = luaL_optinteger(L, 6, ~0);
-
-    /* _create_hook_object expects the callback function to be at TOS. Move it,
-     * then create the hook object. */
-    lua_movetotop(L, 3);
-    hook_info = _create_hook_object(L, 1);
+    hook_info = _create_hook_object(L, 1, 3);
 
     /* Figure out which C hook we need */
     c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
