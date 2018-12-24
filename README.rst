@@ -70,8 +70,8 @@ Reading from/writing to registers on a big-endian host system won't work for
 registers that aren't the same size as a Lua integer. This is because the library
 currently has no concept of register sizes and thus doesn't know how to do
 typecasts. Due to how byte order works this doesn't matter on a little-endian
-system, but will result in things like a 16-bit register getting returned to
-Lua as 0x7fff000000000000 instead of 0x7fff.
+host, but on a big-endian host it'll result in things like a 16-bit register
+getting returned to Lua as 0x7fff000000000000 instead of 0x7fff.
 
 Emergency Collection and Memory Leaks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
