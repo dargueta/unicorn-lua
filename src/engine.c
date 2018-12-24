@@ -1,6 +1,9 @@
+#include <assert.h>
+
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/engine.h"
+#include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
@@ -39,11 +42,6 @@ const luaL_Reg kEngineInstanceMethods[] = {
     {"reg_write_batch", uc_lua__reg_write_batch},
     {NULL, NULL}
 };
-
-
-typedef struct {
-    uc_engine *engine;
-} UCLuaEngine;
 
 
 static int _engine_gc_metamethod(lua_State *L) {
@@ -85,6 +83,9 @@ void uc_lua__create_engine_object(lua_State *L, const uc_engine *engine) {
     lua_pushvalue(L, -3);   /* Duplicate engine object as value */
     lua_settable(L, -3);
     lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
+
+    lua_newtable(L);
+    engine_object->hook_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
 
@@ -113,6 +114,10 @@ void uc_lua__free_engine_object(lua_State *L, int index) {
     lua_pushnil(L);
     lua_settable(L, -3);
     lua_pop(L, 1);          /* Remove pointer map */
+
+    /* Free the hook table. TODO: Release the hooks. */
+    luaL_unref(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
+    engine_object->hook_table_ref = LUA_NOREF;
 
     /* Clear out the engine pointer so we know it's closed now. */
     engine_object->engine = NULL;

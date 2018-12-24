@@ -16,6 +16,11 @@ extern const char * const kEnginePointerMapName;
 extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
+typedef struct {
+    uc_engine *engine;
+    int hook_table_ref;
+} UCLuaEngine;
+
 
 /**
  * Create a Lua engine object wrapping the initialized uc_engine pointer.

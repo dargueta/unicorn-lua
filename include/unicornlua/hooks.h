@@ -7,16 +7,6 @@
 
 #include "unicornlua/lua.h"
 
-
-/**
- * Create a new, empty hook table for the engine at @a index and attach it.
- *
- * @param L         The current Lua state.
- * @param index     The stack index of the engine object the hook table is for.
- */
-void uc_lua__attach_hook_table(lua_State *L, int index);
-
-
 /**
  * Initialize the hook internals.
  */

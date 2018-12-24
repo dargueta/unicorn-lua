@@ -140,11 +140,6 @@ the BIOS setting up a system when booting.
     uc:emu_start(0x7C000, 0x100000)
 
 
-Missing Features
-~~~~~~~~~~~~~~~~
-
-Hooks aren't implemented yet.
-
 Deviations from the Python Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

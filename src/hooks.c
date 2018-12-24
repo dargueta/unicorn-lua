@@ -33,11 +33,6 @@ static const luaL_Reg kHookMetamethods[] = {
 
 
 void uc_lua__init_hooks_lib(lua_State *L) {
-    /* Create a table with weak keys mapping the engine object to a table with
-     * all of its hooks. */
-    uc_lua__create_weak_table(L, "k");
-    lua_setfield(L, LUA_REGISTRYINDEX, kHookMapName);
-
     luaL_newmetatable(L, kHookMetatableName);
     luaL_setfuncs(L, kHookMetamethods, 0);
 
@@ -47,47 +42,11 @@ void uc_lua__init_hooks_lib(lua_State *L) {
 
 
 static void _get_hook_table_for_engine(lua_State *L, int index) {
-    lua_getfield(L, LUA_REGISTRYINDEX, kHookMapName);
-    lua_pushvalue(L, index);
-    lua_gettable(L, -2);
+    UCLuaEngine *engine_object = luaL_checkudata(L, index, kEngineMetatableName);
+    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
 
-    if (lua_isnil(L, -1)) {
-        /* Remove nil and engine hook table from stack. */
-        lua_pop(L, 2);
-        luaL_error(L, "Engine at index %d has no hook table.",
-                   lua_absindex(L, index));
-        return;
-    }
-
-    /* Engine hook table at TOS, remove the engine/hook map right below it */
-    lua_remove(L, -2);
-}
-
-
-void uc_lua__attach_hook_table(lua_State *L, int index) {
-    index = lua_absindex(L, index);
-
-    /* Attempt to get a hook table for this engine, leaving the table on the
-     * stack. We don't use _get_hook_table_for_engine() because that removes the
-     * hook map and we'll need it later. */
-    lua_getfield(L, LUA_REGISTRYINDEX, kHookMapName);
-    lua_pushvalue(L, index);
-    lua_gettable(L, -2);
-
-    if (!lua_isnil(L, -1))
-        luaL_error(L, "Refusing to create hook table for engine at index %d; "
-                      "it already has one.", index);
-
-    /* Remove the nil at TOS */
-    lua_pop(L, 1);
-
-    /* Engine/hook map at TOS, create a new table for the engine's hooks and set
-     * it. */
-    lua_pushvalue(L, index);
-    lua_newtable(L);
-    lua_settable(L, -3);
-
-    lua_pop(L, 1);      /* Remove engine/hook table at TOS. */
+    if (lua_isnil(L, -1))
+        luaL_error(L, "No hook table found for the given engine.");
 }
 
 
@@ -142,9 +101,7 @@ static int _remove_hook(lua_State *L) {
 static void _get_callback_for_hook(const HookInfo *hook_data) {
     lua_State *L = hook_data->L;
 
-    lua_pushinteger(L, hook_data->callback_func_ref);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
+    lua_geti(L, LUA_REGISTRYINDEX, hook_data->callback_func_ref);
     if (lua_isnil(L, -1))
         luaL_error(L, "No callback function found for the given hook.");
 }
