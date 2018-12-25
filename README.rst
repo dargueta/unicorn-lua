@@ -139,6 +139,8 @@ the BIOS setting up a system when booting.
     -- real system.
     uc:emu_start(0x7C000, 0x100000)
 
+You can find further examples in the ``examples`` directory.
+
 
 Deviations from the Python Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
