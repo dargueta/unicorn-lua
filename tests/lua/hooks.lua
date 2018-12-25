@@ -28,4 +28,28 @@ describe('Hook tests', function ()
     uc:emu_start(0, 2^20, 0, 1)
     assert.spy(callback).was_called()
   end)
+
+  it('[x86] Catch port read', function ()
+    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    uc:mem_map(0, 2^20)
+
+    local callback = spy.new(
+      function (engine, port, size)
+        assert.are.equals(uc, engine)
+        assert.are.equals(0x80, port)
+        assert.are.equals(4, size)
+        return 0xdeadbeef
+      end)
+
+    local handle = uc:hook_add(unicorn.UC_HOOK_INSN, callback, 0, 2^20,
+                               x86.UC_X86_INS_IN)
+    assert.not_nil(handle)
+
+    -- in  eax, 0x80
+    uc:mem_write(0, '\229\128')
+
+    uc:emu_start(0, 2^20, 0, 1)
+    assert.are.equals(0xdeadbeef, uc:reg_read(x86.UC_X86_REG_EAX))
+    assert.spy(callback).was_called()
+  end)
 end)
