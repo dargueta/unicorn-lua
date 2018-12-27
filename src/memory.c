@@ -120,26 +120,20 @@ int uc_lua__mem_regions(lua_State *L) {
         return uc_lua__crash_on_error(L, error);
 
     lua_createtable(L, n_regions, 0);
-
     for (i = 0; i < n_regions; ++i) {
-        /* FIXME (dargueta): Why are setfield and seti broken on all versions?! */
         lua_createtable(L, 0, 3);
 
-        lua_pushliteral(L, "begins");
         lua_pushinteger(L, regions[i].begin);
-        lua_settable(L, -3);
+        lua_setfield(L, -2, "begins");
 
-        lua_pushliteral(L, "ends");
         lua_pushinteger(L, regions[i].end);
-        lua_settable(L, -3);
+        lua_setfield(L, -2, "ends");
 
-        lua_pushliteral(L, "perms");
         lua_pushinteger(L, regions[i].perms);
-        lua_settable(L, -3);
+        lua_setfield(L, -2, "perms");
 
-        lua_pushinteger(L, i + 1);
-        lua_insert(L, lua_gettop(L) - 1);
-        lua_settable(L, -3);
+        /* Append this region descriptor to the table we're going to return. */
+        lua_seti(L, -3, i + 1);
     }
 
     uc_free(regions);
