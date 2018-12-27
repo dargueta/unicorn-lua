@@ -9,16 +9,20 @@
  * is almost certainly not as fast as the implementation in 5.3.
  */
 LUA_API void lua_seti(lua_State *L, int index, lua_Integer n) {
+    index = lua_absindex(L, index);
+
     /* Because lua_settable expects the value on top, we need to push the
      * key (n) and then swap the two. */
     lua_pushinteger(L, n);
-    lua_insert(L, lua_gettop(L) - 1);
+    lua_swaptoptwo(L);
     lua_settable(L, index);
 }
 
 
 /* Same caveat as above. */
 LUA_API int lua_geti(lua_State *L, int index, lua_Integer i) {
+    index = lua_absindex(L, index);
+
     lua_pushinteger(L, i);
     lua_gettable(L, index);
     return lua_type(L, -1);
@@ -61,7 +65,7 @@ LUA_API int lua_absindex(lua_State *L, int index) {
 
     if ((index > 0) || (index <= LUA_REGISTRYINDEX))
         return index;
-    return index + top;
+    return index + top + 1;
 }
 
 #endif

@@ -133,7 +133,7 @@ int uc_lua__mem_regions(lua_State *L) {
         lua_setfield(L, -2, "perms");
 
         /* Append this region descriptor to the table we're going to return. */
-        lua_seti(L, -3, i + 1);
+        lua_seti(L, -2, i + 1);
     }
 
     uc_free(regions);
