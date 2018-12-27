@@ -46,12 +46,6 @@ uc_context *uc_lua__tocontext(lua_State *L, int index);
 
 
 /**
- * Allocate/reallocate memory, or throw a Lua error on failure.
- */
-void *uc_lua__realloc(lua_State *L, void *ptr, size_t new_size);
-
-
-/**
  * Create a new weak table with the given key mode, and push it onto the stack.
  *
  * @param L         A pointer to the current Lua state.

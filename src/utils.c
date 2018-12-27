@@ -28,16 +28,6 @@ uc_context *uc_lua__tocontext(lua_State *L, int index) {
 }
 
 
-void *uc_lua__realloc(lua_State *L, void *ptr, size_t new_size) {
-    void *tmp = realloc(ptr, new_size);
-    if (tmp == NULL) {
-        luaL_error(L, "Out of memory.");
-        return NULL;
-    }
-    return tmp;
-}
-
-
 void uc_lua__create_weak_table(lua_State *L, const char *mode) {
     lua_newtable(L);
     lua_createtable(L, 0, 1);

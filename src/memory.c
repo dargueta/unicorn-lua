@@ -36,7 +36,7 @@ int uc_lua__mem_read(lua_State *L) {
     address = (uint64_t)luaL_checkinteger(L, 2);
     length = (size_t)luaL_checkinteger(L, 3);
 
-    data = uc_lua__realloc(L, NULL, length);
+    data = malloc(length);
 
     error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {
@@ -45,6 +45,7 @@ int uc_lua__mem_read(lua_State *L) {
     }
 
     lua_pushlstring(L, data, length);
+    free(data);
     return 1;
 }
 

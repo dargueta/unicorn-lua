@@ -53,23 +53,24 @@ int uc_lua__reg_write_batch(lua_State *L) {
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
      * corresponding registers. */
-    n_registers = 0;
-    registers = NULL;
-    values = NULL;
+
+    /* Count the number of items in the table so we can allocate the buffers of
+     * the right size. */
+    lua_pushnil(L);
+    for (n_registers = 0; lua_next(L, 2) != 0; ++n_registers)
+        lua_pop(L, 1);
+
+    registers = (int *)malloc(n_registers * sizeof(*registers));
+    values = (lua_Unsigned *)malloc(n_registers * sizeof(*values));
 
     lua_pushnil(L);
     while (lua_next(L, 2) != 0) {
-        registers = uc_lua__realloc(
-            L, registers, (n_registers + 1) * sizeof(*registers));
-        values = uc_lua__realloc(
-            L, values, (n_registers + 1) * sizeof(*values));
-
         registers[n_registers] = luaL_checkinteger(L, -2);
         values[n_registers] = (lua_Unsigned)luaL_checkinteger(L, -1);
         lua_pop(L, 1);
     }
 
-    p_values = uc_lua__realloc(L, NULL, n_registers * sizeof(*p_values));
+    p_values = (void **)malloc(n_registers * sizeof(*p_values));
     for (i = 0; i < n_registers; ++i)
         p_values[i] = &values[i];
 
@@ -92,14 +93,11 @@ int uc_lua__reg_read_batch(lua_State *L) {
     void **p_values;
 
     engine = uc_lua__toengine(L, 1);
-
     n_registers = lua_gettop(L) - 1;
 
-    /* Use newuserdata() instead of malloc so we don't have to do any memory
-     * management ourselves. */
-    registers = (int *)lua_newuserdata(L, n_registers * sizeof(*registers));
-    values = (lua_Integer *)lua_newuserdata(L, n_registers * sizeof(*values));
-    p_values = (void **)lua_newuserdata(L, n_registers * sizeof(*p_values));
+    registers = (int *)malloc(n_registers * sizeof(*registers));
+    values = (lua_Integer *)malloc(n_registers * sizeof(*values));
+    p_values = (void **)malloc(n_registers * sizeof(*p_values));
 
     for (i = 0; i < n_registers; ++i) {
         registers[i] = (int)lua_tointeger(L, i + 2);
@@ -114,6 +112,10 @@ int uc_lua__reg_read_batch(lua_State *L) {
 
     for (i = 0; i < n_registers; ++i)
         lua_pushinteger(L, values[i]);
+
+    free(registers);
+    free(values);
+    free(p_values);
 
     return n_registers;
 }
