@@ -64,9 +64,9 @@ int uc_lua__reg_write_batch(lua_State *L) {
     values = (lua_Unsigned *)malloc(n_registers * sizeof(*values));
 
     lua_pushnil(L);
-    while (lua_next(L, 2) != 0) {
-        registers[n_registers] = luaL_checkinteger(L, -2);
-        values[n_registers] = (lua_Unsigned)luaL_checkinteger(L, -1);
+    for (i = 0; lua_next(L, 2) != 0; ++i) {
+        registers[i] = luaL_checkinteger(L, -2);
+        values[i] = (lua_Unsigned)luaL_checkinteger(L, -1);
         lua_pop(L, 1);
     }
 
