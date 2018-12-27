@@ -26,7 +26,7 @@ int uc_lua__version(lua_State *L) {
 
     lua_pushinteger(L, major);
     lua_pushinteger(L, minor);
-    return 1;
+    return 2;
 }
 
 

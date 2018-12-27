@@ -85,13 +85,13 @@ $(SRC_BASE)/engine.o: $(SRC_BASE)/engine.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/hooks.o: $(SRC_BASE)/hooks.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/unicornlua.o: $(C_SOURCES)
+$(SRC_BASE)/unicorn.o: $(C_SOURCES)
 $(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 
 
-$(OBJECT_BASE)/unicornlua.a: $(OBJECTS) | $(OBJECT_BASE)
+$(ARCH_FILE): $(OBJECTS) | $(OBJECT_BASE)
 	$(AR) -rc $@ $^
 
 
-$(OBJECT_BASE)/unicorn.$(LDEXT): $(OBJECTS) | $(OBJECT_BASE)
+$(SHARED_LIB_FILE): $(OBJECTS) | $(OBJECT_BASE)
 	$(LD) $(LDFLAGS) -o $@ $^
