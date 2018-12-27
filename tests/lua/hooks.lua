@@ -47,9 +47,34 @@ describe('Hook tests', function ()
 
     -- in  eax, 0x80
     uc:mem_write(0, '\229\128')
-
     uc:emu_start(0, 2^20, 0, 1)
+    uc:emu_stop()
+
     assert.are.equals(0xdeadbeef, uc:reg_read(x86.UC_X86_REG_EAX))
     assert.spy(callback).was_called()
+  end)
+
+  it('[x86] Handle interrupt call', function ()
+    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_16)
+    uc:mem_map(0, 2^20)
+
+    local callback = spy.new(
+      function (engine, intno)
+        assert.are.equals(uc, engine)
+        assert.are.equals(0xff, intno)
+        assert.are.equals(0x55aa, uc:reg_read(x86.UC_X86_REG_AX))
+        uc:reg_write(x86.UC_X86_REG_AX, 0xaa55)
+      end)
+
+    uc:hook_add(unicorn.UC_HOOK_INTR, callback)
+
+    -- mov ax, 0x55aa
+    -- int 0xff
+    uc:mem_write(0x7c000, '\184\170\085\205\255')
+    uc:emu_start(0x7c000, 0x7c005)
+    uc:emu_stop()
+
+    assert.spy(callback).was_called()
+    assert.are.equals(0xaa55, uc:reg_read(x86.UC_X86_REG_AX), 'AX not written to')
   end)
 end)
