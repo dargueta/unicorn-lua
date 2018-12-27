@@ -11,7 +11,7 @@ unicorn-lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-An attempt at making Lua bindings for the `Unicorn CPU Emulator <http://www.unicorn-engine.org/>`_.
+An attempt at making Lua bindings for the `Unicorn CPU Emulator`_.
 
 This is in a *highly* experimental phase right now and **should not** be used in
 anything requiring reliability.
@@ -36,14 +36,15 @@ bits cannot be represented accurately.
 
 We can work around this limitation by:
 
-* Using libraries such as `BigInt <https://luarocks.org/modules/jorj/bigint>`_.
-  This could quickly become cumbersome, and the performance impact is unknown.
+* Using libraries such as `BigInt`_. This could quickly become cumbersome, and
+  the performance impact is unknown.
 * Providing special read and write functions for 64-bit integers. This is the
   least disruptive but also makes the API irregular.
 
 I don't intend to fix this at the moment, as I want to focus on getting the API
 complete first.
 
+.. _BigInt: https://luarocks.org/modules/jorj/bigint
 .. _digits of precision: https://en.wikipedia.org/wiki/Double-precision_floating-point_format
 
 Signedness
@@ -117,15 +118,13 @@ the BIOS setting up a system when booting.
     uc:mem_protect(0xF0000, 64 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
 
     -- Create a hook for the VGA driver that's called whenever VGA memory is
-    -- accessed by client code. We only really care about writes, but there's no
-    -- way to indicate that in the API.
-    uc:add_memory_access_hook(0xA0000, 128 * 1024, vga_write_callback)
+    -- written to by client code.
+    uc:hook_add(unicorn.UC_MEM_WRITE, vga_write_callback, 0xA0000, 0xBFFFF)
 
     -- Install interrupt hooks so the CPU can perform I/O and other operations.
-    -- We'll handle all of that in Lua.
-    uc:add_interrupt_hook(0x10, vga_interrupt_hook)
-    uc:add_interrupt_hook(0x13, disk_io_interrupt_hook)
-    -- etc.
+    -- We'll handle all of that in Lua. Only one interrupt hook can be set at a
+    -- time.
+    uc:hook_add(unicorn.UC_HOOK_INTR, interrupt_dispatch_hook)
 
     -- Load the boot sector of the hard drive into 0x7C000
     local fdesc = io.open('hard-drive.img')
@@ -139,7 +138,7 @@ the BIOS setting up a system when booting.
     -- real system.
     uc:emu_start(0x7C000, 0x100000)
 
-You can find further examples in the ``examples`` directory.
+You can find further examples in `.docs/examples`_.
 
 
 Deviations from the Python Library
@@ -155,7 +154,7 @@ Development
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* For running: `Unicorn CPU Emulator <http://www.unicorn-engine.org/>`_
+* For running: `Unicorn CPU Emulator`_
 * For unit testing: `busted <http://olivinelabs.com/busted/>`_
 
 To run unit tests, do:
@@ -167,10 +166,12 @@ To run unit tests, do:
 License
 -------
 
-I'm releasing this under the terms of the
-`3-Clause BSD License <https://opensource.org/licenses/BSD-3-Clause>`_. For the
-full legal text, see ``LICENSE.txt``.
+I'm releasing this under the terms of the `New BSD License`_. For the full legal
+text, see ``LICENSE.txt``.
 
 .. [1] Typically 2\ :sup:`63` - 1 on 64-bit machines and 2\ :sup:`31` - 1 on
        32-bit machines.
 .. [2] *Programming in Lua*, 4th Edition. Forgot the page.
+
+.. _Unicorn CPU Emulator: http://www.unicorn-engine.org
+.. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
