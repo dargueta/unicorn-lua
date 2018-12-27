@@ -84,6 +84,7 @@ int uc_lua__reg_write_batch(lua_State *L) {
     return 0;
 }
 
+
 int uc_lua__reg_read_batch(lua_State *L) {
     uc_engine *engine;
     int n_registers, i, error, *registers;
@@ -92,12 +93,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
 
     engine = uc_lua__toengine(L, 1);
 
-    /* Second argument is a table a list of the register IDs to read. Get the
-     * length. */
-    lua_len(L, 2);
-
-    n_registers = lua_tointeger(L, -1);
-    lua_pop(L, 1);
+    n_registers = lua_gettop(L) - 1;
 
     /* Use newuserdata() instead of malloc so we don't have to do any memory
      * management ourselves. */
@@ -106,10 +102,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
     p_values = (void **)lua_newuserdata(L, n_registers * sizeof(*p_values));
 
     for (i = 0; i < n_registers; ++i) {
-        lua_geti(L, 2, i + 1);
-        registers[i] = lua_tointeger(L, -1);
-        lua_pop(L, 1);
-
+        registers[i] = (int)lua_tointeger(L, i + 2);
         p_values[i] = &values[i];
     }
 
@@ -119,12 +112,8 @@ int uc_lua__reg_read_batch(lua_State *L) {
     if (error != UC_ERR_OK)
         return uc_lua__crash_on_error(L, error);
 
-    lua_createtable(L, 0, n_registers);
-    for (i = 0; i < n_registers; ++i) {
-        lua_pushinteger(L, registers[i]);
+    for (i = 0; i < n_registers; ++i)
         lua_pushinteger(L, values[i]);
-        lua_settable(L, -2);
-    }
 
-    return 1;
+    return n_registers;
 }
