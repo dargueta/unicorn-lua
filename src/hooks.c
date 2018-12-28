@@ -16,6 +16,7 @@ typedef struct {
     uc_engine *engine;
     uc_hook hook;
     int callback_func_ref;
+    int user_data_ref;
 } HookInfo;
 
 
@@ -119,7 +120,8 @@ static void code_hook(uc_engine *uc, uint64_t address, uint32_t size,
     uc_lua__get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
-    lua_call(L, 3, 0);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 4, 0);
 }
 
 
@@ -132,7 +134,8 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
     /* Push the arguments */
     uc_lua__get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)intno);
-    lua_call(L, 2, 0);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 3, 0);
 }
 
 
@@ -148,7 +151,8 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
     uc_lua__get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
-    lua_call(L, 3, 1);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 4, 1);
 
     return_value = (uint32_t)luaL_checkinteger(L, -1);
     lua_pop(L, 1);
@@ -169,7 +173,8 @@ static void port_out_hook(uc_engine *uc, uint32_t port, int size, uint32_t value
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_call(L, 4, 0);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 5, 0);
 }
 
 
@@ -186,7 +191,8 @@ static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_call(L, 5, 0);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 6, 0);
 }
 
 
@@ -205,7 +211,8 @@ static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_call(L, 5, 1);
+    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    lua_call(L, 6, 1);
 
     return_value = (bool)luaL_checkboolean(L, -1);
     lua_pop(L, 1);
@@ -262,8 +269,7 @@ int uc_lua__hook_add(lua_State *L) {
     HookInfo *hook_info;
     uint64_t start, end;
     uc_engine *engine;
-    int error, hook_type, n_args;
-    lua_Integer extra_argument;
+    int error, hook_type, n_args, extra_argument;
     void *c_callback;
 
     n_args = lua_gettop(L);
@@ -282,21 +288,37 @@ int uc_lua__hook_add(lua_State *L) {
         case 4:
             /* Start address given but no end address. Presumably the user wants
              * the hook to apply for all memory at and above this address. */
-            start = (uint64_t)luaL_checkinteger(L, 4);
+            start = (uint64_t)luaL_optinteger(L, 4, 0);
             end = ~0;
             break;
         case 5:
         case 6:
+        case 7:
             /* Start and end addresses given. */
-            start = (uint64_t)luaL_checkinteger(L, 4);
-            end = (uint64_t)luaL_checkinteger(L, 5);
+            start = (uint64_t)luaL_optinteger(L, 4, 0);
+            end = (uint64_t)luaL_optinteger(L, 5, ~0);
             break;
         default:
-            return luaL_error(L, "Expected 3-6 arguments, got %d.", n_args);
+            return luaL_error(L, "Expected 3-7 arguments, got %d.", n_args);
     }
 
-    extra_argument = luaL_optinteger(L, 6, ~0);
     hook_info = _create_hook_object(L, 1, 3);
+
+    /* If the caller gave us a sixth argument, it's data to pass to the callback.
+     * Create a reference to it and store that in the hook struct. */
+    if (!lua_isnoneornil(L, 6)) {
+        lua_pushvalue(L, 6);
+        hook_info->user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+    else
+        hook_info->user_data_ref = LUA_NOREF;
+
+    /* We can't use luaL_optinteger for argument 7 because there can be data at
+     * index n_args + 1. We have to check the stack size first. */
+    if (n_args >= 7)
+        extra_argument = (int)luaL_checkinteger(L, 7);
+    else
+        extra_argument = LUA_NOREF;
 
     /* Figure out which C hook we need */
     c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
@@ -330,7 +352,9 @@ int uc_lua__hook_del(lua_State *L) {
      * the reference ID in the C struct. This way, accidental reuse of the hook
      * struct will fail. */
     luaL_unref(L, LUA_REGISTRYINDEX, hook_info->callback_func_ref);
+    luaL_unref(L, LUA_REGISTRYINDEX, hook_info->user_data_ref);
     hook_info->callback_func_ref = LUA_NOREF;
+    hook_info->user_data_ref = LUA_NOREF;
 
     /* Remove the hook from the engine. */
     error = uc_hook_del(hook_info->engine, hook_info->hook);

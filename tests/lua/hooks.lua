@@ -41,7 +41,7 @@ describe('Hook tests', function ()
         return 0xdeadbeef
       end)
 
-    local handle = uc:hook_add(unicorn.UC_HOOK_INSN, callback, 0, 2^20,
+    local handle = uc:hook_add(unicorn.UC_HOOK_INSN, callback, 0, 2^20, nil,
                                x86.UC_X86_INS_IN)
     assert.not_nil(handle)
 
@@ -76,5 +76,57 @@ describe('Hook tests', function ()
 
     assert.spy(callback).was_called()
     assert.are.equals(0xaa55, uc:reg_read(x86.UC_X86_REG_AX), 'AX not written to')
+  end)
+
+  it('[x86] Passing scalar user data', function ()
+    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_16)
+    uc:mem_map(0, 2^20)
+
+    local register_id = x86.UC_X86_REG_ES
+    local callback = spy.new(
+      function (engine, intno, user_data)
+        assert.are.equals(uc, engine)
+        assert.are.equals(0xff, intno)
+        assert.are.equals(register_id, user_data)
+        assert.are.equals(0xdead, uc:reg_read(user_data))
+        uc:reg_write(user_data, 0xf00d)
+      end)
+
+    uc:hook_add(unicorn.UC_HOOK_INTR, callback, nil, nil, register_id)
+
+    -- int 0xff
+    uc:mem_write(0x7c000, '\205\255')
+    uc:reg_write(register_id, 0xdead)
+    uc:emu_start(0x7c000, 0x7c002)
+    uc:emu_stop()
+
+    assert.spy(callback).was_called()
+    assert.are.equals(0xf00d, uc:reg_read(register_id), 'Register not written to')
+  end)
+
+  it('[x86] Passing tables as user data', function ()
+    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_16)
+    uc:mem_map(0, 2^20)
+
+    local info = {x86.UC_X86_REG_ES}
+    local callback = spy.new(
+      function (engine, intno, user_data)
+        assert.are.equals(uc, engine)
+        assert.are.equals(0xff, intno)
+        assert.are.equals(info, user_data)
+        assert.are.equals(0xdead, uc:reg_read(user_data[1]))
+        uc:reg_write(user_data[1], 0xf00d)
+      end)
+
+    uc:hook_add(unicorn.UC_HOOK_INTR, callback, nil, nil, info)
+
+    -- int 0xff
+    uc:mem_write(0x7c000, '\205\255')
+    uc:reg_write(info[1], 0xdead)
+    uc:emu_start(0x7c000, 0x7c002)
+    uc:emu_stop()
+
+    assert.spy(callback).was_called()
+    assert.are.equals(0xf00d, uc:reg_read(info[1]), 'Register not written to')
   end)
 end)
