@@ -20,7 +20,12 @@
 /* Compatibility stuff for Lua < 5.2 */
 #if LUA_VERSION_NUM < 502
     /* This is more or less how lua_Unsigned is defined in Lua 5.2. */
-    typedef LUAI_UINT32 lua_Unsigned;
+    #ifdef LUAI_UINT32
+        typedef LUAI_UINT32 lua_Unsigned;
+    #else
+        /*LuaJIT doesn't define LUAI_UINT32 so we need to do it ourselves. */
+        typedef unsigned int lua_Unsigned;
+    #endif
 
     /* Copied and pasted from the 5.3 implementation. */
     LUALIB_API void luaL_setmetatable(lua_State *L, const char *tname);
