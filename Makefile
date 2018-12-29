@@ -17,24 +17,16 @@ TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 CFLAGS += -c -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
-OS=$(shell uname)
-
-ifeq ($(OS), Darwin)
-	LDEXT=dylib
+ifeq ($(PLATFORM), macosx)
 	LDFLAGS += -dylib
-else ifeq ($(OS), Windows_NT)
-	# TODO
-	LDEXT=dll
-	LDFLAGS += -shared
 else
-	LDEXT=so
 	LDFLAGS += -shared
 endif
 
 LDFLAGS += -lunicorn -lpthread
 
 ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
-SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LDEXT)
+SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LIB_EXTENSION)
 
 .PHONY: all
 all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)

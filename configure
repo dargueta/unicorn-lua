@@ -1,173 +1,284 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-set -e
-
-PARSED_OPTIONS=$(getopt -o '' -l 'lua-version:,unicorn-version:,luarocks-version:' -- "$@")
-
-LUA_VERSION=${LUA_VERSION:-?}
-LUAROCKS_VERSION=${LUAROCKS_VERSION:-3.0.3}
-UNICORN_VERSION=${UNICORN_VERSION:-1.0.1}
-
-eval set -- "$PARSED_OPTIONS"
-
-while true; do
-    case "$1" in
-        --lua-version)
-            LUA_VERSION="$2"
-            shift 2
-            ;;
-        --unicorn-version)
-            UNICORN_VERSION="$2"
-            shift 2
-            ;;
-        --luarocks-version)
-            LUAROCKS_VERSION="$2"
-            shift 2
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
+import argparse
+import fnmatch
+import io
+import logging
+import os
+import shutil
+import subprocess
+import sys
 
 
-# Lua version wasn't explicitly set in an argument. Default to the system Lua
-# version, or if the system doesn't have Lua installed, choose the latest
-# version.
-if [[ ${LUA_VERSION} = '?' ]]; then
-    if [[ -n $(which lua) ]]; then
-        LUA_VERSION=$(lua -v | cut -f2 -d' ')
-    else
-        LUA_VERSION=5.3.5
-    fi
-fi
+LOG = logging.getLogger(__name__)
 
 
-LUA_SHORT_VERSION=$(echo ${LUA_VERSION} | cut -f1-2 -d'.')
-
-LUA_DIRECTORY="$(pwd)/.downloaded/lua-${LUA_VERSION}"
-UNICORN_DIRECTORY="$(pwd)/.downloaded/unicorn-${UNICORN_VERSION}"
-LUAROCKS_DIRECTORY="$(pwd)/.downloaded/luarocks-${LUAROCKS_VERSION}"
-LUAROCKS_BIN_PATH="${LUAROCKS_DIRECTORY}/install/bin"
-LUAROCKS_ROCKS_PATH="${LUAROCKS_DIRECTORY}/install/rocks"
-
-if [[ ${LUA_SHORT_VERSION} = '5.1' ]]; then
-    LUA_BIN_PATH=${LUA_DIRECTORY}/bin
-    LUA_INCLUDE_PATH=${LUA_DIRECTORY}/include
-    LUA_LIB_PATH=${LUA_DIRECTORY}/lib
-else
-    LUA_BIN_PATH=${LUA_DIRECTORY}/install/bin
-    LUA_INCLUDE_PATH=${LUA_DIRECTORY}/install/include
-    LUA_LIB_PATH=${LUA_DIRECTORY}/install/lib
-fi
+SUPPORTED_LUA_VERSIONS = {
+    '5.1': '5.1',
+    '5.2': '5.2',
+    '5.3': '5.3',
+    'luajit': '2.0',
+    'luajit2.0': '2.0',
+}
 
 
-init_unicorn() {
-    git clone --depth 1 https://github.com/unicorn-engine/unicorn.git ${UNICORN_DIRECTORY}
+SPECIFIC_VERSIONS = {
+    '5.1': '5.1.5',
+    '5.2': '5.2.3',
+    '5.3': '5.3.5',
+    'luajit': '2.0.5',
+    'luajit2.0': '2.0.5',
+}
 
-    pushd ${UNICORN_DIRECTORY}
+
+PLATFORM_ALIASES = {
+    'linux': 'linux',
+    'darwin': 'macosx',
+    'win32': 'mingw',
+    'cygwin': 'posix',
+}
+
+
+PLATFORM_LIB_EXTENSIONS = {
+    'linux': 'so',
+    'macosx': 'dylib',
+    'mingw': 'dll',
+    'posix': 'so',
+}
+
+
+LENV_ROOT = os.path.expanduser('~/.lenv')
+LENV_EXE = os.path.join(LENV_ROOT, 'bin', 'lenv')
+DEFAULT_LUA_VERSION = '5.3'
+DEFAULT_UNICORN_VERSION = '1.0.1'
+DOWNLOAD_DIRECTORY = os.path.abspath(os.path.join('.', '.downloaded'))
+DEFAULT_UNICORN_DIR = os.path.join(DOWNLOAD_DIRECTORY, 'unicorn-' + DEFAULT_UNICORN_VERSION)
+
+
+class ErrorExit(Exception):
+    pass
+
+
+def run(*args, text=True, **kwargs):
+    rval = subprocess.check_output(*args, **kwargs)
+    if text:
+        return rval.decode('utf-8')
+    return rval
+
+
+def find_executables():
+    return {
+        'locate': shutil.which('locate'),
+        'lua': shutil.which('lua'),
+        'lenv': shutil.which('lenv'),
+        'perl': shutil.which('perl'),
+        'git': shutil.which('git')
+    }
+
+
+def download_unicorn():
+    run(['git', 'clone', '--depth', '1', 'https://github.com/unicorn-engine/unicorn.git',
+         DEFAULT_UNICORN_DIR])
+
+    here = os.getcwd()
+    os.chdir(DEFAULT_UNICORN_DIR)
 
     # fetch is required to be able to check out a tag.
-    git fetch --all --tags --prune
-    git checkout ${UNICORN_VERSION}
+    run(['git', 'fetch', '--all', '--tags', '--prune'])
+    run(['git', 'checkout', DEFAULT_UNICORN_VERSION])
+    run([os.path.join(DEFAULT_UNICORN_DIR, 'make.sh')])
 
-    ./make.sh
-    popd
-}
-
-
-init_lua() {
-    local tgz_filename="lua-${LUA_VERSION}.tar.gz"
-    local target_dirname=$(basename $LUA_DIRECTORY)
-
-    curl -sO http://www.lua.org/ftp/${tgz_filename}
-    gunzip -c ${tgz_filename} > lua.tar
-    tar -xf lua.tar
-    rm lua.tar ${tgz_filename}
-
-    mv ${target_dirname} ${LUA_DIRECTORY}
-
-    pushd ${LUA_DIRECTORY}
-    make linux local
-    popd
-}
+    os.chdir(here)
 
 
-init_luarocks() {
-    local tgz_filename=luarocks-${LUAROCKS_VERSION}.tar.gz
-    local target_dirname=$(basename ${LUAROCKS_DIRECTORY})
+def parse_args(exe_paths):
+    parser = argparse.ArgumentParser()
 
-    curl -sO http://luarocks.github.io/luarocks/releases/${tgz_filename}
-    gunzip -c < ${tgz_filename} > luarocks.tar
-    tar -xf luarocks.tar
-    rm luarocks.tar ${tgz_filename}
+    if 'TRAVIS_CI' in os.environ or 'CIRCLE_CI' in os.environ:
+        default_lua_version = os.environ['LUA_VERSION']
+    else:
+        default_lua_version = None
 
-    mv ${target_dirname} ${LUAROCKS_DIRECTORY}
+    parser.add_argument('--lua',
+                        metavar='VERSION',
+                        dest='lua_version',
+                        choices=tuple(SUPPORTED_LUA_VERSIONS),
+                        default=default_lua_version,
+                        help='The Lua version to use. If not given, defaults to '
+                             "the system Lua's version, or %s if Lua isn't installed "
+                             'at all. Supported values: %s'
+                             % (DEFAULT_LUA_VERSION,
+                                ', '.join(SUPPORTED_LUA_VERSIONS)))
+    parser.add_argument('--lua-headers', metavar='PATH',
+                        help='The path to the Lua headers to use.')
+    parser.add_argument('--lua-lib', metavar='PATH',
+                        help='The path to the Lua shared library.')
+    parser.add_argument('--uc-headers', metavar='PATH',
+                        help='The path to the Unicorn headers.')
+    parser.add_argument('--uc-lib', metavar='PATH',
+                        help='The path to the Unicorn shared library.')
 
-    pushd ${LUAROCKS_DIRECTORY}
-    mkdir -p ${LUAROCKS_DIRECTORY}/install
+    return parser.parse_args()
 
-    ./configure --lua-version=${LUA_SHORT_VERSION} --with-lua-bin=${LUA_BIN_PATH} \
-                --with-lua=${LUA_BIN_PATH} --with-lua-include=${LUA_INCLUDE_PATH} \
-                --with-lua-lib=${LUA_LIB_PATH} --rocks-tree=${LUAROCKS_ROCKS_PATH} \
-                --prefix=${LUAROCKS_DIRECTORY}/install
-    make install
 
-    popd
-}
+def get_system_lua_version(lua_exe):
+    proc = subprocess.run([lua_exe, '-v'], encoding='ascii', check=True)
+    _lua, version, *_rest = proc.stdout.split()
 
-echo "Using Lua ${LUA_VERSION}"
-echo "Using Unicorn ${UNICORN_VERSION}"
-echo "Using Luarocks ${LUAROCKS_VERSION}"
+    v_major, _sep, v_minor = version.rpartition('.')
+    return v_major
 
-mkdir -p .downloaded
 
-if [ ! -e ${UNICORN_DIRECTORY} ]; then
-    init_unicorn
-fi
+def recursive_enum_files(where, glob='*'):
+    all_files = []
 
-if [ ! -e ${LUA_DIRECTORY} ]; then
-    init_lua
-fi
+    for root, dirnames, filenames in os.walk(where):
+        all_files.extend(os.path.join(root, f)
+                         for f in fnmatch.filter(filenames, glob))
+    return all_files
 
-# Always rebuild LuaRocks because the Lua version might've changed. It doesn't
-# take too long anyway.
-rm -rf ${LUAROCKS_DIRECTORY}
-init_luarocks
 
-# Install `busted`, needed for testing. Not sure why we need LUA_LIBDIR here.
-LUA_LIBDIR=${LUA_LIB_PATH} ${LUAROCKS_BIN_PATH}/luarocks install busted
+def generate_makefile_include(args, install_version, base_dir, platform):
+    short_version = install_version.rpartition('.')[0]
+    if float(short_version) >= 5.3:
+        busted_cli_args = ''
+    else:
+        busted_cli_args = '--exclude-tags="int64only"'
 
-rm -f Makefile.in
+    variables = {
+        'LUA_VERSION': install_version,
+        'LUA_SHORT_VERSION': short_version,
+        'LUA_LIB_PATH': os.path.join(base_dir, 'lib'),
+        'LUA_INCLUDE_PATH': os.path.join(base_dir, 'include'),
+        'UNICORN_LIB_PATH': args.uc_lib,
+        'UNICORN_INCLUDE_PATH': args.uc_headers,
+        'LUAROCKS_BIN_PATH': os.path.join(base_dir, 'bin', 'luarocks'),
+        'BUSTED_EXE': os.path.join(base_dir, 'bin', 'busted'),
+        'C_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.c')),
+        'C_HEADER_FILES': ' '.join(recursive_enum_files('include', '*.h')),
+        'LUA_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.lua')),
+        'BUSTED_CLI_ARGS': busted_cli_args,
+        'LIB_EXTENSION': PLATFORM_LIB_EXTENSIONS[platform],
+        'PLATFORM': platform,
+    }
 
-echo "LUA_VERSION=${LUA_VERSION}" >> Makefile.in
-echo "LUA_SHORT_VERSION=${LUA_SHORT_VERSION}" >> Makefile.in
+    with open('Makefile.in', 'w') as fd:
+        fd.write('\n'.join('%s=%s' % kv for kv in variables.items()) + '\n')
 
-echo "LUA_DIRECTORY=${LUA_DIRECTORY}" >> Makefile.in
-echo "LUA_LIB_PATH=${LUA_LIB_PATH}" >> Makefile.in
-echo "LUA_INCLUDE_PATH=${LUA_INCLUDE_PATH}" >> Makefile.in
 
-echo "UNICORN_DIRECTORY=${UNICORN_DIRECTORY}" >> Makefile.in
-echo 'UNICORN_LIB_PATH=$(UNICORN_DIRECTORY)' >> Makefile.in
-echo 'UNICORN_INCLUDE_PATH=$(UNICORN_DIRECTORY)/include' >> Makefile.in
+def main():
+    logging.basicConfig(format='[%(levelname)-5s] %(message)s', level=logging.INFO)
 
-echo "LUAROCKS_DIRECTORY=${LUAROCKS_DIRECTORY}" >> Makefile.in
-echo "LUAROCKS_BIN_PATH=${LUAROCKS_BIN_PATH}" >> Makefile.in
-echo "LUAROCKS_ROCKS_PATH=${LUAROCKS_ROCKS_PATH}" >> Makefile.in
+    if sys.platform == 'linux':
+        lua_platform = 'linux'
+    elif sys.platform == 'darwin':
+        lua_platform = 'macosx'
+    elif sys.platform == 'win32':
+        lua_platform = 'mingw'
+    elif sys.platform == 'cygwin':
+        lua_platform = 'posix'
+    else:
+        LOG.warning('OS platform potentially unsupported: %r', sys.platform)
+        lua_platform = 'generic'
 
-echo 'BUSTED_EXE=$(LUAROCKS_ROCKS_PATH)/bin/busted' >> Makefile.in
+    exe_paths = find_executables()
 
-# Only skip over the 64-bit tests if we're on Lua < 5.3
-if [[ "${LUA_SHORT_VERSION}" != '5.3' ]]; then
-    echo 'BUSTED_CLI_ARGS=--exclude-tags="int64only"' >> Makefile.in
-else
-    echo 'BUSTED_CLI_ARGS=' >> Makefile.in
-fi
+    if not exe_paths['perl']:
+        raise ErrorExit("Perl doesn't seem to be installed, but is required by "
+                        "lenv. Please install it.")
 
-echo "C_SOURCE_FILES=$(find src/ -name '*.c' -print0 | xargs -0 echo)" >> Makefile.in
-echo "C_HEADER_FILES=$(find include/ -name '*.h' -print0 | xargs -0 echo)" >> Makefile.in
-echo "LUA_SOURCE_FILES=$(find src/ -name '*.lua' -print0 | xargs -0 echo)" >> Makefile.in
+    args = parse_args(exe_paths)
+
+    if not args.uc_headers:
+        if exe_paths['locate']:
+            paths = [
+                ln.strip()
+                for ln in run([exe_paths['locate'], 'unicorn/unicorn.h']).splitlines()
+                if not ln.isspace()
+            ]
+            if len(paths) > 1:
+                raise ErrorExit(
+                    "--uc-headers not given, found multiple Unicorn header file "
+                    "candidates: \n- " + '\n- '.join(paths))
+
+            # Strip off last two path components, the unicorn/unicorn.h part. We
+            # only need the containing directory.
+            args.uc_headers = os.path.dirname(os.path.dirname(paths[0]))
+            LOG.info('Inferred Unicorn header path: %s', args.uc_headers)
+        else:
+            raise ErrorExit(
+                "Can't infer Unicorn header path, you must pass --uc-headers "
+                "to this command.")
+
+    if not args.uc_lib:
+        if exe_paths['locate']:
+            paths = [
+                ln.strip()
+                for ln in run([exe_paths['locate'], 'libunicorn.a']).splitlines()
+                if not ln.isspace()
+            ]
+            if len(paths) > 1:
+                raise ErrorExit(
+                    "--uc-lib not given, found multiple Unicorn lib candidates: "
+                    "\n- " + '\n- '.join(header_paths))
+
+            # Strip off last two path components, the unicorn/unicorn.h part. We
+            # only need the containing directory.
+            args.uc_lib = os.path.dirname(paths[0])
+            LOG.info('Inferred Unicorn header path: %s', args.uc_lib)
+        else:
+            raise ErrorExit(
+                "Can't infer Unicorn library path, you must pass --uc-lib to "
+                "this command.")
+
+    if not os.path.exists(LENV_EXE):
+        raise ErrorExit(
+            "Can't find `lenv` executable. Please install it, following the "
+            "instructions here: https://github.com/mah0x211/lenv")
+
+    if not args.lua_version:
+        if not exe_paths['lua']:
+            LOG.warning("Can't find Lua executable and desired version number "
+                        "not given. Defaulting to %s.", DEFAULT_LUA_VERSION)
+            args.lua_version = DEFAULT_LUA_VERSION
+        else:
+            LOG.info('No version number or Lua executable given, defaulting to '
+                     'the system version.')
+            args.lua_version = get_system_lua_version(exe_paths['lua'])
+            LOG.info('Using Lua version %s', args.lua_version)
+
+    run([LENV_EXE, 'fetch'])
+
+    if args.lua_version in SPECIFIC_VERSIONS:
+        install_version = SPECIFIC_VERSIONS[args.lua_version]
+    else:
+        install_version = SPECIFIC_VERSIONS[args.lua_version]
+
+    is_luajit = args.lua_version.startswith('luajit')
+
+    if is_luajit:
+        # User wants to use LuaJIT, which requires a separate command.
+        LOG.info('Installing LuaJIT %s', install_version)
+        run([LENV_EXE, 'install-lj', install_version])
+        lua_base_dir = os.path.join(LENV_ROOT, 'luajit', install_version)
+    else:
+        # Regular Lua
+        LOG.info('Installing Lua %s', install_version)
+        run([LENV_EXE, 'install', install_version, lua_platform])
+        lua_base_dir = os.path.join(LENV_ROOT, 'lua', install_version)
+
+    LOG.info('Installing `busted` rock...')
+    run([os.path.join(lua_base_dir, 'bin', 'luarocks'), 'install', 'busted'])
+
+    LOG.info('Generating `Makefile.in`...')
+    generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except ErrorExit as exc:
+        LOG.error(str(exc))
+        sys.exit(1)
+    else:
+        sys.exit(0)
