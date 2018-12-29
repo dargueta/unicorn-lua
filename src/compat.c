@@ -46,6 +46,17 @@ LUA_API void lua_len(lua_State *L, int index) {
 }
 
 
+LUA_API int luaL_len(lua_State *L, int index) {
+    int length;
+    index = lua_absindex(L, index);
+
+    lua_len(L, index);
+    length = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    return length;
+}
+
+
 /* Copied and pasted from the Lua 5.3 implementation. */
 LUALIB_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
   luaL_checkstack(L, nup, "too many upvalues");

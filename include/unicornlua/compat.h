@@ -38,6 +38,8 @@
      */
     LUA_API void lua_len(lua_State *L, int index);
 
+    LUA_API int luaL_len(lua_State *L, int index);
+
     /**
      * Implementation of Lua 5.2+ @e lua_absindex.
      */
