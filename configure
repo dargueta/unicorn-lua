@@ -143,6 +143,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
     x86_asm, x86_asm_flags = detect_x86_assembler()
 
     variables = {
+        'REPO_ROOT': os.path.abspath(os.getcwd()),
         'LUA_VERSION': install_version,
         'LUA_SHORT_VERSION': short_version,
         'LUA_LIB_PATH': os.path.join(base_dir, 'lib'),

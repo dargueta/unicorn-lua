@@ -138,7 +138,12 @@ the BIOS setting up a system when booting.
     -- real system.
     uc:emu_start(0x7C000, 0x100000)
 
-You can find further examples in `.docs/examples`_.
+
+Detailed Examples
+~~~~~~~~~~~~~~~~~
+
+More real-world examples can be found in the ``docs/examples`` directory. To run
+them, make sure you do ``make examples`` to generate the required resources.
 
 
 Deviations from the Python Library
@@ -154,14 +159,55 @@ Development
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* For running: `Unicorn CPU Emulator`_
-* For unit testing: `busted <http://olivinelabs.com/busted/>`_
+* Configuration:
+  * Python 3.3 or higher
+  * `lenv`_ for testing on multiple versions of Lua
+* For building and running:
+  * ``make``, either the GNU version or a compatible implementation
+  * `Unicorn CPU Emulator`_ library must be installed or at least built
+* Some examples have additional dependencies; see their READMEs for details.
 
-To run unit tests, do:
+Configuration
+~~~~~~~~~~~~~
+
+Before building the library, you must configure the repository for your system
+using the ``configure`` script:
 
 .. code-block:: sh
 
-    make test
+    # Configure for your current version of Lua
+    python3 configure
+
+    # Configure for a different version of Lua, in this case 5.3
+    python3 configure --lua 5.3
+
+For details on other customization options, run ``python3 configure --help``.
+
+**Important:** After running ``configure``, you **must** run ``make clean`` to
+remove any build artifacts that may have been built for a different version of
+Lua.
+
+Building and Testing
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: sh
+
+    make            # Build the project, including libraries and examples
+    make clean      # Delete all build artifacts, needed when you change Lua versions
+    make examples   # Build but do not run examples (that must be done manually)
+    make test       # Run all unit tests
+
+Examples
+~~~~~~~~
+
+There are some example programs you can use to see how this library (and Unicorn
+in general) works. You can run an example with
+
+.. code-block:: sh
+
+    make run_example EXAMPLE=<name>
+
+where ``<name>`` is the name of the example's directory, like "disk_io".
 
 License
 -------
@@ -173,5 +219,6 @@ text, see ``LICENSE.txt``.
        32-bit machines.
 .. [2] *Programming in Lua*, 4th Edition. Forgot the page.
 
+.. _lenv: https://github.com/mah0x211/lenv
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
 .. _New BSD License: https://opensource.org/licenses/BSD-3-Clause

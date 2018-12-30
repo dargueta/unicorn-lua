@@ -1,17 +1,18 @@
 include Makefile.in
 
-INCLUDE_BASE=include
+INCLUDE_BASE=$(REPO_ROOT)/include
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
-SRC_BASE=src
+SRC_BASE=$(REPO_ROOT)/src
 CONST_SRC_BASE=$(SRC_BASE)/constants
 CONST_HDR_BASE=$(INCLUDE_UC_BASE)/constants
-OBJECT_BASE=bin
+OBJECT_BASE=$(REPO_ROOT)/bin
+EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
 OBJECTS=$(C_SOURCE_FILES:%.c=%.o)
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 
-TESTS_BASE=tests
+TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
@@ -55,7 +56,13 @@ test: test_c test_lua
 
 
 .PHONY: examples
-examples: $(X86_BINARY_IMAGES)
+examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
+
+
+.PHONY: run_example
+run_example: examples
+	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && \
+	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CPATH)" lua $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 %.o : %.c
