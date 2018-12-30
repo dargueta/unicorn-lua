@@ -190,6 +190,9 @@ Lua.
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
+Here are a few commands you may find useful during development. This isn't a
+script, just a list.
+
 .. code-block:: sh
 
     make            # Build the project, including libraries and examples
@@ -205,15 +208,19 @@ in general) works. You can run an example with
 
 .. code-block:: sh
 
-    make run_example EXAMPLE=<name>
+    make run_example EXAMPLE=name
 
-where ``<name>`` is the name of the example's directory, like "disk_io".
+``name`` is the name of the directory the example is in, e.g. ``disk_io`` or
+``cmos_time``.
 
 License
 -------
 
 I'm releasing this under the terms of the `New BSD License`_. For the full legal
 text, see ``LICENSE.txt``.
+
+
+**Footnotes**
 
 .. [1] Typically 2\ :sup:`63` - 1 on 64-bit machines and 2\ :sup:`31` - 1 on
        32-bit machines.
