@@ -9,6 +9,7 @@ OBJECT_BASE=bin
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
 OBJECTS=$(C_SOURCE_FILES:%.c=%.o)
+X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 
 TESTS_BASE=tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
@@ -29,12 +30,11 @@ ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
 SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LIB_EXTENSION)
 
 .PHONY: all
-all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE)
+all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES)
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECT_BASE)
-	find $(SRC_BASE) -name '*.o' -delete
+	rm -rf $(OBJECT_BASE) $(X86_BINARY_IMAGES) $(OBJECTS)
 
 .PHONY: sterile
 sterile: clean
@@ -54,11 +54,19 @@ test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
 test: test_c test_lua
 
 
+.PHONY: examples
+examples: $(X86_BINARY_IMAGES)
+
+
 %.o : %.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 
 %.h: ;
+
+
+%.x86.bin : %.asm
+	$(X86_ASM) $(X86_ASM_FLAGS) -o $@ $<
 
 
 $(OBJECT_BASE) :

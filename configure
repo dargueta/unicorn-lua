@@ -70,7 +70,6 @@ def find_executables():
         'lua': shutil.which('lua'),
         'lenv': shutil.which('lenv'),
         'perl': shutil.which('perl'),
-        'git': shutil.which('git')
     }
 
 
@@ -88,8 +87,6 @@ def parse_args():
         default_uc_lib = None
         default_uc_headers = None
 
-    parser.add_argument('-y', '--yes', action='store_true',
-                        help='Assume "yes" to all prompts.')
     parser.add_argument('--lua',
                         metavar='VERSION',
                         dest='lua_version',
@@ -128,12 +125,22 @@ def recursive_enum_files(where, glob='*'):
     return all_files
 
 
+def detect_x86_assembler():
+    if shutil.which('nasm'):
+        return 'nasm', '-Wall -Werror'
+    if shutil.which('yasm'):
+        return 'yasm', '-Werror --force-strict'
+    return '', ''
+
+
 def generate_makefile_include(args, install_version, base_dir, platform):
     short_version = install_version.rpartition('.')[0]
     if float(short_version) >= 5.3:
         busted_cli_args = ''
     else:
         busted_cli_args = '--exclude-tags="int64only"'
+
+    x86_asm, x86_asm_flags = detect_x86_assembler()
 
     variables = {
         'LUA_VERSION': install_version,
@@ -147,13 +154,16 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         'C_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.c')),
         'C_HEADER_FILES': ' '.join(recursive_enum_files('include', '*.h')),
         'LUA_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.lua')),
+        'X86_ASM_SOURCE_FILES': ' '.join(recursive_enum_files('docs', '*.asm')),
         'BUSTED_CLI_ARGS': busted_cli_args,
         'LIB_EXTENSION': PLATFORM_LIB_EXTENSIONS[platform],
         'PLATFORM': platform,
+        'X86_ASM': x86_asm,
+        'X86_ASM_FLAGS': x86_asm_flags,
     }
 
     with open('Makefile.in', 'w') as fd:
-        fd.write('\n'.join('%s=%s' % kv for kv in variables.items()) + '\n')
+        fd.write('\n'.join('%s=%s' % kv for kv in sorted(variables.items())))
 
 
 def main():

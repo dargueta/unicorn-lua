@@ -66,7 +66,7 @@ engine:hook_add(unicorn.UC_HOOK_INTR, interrupt)
 
 -- Read *only* the first sector from the disk image into memory. The code in the
 -- first sector will load the second sector and execute that.
-fdesc = io.open('diskio.img', 'rb')
+fdesc = io.open('program.x86.bin', 'rb')
 io.input(fdesc)
 engine:mem_write(0x7c000, io.read(512))
 

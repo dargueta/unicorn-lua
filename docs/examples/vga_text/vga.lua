@@ -116,7 +116,7 @@ function main()
   -- Add a hook for detecting writes to video memory, but only for text mode 3.
   engine:hook_add(unicorn.UC_HOOK_MEM_WRITE, vga_write_trigger, 0xb8000, 0xbffff, term_win)
 
-  local fdesc = io.open('program.bin')
+  local fdesc = io.open('program.x86.bin')
   engine:mem_write(0x7c000, fdesc:read(512))
   fdesc:close()
 

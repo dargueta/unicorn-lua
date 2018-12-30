@@ -84,7 +84,7 @@ function main()
   engine:mem_map(0, 4096)
 
   -- Load the program image into memory
-  local fdesc = io.open('./program.bin', 'rb')
+  local fdesc = io.open('program.x86.bin', 'rb')
   engine:mem_write(0, fdesc:read(256))
   fdesc:close()
 
