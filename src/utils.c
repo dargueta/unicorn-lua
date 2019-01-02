@@ -9,7 +9,7 @@ extern const char * const kContextMetatableName;
 extern const char * const kEnginePointerMapName;
 
 
-int uc_lua__crash_on_error(lua_State *L, int error) {
+int ul_crash_on_error(lua_State *L, int error) {
     const char *message;
 
     message = uc_strerror(error);
@@ -18,7 +18,7 @@ int uc_lua__crash_on_error(lua_State *L, int error) {
 }
 
 
-uc_context *uc_lua__tocontext(lua_State *L, int index) {
+uc_context *ul_tocontext(lua_State *L, int index) {
     uc_context *context;
 
     context = *(uc_context **)luaL_checkudata(L, index, kContextMetatableName);
@@ -28,7 +28,7 @@ uc_context *uc_lua__tocontext(lua_State *L, int index) {
 }
 
 
-void uc_lua__create_weak_table(lua_State *L, const char *mode) {
+void ul_create_weak_table(lua_State *L, const char *mode) {
     lua_newtable(L);
     lua_createtable(L, 0, 1);
     lua_pushstring(L, mode);

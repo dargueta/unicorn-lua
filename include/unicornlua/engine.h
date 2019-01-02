@@ -28,12 +28,12 @@ typedef struct {
  * @param L         A pointer to the current Lua state.
  * @param engine    A pointer to the engine we want to create the Lua object for.
  */
-void uc_lua__create_engine_object(lua_State *L, const uc_engine *engine);
+void ul_create_engine_object(lua_State *L, const uc_engine *engine);
 
 
 /**
  */
-void uc_lua__free_engine_object(lua_State *L, int index);
+void ul_free_engine_object(lua_State *L, int index);
 
 
 /**
@@ -42,7 +42,7 @@ void uc_lua__free_engine_object(lua_State *L, int index);
  * @param L         A pointer to the current Lua state.
  * @param engine    A pointer to the engine we want to get the Lua object for.
  */
-void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
+void ul_get_engine_object(lua_State *L, const uc_engine *engine);
 
 
 /**
@@ -52,7 +52,7 @@ void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
  *
  * @param L         A pointer to the current Lua state.
  */
-void uc_lua__init_engines_lib(lua_State *L);
+void ul_init_engines_lib(lua_State *L);
 
 
 /**
@@ -64,6 +64,6 @@ void uc_lua__init_engines_lib(lua_State *L);
  * @param L         A pointer to the current Lua state.
  * @param index     The index of the value to return.
  */
-uc_engine *uc_lua__toengine(lua_State *L, int index);
+uc_engine *ul_toengine(lua_State *L, int index);
 
 #endif  /* INCLUDE_UNICORNLUA_ENGINE_H_ */

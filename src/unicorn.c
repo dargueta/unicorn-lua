@@ -19,7 +19,7 @@
 const char * const kContextMetatableName = "unicornlua__context_meta";
 
 
-int uc_lua__version(lua_State *L) {
+int ul_version(lua_State *L) {
     unsigned major, minor;
 
     uc_version(&major, &minor);
@@ -30,14 +30,14 @@ int uc_lua__version(lua_State *L) {
 }
 
 
-int uc_lua__arch_supported(lua_State *L) {
+int ul_arch_supported(lua_State *L) {
     int architecture = luaL_checkinteger(L, -1);
     lua_pushboolean(L, uc_arch_supported(architecture));
     return 1;
 }
 
 
-int uc_lua__open(lua_State *L) {
+int ul_open(lua_State *L) {
     int architecture, mode, error_code;
     uc_engine *engine;
 
@@ -46,58 +46,58 @@ int uc_lua__open(lua_State *L) {
 
     error_code = uc_open(architecture, mode, &engine);
     if (error_code != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error_code);
+        return ul_crash_on_error(L, error_code);
 
-    uc_lua__create_engine_object(L, engine);
+    ul_create_engine_object(L, engine);
     return 1;
 }
 
 
-int uc_lua__strerror(lua_State *L) {
+int ul_strerror(lua_State *L) {
     lua_pushstring(L, uc_strerror(luaL_checkinteger(L, 1)));
     return 1;
 }
 
 
-int uc_lua__close(lua_State *L) {
-    uc_lua__free_engine_object(L, 1);
+int ul_close(lua_State *L) {
+    ul_free_engine_object(L, 1);
     return 0;
 }
 
 
-int uc_lua__query(lua_State *L) {
+int ul_query(lua_State *L) {
     uc_engine *engine;
     int query_type, error;
     size_t result;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     query_type = luaL_checkinteger(L, 1);
 
     error = uc_query(engine, query_type, &result);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     lua_pushinteger(L, result);
     return 1;
 }
 
 
-int uc_lua__errno(lua_State *L) {
+int ul_errno(lua_State *L) {
     uc_engine *engine;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     lua_pushinteger(L, uc_errno(engine));
     return 1;
 }
 
 
-int uc_lua__emu_start(lua_State *L) {
+int ul_emu_start(lua_State *L) {
     uc_engine *engine;
     uint64_t start, end, timeout;
     size_t n_instructions;
     int error;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     start = (uint64_t)luaL_checkinteger(L, 2);
     end = (uint64_t)luaL_checkinteger(L, 3);
     timeout = (uint64_t)luaL_optinteger(L, 4, 0);
@@ -105,98 +105,98 @@ int uc_lua__emu_start(lua_State *L) {
 
     error = uc_emu_start(engine, start, end, timeout, n_instructions);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
     return 0;
 }
 
 
-int uc_lua__emu_stop(lua_State *L) {
+int ul_emu_stop(lua_State *L) {
     uc_engine *engine;
     int error;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
 
     error = uc_emu_stop(engine);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
     return 0;
 }
 
 
-int uc_lua__free(lua_State *L) {
+int ul_free(lua_State *L) {
     int error = uc_free(*(void **)lua_touserdata(L, 1));
 
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
     return 0;
 }
 
 
-int uc_lua__context_alloc(lua_State *L) {
+int ul_context_alloc(lua_State *L) {
     uc_engine *engine;
     uc_context **context;
     int error;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
 
     context = (uc_context **)lua_newuserdata(L, sizeof(*context));
     luaL_setmetatable(L, kContextMetatableName);
 
     error = uc_context_alloc(engine, context);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     return 1;
 }
 
 
-int uc_lua__context_save(lua_State *L) {
+int ul_context_save(lua_State *L) {
     uc_engine *engine;
     uc_context *context;
     int error;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
 
     if (lua_gettop(L) < 2)
         /* Caller didn't pass a context to update, so create a new one. */
-        uc_lua__context_alloc(L);
+        ul_context_alloc(L);
 
-    context = uc_lua__tocontext(L, 2);
+    context = ul_tocontext(L, 2);
 
     error = uc_context_save(engine, context);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     return 1;
 }
 
 
-int uc_lua__context_restore(lua_State *L) {
+int ul_context_restore(lua_State *L) {
     uc_engine *engine;
     uc_context *context;
     int error;
 
-    engine = uc_lua__toengine(L, 1);
-    context = uc_lua__tocontext(L, 2);
+    engine = ul_toengine(L, 1);
+    context = ul_tocontext(L, 2);
 
     error = uc_context_restore(engine, context);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
     return 0;
 }
 
 
 static const luaL_Reg kUnicornLibraryFunctions[] = {
-    {"arch_supported", uc_lua__arch_supported},
-    {"open", uc_lua__open},
-    {"strerror", uc_lua__strerror},
-    {"version", uc_lua__version},
+    {"arch_supported", ul_arch_supported},
+    {"open", ul_open},
+    {"strerror", ul_strerror},
+    {"version", ul_version},
     {NULL, NULL}
 };
 
 
 static const luaL_Reg kContextMetamethods[] = {
-    {"__gc", uc_lua__free},
+    {"__gc", ul_free},
     {NULL, NULL}
 };
 
@@ -216,8 +216,8 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
 
 
 int luaopen_unicorn(lua_State *L) {
-    uc_lua__init_engines_lib(L);
-    uc_lua__init_hooks_lib(L);
+    ul_init_engines_lib(L);
+    ul_init_hooks_lib(L);
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);

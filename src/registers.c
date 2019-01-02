@@ -8,47 +8,47 @@
 #include "unicornlua/utils.h"
 
 
-int uc_lua__reg_write(lua_State *L) {
+int ul_reg_write(lua_State *L) {
     uc_engine *engine;
     int register_id, error;
     lua_Unsigned value;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     register_id = luaL_checkinteger(L, 2);
     value = (lua_Unsigned)luaL_checkinteger(L, 3);
 
     error = uc_reg_write(engine, register_id, &value);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     return 0;
 }
 
 
-int uc_lua__reg_read(lua_State *L) {
+int ul_reg_read(lua_State *L) {
     uc_engine *engine;
     int register_id, error;
     lua_Unsigned value = 0;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     register_id = luaL_checkinteger(L, 2);
 
     error = uc_reg_read(engine, register_id, &value);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     lua_pushinteger(L, value);
     return 1;
 }
 
 
-int uc_lua__reg_write_batch(lua_State *L) {
+int ul_reg_write_batch(lua_State *L) {
     uc_engine *engine;
     int n_registers, error, *registers, i;
     lua_Unsigned *values;
     void **p_values;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
 
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
@@ -81,18 +81,18 @@ int uc_lua__reg_write_batch(lua_State *L) {
     free(p_values);
 
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
     return 0;
 }
 
 
-int uc_lua__reg_read_batch(lua_State *L) {
+int ul_reg_read_batch(lua_State *L) {
     uc_engine *engine;
     int n_registers, i, error, *registers;
     lua_Integer *values;
     void **p_values;
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     n_registers = lua_gettop(L) - 1;
 
     registers = (int *)malloc(n_registers * sizeof(*registers));
@@ -108,7 +108,7 @@ int uc_lua__reg_read_batch(lua_State *L) {
     error = uc_reg_read_batch(engine, registers, p_values, n_registers);
 
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     for (i = 0; i < n_registers; ++i)
         lua_pushinteger(L, values[i]);

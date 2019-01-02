@@ -21,7 +21,7 @@
  * @note Like lua_error, this function never returns, and should be treated in
  * exactly the same way.
  */
-int uc_lua__crash_on_error(lua_State *L, int error);
+int ul_crash_on_error(lua_State *L, int error);
 
 
 /**
@@ -30,7 +30,7 @@ int uc_lua__crash_on_error(lua_State *L, int error);
  * @param L         A pointer to the current Lua state.
  * @param engine    The pointer to the engine we want to get the Lua object for.
  */
-void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
+void ul_get_engine_object(lua_State *L, const uc_engine *engine);
 
 
 /**
@@ -42,7 +42,7 @@ void uc_lua__get_engine_object(lua_State *L, const uc_engine *engine);
  * @param L         A pointer to the current Lua state.
  * @param index     The index of the value to return.
  */
-uc_context *uc_lua__tocontext(lua_State *L, int index);
+uc_context *ul_tocontext(lua_State *L, int index);
 
 
 /**
@@ -52,6 +52,6 @@ uc_context *uc_lua__tocontext(lua_State *L, int index);
  * @param mode      The table mode to use. See the Lua documentation for a full
  *                  description of valid modes and how they work.
  */
-void uc_lua__create_weak_table(lua_State *L, const char *mode);
+void ul_create_weak_table(lua_State *L, const char *mode);
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

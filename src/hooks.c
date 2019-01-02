@@ -33,7 +33,7 @@ static const luaL_Reg kHookMetamethods[] = {
 };
 
 
-void uc_lua__init_hooks_lib(lua_State *L) {
+void ul_init_hooks_lib(lua_State *L) {
     luaL_newmetatable(L, kHookMetatableName);
     luaL_setfuncs(L, kHookMetamethods, 0);
 
@@ -60,7 +60,7 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) 
     luaL_setmetatable(L, kHookMetatableName);
 
     hook_info->L = L;
-    hook_info->engine = uc_lua__toengine(L, eng_index);
+    hook_info->engine = ul_toengine(L, eng_index);
     hook_info->hook = 0;
 
     /* Push a copy of the callback function on the top of the stack and store a
@@ -87,15 +87,15 @@ static int _remove_hook(lua_State *L) {
 
     hook_info = (HookInfo *)luaL_checkudata(L, 1, kHookMetatableName);
 
-    /* uc_lua__hook_del expects the engine as the first argument, so we need to
+    /* ul_hook_del expects the engine as the first argument, so we need to
      * add it here. */
-    uc_lua__get_engine_object(L, hook_info->engine);
+    ul_get_engine_object(L, hook_info->engine);
 
     /* TOS is the engine, hook object is underneath it. We need the engine as
      * the first argument, hook object as the second. */
     lua_swaptoptwo(L);
 
-    return uc_lua__hook_del(L);
+    return ul_hook_del(L);
 }
 
 
@@ -117,7 +117,7 @@ static void code_hook(uc_engine *uc, uint64_t address, uint32_t size,
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
@@ -132,7 +132,7 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)intno);
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
     lua_call(L, 3, 0);
@@ -148,7 +148,7 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
@@ -169,7 +169,7 @@ static void port_out_hook(uc_engine *uc, uint32_t port, int size, uint32_t value
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
@@ -186,7 +186,7 @@ static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Integer)type);
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
@@ -206,7 +206,7 @@ static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
     _get_callback_for_hook((HookInfo *)user_data);
 
     /* Push the arguments */
-    uc_lua__get_engine_object(L, uc);
+    ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Integer)type);
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
@@ -265,7 +265,7 @@ static void *_get_c_callback_for_hook_type(int hook_type, int insn_code) {
 }
 
 
-int uc_lua__hook_add(lua_State *L) {
+int ul_hook_add(lua_State *L) {
     HookInfo *hook_info;
     uint64_t start, end;
     uc_engine *engine;
@@ -274,7 +274,7 @@ int uc_lua__hook_add(lua_State *L) {
 
     n_args = lua_gettop(L);
 
-    engine = uc_lua__toengine(L, 1);
+    engine = ul_toengine(L, 1);
     hook_type = luaL_checkinteger(L, 2);
     /* Callback function is at position 3 */
 
@@ -333,7 +333,7 @@ int uc_lua__hook_add(lua_State *L) {
                             (void *)hook_info, start, end, extra_argument);
 
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     /* Return the hook struct as light userdata. Lua code can use this to remove
      * a hook before the engine is closed. */
@@ -342,7 +342,7 @@ int uc_lua__hook_add(lua_State *L) {
 }
 
 
-int uc_lua__hook_del(lua_State *L) {
+int ul_hook_del(lua_State *L) {
     int error;
     HookInfo *hook_info;
 
@@ -359,7 +359,7 @@ int uc_lua__hook_del(lua_State *L) {
     /* Remove the hook from the engine. */
     error = uc_hook_del(hook_info->engine, hook_info->hook);
     if (error != UC_ERR_OK)
-        return uc_lua__crash_on_error(L, error);
+        return ul_crash_on_error(L, error);
 
     /* Get the hook object table for this engine so we can remove the hook
      * object. */

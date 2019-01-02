@@ -10,10 +10,10 @@
 /**
  * Initialize the hook internals.
  */
-void uc_lua__init_hooks_lib(lua_State *L);
+void ul_init_hooks_lib(lua_State *L);
 
 
-int uc_lua__hook_del(lua_State *L);
-int uc_lua__hook_add(lua_State *L);
+int ul_hook_del(lua_State *L);
+int ul_hook_add(lua_State *L);
 
 #endif  /* INCLUDE_UNICORNLUA_HOOKS_H_ */

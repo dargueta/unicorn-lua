@@ -18,15 +18,15 @@
 /**
  *
  */
-int uc_lua__arch_supported(lua_State *L);
-int uc_lua__close(lua_State *L);
-int uc_lua__context_alloc(lua_State *L);
-int uc_lua__context_restore(lua_State *L);
-int uc_lua__context_save(lua_State *L);
-int uc_lua__context_update(lua_State *L);
-int uc_lua__emu_start(lua_State *L);
-int uc_lua__emu_stop(lua_State *L);
-int uc_lua__errno(lua_State *L);
+int ul_arch_supported(lua_State *L);
+int ul_close(lua_State *L);
+int ul_context_alloc(lua_State *L);
+int ul_context_restore(lua_State *L);
+int ul_context_save(lua_State *L);
+int ul_context_update(lua_State *L);
+int ul_emu_start(lua_State *L);
+int ul_emu_stop(lua_State *L);
+int ul_errno(lua_State *L);
 
 /**
  * Release resources used by an engine or context.
@@ -34,22 +34,22 @@ int uc_lua__errno(lua_State *L);
  * This function is not directly exposed to Lua code. Rather, it's set as the
  * garbage collection metamethod.
  */
-int uc_lua__free(lua_State *L);
+int ul_free(lua_State *L);
 
-int uc_lua__hook_add(lua_State *L);
-int uc_lua__hook_del(lua_State *L);
-int uc_lua__mem_map(lua_State *L);
-int uc_lua__mem_protect(lua_State *L);
-int uc_lua__mem_read(lua_State *L);
-int uc_lua__mem_regions(lua_State *L);
-int uc_lua__mem_unmap(lua_State *L);
-int uc_lua__mem_write(lua_State *L);
-int uc_lua__open(lua_State *L);
-int uc_lua__query(lua_State *L);
-int uc_lua__reg_read(lua_State *L);
-int uc_lua__reg_read_batch(lua_State *L);
-int uc_lua__reg_write(lua_State *L);
-int uc_lua__reg_write_batch(lua_State *L);
+int ul_hook_add(lua_State *L);
+int ul_hook_del(lua_State *L);
+int ul_mem_map(lua_State *L);
+int ul_mem_protect(lua_State *L);
+int ul_mem_read(lua_State *L);
+int ul_mem_regions(lua_State *L);
+int ul_mem_unmap(lua_State *L);
+int ul_mem_write(lua_State *L);
+int ul_open(lua_State *L);
+int ul_query(lua_State *L);
+int ul_reg_read(lua_State *L);
+int ul_reg_read_batch(lua_State *L);
+int ul_reg_write(lua_State *L);
+int ul_reg_write_batch(lua_State *L);
 
 /**
  * Get a formatted error message from the given Unicorn error code.
@@ -58,7 +58,7 @@ int uc_lua__reg_write_batch(lua_State *L);
  *
  *     local message = unicorn.strerror(123)
  */
-int uc_lua__strerror(lua_State *L);
+int ul_strerror(lua_State *L);
 
 
 /**
@@ -68,6 +68,6 @@ int uc_lua__strerror(lua_State *L);
  *
  *      local major, minor = unicorn.version()
  */
-int uc_lua__version(lua_State *L);
+int ul_version(lua_State *L);
 
 #endif  /* INCLUDE_UNICORNLUA_UNICORNLUA_H_ */
