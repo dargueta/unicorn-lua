@@ -59,7 +59,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 .PHONY: run_example
 run_example: examples
 	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && \
-	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CPATH)" $(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
+	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CUSTOM_CPATH)" $(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 %.o : %.c

@@ -11,3 +11,6 @@ directory they're in, or via the Makefile in the root directory of the repo:
 
 ``name`` is the name of the directory the example is in, e.g. ``disk_io`` or
 ``cmos_time``.
+
+
+**Note:** Some of these examples may not work with LuaJIT.

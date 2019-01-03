@@ -143,6 +143,11 @@ def generate_makefile_include(args, install_version, base_dir, platform):
 
     x86_asm, x86_asm_flags = detect_x86_assembler()
 
+    cpath = [
+        os.path.join(base_dir, 'lib', 'lua', short_version, '?.$(LIB_EXTENSION)'),
+        os.getenv('LUA_CPATH', '')
+    ]
+
     variables = {
         'REPO_ROOT': os.path.abspath(os.getcwd()),
         'LUA_VERSION': install_version,
@@ -153,6 +158,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         'UNICORN_LIB_PATH': args.uc_lib  or '.',
         'UNICORN_INCLUDE_PATH': args.uc_headers or '.',
         'LUAROCKS_EXE': os.path.join(base_dir, 'bin', 'luarocks'),
+        'LUA_CUSTOM_CPATH': ';'.join(cpath),
         'BUSTED_EXE': os.path.join(base_dir, 'bin', 'busted'),
         'C_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.c')),
         'C_HEADER_FILES': ' '.join(recursive_enum_files('include', '*.h')),
