@@ -16,7 +16,7 @@ TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
-CFLAGS += -c -Wall -Werror -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+CFLAGS += -c -Wall -Werror -Wextra -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 ifeq ($(PLATFORM), macosx)
@@ -33,14 +33,11 @@ SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LIB_EXTENSION)
 .PHONY: all
 all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES)
 
+
 .PHONY: clean
 clean:
 	rm -rf $(OBJECT_BASE) $(X86_BINARY_IMAGES) $(OBJECTS)
 
-.PHONY: sterile
-sterile: clean
-	rm -rf .downloaded
-	rm -f Makefile.in
 
 .PHONY: test_c
 test_c: $(SHARED_LIB_FILE)
@@ -62,7 +59,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 .PHONY: run_example
 run_example: examples
 	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && \
-	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CPATH)" lua $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
+	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CPATH)" $(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 %.o : %.c

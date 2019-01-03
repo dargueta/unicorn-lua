@@ -50,6 +50,7 @@ LENV_ROOT = os.path.expanduser('~/.lenv')
 LENV_EXE = os.path.join(LENV_ROOT, 'bin', 'lenv')
 DEFAULT_LUA_VERSION = '5.3'
 IN_CI_ENVIRONMENT = os.getenv('CI') == 'true'
+REQUIRED_ROCKS = {'busted', 'lcurses'}
 
 
 class ErrorExit(Exception):
@@ -148,9 +149,10 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         'LUA_SHORT_VERSION': short_version,
         'LUA_LIB_PATH': os.path.join(base_dir, 'lib'),
         'LUA_INCLUDE_PATH': os.path.join(base_dir, 'include'),
+        'LUA_EXE': os.path.join(base_dir, 'bin', 'lua'),
         'UNICORN_LIB_PATH': args.uc_lib  or '.',
         'UNICORN_INCLUDE_PATH': args.uc_headers or '.',
-        'LUAROCKS_BIN_PATH': os.path.join(base_dir, 'bin', 'luarocks'),
+        'LUAROCKS_EXE': os.path.join(base_dir, 'bin', 'luarocks'),
         'BUSTED_EXE': os.path.join(base_dir, 'bin', 'busted'),
         'C_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.c')),
         'C_HEADER_FILES': ' '.join(recursive_enum_files('include', '*.h')),
@@ -274,8 +276,11 @@ def main():
         run([LENV_EXE, 'install', install_version, lua_platform])
         lua_base_dir = os.path.join(LENV_ROOT, 'lua', install_version)
 
-    LOG.info('Installing required rocks...')
-    run([os.path.join(lua_base_dir, 'bin', 'luarocks'), 'install', 'busted'])
+    LOG.info('Installing required Lua rocks...')
+    luarocks_exe = os.path.join(lua_base_dir, 'bin', 'luarocks')
+    for i, rock in enumerate(REQUIRED_ROCKS, start=1):
+        LOG.info('Rock %d of %d: %s', i, len(REQUIRED_ROCKS), rock)
+        run([luarocks_exe, 'install', rock])
 
     LOG.info('Generating Makefile parameters...')
     generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
