@@ -160,11 +160,15 @@ This project has the following dependencies. Ensure you have them installed
 before using.
 
 * Configuration:
+
   * Python 3.3 or higher
   * `lenv`_ for testing on multiple versions of Lua
+
 * For building and running:
+
   * ``make``, either the GNU version or a compatible implementation
   * `Unicorn CPU Emulator`_ library must be installed or at least built
+
 * Some examples have additional dependencies; see their READMEs for details.
 
 Configuration
