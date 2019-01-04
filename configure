@@ -142,10 +142,11 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         busted_cli_args = '--exclude-tags="int64only"'
 
     x86_asm, x86_asm_flags = detect_x86_assembler()
+    ext = PLATFORM_LIB_EXTENSIONS[platform]
 
     cpath = [
-        os.path.join(base_dir, 'lib', 'lua', short_version, '?.$(LIB_EXTENSION)'),
-        os.getenv('LUA_CPATH', '')
+        os.path.join(base_dir, 'lib', 'lua', short_version, '?.' + ext),
+        os.path.join(base_dir, 'luarocks', 'lib', '?.' + ext),
     ]
 
     variables = {
