@@ -134,15 +134,15 @@ int ul_free(lua_State *L) {
 
 int ul_context_alloc(lua_State *L) {
     uc_engine *engine;
-    uc_context **context;
+    uc_context *context;
     int error;
 
     engine = ul_toengine(L, 1);
 
-    context = (uc_context **)lua_newuserdata(L, sizeof(*context));
+    context = (uc_context *)lua_newuserdata(L, sizeof(context));
     luaL_setmetatable(L, kContextMetatableName);
 
-    error = uc_context_alloc(engine, context);
+    error = uc_context_alloc(engine, &context);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
@@ -217,7 +217,6 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
 
 int luaopen_unicorn(lua_State *L) {
     ul_init_engines_lib(L);
-    ul_init_hooks_lib(L);
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);

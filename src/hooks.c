@@ -7,9 +7,6 @@
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
-const char * const kHookMapName = "unicornlua__hook_map";
-const char * const kHookMetatableName = "unicornlua__hook_meta";
-
 
 typedef struct {
     lua_State *L;
@@ -23,23 +20,7 @@ typedef struct {
 static void _get_callback_for_hook(const HookInfo *hook_data);
 static void _get_hook_table_for_engine(lua_State *L, int index);
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index);
-static int _remove_hook(lua_State *L);
 static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
-
-
-static const luaL_Reg kHookMetamethods[] = {
-    {"__gc", _remove_hook},
-    {NULL, NULL}
-};
-
-
-void ul_init_hooks_lib(lua_State *L) {
-    luaL_newmetatable(L, kHookMetatableName);
-    luaL_setfuncs(L, kHookMetamethods, 0);
-
-    /* Remove the metatable from the stack. */
-    lua_pop(L, 1);
-}
 
 
 static void _get_hook_table_for_engine(lua_State *L, int index) {
@@ -57,8 +38,6 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) 
     _get_hook_table_for_engine(L, eng_index);
 
     hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
-    luaL_setmetatable(L, kHookMetatableName);
-
     hook_info->L = L;
     hook_info->engine = ul_toengine(L, eng_index);
     hook_info->hook = 0;
@@ -79,23 +58,6 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) 
     lua_settable(L, -3);
 
     return hook_info;
-}
-
-
-static int _remove_hook(lua_State *L) {
-    HookInfo *hook_info;
-
-    hook_info = (HookInfo *)luaL_checkudata(L, 1, kHookMetatableName);
-
-    /* ul_hook_del expects the engine as the first argument, so we need to
-     * add it here. */
-    ul_get_engine_object(L, hook_info->engine);
-
-    /* TOS is the engine, hook object is underneath it. We need the engine as
-     * the first argument, hook object as the second. */
-    lua_swaptoptwo(L);
-
-    return ul_hook_del(L);
 }
 
 
@@ -343,10 +305,19 @@ int ul_hook_add(lua_State *L) {
 
 
 int ul_hook_del(lua_State *L) {
+    ul_hook_del_by_indexes(L, 1, 2);
+    return 0;
+}
+
+
+int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index) {
     int error;
     HookInfo *hook_info;
 
-    hook_info = (HookInfo *)luaL_checklightuserdata(L, 2);
+    engine_index = lua_absindex(L, engine_index);
+    hook_handle_index = lua_absindex(L, hook_handle_index);
+
+    hook_info = (HookInfo *)luaL_checklightuserdata(L, hook_handle_index);
 
     /* Remove the hard reference to the hook's callback function, and overwrite
      * the reference ID in the C struct. This way, accidental reuse of the hook
@@ -363,13 +334,16 @@ int ul_hook_del(lua_State *L) {
 
     /* Get the hook object table for this engine so we can remove the hook
      * object. */
-    _get_hook_table_for_engine(L, 1);
+    _get_hook_table_for_engine(L, engine_index);
 
     /* TOS is the hook table for this engine. Find the hook object associated
      * with the hook ID and remove it from the table. */
     lua_pushlightuserdata(L, (void *)hook_info);
     lua_pushnil(L);
     lua_settable(L, -3);
+
+    /* Remove the hook table from the stack. */
+    lua_pop(L, 1);
 
     return 0;
 }

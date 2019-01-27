@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/engine.h"
@@ -89,12 +87,14 @@ void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
 }
 
 
-void ul_free_engine_object(lua_State *L, int index) {
+void ul_free_engine_object(lua_State *L, int engine_index) {
     UCLuaEngine *engine_object;
-    int error;
+    int error, hook_table_index;
+
+    engine_index = lua_absindex(L, engine_index);
 
     /* Deliberately not using ul_toengine, see below. */
-    engine_object = (UCLuaEngine *)luaL_checkudata(L, index, kEngineMetatableName);
+    engine_object = (UCLuaEngine *)luaL_checkudata(L, engine_index, kEngineMetatableName);
 
     /* If the engine is already closed, don't try closing it again. Since the
      * engine is automatically closed when it gets garbage collected, if the
@@ -102,6 +102,22 @@ void ul_free_engine_object(lua_State *L, int index) {
      * already-closed engine. */
     if (engine_object->engine == NULL)
         return;
+
+    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
+    hook_table_index = lua_absindex(L, -1);
+
+    /* Release all hooks */
+    lua_pushnil(L);
+    while ((lua_next(L, hook_table_index)) != 0) {
+        /* Hook object at TOS, light userdata used by Lua underneath it. */
+        ul_hook_del_by_indexes(L, engine_index, -2);
+        lua_pop(L, 1);
+    }
+
+    /* Remove hook table from stack and free it. */
+    lua_pop(L, 1);
+    luaL_unref(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
+    engine_object->hook_table_ref = LUA_NOREF;
 
     error = uc_close(engine_object->engine);
     if (error != UC_ERR_OK)
@@ -114,10 +130,6 @@ void ul_free_engine_object(lua_State *L, int index) {
     lua_pushnil(L);
     lua_settable(L, -3);
     lua_pop(L, 1);          /* Remove pointer map */
-
-    /* Free the hook table. TODO: Release the hooks. */
-    luaL_unref(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
-    engine_object->hook_table_ref = LUA_NOREF;
 
     /* Clear out the engine pointer so we know it's closed now. */
     engine_object->engine = NULL;

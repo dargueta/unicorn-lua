@@ -21,7 +21,7 @@ int ul_crash_on_error(lua_State *L, int error) {
 uc_context *ul_tocontext(lua_State *L, int index) {
     uc_context *context;
 
-    context = *(uc_context **)luaL_checkudata(L, index, kContextMetatableName);
+    context = (uc_context *)luaL_checkudata(L, index, kContextMetatableName);
     if (context == NULL)
         luaL_error(L, "Attempted to use closed context.");
     return context;
