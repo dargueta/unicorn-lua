@@ -104,7 +104,10 @@ const struct NamedIntConst kGlobalsConstants[] = {
 
     {"UC_QUERY_MODE", UC_QUERY_MODE},
     {"UC_QUERY_PAGE_SIZE", UC_QUERY_PAGE_SIZE},
-    /* {"UC_QUERY_ARCH", UC_QUERY_ARCH}, */
+
+#ifdef UC_QUERY_ARCH
+    {"UC_QUERY_ARCH", UC_QUERY_ARCH},
+#endif
 
     {"UC_PROT_NONE", UC_PROT_NONE},
     {"UC_PROT_READ", UC_PROT_READ},
