@@ -107,8 +107,12 @@ int ul_reg_read_batch(lua_State *L) {
     memset(values, 0, n_registers * sizeof(*values));
     error = uc_reg_read_batch(engine, registers, p_values, n_registers);
 
-    if (error != UC_ERR_OK)
+    if (error != UC_ERR_OK) {
+        free(registers);
+        free(values);
+        free(p_values);
         return ul_crash_on_error(L, error);
+    }
 
     for (i = 0; i < n_registers; ++i)
         lua_pushinteger(L, values[i]);
