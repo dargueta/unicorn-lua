@@ -149,6 +149,16 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         os.path.join(base_dir, 'luarocks', 'lib', '?.' + ext),
     ]
 
+    # Don't list any source files if the user doesn't have a supported x86
+    # assembler. This avoids running commands like "-o output input".
+    if x86_asm:
+        LOG.info('Found x86 assembler: %s', x86_asm)
+        x86_source_files = ' '.join(recursive_enum_files('docs', '*.asm'))
+    else:
+        LOG.warning('No x86 assembler found, ignoring all *.asm files. Some '
+                    'example programs may not be available.')
+        x86_source_files = ''
+
     variables = {
         'REPO_ROOT': os.path.abspath(os.getcwd()),
         'LUA_VERSION': install_version,
@@ -164,7 +174,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         'C_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.c')),
         'C_HEADER_FILES': ' '.join(recursive_enum_files('include', '*.h')),
         'LUA_SOURCE_FILES': ' '.join(recursive_enum_files('src', '*.lua')),
-        'X86_ASM_SOURCE_FILES': ' '.join(recursive_enum_files('docs', '*.asm')),
+        'X86_ASM_SOURCE_FILES': x86_source_files,
         'BUSTED_CLI_ARGS': busted_cli_args,
         'LIB_EXTENSION': PLATFORM_LIB_EXTENSIONS[platform],
         'PLATFORM': platform,
@@ -291,6 +301,11 @@ def main():
 
     LOG.info('Generating Makefile parameters...')
     generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
+
+    # Remove all build artifacts from a previous build, since we're probably
+    # switching Lua versions.
+    LOG.info('Cleaning up...')
+    run(['make', 'clean'])
 
 
 if __name__ == '__main__':

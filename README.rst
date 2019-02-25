@@ -187,10 +187,6 @@ using the ``configure`` script:
 
 For details on other customization options, run ``python3 configure --help``.
 
-**Important:** After running ``configure``, you **must** run ``make clean`` to
-remove any build artifacts that may have been built for a different version of
-Lua.
-
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
