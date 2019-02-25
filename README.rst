@@ -196,7 +196,8 @@ script, just a list.
 .. code-block:: sh
 
     make            # Build the project, including libraries and examples
-    make clean      # Delete all build artifacts, needed when you change Lua versions
+    make clean      # Delete all build artifacts
+    make docs       # Build the documentation pages
     make examples   # Build but do not run examples (that must be done manually)
     make test       # Run all unit tests
 

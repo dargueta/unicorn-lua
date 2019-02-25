@@ -8,11 +8,23 @@
 #include "unicornlua/utils.h"
 
 
+/**
+ * A struct used for holding information about an active hook.
+ */
 typedef struct {
-    lua_State *L;
-    uc_engine *engine;
-    uc_hook hook;
+    lua_State *L;           /**< The Lua state used by this hook. */
+    uc_engine *engine;      /**< The engine this hook is bound to. */
+    uc_hook hook;           /**< The hook handle used by Unicorn. */
+
+    /**
+     * A reference in the global registry for this hook's callback function.
+     */
     int callback_func_ref;
+
+    /**
+     * A reference in the global registry to a user-defined object to pass to
+     * this hook's callback function.
+     */
     int user_data_ref;
 } HookInfo;
 

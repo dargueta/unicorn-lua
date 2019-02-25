@@ -19,6 +19,8 @@ TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 CFLAGS += -c -Wall -Werror -Wextra -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
+DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
+
 ifeq ($(PLATFORM), macosx)
 	LDFLAGS += -dylib
 else
@@ -36,8 +38,14 @@ all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE) $(X86_BINARY_IMAG
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECT_BASE) $(X86_BINARY_IMAGES) $(OBJECTS)
+	rm -rf $(OBJECT_BASE) $(X86_BINARY_IMAGES) $(OBJECTS) $(DOXYGEN_OUTPUT_BASE)
 
+
+.PHONY: docs
+docs: $(DOXYGEN_OUTPUT_BASE)
+
+$(DOXYGEN_OUTPUT_BASE): $(C_SOURCE_FILES) $(C_HEADER_FILES) Doxyfile
+	doxygen
 
 .PHONY: test_c
 test_c: $(SHARED_LIB_FILE)

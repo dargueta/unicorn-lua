@@ -1,5 +1,5 @@
 /**
- * Compatibility shims for differences between Lua versions
+ * Compatibility shims for differences between Lua versions.
  *
  * @file compat.h
  */
@@ -19,11 +19,11 @@
 
 /* Compatibility stuff for Lua < 5.2 */
 #if LUA_VERSION_NUM < 502
-    /* This is more or less how lua_Unsigned is defined in Lua 5.2. */
+    /* This is more or less how `lua_Unsigned` is defined in Lua 5.2. */
     #ifdef LUAI_UINT32
         typedef LUAI_UINT32 lua_Unsigned;
     #else
-        /*LuaJIT doesn't define LUAI_UINT32 so we need to do it ourselves. */
+        /*LuaJIT doesn't define `LUAI_UINT32` so we need to do it ourselves. */
         typedef unsigned int lua_Unsigned;
     #endif
 
@@ -33,7 +33,7 @@
     /**
      * A partial replacement for Lua 5.2+ @e lua_len.
      *
-     * @warning This DOES NOT invoke the __len metamethod, and as of right now
+     * @warning This DOES NOT invoke the `__len` metamethod, and as of right now
      *          this library doesn't need it so it won't be supported.
      */
     LUA_API void lua_len(lua_State *L, int index);
@@ -41,7 +41,7 @@
     LUA_API int luaL_len(lua_State *L, int index);
 
     /**
-     * Implementation of Lua 5.2+ @e lua_absindex.
+     * Implementation of Lua 5.2+ `lua_absindex`.
      */
     LUA_API int lua_absindex(lua_State *L, int index);
 
