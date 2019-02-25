@@ -205,10 +205,8 @@ static int _load_int_constants(lua_State *L, const struct NamedIntConst *constan
     int i;
 
     for (i = 0; constants[i].name != NULL; ++i) {
-        /* For some reason I can't get lua_setfield() to work. */
-        lua_pushstring(L, constants[i].name);
         lua_pushinteger(L, constants[i].value);
-        lua_settable(L, -3);
+        lua_setfield(L, -2, constants[i].name);
     }
 
     return i;
