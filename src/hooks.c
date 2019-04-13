@@ -11,7 +11,7 @@
 /**
  * A struct used for holding information about an active hook.
  */
-typedef struct {
+struct HookInfo_ {
     lua_State *L;           /**< The Lua state used by this hook. */
     uc_engine *engine;      /**< The engine this hook is bound to. */
     uc_hook hook;           /**< The hook handle used by Unicorn. */
@@ -26,16 +26,14 @@ typedef struct {
      * this hook's callback function.
      */
     int user_data_ref;
-} HookInfo;
+};
 
 
-static void _get_callback_for_hook(const HookInfo *hook_data);
-static void _get_hook_table_for_engine(lua_State *L, int index);
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index);
 static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
-static void _get_hook_table_for_engine(lua_State *L, int index) {
+void ul_hook_get_hook_table(lua_State *L, int index) {
     UCLuaEngine *engine_object = luaL_checkudata(L, index, kEngineMetatableName);
     lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
 
@@ -47,7 +45,7 @@ static void _get_hook_table_for_engine(lua_State *L, int index) {
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
     HookInfo *hook_info;
 
-    _get_hook_table_for_engine(L, eng_index);
+    ul_hook_get_hook_table(L, eng_index);
 
     hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
     hook_info->L = L;
@@ -73,7 +71,7 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) 
 }
 
 
-static void _get_callback_for_hook(const HookInfo *hook_data) {
+void ul_hook_get_callback(const HookInfo *hook_data) {
     lua_State *L = hook_data->L;
 
     lua_geti(L, LUA_REGISTRYINDEX, hook_data->callback_func_ref);
@@ -88,7 +86,7 @@ static void code_hook(uc_engine *uc, uint64_t address, uint32_t size,
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -103,7 +101,7 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -119,7 +117,7 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -140,7 +138,7 @@ static void port_out_hook(uc_engine *uc, uint32_t port, int size, uint32_t value
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -157,7 +155,7 @@ static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -177,7 +175,7 @@ static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
-    _get_callback_for_hook((HookInfo *)user_data);
+    ul_hook_get_callback((HookInfo *)user_data);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -346,7 +344,7 @@ int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index
 
     /* Get the hook object table for this engine so we can remove the hook
      * object. */
-    _get_hook_table_for_engine(L, engine_index);
+    ul_hook_get_hook_table(L, engine_index);
 
     /* TOS is the hook table for this engine. Find the hook object associated
      * with the hook ID and remove it from the table. */
