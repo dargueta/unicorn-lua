@@ -1,7 +1,6 @@
 *.o
 *.so
 *.a
-*.x86.bin
 .git/
 bin/
 .downloaded/
