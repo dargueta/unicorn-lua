@@ -1,4 +1,6 @@
 /**
+ * The primary Unicorn Lua header needed by all C code using the library.
+ *
  * @file unicornlua.h
  */
 
@@ -16,9 +18,14 @@
 #endif
 
 /**
+ * Determine if the given architecture is supported on this platform.
  *
+ * Usage:
+ *
+ *      unicorn.arch_supported(unicorn.UC_ARCH_ARM)
  */
 int ul_arch_supported(lua_State *L);
+
 int ul_close(lua_State *L);
 int ul_context_alloc(lua_State *L);
 int ul_context_restore(lua_State *L);

@@ -9,6 +9,9 @@
 
 #include "unicornlua/lua.h"
 
+/**
+ * Write to an architecture register.
+ */
 int ul_reg_write(lua_State *L);
 int ul_reg_read(lua_State *L);
 int ul_reg_write_batch(lua_State *L);
