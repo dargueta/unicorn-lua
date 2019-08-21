@@ -20,7 +20,6 @@ int ul_mem_write(lua_State *L) {
     error = uc_mem_write(engine, address, data, length);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
-
     return 0;
 }
 
@@ -37,6 +36,8 @@ int ul_mem_read(lua_State *L) {
     length = (size_t)luaL_checkinteger(L, 3);
 
     data = malloc(length);
+    if (!data)
+        return luaL_error(L, "Out of memory.");
 
     error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {

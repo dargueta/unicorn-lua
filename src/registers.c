@@ -20,7 +20,6 @@ int ul_reg_write(lua_State *L) {
     error = uc_reg_write(engine, register_id, &value);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
-
     return 0;
 }
 
@@ -55,14 +54,25 @@ int ul_reg_write_batch(lua_State *L) {
      * corresponding registers. */
 
     /* Count the number of items in the table so we can allocate the buffers of
-     * the right size. */
+     * the right size. We can't use luaL_len() because that doesn't tell us how
+     * many keys there are in the table, only entries in the array part. */
     lua_pushnil(L);
     for (n_registers = 0; lua_next(L, 2) != 0; ++n_registers)
         lua_pop(L, 1);
 
     registers = (int *)malloc(n_registers * sizeof(*registers));
     values = (lua_Unsigned *)malloc(n_registers * sizeof(*values));
+    p_values = (void **)malloc(n_registers * sizeof(*p_values));
 
+    if (!registers || !values || !p_values) {
+        free(registers);
+        free(values);
+        free(p_values);
+        return luaL_error(L, "Out of memory.");
+    }
+
+    /* Iterate through the register/value pairs and put them in the corresponding
+     * array positions. */
     lua_pushnil(L);
     for (i = 0; lua_next(L, 2) != 0; ++i) {
         registers[i] = luaL_checkinteger(L, -2);
@@ -70,7 +80,8 @@ int ul_reg_write_batch(lua_State *L) {
         lua_pop(L, 1);
     }
 
-    p_values = (void **)malloc(n_registers * sizeof(*p_values));
+    /* p_values is an array of pointers to the values we want to set, as required
+     * by the library. Set the pointers here. */
     for (i = 0; i < n_registers; ++i)
         p_values[i] = &values[i];
 
@@ -98,6 +109,13 @@ int ul_reg_read_batch(lua_State *L) {
     registers = (int *)malloc(n_registers * sizeof(*registers));
     values = (lua_Integer *)malloc(n_registers * sizeof(*values));
     p_values = (void **)malloc(n_registers * sizeof(*p_values));
+
+    if (!registers || !values || !p_values) {
+        free(registers);
+        free(values);
+        free(p_values);
+        return luaL_error(L, "Out of memory.");
+    }
 
     for (i = 0; i < n_registers; ++i) {
         registers[i] = (int)lua_tointeger(L, i + 2);
