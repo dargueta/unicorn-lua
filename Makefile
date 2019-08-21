@@ -11,6 +11,7 @@ EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
 OBJECTS=$(C_SOURCE_FILES:%.c=%.o)
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
+MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.S=%.mips32.bin)
 
 TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
@@ -79,6 +80,11 @@ run_example: examples
 
 %.x86.bin : %.asm
 	$(X86_ASM) $(X86_ASM_FLAGS) -o $@ $<
+
+
+%.mips32.bin : %.S
+	mips-linux-gnu-as -o $@.o -mips32 -EB $<
+	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
 
 
 $(OBJECT_BASE) :
