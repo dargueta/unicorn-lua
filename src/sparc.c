@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kSPARCConstants[] = {
+
+static const struct NamedIntConst kSPARCConstants[] = {
     {"UC_SPARC_REG_INVALID", UC_SPARC_REG_INVALID},
     {"UC_SPARC_REG_F0", UC_SPARC_REG_F0},
     {"UC_SPARC_REG_F1", UC_SPARC_REG_F1},
@@ -98,3 +100,10 @@ const struct NamedIntConst kSPARCConstants[] = {
 
     {NULL, 0}
 };
+
+
+int luaopen_unicorn_sparc(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kSPARCConstants);
+    return 1;
+}

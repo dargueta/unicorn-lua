@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kM68KConstants[] = {
+
+static const struct NamedIntConst kM68KConstants[] = {
     {"UC_M68K_REG_INVALID", UC_M68K_REG_INVALID},
     {"UC_M68K_REG_A0", UC_M68K_REG_A0},
     {"UC_M68K_REG_A1", UC_M68K_REG_A1},
@@ -26,3 +28,10 @@ const struct NamedIntConst kM68KConstants[] = {
 
     {NULL, 0}
 };
+
+
+int luaopen_unicorn_m68k(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kM68KConstants);
+    return 1;
+}

@@ -4,17 +4,11 @@
 
 #include "unicornlua/common.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/globals.h"
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
-#include "unicornlua/constants/arm.h"
-#include "unicornlua/constants/arm64.h"
-#include "unicornlua/constants/globals.h"
-#include "unicornlua/constants/m68k.h"
-#include "unicornlua/constants/mips.h"
-#include "unicornlua/constants/sparc.h"
-#include "unicornlua/constants/x86.h"
 
 const char * const kContextMetatableName = "unicornlua__context_meta";
 
@@ -201,18 +195,6 @@ static const luaL_Reg kContextMetamethods[] = {
 };
 
 
-static int _load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
-    int i;
-
-    for (i = 0; constants[i].name != NULL; ++i) {
-        lua_pushinteger(L, constants[i].value);
-        lua_setfield(L, -2, constants[i].name);
-    }
-
-    return i;
-}
-
-
 int luaopen_unicorn(lua_State *L) {
     ul_init_engines_lib(L);
 
@@ -220,48 +202,6 @@ int luaopen_unicorn(lua_State *L) {
     luaL_setfuncs(L, kContextMetamethods, 0);
 
     luaL_newlib(L, kUnicornLibraryFunctions);
-    _load_int_constants(L, kGlobalsConstants);
-    return 1;
-}
-
-
-int luaopen_unicorn_arm64(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kARM64Constants);
-    return 1;
-}
-
-
-int luaopen_unicorn_arm(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kARMConstants);
-    return 1;
-}
-
-
-int luaopen_unicorn_m68k(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kM68KConstants);
-    return 1;
-}
-
-
-int luaopen_unicorn_mips(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kMIPSConstants);
-    return 1;
-}
-
-
-int luaopen_unicorn_sparc(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kSPARCConstants);
-    return 1;
-}
-
-
-int luaopen_unicorn_x86(lua_State *L) {
-    lua_newtable(L);
-    _load_int_constants(L, kX86Constants);
+    load_int_constants(L, kGlobalsConstants);
     return 1;
 }

@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kX86Constants[] = {
+
+static const struct NamedIntConst kX86Constants[] = {
     {"UC_X86_REG_INVALID", UC_X86_REG_INVALID},
     {"UC_X86_REG_AH", UC_X86_REG_AH},
     {"UC_X86_REG_AL", UC_X86_REG_AL},
@@ -1596,3 +1598,9 @@ const struct NamedIntConst kX86Constants[] = {
     {NULL, 0},
 };
 
+
+int luaopen_unicorn_x86(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kX86Constants);
+    return 1;
+}

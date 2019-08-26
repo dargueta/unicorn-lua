@@ -2,6 +2,7 @@
 
 #include "unicornlua/common.h"
 
+
 const struct NamedIntConst kGlobalsConstants[] = {
     {"UC_API_MAJOR", UC_API_MAJOR},
     {"UC_API_MINOR", UC_API_MINOR},

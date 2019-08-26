@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kMIPSConstants[] = {
+
+static const struct NamedIntConst kMIPSConstants[] = {
     {"UC_MIPS_REG_INVALID", UC_MIPS_REG_INVALID},
     {"UC_MIPS_REG_PC", UC_MIPS_REG_PC},
     {"UC_MIPS_REG_0", UC_MIPS_REG_0},
@@ -185,3 +187,10 @@ const struct NamedIntConst kMIPSConstants[] = {
 
     {NULL, 0}
 };
+
+
+int luaopen_unicorn_mips(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kMIPSConstants);
+    return 1;
+}

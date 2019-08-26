@@ -2,7 +2,9 @@
 
 #include <unicorn/unicorn.h>
 
+#include "unicornlua/common.h"
 #include "unicornlua/lua.h"
+
 
 extern const char * const kEngineMetatableName;
 extern const char * const kContextMetatableName;
@@ -53,4 +55,16 @@ int luaL_checkboolean(lua_State *L, int index) {
 void *luaL_checklightuserdata(lua_State *L, int index) {
     luaL_checktype(L, index, LUA_TLIGHTUSERDATA);
     return lua_touserdata(L, index);
+}
+
+
+int load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
+    int i;
+
+    for (i = 0; constants[i].name != NULL; ++i) {
+        lua_pushinteger(L, constants[i].value);
+        lua_setfield(L, -2, constants[i].name);
+    }
+
+    return i;
 }

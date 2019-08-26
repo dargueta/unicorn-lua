@@ -3,8 +3,6 @@ include Makefile.in
 INCLUDE_BASE=$(REPO_ROOT)/include
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
 SRC_BASE=$(REPO_ROOT)/src
-CONST_SRC_BASE=$(SRC_BASE)/constants
-CONST_HDR_BASE=$(INCLUDE_UC_BASE)/constants
 OBJECT_BASE=$(REPO_ROOT)/bin
 EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples
 
@@ -91,13 +89,13 @@ $(OBJECT_BASE) :
 	mkdir -p $(OBJECT_BASE)
 
 
-$(SRC_BASE)/constants/arm.o: $(CONST_SRC_BASE)/arm.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm.h
-$(SRC_BASE)/constants/arm64.o: $(CONST_SRC_BASE)/arm64.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/arm64.h
-$(SRC_BASE)/constants/globals.o: $(CONST_SRC_BASE)/globals.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/globals.h
-$(SRC_BASE)/constants/m68k.o: $(CONST_SRC_BASE)/m68k.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/m68k.h
-$(SRC_BASE)/constants/mips.o: $(CONST_SRC_BASE)/mips.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/mips.h
-$(SRC_BASE)/constants/sparc.o: $(CONST_SRC_BASE)/sparc.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/sparc.h
-$(SRC_BASE)/constants/x86.o: $(CONST_SRC_BASE)/x86.c $(GLOBAL_HEADERS) $(CONST_HDR_BASE)/x86.h
+$(SRC_BASE)/arm.o: $(SRC_BASE)/arm.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/arm64.o: $(SRC_BASE)/arm64.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/globals.o: $(SRC_BASE)/globals.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/m68k.o: $(SRC_BASE)/m68k.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/mips.o: $(SRC_BASE)/mips.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/sparc.o: $(SRC_BASE)/sparc.c $(GLOBAL_HEADERS)
+$(SRC_BASE)/x86.o: $(SRC_BASE)/x86.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/compat.o: $(SRC_BASE)/compat.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/engine.o: $(SRC_BASE)/engine.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
 $(SRC_BASE)/hooks.o: $(SRC_BASE)/hooks.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)

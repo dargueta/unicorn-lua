@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kARMConstants[] = {
+
+static const struct NamedIntConst kARMConstants[] = {
     {"UC_ARM_REG_INVALID", UC_ARM_REG_INVALID},
     {"UC_ARM_REG_APSR", UC_ARM_REG_APSR},
     {"UC_ARM_REG_APSR_NZCV", UC_ARM_REG_APSR_NZCV},
@@ -128,3 +130,10 @@ const struct NamedIntConst kARMConstants[] = {
 
     {NULL, 0}
 };
+
+
+int luaopen_unicorn_arm(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kARMConstants);
+    return 1;
+}

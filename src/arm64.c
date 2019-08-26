@@ -1,8 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/lua.h"
 
-const struct NamedIntConst kARM64Constants[] = {
+
+static const struct NamedIntConst kARM64Constants[] = {
     {"UC_ARM64_REG_INVALID", UC_ARM64_REG_INVALID},
     {"UC_ARM64_REG_X29", UC_ARM64_REG_X29},
     {"UC_ARM64_REG_X30", UC_ARM64_REG_X30},
@@ -288,3 +290,10 @@ const struct NamedIntConst kARM64Constants[] = {
 
     {NULL, 0}
 };
+
+
+int luaopen_unicorn_arm64(lua_State *L) {
+    lua_newtable(L);
+    load_int_constants(L, kARM64Constants);
+    return 1;
+}
