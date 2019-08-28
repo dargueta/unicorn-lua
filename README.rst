@@ -65,6 +65,15 @@ numbers, e.g.
 This doesn't affect how arguments are passed *to* the library, only values returned
 *from* the library.
 
+Floating-point Registers
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Straight-up don't work. Everything is read as an integer so you're going to get
+back whatever the binary representation of a floating-point integer is on your
+machine, which can differ between architectures. This is fixable, but is going
+to be tedious and error-prone for architectures other than x86 and MIPS because
+I'm not as familiar with those.
+
 Big-Endian Hosts
 ~~~~~~~~~~~~~~~~
 
