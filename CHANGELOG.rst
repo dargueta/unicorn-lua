@@ -1,6 +1,26 @@
 Changes
 =======
 
+1.0b3 (unreleased)
+------------------
+
+* Changed MIPS file extension from ``*.S`` to ``*.s``.
+* Documented floating-point limitation in repo's README.
+
+Significant refactor
+~~~~~~~~~~~~~~~~~~~~
+
+All files from ``src/constants`` were moved into ``src``, and the submodule
+initialization functions were moved from ``unicornlua.c`` into their respective
+submodules.
+
+The corresponding headers under ``unicornlua/constants`` were all deleted except
+``globals.h``, which was moved up to ``unicornlua``. All constant declaration
+arrays were made static.
+
+This refactor allows us to easily put architecture-specific functions inside the
+submodules instead of only having constants in there.
+
 1.0b2 (2019-08-21)
 ------------------
 

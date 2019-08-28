@@ -182,7 +182,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
     mips_asm, mips_flags = detect_mips_toolchain()
     if mips_asm:
         LOG.info("Found MIPS toolchain: %s", mips_asm)
-        mips_source_files = " ".join(recursive_enum_files("docs", "*.S"))
+        mips_source_files = " ".join(recursive_enum_files("docs", "*.s"))
     else:
         LOG.warning(
             "No MIPS toolchain found, ignoring all *.S files. Some example programs"
