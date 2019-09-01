@@ -95,7 +95,7 @@ def parse_args():
         choices=tuple(SUPPORTED_LUA_VERSIONS),
         default=default_lua_version,
         help="The Lua version to use. If not given, defaults to the system Lua's"
-        "version, or %s if Lua isn't installed at all. Supported values: %s"
+        " version, or %s if Lua isn't installed at all. Supported values: %s"
         % (DEFAULT_LUA_VERSION, ", ".join(SUPPORTED_LUA_VERSIONS)),
     )
     parser.add_argument(
@@ -116,7 +116,6 @@ def parse_args():
         help="The path to the Unicorn shared library.",
         default=default_uc_lib,
     )
-
     return parser.parse_args()
 
 
@@ -178,7 +177,6 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         )
         x86_source_files = ""
 
-    # TODO (dargueta): Detect MIPS cross-compiler somehow
     mips_asm, mips_flags = detect_mips_toolchain()
     if mips_asm:
         LOG.info("Found MIPS toolchain: %s", mips_asm)
@@ -233,7 +231,7 @@ def main():
     if not exe_paths["perl"]:
         raise ErrorExit(
             "Perl doesn't seem to be installed, but is required by lenv. Please install"
-            "it."
+            " it."
         )
 
     args = parse_args()
@@ -255,7 +253,7 @@ def main():
             elif not paths:
                 raise ErrorExit(
                     "Can't infer Unicorn header path, you must pass --uc-headers to"
-                    "this command."
+                    " this command."
                 )
 
             # Strip off last two path components, the unicorn/unicorn.h part. We
@@ -265,7 +263,7 @@ def main():
         else:
             raise ErrorExit(
                 "Can't infer Unicorn header path, you must pass --uc-headers to this"
-                "command."
+                " command."
             )
 
     if not args.uc_lib:
@@ -285,7 +283,7 @@ def main():
             elif not paths:
                 raise ErrorExit(
                     "Can't infer Unicorn library path, you must pass --uc-lib to this"
-                    "command."
+                    " command."
                 )
 
             # Strip off last two path components, the unicorn/unicorn.h part. We
@@ -295,27 +293,27 @@ def main():
         else:
             raise ErrorExit(
                 "Can't infer Unicorn library path, you must pass --uc-lib to this"
-                "command."
+                " command."
             )
 
     if not os.path.exists(LENV_EXE):
         raise ErrorExit(
-            "Can't find `lenv` executable. Please install it, following the "
-            "instructions here: https://github.com/mah0x211/lenv"
+            "Can't find `lenv` executable. Please install it, following the"
+            " instructions here: https://github.com/mah0x211/lenv"
         )
 
     if not args.lua_version:
         if not exe_paths["lua"]:
             LOG.warning(
                 "Can't find Lua executable and desired version number not given."
-                "Defaulting to %s.",
+                " Defaulting to %s.",
                 DEFAULT_LUA_VERSION,
             )
             args.lua_version = DEFAULT_LUA_VERSION
         else:
             LOG.info(
                 "No version number or Lua executable given, defaulting to the system"
-                "version."
+                " version."
             )
             args.lua_version = get_system_lua_version(exe_paths["lua"])
             LOG.info("Using Lua version %s", args.lua_version)
