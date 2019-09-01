@@ -80,7 +80,7 @@ run_example: examples
 	$(X86_ASM) $(X86_ASM_FLAGS) -o $@ $<
 
 
-%.mips32.bin : %.S
+%.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
 

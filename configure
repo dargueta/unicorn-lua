@@ -185,7 +185,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         mips_source_files = " ".join(recursive_enum_files("docs", "*.s"))
     else:
         LOG.warning(
-            "No MIPS toolchain found, ignoring all *.S files. Some example programs"
+            "No MIPS toolchain found, ignoring all *.s files. Some example programs"
             "may not be available."
         )
         mips_source_files = ""
