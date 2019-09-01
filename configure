@@ -51,6 +51,7 @@ LENV_EXE = os.path.join(LENV_ROOT, "bin", "lenv")
 DEFAULT_LUA_VERSION = "5.3"
 IN_CI_ENVIRONMENT = os.getenv("CI") == "true"
 REQUIRED_ROCKS = {"busted", "lcurses"}
+REQUIRED_PYTHON_LIBRARIES = ["pycparser"]
 
 
 class ErrorExit(Exception):
@@ -59,7 +60,13 @@ class ErrorExit(Exception):
 
 def run(*args, text=True, **kwargs):
     kwargs.setdefault("stderr", subprocess.PIPE)
-    rval = subprocess.check_output(*args, **kwargs)
+    try:
+        rval = subprocess.check_output(*args, **kwargs)
+    except subprocess.CalledProcessError as exc:
+        logging.error("Called process `%s` failed.", " ".join(args[0]))
+        print(exc.output.decode("utf-8"))
+        raise
+
     if text:
         return rval.decode("utf-8")
     return rval
@@ -218,6 +225,67 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         fd.write("\n".join("%s=%s" % kv for kv in sorted(variables.items())))
 
 
+def locate_unicorn_headers(exe_paths):
+    if not exe_paths["locate"]:
+        raise ErrorExit(
+            "Can't infer Unicorn header path, you must pass --uc-headers to this"
+            " command."
+        )
+
+    LOG.info("Locating Unicorn headers...")
+    try:
+        out = run([exe_paths["locate"], "unicorn/unicorn.h"])
+    except subprocess.CalledProcessError:
+        out = ""
+
+    paths = [ln.strip() for ln in out.splitlines() if not ln.isspace()]
+    if len(paths) > 1:
+        raise ErrorExit(
+            "--uc-headers not given, found multiple Unicorn header file"
+            " candidates: \n- " + "\n- ".join(paths)
+        )
+    elif not paths:
+        raise ErrorExit(
+            "Can't infer Unicorn header path, you must pass --uc-headers to"
+            " this command."
+        )
+
+    # Strip off last two path components, the unicorn/unicorn.h part. We
+    # only need the containing directory.
+    path = os.path.dirname(paths[0])
+    LOG.info("Inferred Unicorn header path: %s", path)
+    return path
+
+
+def locate_unicorn_library(exe_paths):
+    if not exe_paths["locate"]:
+        raise ErrorExit(
+            "Can't infer Unicorn library path, you must pass --uc-lib to this command."
+        )
+    LOG.info("Locating Unicorn library...")
+    try:
+        out = run([exe_paths["locate"], "libunicorn.a"])
+    except subprocess.CalledProcessError:
+        out = ""
+
+    paths = [ln.strip() for ln in out.splitlines() if not ln.isspace()]
+    if len(paths) > 1:
+        raise ErrorExit(
+            "--uc-lib not given, found multiple Unicorn lib candidates: "
+            "\n- " + "\n- ".join(paths)
+        )
+    elif not paths:
+        raise ErrorExit(
+            "Can't infer Unicorn library path, you must pass --uc-lib to this command."
+        )
+
+    # Strip off last two path components, the unicorn/unicorn.h part. We only need the
+    # containing directory.
+    path = os.path.dirname(paths[0])
+    LOG.info("Inferred Unicorn library path: %s", path)
+    return path
+
+
 def main():
     logging.basicConfig(format="[%(levelname)-5s] %(message)s", level=logging.INFO)
 
@@ -227,7 +295,6 @@ def main():
         lua_platform = "generic"
 
     exe_paths = find_executables()
-
     if not exe_paths["perl"]:
         raise ErrorExit(
             "Perl doesn't seem to be installed, but is required by lenv. Please install"
@@ -235,73 +302,15 @@ def main():
         )
 
     args = parse_args()
-
     if not args.uc_headers:
-        if exe_paths["locate"]:
-            LOG.info("Locating Unicorn headers...")
-            try:
-                out = run([exe_paths["locate"], "unicorn/unicorn.h"])
-            except subprocess.CalledProcessError:
-                out = ""
-
-            paths = [ln.strip() for ln in out.splitlines() if not ln.isspace()]
-            if len(paths) > 1:
-                raise ErrorExit(
-                    "--uc-headers not given, found multiple Unicorn header file"
-                    " candidates: \n- " + "\n- ".join(paths)
-                )
-            elif not paths:
-                raise ErrorExit(
-                    "Can't infer Unicorn header path, you must pass --uc-headers to"
-                    " this command."
-                )
-
-            # Strip off last two path components, the unicorn/unicorn.h part. We
-            # only need the containing directory.
-            args.uc_headers = os.path.dirname(os.path.dirname(paths[0]))
-            LOG.info("Inferred Unicorn header path: %s", args.uc_headers)
-        else:
-            raise ErrorExit(
-                "Can't infer Unicorn header path, you must pass --uc-headers to this"
-                " command."
-            )
-
+        args.uc_headers = locate_unicorn_headers(exe_paths)
     if not args.uc_lib:
-        if exe_paths["locate"]:
-            LOG.info("Locating Unicorn library...")
-            try:
-                out = run([exe_paths["locate"], "libunicorn.a"])
-            except subprocess.CalledProcessError:
-                out = ""
-
-            paths = [ln.strip() for ln in out.splitlines() if not ln.isspace()]
-            if len(paths) > 1:
-                raise ErrorExit(
-                    "--uc-lib not given, found multiple Unicorn lib candidates: "
-                    "\n- " + "\n- ".join(paths)
-                )
-            elif not paths:
-                raise ErrorExit(
-                    "Can't infer Unicorn library path, you must pass --uc-lib to this"
-                    " command."
-                )
-
-            # Strip off last two path components, the unicorn/unicorn.h part. We
-            # only need the containing directory.
-            args.uc_lib = os.path.dirname(paths[0])
-            LOG.info("Inferred Unicorn library path: %s", args.uc_lib)
-        else:
-            raise ErrorExit(
-                "Can't infer Unicorn library path, you must pass --uc-lib to this"
-                " command."
-            )
-
+        args.uc_lib = locate_unicorn_library(exe_paths)
     if not os.path.exists(LENV_EXE):
         raise ErrorExit(
             "Can't find `lenv` executable. Please install it, following the"
             " instructions here: https://github.com/mah0x211/lenv"
         )
-
     if not args.lua_version:
         if not exe_paths["lua"]:
             LOG.warning(
@@ -344,6 +353,9 @@ def main():
     for i, rock in enumerate(REQUIRED_ROCKS, start=1):
         LOG.info("Rock %d of %d: %s", i, len(REQUIRED_ROCKS), rock)
         run([luarocks_exe, "install", rock])
+
+    LOG.info("Installing required Python libraries...")
+    run(["pip3", "install"] + REQUIRED_PYTHON_LIBRARIES)
 
     LOG.info("Generating Makefile parameters...")
     generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
