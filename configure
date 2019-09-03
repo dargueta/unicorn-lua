@@ -96,6 +96,12 @@ def parse_args():
         default_uc_headers = None
 
     parser.add_argument(
+        "--install-path",
+        metavar="PATH",
+        help="The directory to install the compiled Lua library into. Defaults to the"
+        " first directory in the OS's Lua's `packages.cpath`.",
+    )
+    parser.add_argument(
         "--lua",
         metavar="VERSION",
         dest="lua_version",
@@ -131,9 +137,47 @@ def get_system_lua_version(lua_exe):
     return version.rpartition(".")[0]
 
 
+def get_library_file_extension():
+    output = run(["lua", "-e", "print(package.cpath)"])
+    paths = [p for p in output.split(";") if p and not p.isspace()]
+
+    # Each path with a wildcard ("?") in it should end with the system's shared library
+    # file extension.
+    extensions = {os.path.splitext(p)[1] for p in paths if "?" in p}
+
+    if not extensions:
+        raise ErrorExit("Couldn't determine file extension for shared libraries.")
+    if len(extensions) > 1:
+        raise ErrorExit(
+            "More than one possible file extension for shared libraries found: "
+            + ", ".join("`%s`" % e for e in sorted(extensions))
+        )
+
+    ext = extensions.pop().lstrip(".")
+    LOG.info("Inferred shared library file extension: `%s`", ext)
+    return ext
+
+
+def get_default_installation_path():
+    output = run(["lua", "-e", "print(package.cpath)"])
+    paths = [p for p in output.split(";") if p and not p.isspace()]
+
+    # Each path *ending* with "?.<extension>" will be an installation path we can use.
+    # Only take the first one.
+    extension = get_library_file_extension()
+    install_dirs = [os.path.dirname(p) for p in paths if p.endswith("?." + extension)]
+
+    if len(install_dirs) >= 1:
+        LOG.info("Inferred installation directory: " + install_dirs[0])
+        return install_dirs[0]
+    raise ErrorExit(
+        "Couldn't find an installation path for C libraries. You must provide a path"
+        " using the `--install-path` option."
+    )
+
+
 def recursive_enum_files(where, glob="*"):
     all_files = []
-
     for root, _dirnames, filenames in os.walk(where):
         all_files.extend(os.path.join(root, f) for f in fnmatch.filter(filenames, glob))
     return all_files
@@ -165,7 +209,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         busted_cli_args = '--exclude-tags="int64only"'
 
     x86_asm, x86_asm_flags = detect_x86_assembler()
-    ext = PLATFORM_LIB_EXTENSIONS[platform]
+    ext = get_library_file_extension()
 
     cpath = [
         os.path.join(base_dir, "lib", "lua", short_version, "?." + ext),
@@ -191,7 +235,7 @@ def generate_makefile_include(args, install_version, base_dir, platform):
     else:
         LOG.warning(
             "No MIPS toolchain found, ignoring all *.s files. Some example programs"
-            "may not be available."
+            " may not be available."
         )
         mips_source_files = ""
 
@@ -213,12 +257,13 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         "X86_ASM_SOURCE_FILES": x86_source_files,
         "MIPS_ASM_SOURCE_FILES": mips_source_files,
         "BUSTED_CLI_ARGS": busted_cli_args,
-        "LIB_EXTENSION": PLATFORM_LIB_EXTENSIONS[platform],
+        "LIB_EXTENSION": ext,
         "PLATFORM": platform,
         "X86_ASM": x86_asm,
         "X86_ASM_FLAGS": x86_asm_flags,
         "MIPS_ASM": mips_asm,
         "MIPS_ASM_FLAGS": mips_flags,
+        "INSTALLATION_PATH": args.install_path or get_default_installation_path(),
     }
 
     with open("Makefile.in", "w") as fd:
@@ -241,13 +286,13 @@ def locate_unicorn_headers(exe_paths):
     paths = [ln.strip() for ln in out.splitlines() if not ln.isspace()]
     if len(paths) > 1:
         raise ErrorExit(
-            "--uc-headers not given, found multiple Unicorn header file"
-            " candidates: \n- " + "\n- ".join(paths)
+            "--uc-headers not given, found multiple Unicorn header file candidates:"
+            "\n- " + "\n- ".join(paths)
         )
     elif not paths:
         raise ErrorExit(
-            "Can't infer Unicorn header path, you must pass --uc-headers to"
-            " this command."
+            "Can't infer Unicorn header path, you must pass --uc-headers to this"
+            " command."
         )
 
     # Strip off last two path components, the unicorn/unicorn.h part. We
