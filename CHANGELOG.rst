@@ -6,6 +6,8 @@ Changes
 
 * Changed MIPS file extension from ``*.S`` to ``*.s``.
 * Documented floating-point limitation in repo's README.
+* Overhauled ``configure`` script to allow using the operating system's Lua installation. Using a
+  virtual environment is no longer forced.
 
 Significant refactor
 ~~~~~~~~~~~~~~~~~~~~
