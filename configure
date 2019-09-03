@@ -38,14 +38,6 @@ PLATFORM_ALIASES = {
 }
 
 
-PLATFORM_LIB_EXTENSIONS = {
-    "linux": "so",
-    "macosx": "dylib",
-    "mingw": "dll",
-    "posix": "so",
-}
-
-
 LENV_ROOT = os.path.expanduser("~/.lenv")
 LENV_EXE = os.path.join(LENV_ROOT, "bin", "lenv")
 DEFAULT_LUA_VERSION = "5.3"
@@ -78,6 +70,7 @@ def find_executables():
         "lua": shutil.which("lua"),
         "lenv": shutil.which("lenv"),
         "perl": shutil.which("perl"),
+        "luarocks": shutil.which("luarocks"),
     }
 
 
@@ -102,16 +95,6 @@ def parse_args():
         " first directory in the OS's Lua's `packages.cpath`.",
     )
     parser.add_argument(
-        "--lua",
-        metavar="VERSION",
-        dest="lua_version",
-        choices=tuple(SUPPORTED_LUA_VERSIONS),
-        default=default_lua_version,
-        help="The Lua version to use. If not given, defaults to the system Lua's"
-        " version, or %s if Lua isn't installed at all. Supported values: %s"
-        % (DEFAULT_LUA_VERSION, ", ".join(SUPPORTED_LUA_VERSIONS)),
-    )
-    parser.add_argument(
         "--lua-headers", metavar="PATH", help="The path to the Lua headers to use."
     )
     parser.add_argument(
@@ -128,6 +111,24 @@ def parse_args():
         metavar="PATH",
         help="The path to the Unicorn shared library.",
         default=default_uc_lib,
+    )
+    parser.add_argument(
+        "--use-venv",
+        action="store_true",
+        help="Use a virtual environment instead of the OS's Lua. This allows you to use"
+        " a different version of Lua than your OS, or isolate changes to a copy of your"
+        " OS's Lua.",
+    )
+    parser.add_argument(
+        "--venv-version",
+        metavar="VERSION",
+        dest="venv_version",
+        choices=tuple(SUPPORTED_LUA_VERSIONS),
+        default=default_lua_version,
+        help="The Lua version to use in the virtual environment. If not given, defaults"
+        " to the OS's Lua's version, or %s if Lua isn't installed at all. Implies"
+        " --use-venv. Supported values: %s"
+        % (DEFAULT_LUA_VERSION, ", ".join(SUPPORTED_LUA_VERSIONS)),
     )
     return parser.parse_args()
 
@@ -302,6 +303,69 @@ def locate_unicorn_headers(exe_paths):
     return path
 
 
+def set_up_venv(args, exe_paths, lua_platform):
+    if not exe_paths["perl"]:
+        raise ErrorExit(
+            "Perl doesn't seem to be installed, but is required by lenv. Please"
+            " install it."
+        )
+    if not os.path.exists(LENV_EXE):
+        raise ErrorExit(
+            "--use-venv is set but can't find `lenv` executable. Please install it,"
+            " following the instructions here: https://github.com/mah0x211/lenv"
+        )
+    if not args.venv_version:
+        if not exe_paths["lua"]:
+            LOG.warning(
+                "Can't find Lua executable and desired version number not given."
+                " Defaulting to %s.",
+                DEFAULT_LUA_VERSION,
+            )
+            args.venv_version = DEFAULT_LUA_VERSION
+        else:
+            LOG.info(
+                "No version number given, defaulting to the OS's Lua version."
+            )
+            args.venv_version = get_system_lua_version(exe_paths["lua"])
+            LOG.info("Using Lua version %s", args.venv_version)
+
+    LOG.info("Enumerating available Lua versions...")
+    run([LENV_EXE, "fetch"])
+
+    if args.venv_version in SPECIFIC_VERSIONS:
+        install_version = SPECIFIC_VERSIONS[args.venv_version]
+    else:
+        raise ErrorExit(
+            "Unsupported Lua version: %r. Use --help to see supported versions."
+            % args.venv_version
+        )
+
+    is_luajit = args.lua_version.startswith("luajit")
+
+    if is_luajit:
+        # User wants to use LuaJIT, which requires a separate command.
+        LOG.info("Installing LuaJIT %s", install_version)
+        run([LENV_EXE, "install-lj", install_version])
+        lua_base_dir = os.path.join(LENV_ROOT, "luajit", install_version)
+    else:
+        # Regular Lua
+        LOG.info("Installing Lua %s", install_version)
+        run([LENV_EXE, "install", install_version, lua_platform])
+        lua_base_dir = os.path.join(LENV_ROOT, "lua", install_version)
+
+    return install_version, lua_base_dir
+
+
+def detect_os_lua(exe_paths):
+    lua_exe = exe_paths["lua"]
+    if not lua_exe:
+        raise ErrorExit(
+            "Lua not installed on OS or not in PATH environment variable. You must use"
+            " a virtual environment (see --use-venv) or install it on your OS."
+        )
+    return get_system_lua_version(lua_exe), os.path.dirname(lua_exe)
+
+
 def locate_unicorn_library(exe_paths):
     if not exe_paths["locate"]:
         raise ErrorExit(
@@ -339,68 +403,41 @@ def main():
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
 
-    exe_paths = find_executables()
-    if not exe_paths["perl"]:
-        raise ErrorExit(
-            "Perl doesn't seem to be installed, but is required by lenv. Please install"
-            " it."
-        )
-
     args = parse_args()
+    exe_paths = find_executables()
+
     if not args.uc_headers:
         args.uc_headers = locate_unicorn_headers(exe_paths)
     if not args.uc_lib:
         args.uc_lib = locate_unicorn_library(exe_paths)
-    if not os.path.exists(LENV_EXE):
-        raise ErrorExit(
-            "Can't find `lenv` executable. Please install it, following the"
-            " instructions here: https://github.com/mah0x211/lenv"
-        )
-    if not args.lua_version:
-        if not exe_paths["lua"]:
-            LOG.warning(
-                "Can't find Lua executable and desired version number not given."
-                " Defaulting to %s.",
-                DEFAULT_LUA_VERSION,
-            )
-            args.lua_version = DEFAULT_LUA_VERSION
-        else:
-            LOG.info(
-                "No version number or Lua executable given, defaulting to the system"
-                " version."
-            )
-            args.lua_version = get_system_lua_version(exe_paths["lua"])
-            LOG.info("Using Lua version %s", args.lua_version)
 
-    LOG.info("Enumerating available Lua versions...")
-    run([LENV_EXE, "fetch"])
+    if args.venv_version:
+        args.use_venv = True
 
-    if args.lua_version in SPECIFIC_VERSIONS:
-        install_version = SPECIFIC_VERSIONS[args.lua_version]
+    if args.use_venv:
+        install_version, lua_base_dir = set_up_venv(args, exe_paths, lua_platform)
+        LOG.info("Using virtual environment, Lua %s", install_version)
+        luarocks_exe = os.path.join(lua_base_dir, "bin", "luarocks")
     else:
-        install_version = SPECIFIC_VERSIONS[args.lua_version]
+        install_version, lua_base_dir = detect_os_lua(exe_paths)
+        LOG.info("Using OS installation, Lua %s", install_version)
 
-    is_luajit = args.lua_version.startswith("luajit")
-
-    if is_luajit:
-        # User wants to use LuaJIT, which requires a separate command.
-        LOG.info("Installing LuaJIT %s", install_version)
-        run([LENV_EXE, "install-lj", install_version])
-        lua_base_dir = os.path.join(LENV_ROOT, "luajit", install_version)
-    else:
-        # Regular Lua
-        LOG.info("Installing Lua %s", install_version)
-        run([LENV_EXE, "install", install_version, lua_platform])
-        lua_base_dir = os.path.join(LENV_ROOT, "lua", install_version)
+        luarocks_exe = exe_paths["luarocks"]
+        if not luarocks_exe:
+            raise ErrorExit("Can't find `luarocks` executable. Please install it.")
 
     LOG.info("Installing required Lua rocks...")
-    luarocks_exe = os.path.join(lua_base_dir, "bin", "luarocks")
     for i, rock in enumerate(REQUIRED_ROCKS, start=1):
         LOG.info("Rock %d of %d: %s", i, len(REQUIRED_ROCKS), rock)
-        run([luarocks_exe, "install", rock])
+
+        # Use --local when installing rocks because otherwise the installation would be
+        # system-wide and require sudo privileges.
+        run([luarocks_exe, "install", "--local", rock])
 
     LOG.info("Installing required Python libraries...")
-    run(["pip3", "install"] + REQUIRED_PYTHON_LIBRARIES)
+
+    # Install dependencies locally so we don't need sudo to install packages.
+    run(["pip3", "install", "--user"] + REQUIRED_PYTHON_LIBRARIES)
 
     LOG.info("Generating Makefile parameters...")
     generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
