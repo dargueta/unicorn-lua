@@ -2,7 +2,6 @@
 
 local curses = require 'curses'
 local unicorn = require 'unicorn'
-local x86 = require 'unicorn.x86'
 
 
 function make_color_pair(foreground, background)

@@ -1,5 +1,5 @@
 local unicorn = require 'unicorn'
-local x86 = require 'unicorn.x86'
+local x86 = require 'unicorn.x86_const'
 
 
 function handle_in(engine, port, size, cmos)
