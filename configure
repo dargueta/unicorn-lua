@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import collections
 import fnmatch
 import logging
 import os
@@ -10,6 +11,7 @@ import sys
 
 
 LOG = logging.getLogger(__name__)
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 SUPPORTED_LUA_VERSIONS = {
@@ -38,6 +40,9 @@ PLATFORM_ALIASES = {
 }
 
 
+CONSTANTS_FILE_SLUGS = ["arm", "arm64", "m68k", "mips", "sparc", "x86"]
+
+
 LENV_ROOT = os.path.expanduser("~/.lenv")
 LENV_EXE = os.path.join(LENV_ROOT, "bin", "lenv")
 DEFAULT_LUA_VERSION = "5.3"
@@ -52,10 +57,11 @@ class ErrorExit(Exception):
 
 def run(*args, text=True, **kwargs):
     kwargs.setdefault("stderr", subprocess.PIPE)
+    LOG.debug("Executing script: %r", args[0])
     try:
         rval = subprocess.check_output(*args, **kwargs)
     except subprocess.CalledProcessError as exc:
-        logging.error("Called process `%s` failed.", " ".join(args[0]))
+        LOG.error("Called process `%s` failed.", " ".join(args[0]))
         print(exc.output.decode("utf-8"))
         raise
 
@@ -88,6 +94,15 @@ def parse_args():
         default_uc_lib = None
         default_uc_headers = None
 
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_const",
+        const=logging.DEBUG,
+        default=logging.INFO,
+        dest="logging_level",
+        help="Enable debug logging. Only useful for debugging this script.",
+    )
     parser.add_argument(
         "--install-path",
         metavar="PATH",
@@ -135,16 +150,16 @@ def parse_args():
 
 def get_system_lua_version(lua_exe):
     _lua, version, *_rest = run([lua_exe, "-v"]).split()
-    return version.rpartition(".")[0]
+    return version
 
 
 def get_library_file_extension():
     output = run(["lua", "-e", "print(package.cpath)"])
-    paths = [p for p in output.split(";") if p and not p.isspace()]
+    paths = [p.strip() for p in output.split(";") if p and not p.isspace()]
 
     # Each path with a wildcard ("?") in it should end with the system's shared library
     # file extension.
-    extensions = {os.path.splitext(p)[1] for p in paths if "?" in p}
+    extensions = {os.path.splitext(p)[1].lstrip(".") for p in paths if "?" in p}
 
     if not extensions:
         raise ErrorExit("Couldn't determine file extension for shared libraries.")
@@ -155,7 +170,7 @@ def get_library_file_extension():
         )
 
     ext = extensions.pop().lstrip(".")
-    LOG.info("Inferred shared library file extension: `%s`", ext)
+    LOG.debug("Inferred shared library file extension: `%s`", ext)
     return ext
 
 
@@ -169,7 +184,7 @@ def get_default_installation_path():
     install_dirs = [os.path.dirname(p) for p in paths if p.endswith("?." + extension)]
 
     if len(install_dirs) >= 1:
-        LOG.info("Inferred installation directory: " + install_dirs[0])
+        LOG.debug("Inferred installation directory: " + install_dirs[0])
         return install_dirs[0]
     raise ErrorExit(
         "Couldn't find an installation path for C libraries. You must provide a path"
@@ -180,7 +195,10 @@ def get_default_installation_path():
 def recursive_enum_files(where, glob="*"):
     all_files = []
     for root, _dirnames, filenames in os.walk(where):
-        all_files.extend(os.path.join(root, f) for f in fnmatch.filter(filenames, glob))
+        all_files.extend(
+            os.path.join(os.path.relpath(root, HERE), f)
+            for f in fnmatch.filter(filenames, glob)
+        )
     return all_files
 
 
@@ -202,25 +220,57 @@ def detect_mips_toolchain():
     return "", ""
 
 
-def generate_makefile_include(args, install_version, base_dir, platform):
+def generate_makefile_include(args, exe_paths, install_version, base_dir, platform):
+    ext = get_library_file_extension()
+
     short_version = install_version.rpartition(".")[0]
     if float(short_version) >= 5.3:
         busted_cli_args = ""
     else:
         busted_cli_args = '--exclude-tags="int64only"'
 
-    x86_asm, x86_asm_flags = detect_x86_assembler()
-    ext = get_library_file_extension()
+    if args.use_venv:
+        LOG.debug("Determining binary and library paths for virtual environment.")
+        bin_root = os.path.join(base_dir, "bin")
+        lib_root = os.path.join(base_dir, "lib")
+        rocks_root = os.path.join(base_dir, "luarocks")
+        lua_include = args.lua_headers or os.path.join(base_dir, "include")
 
-    cpath = [
-        os.path.join(base_dir, "lib", "lua", short_version, "?." + ext),
-        os.path.join(base_dir, "luarocks", "lib", "?." + ext),
-    ]
+        cpath = [
+            os.path.join(lib_root, "lua", short_version, "?." + ext),
+            os.path.join(rocks_root, "lib", "?." + ext),
+        ]
+    else:
+        # Hopefully these are right...
+        LOG.debug("Determining binary and library paths for system Lua.")
+        bin_root = os.path.dirname(exe_paths["lua"])
+        lib_root = args.uc_lib
+        rocks_root = os.path.join("?")
+        lua_include = args.lua_headers or os.path.join(
+            os.path.dirname(args.uc_headers), "lua" + short_version
+        )
+
+        cpath = [
+            os.path.join(lib_root, "lua", short_version, "?." + ext),
+            os.path.join(rocks_root, "lib", "?." + ext),
+        ]
+
+        if not os.path.exists(lua_include):
+            raise ErrorExit(
+                "Expected Lua headers at `%s` but the directory doesn't exist. Your OS"
+                " probably installed the binary and didn't build from source. Use"
+                " --lua-headers to set the directory for Lua %s's headers, or use"
+                " --use-venv to install a  separate version of Lua that ships with the"
+                " headers. It won't modify your OS's Lua."
+                % (lua_include, short_version)
+            )
+
+    x86_asm, x86_asm_flags = detect_x86_assembler()
 
     # Don't list any source files if the user doesn't have a supported x86
     # assembler. This avoids running commands like "-o output input".
     if x86_asm:
-        LOG.info("Found x86 assembler: %s", x86_asm)
+        LOG.debug("Found x86 assembler: %s", x86_asm)
         x86_source_files = " ".join(recursive_enum_files("docs", "*.asm"))
     else:
         LOG.warning(
@@ -235,40 +285,62 @@ def generate_makefile_include(args, install_version, base_dir, platform):
         mips_source_files = " ".join(recursive_enum_files("docs", "*.s"))
     else:
         LOG.warning(
-            "No MIPS toolchain found, ignoring all *.s files. Some example programs"
-            " may not be available."
+            "No MIPS toolchain found, ignoring all *.s files. Some example programs may"
+            " not be available."
         )
         mips_source_files = ""
 
-    variables = {
-        "REPO_ROOT": os.path.abspath(os.getcwd()),
-        "LUA_VERSION": install_version,
-        "LUA_SHORT_VERSION": short_version,
-        "LUA_LIB_PATH": os.path.join(base_dir, "lib"),
-        "LUA_INCLUDE_PATH": os.path.join(base_dir, "include"),
-        "LUA_EXE": os.path.join(base_dir, "bin", "lua"),
-        "UNICORN_LIB_PATH": args.uc_lib or ".",
-        "UNICORN_INCLUDE_PATH": args.uc_headers or ".",
-        "LUAROCKS_EXE": os.path.join(base_dir, "bin", "luarocks"),
-        "LUA_CUSTOM_CPATH": ";".join(cpath),
-        "BUSTED_EXE": os.path.join(base_dir, "bin", "busted"),
-        "C_SOURCE_FILES": " ".join(recursive_enum_files("src", "*.c")),
-        "C_HEADER_FILES": " ".join(recursive_enum_files("include", "*.h")),
-        "LUA_SOURCE_FILES": " ".join(recursive_enum_files("src", "*.lua")),
-        "X86_ASM_SOURCE_FILES": x86_source_files,
-        "MIPS_ASM_SOURCE_FILES": mips_source_files,
-        "BUSTED_CLI_ARGS": busted_cli_args,
-        "LIB_EXTENSION": ext,
-        "PLATFORM": platform,
-        "X86_ASM": x86_asm,
-        "X86_ASM_FLAGS": x86_asm_flags,
-        "MIPS_ASM": mips_asm,
-        "MIPS_ASM_FLAGS": mips_flags,
-        "INSTALLATION_PATH": args.install_path or get_default_installation_path(),
-    }
+    variables = collections.OrderedDict(
+        (
+            ("REPO_ROOT", HERE),
+            ("SRC_ROOT", os.path.join("$(REPO_ROOT)", "src")),
+            ("INCLUDE_BASE", os.path.join("$(REPO_ROOT)", "include")),
+            ("BUILD_DIR", os.path.join("$(REPO_ROOT)", "build")),
+            ("OBJECT_DIR", os.path.join("$(BUILD_DIR)", "obj")),
+            ("INSTALL_STAGING_DIR", os.path.join("$(BUILD_DIR)", "unicorn")),
+            ("LUA_VERSION", install_version),
+            ("LUA_SHORT_VERSION", short_version),
+            ("LUA_LIB_PATH", lib_root),
+            ("LUA_INCLUDE_PATH", lua_include),
+            ("LUA_EXE", os.path.join(bin_root, "lua")),
+            ("UNICORN_LIB_PATH", args.uc_lib),
+            ("UNICORN_INCLUDE_PATH", args.uc_headers),
+            ("LUAROCKS_EXE", os.path.join(bin_root, "luarocks")),
+            ("LUA_CUSTOM_CPATH", ";".join(cpath)),
+            ("BUSTED_EXE", os.path.join(bin_root, "busted")),
+            ("C_SOURCE_FILES", " ".join(recursive_enum_files("src", "*.c"))),
+            ("C_HEADER_FILES", " ".join(recursive_enum_files("include", "*.h"))),
+            (
+                "LUA_SOURCE_FILES",
+                " ".join(
+                    os.path.join("$(INSTALL_STAGING_DIR)", os.path.basename(f))
+                    for f in recursive_enum_files("src", "*.lua")
+                ),
+            ),
+            (
+                "LUA_AUTOGEN_FILES",
+                " ".join(
+                    os.path.join("$(INSTALL_STAGING_DIR)", slug + "_const.lua")
+                    for slug in CONSTANTS_FILE_SLUGS
+                ),
+            ),
+            ("X86_ASM_SOURCE_FILES", x86_source_files),
+            ("MIPS_ASM_SOURCE_FILES", mips_source_files),
+            ("BUSTED_CLI_ARGS", busted_cli_args),
+            ("LIB_EXTENSION", ext),
+            ("PLATFORM", platform),
+            ("X86_ASM", x86_asm),
+            ("X86_ASM_FLAGS", x86_asm_flags),
+            ("MIPS_ASM", mips_asm),
+            ("MIPS_ASM_FLAGS", mips_flags),
+            ("INSTALLATION_PATH", args.install_path or get_default_installation_path()),
+        )
+    )
 
+    LOG.debug("Writing Makefile include file.")
     with open("Makefile.in", "w") as fd:
-        fd.write("\n".join("%s=%s" % kv for kv in sorted(variables.items())))
+        fd.write("\n".join("%s=%s" % kv for kv in variables.items()))
+    LOG.debug("Done writing `Makefile.in`")
 
 
 def locate_unicorn_headers(exe_paths):
@@ -299,7 +371,7 @@ def locate_unicorn_headers(exe_paths):
     # Strip off last two path components, the unicorn/unicorn.h part. We
     # only need the containing directory.
     path = os.path.dirname(paths[0])
-    LOG.info("Inferred Unicorn header path: %s", path)
+    LOG.debug("Inferred Unicorn header path: %s", path)
     return path
 
 
@@ -323,10 +395,9 @@ def set_up_venv(args, exe_paths, lua_platform):
             )
             args.venv_version = DEFAULT_LUA_VERSION
         else:
-            LOG.info(
-                "No version number given, defaulting to the OS's Lua version."
-            )
-            args.venv_version = get_system_lua_version(exe_paths["lua"])
+            LOG.info("No version number given, defaulting to the OS's Lua version.")
+            system_full_version = get_system_lua_version(exe_paths["lua"])
+            args.venv_version = system_full_version.rpartition(".")[0]
             LOG.info("Using Lua version %s", args.venv_version)
 
     LOG.info("Enumerating available Lua versions...")
@@ -340,9 +411,7 @@ def set_up_venv(args, exe_paths, lua_platform):
             % args.venv_version
         )
 
-    is_luajit = args.lua_version.startswith("luajit")
-
-    if is_luajit:
+    if args.venv_version.startswith("luajit"):
         # User wants to use LuaJIT, which requires a separate command.
         LOG.info("Installing LuaJIT %s", install_version)
         run([LENV_EXE, "install-lj", install_version])
@@ -391,26 +460,26 @@ def locate_unicorn_library(exe_paths):
     # Strip off last two path components, the unicorn/unicorn.h part. We only need the
     # containing directory.
     path = os.path.dirname(paths[0])
-    LOG.info("Inferred Unicorn library path: %s", path)
+    LOG.debug("Inferred Unicorn library path: %s", path)
     return path
 
 
 def main():
-    logging.basicConfig(format="[%(levelname)-5s] %(message)s", level=logging.INFO)
+    args = parse_args()
+    logging.basicConfig(
+        format="[%(levelname)-5s] %(message)s", level=args.logging_level
+    )
+    exe_paths = find_executables()
 
     lua_platform = PLATFORM_ALIASES.get(sys.platform)
     if not lua_platform:
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
 
-    args = parse_args()
-    exe_paths = find_executables()
-
     if not args.uc_headers:
         args.uc_headers = locate_unicorn_headers(exe_paths)
     if not args.uc_lib:
         args.uc_lib = locate_unicorn_library(exe_paths)
-
     if args.venv_version:
         args.use_venv = True
 
@@ -426,6 +495,11 @@ def main():
         if not luarocks_exe:
             raise ErrorExit("Can't find `luarocks` executable. Please install it.")
 
+    LOG.info("Generating Makefile parameters...")
+    generate_makefile_include(
+        args, exe_paths, install_version, lua_base_dir, lua_platform
+    )
+
     LOG.info("Installing required Lua rocks...")
     for i, rock in enumerate(REQUIRED_ROCKS, start=1):
         LOG.info("Rock %d of %d: %s", i, len(REQUIRED_ROCKS), rock)
@@ -438,9 +512,6 @@ def main():
 
     # Install dependencies locally so we don't need sudo to install packages.
     run(["pip3", "install", "--user"] + REQUIRED_PYTHON_LIBRARIES)
-
-    LOG.info("Generating Makefile parameters...")
-    generate_makefile_include(args, install_version, lua_base_dir, lua_platform)
 
     # Remove all build artifacts from a previous build, since we're probably switching
     # Lua versions.

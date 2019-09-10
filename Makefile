@@ -1,15 +1,16 @@
 include Makefile.in
 
-INCLUDE_BASE=$(REPO_ROOT)/include
+vpath %.h $(INCLUDE_BASE) $(UNICORN_INCLUDE_PATH)
+vpath %.o $(OBJECT_DIR)
+vpath %.c $(SRC_ROOT)
+
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
-SRC_BASE=$(REPO_ROOT)/src
-OBJECT_BASE=$(REPO_ROOT)/bin
 EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
-OBJECTS=$(C_SOURCE_FILES:%.c=%.o)
+OBJECTS=$(C_SOURCE_FILES:src/%.c=build/obj/%.o)
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
-MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.S=%.mips32.bin)
+MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
@@ -28,16 +29,16 @@ endif
 
 LDFLAGS += -lunicorn -lpthread
 
-ARCH_FILE=$(OBJECT_BASE)/unicornlua.a
-SHARED_LIB_FILE=$(OBJECT_BASE)/unicorn.$(LIB_EXTENSION)
+ARCH_FILE=$(BUILD_DIR)/unicornlua.a
+SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
 .PHONY: all
-all: $(OBJECT_BASE) $(OBJECTS) $(ARCH_FILE) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES)
+all: $(OBJECT_DIR) $(INSTALL_STAGING_DIR) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES) $(LUA_SOURCE_FILES) $(LUA_AUTOGEN_FILES)
 
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECT_BASE) $(OBJECTS) $(DOXYGEN_OUTPUT_BASE)
+	rm -rf $(OBJECTS) $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR)
 
 
 .PHONY: docs
@@ -52,7 +53,7 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	PATH="$(PATH):$(OBJECT_BASE)" LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)" $(BUSTED_EXE) $(BUSTED_CLI_ARGS)
+	PATH="$(PATH):$(OBJECT_DIR)" LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)" $(BUSTED_EXE) $(BUSTED_CLI_ARGS)
 
 
 .PHONY: test
@@ -66,10 +67,10 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 .PHONY: run_example
 run_example: examples
 	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && \
-	LUA_CPATH="$(OBJECT_BASE)/?.$(LIB_EXTENSION);$(LUA_CUSTOM_CPATH)" $(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
+	LUA_CPATH="$(BUILD_DIR)/?.$(LIB_EXTENSION);$(LUA_CUSTOM_CPATH)" $(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
-%.o : %.c
+build/obj/%.o : src/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 
@@ -85,29 +86,35 @@ run_example: examples
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
 
 
-$(OBJECT_BASE) :
-	mkdir -p $(OBJECT_BASE)
+$(BUILD_DIR) :
+	mkdir -p $(BUILD_DIR)
 
+$(OBJECT_DIR) :
+	mkdir -p $(OBJECT_DIR)
 
-$(SRC_BASE)/arm.o: $(SRC_BASE)/arm.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/arm64.o: $(SRC_BASE)/arm64.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/globals.o: $(SRC_BASE)/globals.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/m68k.o: $(SRC_BASE)/m68k.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/mips.o: $(SRC_BASE)/mips.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/sparc.o: $(SRC_BASE)/sparc.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/x86.o: $(SRC_BASE)/x86.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/compat.o: $(SRC_BASE)/compat.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/engine.o: $(SRC_BASE)/engine.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/hooks.o: $(SRC_BASE)/hooks.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/memory.o: $(SRC_BASE)/memory.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/registers.o: $(SRC_BASE)/registers.c $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
-$(SRC_BASE)/unicorn.o: $(C_SOURCES)
-$(SRC_BASE)/utils.o: $(SRC_BASE)/utils.c $(GLOBAL_HEADERS)
+$(INSTALL_STAGING_DIR) :
+	mkdir -p $(INSTALL_STAGING_DIR)
 
+$(INSTALL_STAGING_DIR)/%_const.lua : $(UNICORN_INCLUDE_PATH)/%.h | $(INSTALL_STAGING_DIR)
+	python3 tools/generate_constants.py $^ $@
 
-$(ARCH_FILE): $(OBJECTS) | $(OBJECT_BASE)
-	$(AR) -rc $@ $^
+$(INSTALL_STAGING_DIR)/%.lua : $(SRC_ROOT)/%.lua | $(INSTALL_STAGING_DIR)
+	cp $^ $@
 
+$(OBJECT_DIR)/arm.o: $(SRC_ROOT)/arm.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/arm64.o: $(SRC_ROOT)/arm64.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/m68k.o: $(SRC_ROOT)/m68k.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/mips.o: $(SRC_ROOT)/mips.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/sparc.o: $(SRC_ROOT)/sparc.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/x86.o: $(SRC_ROOT)/x86.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/unicorn.o: $(C_SOURCES)
+$(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
 
-$(SHARED_LIB_FILE): $(OBJECTS) | $(OBJECT_BASE)
+$(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR)
 	$(LD) $(LDFLAGS) -o $@ $^
