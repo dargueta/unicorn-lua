@@ -92,17 +92,9 @@ def parse_args():
     if IN_CI_ENVIRONMENT:
         LOG.info("CI enviornent detected, altering script defaults.")
         default_lua_version = os.environ["LUA_VERSION"]
-        default_uc_headers = "/usr/include/unicorn"
         default_log_level = logging.DEBUG
-
-        if os.path.isdir("/usr/lib64"):
-            default_uc_lib = "/usr/lib64"
-        else:
-            default_uc_lib = "/usr/lib"
     else:
         default_lua_version = None
-        default_uc_lib = None
-        default_uc_headers = None
         default_log_level = logging.INFO
 
     parser.add_argument(
@@ -130,13 +122,11 @@ def parse_args():
         "--uc-headers",
         metavar="PATH",
         help="The path to the Unicorn headers.",
-        default=default_uc_headers,
     )
     parser.add_argument(
         "--uc-lib",
         metavar="PATH",
         help="The path to the Unicorn shared library.",
-        default=default_uc_lib,
     )
     parser.add_argument(
         "--use-venv",
@@ -354,13 +344,23 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
 
 
 def locate_unicorn_headers(exe_paths):
+    LOG.info("Locating Unicorn headers...")
+    for base_dir in {"/usr/include/unicorn", "/usr/local/include/unicorn"}:
+        if os.path.isdir(base_dir):
+            LOG.debug("Found Unicorn headers in: " + base_dir)
+            return base_dir
+
+    LOG.warning(
+        "Header not found in usual places, using `locate` command which may give"
+        " inaccurate results."
+    )
+
     if not exe_paths["locate"]:
         raise ErrorExit(
             "Can't infer Unicorn header path, you must pass --uc-headers to this"
             " command."
         )
 
-    LOG.info("Locating Unicorn headers...")
     try:
         out = run([exe_paths["locate"], "unicorn/unicorn.h"])
     except subprocess.CalledProcessError:
@@ -446,12 +446,25 @@ def detect_os_lua(exe_paths):
 
 
 def locate_unicorn_library(exe_paths):
+    LOG.info("Locating Unicorn library...")
+    for base_dir in {"/usr/lib", "/usr/local/lib", "/usr/lib64", "/usr/local/lib64"}:
+        if os.path.isdir(base_dir):
+            if any("unicorn" in n for n in os.listdir(base_dir)):
+                LOG.debug("Found Unicorn shared library in: " + base_dir)
+                return base_dir
+
+    LOG.warning(
+        "Unicorn library not in usual places, using `locate` command, which may give"
+        " inaccurate results."
+    )
+
     if not exe_paths["locate"]:
         raise ErrorExit(
             "Can't infer Unicorn library path, you must pass --uc-lib to this command."
         )
-    LOG.info("Locating Unicorn library...")
     try:
+        # Locate libunicorn.a instead of libunicorn because "libunicorn" by itself is
+        # going to return multiple results.
         out = run([exe_paths["locate"], "libunicorn.a"])
     except subprocess.CalledProcessError:
         out = ""
