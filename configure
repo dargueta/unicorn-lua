@@ -64,7 +64,7 @@ def run(*args, text=True, **kwargs):
         rval = subprocess.check_output(*args, **kwargs)
     except subprocess.CalledProcessError as exc:
         LOG.error("Called process `%s` failed.", " ".join(args[0]))
-        print(exc.output.decode("utf-8"))
+        print(exc.stderr.decode("utf-8"))
         raise
 
     if text:
@@ -155,8 +155,8 @@ def get_system_lua_version(lua_exe):
     return version
 
 
-def get_library_file_extension():
-    output = run(["lua", "-e", "print(package.cpath)"])
+def get_library_file_extension(lua_exe_path="lua"):
+    output = run([lua_exe_path, "-e", "print(package.cpath)"])
     paths = [p.strip() for p in output.split(";") if p and not p.isspace()]
 
     # Each path with a wildcard ("?") in it should end with the system's shared library
@@ -176,13 +176,13 @@ def get_library_file_extension():
     return ext
 
 
-def get_default_installation_path():
-    output = run(["lua", "-e", "print(package.cpath)"])
+def get_default_installation_path(lua_exe_path="lua"):
+    output = run([lua_exe_path, "-e", "print(package.cpath)"])
     paths = [p for p in output.split(";") if p and not p.isspace()]
 
     # Each path *ending* with "?.<extension>" will be an installation path we can use.
     # Only take the first one.
-    extension = get_library_file_extension()
+    extension = get_library_file_extension(lua_exe_path)
     install_dirs = [os.path.dirname(p) for p in paths if p.endswith("?." + extension)]
 
     if len(install_dirs) >= 1:
@@ -231,7 +231,7 @@ def determine_lua_paths(luarocks_exe):
 
 
 def generate_makefile_parameters(args, exe_paths, install_version, base_dir, platform):
-    ext = get_library_file_extension()
+    ext = get_library_file_extension(exe_paths["lua"])
 
     short_version = install_version.rpartition(".")[0]
     if float(short_version) >= 5.3:
@@ -334,7 +334,10 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
             ("X86_ASM_FLAGS", x86_asm_flags),
             ("MIPS_ASM", mips_asm),
             ("MIPS_ASM_FLAGS", mips_flags),
-            ("INSTALLATION_PATH", args.install_path or get_default_installation_path()),
+            (
+                "INSTALLATION_PATH",
+                args.install_path or get_default_installation_path(exe_paths["lua"]),
+            ),
         )
     )
 
@@ -492,6 +495,7 @@ def main():
     if args.use_venv:
         install_version, lua_base_dir = set_up_venv(args, exe_paths, lua_platform)
         LOG.info("Using virtual environment, Lua %s", install_version)
+        exe_paths["lua"] = os.path.join(lua_base_dir, "bin", "lua")
         exe_paths["luarocks"] = os.path.join(lua_base_dir, "bin", "luarocks")
     else:
         install_version, lua_base_dir = detect_os_lua(exe_paths)
