@@ -48,8 +48,11 @@ CONSTANTS_FILE_SLUGS = ["arm", "arm64", "m68k", "mips", "sparc", "x86"]
 LENV_ROOT = os.path.expanduser("~/.lenv")
 LENV_EXE = os.path.join(LENV_ROOT, "bin", "lenv")
 DEFAULT_LUA_VERSION = "5.3"
-IN_CI_ENVIRONMENT = os.getenv("CI") == "true"
 REQUIRED_ROCKS = {"busted", "lcurses"}
+
+# Detect if we're in a CI environment. This works for Travis, CircleCI, and
+# AppVeyor. (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
+IN_CI_ENVIRONMENT = os.getenv("CI", "").lower() == "true"
 
 
 class ErrorExit(Exception):
@@ -84,23 +87,30 @@ def find_executables():
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    # Pull default Lua version from the environment if we're running on a CI. This works
-    # for Travis and CircleCI.
+    # Use different defaults if we're running in a CI environment like Travis or
+    # CircleCI.
     if IN_CI_ENVIRONMENT:
+        LOG.info("CI enviornent detected, altering script defaults.")
         default_lua_version = os.environ["LUA_VERSION"]
-        default_uc_lib = "/usr/lib"
-        default_uc_headers = "/usr/include"
+        default_uc_headers = "/usr/include/unicorn"
+        default_log_level = logging.DEBUG
+
+        if os.path.isdir("/usr/lib64"):
+            default_uc_lib = "/usr/lib64"
+        else:
+            default_uc_lib = "/usr/lib"
     else:
         default_lua_version = None
         default_uc_lib = None
         default_uc_headers = None
+        default_log_level = logging.INFO
 
     parser.add_argument(
         "-d",
         "--debug",
         action="store_const",
         const=logging.DEBUG,
-        default=logging.INFO,
+        default=default_log_level,
         dest="logging_level",
         help="Enable debug logging. Only useful for debugging this script.",
     )
@@ -486,8 +496,10 @@ def main():
 
     if not args.uc_headers:
         args.uc_headers = locate_unicorn_headers(exe_paths)
+        LOG.debug("Using Unicorn header path: " + args.uc_headers)
     if not args.uc_lib:
         args.uc_lib = locate_unicorn_library(exe_paths)
+        LOG.debug("Using Unicorn library path: " + args.uc_lib)
     if args.venv_version:
         args.use_venv = True
 
