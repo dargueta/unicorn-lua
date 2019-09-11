@@ -185,15 +185,31 @@ Configuration
 ~~~~~~~~~~~~~
 
 Before building the library, you must configure the repository for your system
-using the ``configure`` script:
+using the ``configure`` script. Because it uses Python and requires some additional
+packages, you may want to create a virtual environment for this project first. [3]_
+
+Install the Python dependencies it requires:
 
 .. code-block:: sh
 
-    # Configure for your current version of Lua
+    pip3 install --user -r python-requirements.txt
+
+Now you can run the configuration script. If you're only building the library,
+you'll only need to do this once, unless you want to change the Lua version the
+library is being built for.
+
+If you're only building for installation, configure the repo for your OS's
+installed version of Lua:
+
+.. code-block:: sh
+
     python3 configure
 
-    # Configure for a different version of Lua, in this case 5.3
-    python3 configure --lua 5.3
+If you're developing and want to use a specific version of Lua (5.3 in this example):
+
+.. code-block:: sh
+
+    python3 configure --venv-version 5.3
 
 For details on other customization options, run ``python3 configure --help``.
 
@@ -236,7 +252,10 @@ text, see ``LICENSE.txt``.
 .. [1] Typically 2\ :sup:`63` - 1 on 64-bit machines and 2\ :sup:`31` - 1 on
        32-bit machines.
 .. [2] *Programming in Lua*, 4th Edition. Forgot the page.
+.. [3] I personally use pyenv_ for this, but you can use other tools like pipenv_.
 
 .. _lenv: https://github.com/mah0x211/lenv
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
 .. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
+.. _pyenv: https://github.com/pyenv/pyenv
+.. _pipenv: https://docs.pipenv.org/en/latest
