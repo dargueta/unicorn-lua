@@ -14,7 +14,7 @@ env:
 before_install:
   # NOTE: This will break when Travis changes which version(s) of Python 3 they have
   # installed.
-  - pyenv local 3.7.1
+  - pyenv local 2.7.15 3.7.1
 
 install:
   - pip3 install -U -r python-requirements.txt
