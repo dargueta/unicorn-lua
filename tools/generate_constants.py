@@ -105,7 +105,7 @@ def generate_constants_for_file(header_file, output_file):
 
     try:
         ast = pycparser.parse_file(
-            header_file, use_cpp=True, cpp_path="gcc", cpp_args=["-E", "-std=c17"]
+            header_file, use_cpp=True, cpp_path="gcc", cpp_args=["-E", "-std=c11"]
         )
     except plyparser.ParseError as err:
         logging.error(
