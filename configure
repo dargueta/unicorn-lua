@@ -301,6 +301,7 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
             ("LUA_LIB_PATH", lib_root),
             ("LUA_INCLUDE_PATH", lua_include),
             ("LUA_EXE", os.path.join(bin_root, "lua")),
+            ("LUAC_EXE", os.path.join(bin_root, "luac")),
             ("UNICORN_LIB_PATH", args.uc_lib),
             ("UNICORN_INCLUDE_PATH", args.uc_headers),
             ("LUAROCKS_EXE", os.path.join(bin_root, "luarocks")),

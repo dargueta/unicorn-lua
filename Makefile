@@ -18,6 +18,17 @@ TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
+CFLAGS ?=
+LDFLAGS ?=
+IS_DEBUG ?= true
+
+ifeq ($(IS_DEBUG), true)
+	CFLAGS += -Og -ggdb
+else
+	CFLAGS += -Ofast
+	LDFLAGS += --strip-all
+endif
+
 CFLAGS += -c -Wall -Werror -Wextra -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
@@ -29,9 +40,9 @@ else
 	LDFLAGS += -shared
 endif
 
+# These must come after the -shared flag for some reason.
 LDFLAGS += -lunicorn -lpthread
 
-ARCH_FILE=$(BUILD_DIR)/unicornlua.a
 SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
 .PHONY: all
