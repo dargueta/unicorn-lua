@@ -6,6 +6,7 @@
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
+const char * const kContextMetatableName = "unicornlua__context_meta";
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
@@ -149,6 +150,124 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 
     /* Remove the engine pointer map from the stack. */
     lua_remove(L, -2);
+}
+
+
+UNICORN_EXPORT int ul_context_alloc(lua_State *L) {
+    uc_engine *engine;
+    uc_context *context;
+    int error;
+
+    engine = ul_toengine(L, 1);
+
+    context = (uc_context *)lua_newuserdata(L, sizeof(context));
+    luaL_setmetatable(L, kContextMetatableName);
+
+    error = uc_context_alloc(engine, &context);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    return 1;
+}
+
+
+UNICORN_EXPORT int ul_context_save(lua_State *L) {
+    uc_engine *engine;
+    uc_context *context;
+    int error;
+
+    engine = ul_toengine(L, 1);
+
+    if (lua_gettop(L) < 2)
+        /* Caller didn't pass a context to update, so create a new one. */
+        ul_context_alloc(L);
+
+    context = ul_tocontext(L, 2);
+
+    error = uc_context_save(engine, context);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    return 1;
+}
+
+
+UNICORN_EXPORT int ul_context_restore(lua_State *L) {
+    uc_engine *engine;
+    uc_context *context;
+    int error;
+
+    engine = ul_toengine(L, 1);
+    context = ul_tocontext(L, 2);
+
+    error = uc_context_restore(engine, context);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+    return 0;
+}
+
+
+UNICORN_EXPORT int ul_close(lua_State *L) {
+    ul_free_engine_object(L, 1);
+    return 0;
+}
+
+
+UNICORN_EXPORT int ul_query(lua_State *L) {
+    uc_engine *engine;
+    int query_type, error;
+    size_t result;
+
+    engine = ul_toengine(L, 1);
+    query_type = luaL_checkinteger(L, 1);
+
+    error = uc_query(engine, query_type, &result);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+
+UNICORN_EXPORT int ul_errno(lua_State *L) {
+    uc_engine *engine;
+
+    engine = ul_toengine(L, 1);
+    lua_pushinteger(L, uc_errno(engine));
+    return 1;
+}
+
+
+UNICORN_EXPORT int ul_emu_start(lua_State *L) {
+    uc_engine *engine;
+    uint64_t start, end, timeout;
+    size_t n_instructions;
+    int error;
+
+    engine = ul_toengine(L, 1);
+    start = (uint64_t)luaL_checkinteger(L, 2);
+    end = (uint64_t)luaL_checkinteger(L, 3);
+    timeout = (uint64_t)luaL_optinteger(L, 4, 0);
+    n_instructions = (size_t)luaL_optinteger(L, 5, 0);
+
+    error = uc_emu_start(engine, start, end, timeout, n_instructions);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+    return 0;
+}
+
+
+UNICORN_EXPORT int ul_emu_stop(lua_State *L) {
+    uc_engine *engine;
+    int error;
+
+    engine = ul_toengine(L, 1);
+
+    error = uc_emu_stop(engine);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+    return 0;
 }
 
 
