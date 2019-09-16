@@ -10,17 +10,15 @@ const char * const kContextMetatableName = "unicornlua__context_meta";
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
-static int _engine_gc_metamethod(lua_State *L);
-
 
 const luaL_Reg kEngineMetamethods[] = {
-    {"__gc", _engine_gc_metamethod},
+    {"__gc", ul_close},
     {NULL, NULL}
 };
 
 
 const luaL_Reg kEngineInstanceMethods[] = {
-    {"close", _engine_gc_metamethod},
+    {"close", ul_close},
     {"context_restore", ul_context_restore},
     {"context_save", ul_context_save},
     {"emu_start", ul_emu_start},
@@ -41,12 +39,6 @@ const luaL_Reg kEngineInstanceMethods[] = {
     {"reg_write_batch", ul_reg_write_batch},
     {NULL, NULL}
 };
-
-
-static int _engine_gc_metamethod(lua_State *L) {
-    ul_free_engine_object(L, 1);
-    return 0;
-}
 
 
 void ul_init_engines_lib(lua_State *L) {
