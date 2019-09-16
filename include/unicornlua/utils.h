@@ -25,15 +25,6 @@ int ul_crash_on_error(lua_State *L, uc_err error);
 
 
 /**
- * Given a uc_engine pointer, find the corresponding Lua object and push it.
- *
- * @param L         A pointer to the current Lua state.
- * @param engine    The pointer to the engine we want to get the Lua object for.
- */
-void ul_get_engine_object(lua_State *L, const uc_engine *engine);
-
-
-/**
  * Return the value on the stack at @a index as a uc_context pointer.
  *
  * If the value at @a index is @e not a uc_context struct, or the context has

@@ -62,8 +62,8 @@ void ul_init_engines_lib(lua_State *L) {
 
 
 void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
-    UCLuaEngine *engine_object = \
-        reinterpret_cast<UCLuaEngine *>(lua_newuserdata(L, sizeof(*engine_object)));
+    auto engine_object = \
+        reinterpret_cast<UCLuaEngine *>(lua_newuserdata(L, sizeof(UCLuaEngine)));
     engine_object->engine = const_cast<uc_engine *>(engine);
 
     luaL_setmetatable(L, kEngineMetatableName);
@@ -190,13 +190,14 @@ int ul_close(lua_State *L) {
 
 int ul_query(lua_State *L) {
     size_t result;
-
     uc_engine *engine = ul_toengine(L, 1);
-    uc_query_type query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
+    auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
+
 
     uc_err error = uc_query(engine, query_type, &result);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
+
 
     lua_pushinteger(L, result);
     return 1;
@@ -212,10 +213,10 @@ int ul_errno(lua_State *L) {
 
 int ul_emu_start(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    uint64_t start = (uint64_t)luaL_checkinteger(L, 2);
-    uint64_t end = (uint64_t)luaL_checkinteger(L, 3);
-    uint64_t timeout = (uint64_t)luaL_optinteger(L, 4, 0);
-    size_t n_instructions = (size_t)luaL_optinteger(L, 5, 0);
+    auto start = static_cast<uint64_t>(luaL_checkinteger(L, 2));
+    auto end = static_cast<uint64_t>(luaL_checkinteger(L, 3));
+    auto timeout = static_cast<uint64_t>(luaL_optinteger(L, 4, 0));
+    auto n_instructions = static_cast<size_t>(luaL_optinteger(L, 5, 0));
 
     uc_err error = uc_emu_start(engine, start, end, timeout, n_instructions);
     if (error != UC_ERR_OK)
