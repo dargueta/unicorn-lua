@@ -13,7 +13,6 @@ UNICORN_EXPORT int ul_version(lua_State *L) {
     unsigned major, minor;
 
     uc_version(&major, &minor);
-
     lua_pushinteger(L, major);
     lua_pushinteger(L, minor);
     return 2;
@@ -28,15 +27,14 @@ UNICORN_EXPORT int ul_arch_supported(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_open(lua_State *L) {
-    int architecture, mode, error_code;
     uc_engine *engine;
 
-    architecture = luaL_checkinteger(L, 1);
-    mode = luaL_checkinteger(L, 2);
+    int architecture = luaL_checkinteger(L, 1);
+    int mode = luaL_checkinteger(L, 2);
 
-    error_code = uc_open(architecture, mode, &engine);
-    if (error_code != UC_ERR_OK)
-        return ul_crash_on_error(L, error_code);
+    uc_err error = uc_open(architecture, mode, &engine);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
 
     ul_create_engine_object(L, engine);
     return 1;
@@ -50,8 +48,7 @@ UNICORN_EXPORT int ul_strerror(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_free(lua_State *L) {
-    int error = uc_free(*(void **)lua_touserdata(L, 1));
-
+    uc_err error = uc_free(*(void **)lua_touserdata(L, 1));
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;

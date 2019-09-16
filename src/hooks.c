@@ -43,11 +43,9 @@ void ul_hook_get_hook_table(lua_State *L, int index) {
 
 
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
-    HookInfo *hook_info;
-
     ul_hook_get_hook_table(L, eng_index);
 
-    hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
+    HookInfo *hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
     hook_info->L = L;
     hook_info->engine = ul_toengine(L, eng_index);
     hook_info->hook = 0;
@@ -113,7 +111,6 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
 
 static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
                              void *user_data) {
-    uint32_t return_value;
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -126,7 +123,7 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
     lua_call(L, 4, 1);
 
-    return_value = (uint32_t)luaL_checkinteger(L, -1);
+    uint32_t return_value = (uint32_t)luaL_checkinteger(L, -1);
     lua_pop(L, 1);
 
     return return_value;
@@ -171,7 +168,6 @@ static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address
 static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
                                     uint64_t address, int size, int64_t value,
                                     void *user_data) {
-    bool return_value;
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -186,7 +182,7 @@ static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
     lua_call(L, 6, 1);
 
-    return_value = (bool)luaL_checkboolean(L, -1);
+    bool return_value = (bool)luaL_checkboolean(L, -1);
     lua_pop(L, 1);
 
     return return_value;
@@ -238,16 +234,14 @@ static void *_get_c_callback_for_hook_type(int hook_type, int insn_code) {
 
 
 int ul_hook_add(lua_State *L) {
-    HookInfo *hook_info;
     uint64_t start, end;
-    uc_engine *engine;
-    int error, hook_type, n_args, extra_argument;
-    void *c_callback;
+    int extra_argument;
+    uc_err error;
 
-    n_args = lua_gettop(L);
+    int n_args = lua_gettop(L);
 
-    engine = ul_toengine(L, 1);
-    hook_type = luaL_checkinteger(L, 2);
+    uc_engine *engine = ul_toengine(L, 1);
+    int hook_type = luaL_checkinteger(L, 2);
     /* Callback function is at position 3 */
 
     switch (n_args) {
@@ -274,7 +268,7 @@ int ul_hook_add(lua_State *L) {
             return luaL_error(L, "Expected 3-7 arguments, got %d.", n_args);
     }
 
-    hook_info = _create_hook_object(L, 1, 3);
+    HookInfo *hook_info = _create_hook_object(L, 1, 3);
 
     /* If the caller gave us a sixth argument, it's data to pass to the callback.
      * Create a reference to it and store that in the hook struct. */
@@ -293,7 +287,7 @@ int ul_hook_add(lua_State *L) {
         extra_argument = LUA_NOREF;
 
     /* Figure out which C hook we need */
-    c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
+    void *c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
     if (c_callback == NULL)
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
 
@@ -321,13 +315,10 @@ int ul_hook_del(lua_State *L) {
 
 
 int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index) {
-    int error;
-    HookInfo *hook_info;
-
     engine_index = lua_absindex(L, engine_index);
     hook_handle_index = lua_absindex(L, hook_handle_index);
 
-    hook_info = (HookInfo *)luaL_checklightuserdata(L, hook_handle_index);
+    HookInfo *hook_info = (HookInfo *)luaL_checklightuserdata(L, hook_handle_index);
 
     /* Remove the hard reference to the hook's callback function, and overwrite
      * the reference ID in the C struct. This way, accidental reuse of the hook
@@ -338,7 +329,7 @@ int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index
     hook_info->user_data_ref = LUA_NOREF;
 
     /* Remove the hook from the engine. */
-    error = uc_hook_del(hook_info->engine, hook_info->hook);
+    uc_err error = uc_hook_del(hook_info->engine, hook_info->hook);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 

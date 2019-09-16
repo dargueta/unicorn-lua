@@ -60,9 +60,7 @@ void ul_init_engines_lib(lua_State *L) {
 
 
 void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
-    UCLuaEngine *engine_object;
-
-    engine_object = lua_newuserdata(L, sizeof(*engine_object));
+    UCLuaEngine *engine_object = lua_newuserdata(L, sizeof(*engine_object));
     engine_object->engine = (uc_engine *)engine;
 
     luaL_setmetatable(L, kEngineMetatableName);
@@ -81,13 +79,10 @@ void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
 
 
 void ul_free_engine_object(lua_State *L, int engine_index) {
-    UCLuaEngine *engine_object;
-    int error, hook_table_index;
-
     engine_index = lua_absindex(L, engine_index);
 
     /* Deliberately not using ul_toengine, see below. */
-    engine_object = (UCLuaEngine *)luaL_checkudata(L, engine_index, kEngineMetatableName);
+    UCLuaEngine *engine_object = luaL_checkudata(L, engine_index, kEngineMetatableName);
 
     /* If the engine is already closed, don't try closing it again. Since the
      * engine is automatically closed when it gets garbage collected, if the
@@ -97,7 +92,7 @@ void ul_free_engine_object(lua_State *L, int engine_index) {
         return;
 
     lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
-    hook_table_index = lua_absindex(L, -1);
+    int hook_table_index = lua_absindex(L, -1);
 
     /* Release all hooks */
     lua_pushnil(L);
@@ -112,7 +107,7 @@ void ul_free_engine_object(lua_State *L, int engine_index) {
     luaL_unref(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
     engine_object->hook_table_ref = LUA_NOREF;
 
-    error = uc_close(engine_object->engine);
+    uc_err error = uc_close(engine_object->engine);
     if (error != UC_ERR_OK)
         ul_crash_on_error(L, error);
 
@@ -146,16 +141,11 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 
 
 UNICORN_EXPORT int ul_context_alloc(lua_State *L) {
-    uc_engine *engine;
-    uc_context *context;
-    int error;
-
-    engine = ul_toengine(L, 1);
-
-    context = (uc_context *)lua_newuserdata(L, sizeof(context));
+    uc_engine *engine = ul_toengine(L, 1);
+    uc_context *context = (uc_context *)lua_newuserdata(L, sizeof(context));
     luaL_setmetatable(L, kContextMetatableName);
 
-    error = uc_context_alloc(engine, &context);
+    uc_err error = uc_context_alloc(engine, &context);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
@@ -164,19 +154,13 @@ UNICORN_EXPORT int ul_context_alloc(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_context_save(lua_State *L) {
-    uc_engine *engine;
-    uc_context *context;
-    int error;
-
-    engine = ul_toengine(L, 1);
-
+    uc_engine *engine = ul_toengine(L, 1);
     if (lua_gettop(L) < 2)
         /* Caller didn't pass a context to update, so create a new one. */
         ul_context_alloc(L);
 
-    context = ul_tocontext(L, 2);
-
-    error = uc_context_save(engine, context);
+    uc_context *context = ul_tocontext(L, 2);
+    uc_err error = uc_context_save(engine, context);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
@@ -185,14 +169,10 @@ UNICORN_EXPORT int ul_context_save(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_context_restore(lua_State *L) {
-    uc_engine *engine;
-    uc_context *context;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uc_context *context = ul_tocontext(L, 2);
 
-    engine = ul_toengine(L, 1);
-    context = ul_tocontext(L, 2);
-
-    error = uc_context_restore(engine, context);
+    uc_err error = uc_context_restore(engine, context);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -206,14 +186,12 @@ UNICORN_EXPORT int ul_close(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_query(lua_State *L) {
-    uc_engine *engine;
-    int query_type, error;
     size_t result;
 
-    engine = ul_toengine(L, 1);
-    query_type = luaL_checkinteger(L, 1);
+    uc_engine *engine = ul_toengine(L, 1);
+    int query_type = luaL_checkinteger(L, 1);
 
-    error = uc_query(engine, query_type, &result);
+    uc_err error = uc_query(engine, query_type, &result);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
@@ -223,27 +201,20 @@ UNICORN_EXPORT int ul_query(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_errno(lua_State *L) {
-    uc_engine *engine;
-
-    engine = ul_toengine(L, 1);
+    uc_engine *engine = ul_toengine(L, 1);
     lua_pushinteger(L, uc_errno(engine));
     return 1;
 }
 
 
 UNICORN_EXPORT int ul_emu_start(lua_State *L) {
-    uc_engine *engine;
-    uint64_t start, end, timeout;
-    size_t n_instructions;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t start = (uint64_t)luaL_checkinteger(L, 2);
+    uint64_t end = (uint64_t)luaL_checkinteger(L, 3);
+    uint64_t timeout = (uint64_t)luaL_optinteger(L, 4, 0);
+    size_t n_instructions = (size_t)luaL_optinteger(L, 5, 0);
 
-    engine = ul_toengine(L, 1);
-    start = (uint64_t)luaL_checkinteger(L, 2);
-    end = (uint64_t)luaL_checkinteger(L, 3);
-    timeout = (uint64_t)luaL_optinteger(L, 4, 0);
-    n_instructions = (size_t)luaL_optinteger(L, 5, 0);
-
-    error = uc_emu_start(engine, start, end, timeout, n_instructions);
+    uc_err error = uc_emu_start(engine, start, end, timeout, n_instructions);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -251,12 +222,9 @@ UNICORN_EXPORT int ul_emu_start(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_emu_stop(lua_State *L) {
-    uc_engine *engine;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uc_err error = uc_emu_stop(engine);
 
-    engine = ul_toengine(L, 1);
-
-    error = uc_emu_stop(engine);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -264,9 +232,7 @@ UNICORN_EXPORT int ul_emu_stop(lua_State *L) {
 
 
 uc_engine *ul_toengine(lua_State *L, int index) {
-    UCLuaEngine *engine_object;
-
-    engine_object = (UCLuaEngine *)luaL_checkudata(L, index, kEngineMetatableName);
+    UCLuaEngine *engine_object = luaL_checkudata(L, index, kEngineMetatableName);
     if (engine_object->engine == NULL)
         luaL_error(L, "Attempted to use closed engine.");
 

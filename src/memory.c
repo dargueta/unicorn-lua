@@ -7,17 +7,13 @@
 
 
 int ul_mem_write(lua_State *L) {
-    uc_engine *engine;
-    uint64_t address;
-    const void *data;
     size_t length;
-    int error;
 
-    engine = ul_toengine(L, 1);
-    address = (uint64_t)luaL_checkinteger(L, 2);
-    data = (const void *)luaL_checklstring(L, 3, &length);
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+    const void *data = luaL_checklstring(L, 3, &length);
 
-    error = uc_mem_write(engine, address, data, length);
+    uc_err error = uc_mem_write(engine, address, data, length);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -25,21 +21,15 @@ int ul_mem_write(lua_State *L) {
 
 
 int ul_mem_read(lua_State *L) {
-    uc_engine *engine;
-    uint64_t address;
-    size_t length;
-    void *data;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+    size_t length = (size_t)luaL_checkinteger(L, 3);
 
-    engine = ul_toengine(L, 1);
-    address = (uint64_t)luaL_checkinteger(L, 2);
-    length = (size_t)luaL_checkinteger(L, 3);
-
-    data = malloc(length);
+    void *data = malloc(length);
     if (!data)
         return luaL_error(L, "Out of memory.");
 
-    error = uc_mem_read(engine, address, data, length);
+    uc_err error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {
         free(data);
         return ul_crash_on_error(L, error);
@@ -52,18 +42,12 @@ int ul_mem_read(lua_State *L) {
 
 
 int ul_mem_map(lua_State *L) {
-    uc_engine *engine;
-    uint64_t address;
-    size_t size;
-    uint32_t perms;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+    size_t size = (size_t)luaL_checkinteger(L, 3);
+    uint32_t perms = (uint32_t)luaL_optinteger(L, 4, UC_PROT_ALL);
 
-    engine = ul_toengine(L, 1);
-    address = (uint64_t)luaL_checkinteger(L, 2);
-    size = (size_t)luaL_checkinteger(L, 3);
-    perms = (uint32_t)luaL_optinteger(L, 4, UC_PROT_ALL);
-
-    error = uc_mem_map(engine, address, size, perms);
+    uc_err error = uc_mem_map(engine, address, size, perms);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -71,16 +55,11 @@ int ul_mem_map(lua_State *L) {
 
 
 int ul_mem_unmap(lua_State *L) {
-    uc_engine *engine;
-    uint64_t address;
-    size_t size;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+    size_t size = (size_t)luaL_checkinteger(L, 3);
 
-    engine = ul_toengine(L, 1);
-    address = (uint64_t)luaL_checkinteger(L, 2);
-    size = (size_t)luaL_checkinteger(L, 3);
-
-    error = uc_mem_unmap(engine, address, size);
+    uc_err error = uc_mem_unmap(engine, address, size);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -88,18 +67,12 @@ int ul_mem_unmap(lua_State *L) {
 
 
 int ul_mem_protect(lua_State *L) {
-    uc_engine *engine;
-    uint64_t address;
-    size_t size;
-    uint32_t perms;
-    int error;
+    uc_engine *engine = ul_toengine(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+    size_t size = (size_t)luaL_checkinteger(L, 3);
+    uint32_t perms = (uint32_t)luaL_checkinteger(L, 4);
 
-    engine = ul_toengine(L, 1);
-    address = (uint64_t)luaL_checkinteger(L, 2);
-    size = (size_t)luaL_checkinteger(L, 3);
-    perms = (uint32_t)luaL_checkinteger(L, 4);
-
-    error = uc_mem_protect(engine, address, size, perms);
+    uc_err error = uc_mem_protect(engine, address, size, perms);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
@@ -107,21 +80,18 @@ int ul_mem_protect(lua_State *L) {
 
 
 int ul_mem_regions(lua_State *L) {
-    uc_engine *engine;
-    uc_mem_region *regions;
-    uint32_t n_regions, i;
-    int error;
+    uint32_t n_regions;
 
-    engine = ul_toengine(L, 1);
-    regions = NULL;
+    uc_engine *engine = ul_toengine(L, 1);
+    uc_mem_region *regions = NULL;
     n_regions = 0;
 
-    error = uc_mem_regions(engine, &regions, &n_regions);
+    uc_err error = uc_mem_regions(engine, &regions, &n_regions);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
     lua_createtable(L, n_regions, 0);
-    for (i = 0; i < n_regions; ++i) {
+    for (uint32_t i = 0; i < n_regions; ++i) {
         lua_createtable(L, 0, 3);
 
         lua_pushinteger(L, regions[i].begin);
