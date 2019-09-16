@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
@@ -20,18 +18,17 @@ UNICORN_EXPORT int ul_version(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_arch_supported(lua_State *L) {
-    int architecture = luaL_checkinteger(L, -1);
+    auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, -1));
     lua_pushboolean(L, uc_arch_supported(architecture));
     return 1;
 }
 
 
 UNICORN_EXPORT int ul_open(lua_State *L) {
+    auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, 1));
+    auto mode = static_cast<uc_mode>(luaL_checkinteger(L, 2));
+
     uc_engine *engine;
-
-    int architecture = luaL_checkinteger(L, 1);
-    int mode = luaL_checkinteger(L, 2);
-
     uc_err error = uc_open(architecture, mode, &engine);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -42,7 +39,8 @@ UNICORN_EXPORT int ul_open(lua_State *L) {
 
 
 UNICORN_EXPORT int ul_strerror(lua_State *L) {
-    lua_pushstring(L, uc_strerror(luaL_checkinteger(L, 1)));
+    auto error = static_cast<uc_err>(luaL_checkinteger(L, 1));
+    lua_pushstring(L, uc_strerror(error));
     return 1;
 }
 
@@ -60,13 +58,13 @@ static const luaL_Reg kUnicornLibraryFunctions[] = {
     {"open", ul_open},
     {"strerror", ul_strerror},
     {"version", ul_version},
-    {NULL, NULL}
+    {nullptr, nullptr}
 };
 
 
 static const luaL_Reg kContextMetamethods[] = {
     {"__gc", ul_free},
-    {NULL, NULL}
+    {nullptr, nullptr}
 };
 
 

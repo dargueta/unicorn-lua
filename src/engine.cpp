@@ -13,7 +13,7 @@ const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
 const luaL_Reg kEngineMetamethods[] = {
     {"__gc", ul_close},
-    {NULL, NULL}
+    {nullptr, nullptr}
 };
 
 
@@ -37,7 +37,7 @@ const luaL_Reg kEngineInstanceMethods[] = {
     {"reg_read_batch", ul_reg_read_batch},
     {"reg_write", ul_reg_write},
     {"reg_write_batch", ul_reg_write_batch},
-    {NULL, NULL}
+    {nullptr, nullptr}
 };
 
 
@@ -60,8 +60,9 @@ void ul_init_engines_lib(lua_State *L) {
 
 
 void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
-    UCLuaEngine *engine_object = lua_newuserdata(L, sizeof(*engine_object));
-    engine_object->engine = (uc_engine *)engine;
+    UCLuaEngine *engine_object = \
+        reinterpret_cast<UCLuaEngine *>(lua_newuserdata(L, sizeof(*engine_object)));
+    engine_object->engine = const_cast<uc_engine *>(engine);
 
     luaL_setmetatable(L, kEngineMetatableName);
 
@@ -82,13 +83,13 @@ void ul_free_engine_object(lua_State *L, int engine_index) {
     engine_index = lua_absindex(L, engine_index);
 
     /* Deliberately not using ul_toengine, see below. */
-    UCLuaEngine *engine_object = luaL_checkudata(L, engine_index, kEngineMetatableName);
+    auto engine_object = get_engine_struct(L, engine_index);
 
     /* If the engine is already closed, don't try closing it again. Since the
      * engine is automatically closed when it gets garbage collected, if the
      * user manually closes it first this will result in an attempt to close an
      * already-closed engine. */
-    if (engine_object->engine == NULL)
+    if (engine_object->engine == nullptr)
         return;
 
     lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
@@ -120,7 +121,7 @@ void ul_free_engine_object(lua_State *L, int engine_index) {
     lua_pop(L, 1);          /* Remove pointer map */
 
     /* Clear out the engine pointer so we know it's closed now. */
-    engine_object->engine = NULL;
+    engine_object->engine = nullptr;
 }
 
 
@@ -189,7 +190,7 @@ UNICORN_EXPORT int ul_query(lua_State *L) {
     size_t result;
 
     uc_engine *engine = ul_toengine(L, 1);
-    int query_type = luaL_checkinteger(L, 1);
+    uc_query_type query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
 
     uc_err error = uc_query(engine, query_type, &result);
     if (error != UC_ERR_OK)
@@ -232,8 +233,8 @@ UNICORN_EXPORT int ul_emu_stop(lua_State *L) {
 
 
 uc_engine *ul_toengine(lua_State *L, int index) {
-    UCLuaEngine *engine_object = luaL_checkudata(L, index, kEngineMetatableName);
-    if (engine_object->engine == NULL)
+    auto engine_object = get_engine_struct(L, index);
+    if (engine_object->engine == nullptr)
         luaL_error(L, "Attempted to use closed engine.");
 
     return engine_object->engine;

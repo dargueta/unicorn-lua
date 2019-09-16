@@ -25,9 +25,7 @@ int ul_mem_read(lua_State *L) {
     uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
     size_t length = (size_t)luaL_checkinteger(L, 3);
 
-    void *data = malloc(length);
-    if (!data)
-        return luaL_error(L, "Out of memory.");
+    char *data = new char[length];
 
     uc_err error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {
@@ -36,7 +34,7 @@ int ul_mem_read(lua_State *L) {
     }
 
     lua_pushlstring(L, data, length);
-    free(data);
+    delete data;
     return 1;
 }
 
@@ -83,7 +81,7 @@ int ul_mem_regions(lua_State *L) {
     uint32_t n_regions;
 
     uc_engine *engine = ul_toengine(L, 1);
-    uc_mem_region *regions = NULL;
+    uc_mem_region *regions = nullptr;
     n_regions = 0;
 
     uc_err error = uc_mem_regions(engine, &regions, &n_regions);

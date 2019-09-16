@@ -309,7 +309,7 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
             ("LUA_CUSTOM_LPATH", search_paths["lpath"]),
             ("LUA_CUSTOM_EXEPATH", search_paths["path"]),
             ("BUSTED_EXE", os.path.join(HOME, ".luarocks", "bin", "busted")),
-            ("C_SOURCE_FILES", " ".join(recursive_enum_files("src", "*.c"))),
+            ("C_SOURCE_FILES", " ".join(recursive_enum_files("src", "*.cpp"))),
             ("C_HEADER_FILES", " ".join(recursive_enum_files("include", "*.h"))),
             (
                 "LUA_SOURCE_FILES",

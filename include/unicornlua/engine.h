@@ -82,4 +82,8 @@ void ul_init_engines_lib(lua_State *L);
  */
 uc_engine *ul_toengine(lua_State *L, int index);
 
+
+#define get_engine_struct(L, index)   \
+    reinterpret_cast<UCLuaEngine *>(luaL_checkudata((L), (index), kEngineMetatableName))
+
 #endif  /* INCLUDE_UNICORNLUA_ENGINE_H_ */

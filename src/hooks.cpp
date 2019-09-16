@@ -34,9 +34,9 @@ static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
 void ul_hook_get_hook_table(lua_State *L, int index) {
-    UCLuaEngine *engine_object = luaL_checkudata(L, index, kEngineMetatableName);
-    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
+    auto engine_object = get_engine_struct(L, index);
 
+    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
     if (lua_isnil(L, -1))
         luaL_error(L, "No hook table found for the given engine.");
 }
@@ -228,7 +228,7 @@ static void *_get_c_callback_for_hook_type(int hook_type, int insn_code) {
             return (void *)invalid_mem_access_hook;
 
         default:
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -288,7 +288,7 @@ int ul_hook_add(lua_State *L) {
 
     /* Figure out which C hook we need */
     void *c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
-    if (c_callback == NULL)
+    if (c_callback == nullptr)
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
 
     if (n_args < 6)

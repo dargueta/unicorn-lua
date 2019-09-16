@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
@@ -11,7 +9,7 @@ extern const char * const kContextMetatableName;
 extern const char * const kEnginePointerMapName;
 
 
-int ul_crash_on_error(lua_State *L, int error) {
+int ul_crash_on_error(lua_State *L, uc_err error) {
     const char *message = uc_strerror(error);
     lua_pushstring(L, message);
     return lua_error(L);
@@ -19,8 +17,10 @@ int ul_crash_on_error(lua_State *L, int error) {
 
 
 uc_context *ul_tocontext(lua_State *L, int index) {
-    uc_context *context = (uc_context *)luaL_checkudata(L, index, kContextMetatableName);
-    if (context == NULL)
+    auto context = reinterpret_cast<uc_context *>(
+        luaL_checkudata(L, index, kContextMetatableName)
+    );
+    if (context == nullptr)
         luaL_error(L, "Attempted to use closed context.");
     return context;
 }
@@ -57,7 +57,7 @@ void *luaL_checklightuserdata(lua_State *L, int index) {
 int load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
     int i;
 
-    for (i = 0; constants[i].name != NULL; ++i) {
+    for (i = 0; constants[i].name != nullptr; ++i) {
         lua_pushinteger(L, constants[i].value);
         lua_setfield(L, -2, constants[i].name);
     }

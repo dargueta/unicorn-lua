@@ -36,9 +36,7 @@ int ul_reg_read(lua_State *L) {
 
 
 int ul_reg_write_batch(lua_State *L) {
-    int n_registers, *registers;
-    lua_Unsigned *values;
-    void **p_values;
+    int n_registers;
 
     uc_engine *engine = ul_toengine(L, 1);
 
@@ -53,16 +51,9 @@ int ul_reg_write_batch(lua_State *L) {
     for (n_registers = 0; lua_next(L, 2) != 0; ++n_registers)
         lua_pop(L, 1);
 
-    registers = (int *)malloc(n_registers * sizeof(*registers));
-    values = (lua_Unsigned *)malloc(n_registers * sizeof(*values));
-    p_values = (void **)malloc(n_registers * sizeof(*p_values));
-
-    if (!registers || !values || !p_values) {
-        free(registers);
-        free(values);
-        free(p_values);
-        return luaL_error(L, "Out of memory.");
-    }
+    int *registers = new int[n_registers];
+    lua_Unsigned *values = new lua_Unsigned[n_registers];
+    void **p_values = new void *[n_registers];
 
     /* Iterate through the register/value pairs and put them in the corresponding
      * array positions. */
@@ -79,10 +70,9 @@ int ul_reg_write_batch(lua_State *L) {
         p_values[i] = &values[i];
 
     uc_err error = uc_reg_write_batch(engine, registers, p_values, n_registers);
-
-    free(registers);
-    free(values);
-    free(p_values);
+    delete[] registers;
+    delete[] values;
+    delete[] p_values;
 
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -94,16 +84,9 @@ int ul_reg_read_batch(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int n_registers = lua_gettop(L) - 1;
 
-    int *registers = malloc(n_registers * sizeof(*registers));
-    lua_Integer *values = malloc(n_registers * sizeof(*values));
-    void **p_values = malloc(n_registers * sizeof(*p_values));
-
-    if (!registers || !values || !p_values) {
-        free(registers);
-        free(values);
-        free(p_values);
-        return luaL_error(L, "Out of memory.");
-    }
+    int *registers = new int[n_registers];
+    lua_Integer *values = new lua_Integer[n_registers];
+    void **p_values = new void *[n_registers];
 
     for (int i = 0; i < n_registers; ++i) {
         registers[i] = (int)lua_tointeger(L, i + 2);
@@ -114,18 +97,17 @@ int ul_reg_read_batch(lua_State *L) {
     uc_err error = uc_reg_read_batch(engine, registers, p_values, n_registers);
 
     if (error != UC_ERR_OK) {
-        free(registers);
-        free(values);
-        free(p_values);
+        delete[] registers;
+        delete[] values;
+        delete[] p_values;
         return ul_crash_on_error(L, error);
     }
 
     for (int i = 0; i < n_registers; ++i)
         lua_pushinteger(L, values[i]);
 
-    free(registers);
-    free(values);
-    free(p_values);
-
+    delete[] registers;
+    delete[] values;
+    delete[] p_values;
     return n_registers;
 }

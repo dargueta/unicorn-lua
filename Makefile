@@ -10,12 +10,12 @@ BUILD_LUA_CPATH=$(BUILD_DIR)/?.$(LIB_EXTENSION);$(BUILD_DIR)/?/init.$(LIB_EXTENS
 BUILD_LUA_PATH=$(BUILD_DIR)/?.lua;$(BUILD_DIR)/?/init.lua
 
 GLOBAL_HEADERS=$(wildcard $(INCLUDE_UC_BASE)/*.h)
-OBJECTS=$(C_SOURCE_FILES:src/%.c=build/obj/%.o)
+OBJECTS=$(C_SOURCE_FILES:src/%.cpp=build/obj/%.o)
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 TESTS_BASE=$(REPO_ROOT)/tests
-TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.c)
+TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.cpp)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 
 CFLAGS ?=
@@ -24,12 +24,13 @@ IS_DEBUG ?= true
 
 ifeq ($(IS_DEBUG), true)
 	CFLAGS += -Og -ggdb
+	LDFLAGS += -O0
 else
 	CFLAGS += -Ofast
-	LDFLAGS += --strip-all
+	LDFLAGS += --strip-all -O1
 endif
 
-CFLAGS += -c -Wall -Werror -Wextra -std=c99 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+CFLAGS += -fno-rtti -fvisibility=hidden -c -Wall -Werror -Wextra -std=c++11 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
@@ -41,7 +42,7 @@ else
 endif
 
 # These must come after the -shared flag for some reason.
-LDFLAGS += -lunicorn -lpthread
+LDFLAGS += -lunicorn -lpthread -export-dynamic
 
 SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
@@ -90,7 +91,7 @@ run_example: examples
 	$(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
-build/obj/%.o : src/%.c
+build/obj/%.o : src/%.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
 
@@ -121,20 +122,16 @@ $(INSTALL_STAGING_DIR)/%_const.lua : $(UNICORN_INCLUDE_PATH)/%.h | $(INSTALL_STA
 $(INSTALL_STAGING_DIR)/%.lua : $(SRC_ROOT)/%.lua | $(INSTALL_STAGING_DIR)
 	cp $^ $@
 
-$(OBJECT_DIR)/arm.o: $(SRC_ROOT)/arm.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/arm64.o: $(SRC_ROOT)/arm64.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/m68k.o: $(SRC_ROOT)/m68k.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/mips.o: $(SRC_ROOT)/mips.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/sparc.o: $(SRC_ROOT)/sparc.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/x86.o: $(SRC_ROOT)/x86.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.c $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+
+$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/unicorn.o: $(C_SOURCES)
-$(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.c $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
 
 $(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR)
 	$(LD) $(LDFLAGS) -o $@ $^

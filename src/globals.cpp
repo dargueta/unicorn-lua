@@ -116,6 +116,6 @@ const struct NamedIntConst kGlobalsConstants[] = {
     {"UC_PROT_EXEC", UC_PROT_EXEC},
     {"UC_PROT_ALL", UC_PROT_ALL},
 
-    {NULL, 0}
+    {nullptr, 0}
 };
 

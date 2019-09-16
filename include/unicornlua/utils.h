@@ -21,7 +21,7 @@
  * @note Like lua_error, this function never returns, and should be treated in
  * exactly the same way.
  */
-int ul_crash_on_error(lua_State *L, int error);
+int ul_crash_on_error(lua_State *L, uc_err error);
 
 
 /**
