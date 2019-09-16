@@ -186,7 +186,7 @@ static const struct NamedIntConst kModuleConstants[] = {
 };
 
 
-int luaopen_unicorn__clib(lua_State *L) {
+extern "C" UNICORN_EXPORT int luaopen_unicorn__clib(lua_State *L) {
     ul_init_engines_lib(L);
 
     luaL_newmetatable(L, kContextMetatableName);

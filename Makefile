@@ -30,19 +30,14 @@ else
 	LDFLAGS += --strip-all -O1
 endif
 
-CFLAGS += -fno-rtti -fpic -c -Wall -Werror -Wextra -std=c++11 -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
-LDFLAGS += -fpic -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
+CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 -Wall -Wextra -Werror -Wpedantic -pedantic-errors -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+LDFLAGS += -fno-rtti -fpic -shared -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 
-ifeq ($(PLATFORM), macosx)
-	LDFLAGS += -dylib
-else
-	LDFLAGS += -shared
-endif
-
-# These must come after the -shared flag for some reason.
-LDFLAGS += -lunicorn -lpthread
+# These must come at the end of the link command, after the object files. Thus, we're
+# forced to use a separate variable.
+LINK_LIBRARIES = -lunicorn -lpthread
 
 SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
@@ -52,7 +47,7 @@ all: $(OBJECT_DIR) $(INSTALL_STAGING_DIR) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECTS) $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR)
+	rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR)
 
 
 .PHONY: docs
@@ -67,10 +62,10 @@ test_c: $(SHARED_LIB_FILE)
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)" \
-	LUA_CPATH="$(LUA_CUSTOM_CPATH);$(BUILD_LUA_CPATH)" \
-	LUA_PATH="$(LUA_CUSTOM_LPATH);$(BUILD_LUA_PATH)" \
-	PATH="$(LUA_CUSTOM_EXEPATH):$(PATH)" \
+	LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)"    \
+	LUA_CPATH="$(LUA_CUSTOM_CPATH);$(BUILD_LUA_CPATH)"          \
+	LUA_PATH="$(LUA_CUSTOM_LPATH);$(BUILD_LUA_PATH)"            \
+	PATH="$(LUA_CUSTOM_EXEPATH):$(PATH)"                        \
 	$(BUSTED_EXE) $(BUSTED_CLI_ARGS)
 
 
@@ -84,15 +79,15 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 .PHONY: run_example
 run_example: examples
-	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && \
-	LUA_CPATH="$(LUA_CUSTOM_CPATH);$(BUILD_LUA_CPATH)" \
-	LUA_PATH="$(LUA_CUSTOM_LPATH);$(BUILD_LUA_PATH)" \
-	PATH="$(LUA_CUSTOM_EXEPATH):$(PATH)" \
+	cd $(EXAMPLES_ROOT)/$(EXAMPLE) &&                   \
+	LUA_CPATH="$(LUA_CUSTOM_CPATH);$(BUILD_LUA_CPATH)"  \
+	LUA_PATH="$(LUA_CUSTOM_LPATH);$(BUILD_LUA_PATH)"    \
+	PATH="$(LUA_CUSTOM_EXEPATH):$(PATH)"                \
 	$(LUA_EXE) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 build/obj/%.o : src/%.cpp
-	g++ $(CFLAGS) -o $@ $^
+	$(CXX) $(CFLAGS) -o $@ $^
 
 
 %.h: ;
@@ -122,13 +117,13 @@ $(INSTALL_STAGING_DIR)/%_const.lua : $(UNICORN_INCLUDE_PATH)/%.h | $(INSTALL_STA
 $(INSTALL_STAGING_DIR)/%.lua : $(SRC_ROOT)/%.lua | $(INSTALL_STAGING_DIR)
 	cp $^ $@
 
-$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/unicorn.o: $(C_SOURCES)
-$(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
+$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/unicorn.o: $(C_SOURCES) | $(OBJECT_DIR)
+$(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
 
 $(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR)
-	g++ $(LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LINK_LIBRARIES)
