@@ -69,9 +69,6 @@ int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index
  */
 void ul_hook_get_callback(const HookInfo *hook_data);
 
-/**
- * Push the hook table associated with the engine at @a index onto the stack.
- */
-void ul_hook_get_hook_table(lua_State *L, int index);
+void ul_destroy_hook(HookInfo *hook);
 
 #endif  /* INCLUDE_UNICORNLUA_HOOKS_H_ */

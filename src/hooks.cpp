@@ -319,32 +319,22 @@ int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index
     hook_handle_index = lua_absindex(L, hook_handle_index);
 
     HookInfo *hook_info = (HookInfo *)luaL_checklightuserdata(L, hook_handle_index);
+    ul_destroy_hook(hook_info);
+    return 0;
+}
 
+
+void ul_destroy_hook(HookInfo *hook) {
     /* Remove the hard reference to the hook's callback function, and overwrite
      * the reference ID in the C struct. This way, accidental reuse of the hook
      * struct will fail. */
-    luaL_unref(L, LUA_REGISTRYINDEX, hook_info->callback_func_ref);
-    luaL_unref(L, LUA_REGISTRYINDEX, hook_info->user_data_ref);
-    hook_info->callback_func_ref = LUA_NOREF;
-    hook_info->user_data_ref = LUA_NOREF;
+    luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->callback_func_ref);
+    luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->user_data_ref);
+    hook->callback_func_ref = LUA_NOREF;
+    hook->user_data_ref = LUA_NOREF;
 
     /* Remove the hook from the engine. */
-    uc_err error = uc_hook_del(hook_info->engine, hook_info->hook);
+    uc_err error = uc_hook_del(hook->engine, hook->hook);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
-
-    /* Get the hook object table for this engine so we can remove the hook
-     * object. */
-    ul_hook_get_hook_table(L, engine_index);
-
-    /* TOS is the hook table for this engine. Find the hook object associated
-     * with the hook ID and remove it from the table. */
-    lua_pushlightuserdata(L, (void *)hook_info);
-    lua_pushnil(L);
-    lua_settable(L, -3);
-
-    /* Remove the hook table from the stack. */
-    lua_pop(L, 1);
-
-    return 0;
+        ul_crash_on_error(hook->L, error);
 }
