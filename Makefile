@@ -30,8 +30,8 @@ else
 	LDFLAGS += --strip-all -O1
 endif
 
-CFLAGS += -fno-rtti -fvisibility=hidden -c -Wall -Werror -Wextra -std=c++11 -fpic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
-LDFLAGS += -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
+CFLAGS += -fno-rtti -fpic -c -Wall -Werror -Wextra -std=c++11 -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+LDFLAGS += -fpic -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 
@@ -42,7 +42,7 @@ else
 endif
 
 # These must come after the -shared flag for some reason.
-LDFLAGS += -lunicorn -lpthread -export-dynamic
+LDFLAGS += -lunicorn -lpthread
 
 SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
@@ -92,7 +92,7 @@ run_example: examples
 
 
 build/obj/%.o : src/%.cpp
-	$(CC) $(CFLAGS) -o $@ $<
+	g++ $(CFLAGS) -o $@ $^
 
 
 %.h: ;
@@ -122,11 +122,8 @@ $(INSTALL_STAGING_DIR)/%_const.lua : $(UNICORN_INCLUDE_PATH)/%.h | $(INSTALL_STA
 $(INSTALL_STAGING_DIR)/%.lua : $(SRC_ROOT)/%.lua | $(INSTALL_STAGING_DIR)
 	cp $^ $@
 
-
-$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
-$(OBJECT_DIR)/globals.o: $(SRC_ROOT)/globals.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
 $(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
@@ -134,4 +131,4 @@ $(OBJECT_DIR)/unicorn.o: $(C_SOURCES)
 $(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS)
 
 $(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR)
-	$(LD) $(LDFLAGS) -o $@ $^
+	g++ $(LDFLAGS) -o $@ $^

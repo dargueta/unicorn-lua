@@ -1,8 +1,10 @@
+extern "C" {
+#include <lua.h>
+}
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/engine.h"
 #include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
@@ -141,7 +143,7 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 }
 
 
-UNICORN_EXPORT int ul_context_alloc(lua_State *L) {
+int ul_context_alloc(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     uc_context *context = (uc_context *)lua_newuserdata(L, sizeof(context));
     luaL_setmetatable(L, kContextMetatableName);
@@ -154,7 +156,7 @@ UNICORN_EXPORT int ul_context_alloc(lua_State *L) {
 }
 
 
-UNICORN_EXPORT int ul_context_save(lua_State *L) {
+int ul_context_save(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     if (lua_gettop(L) < 2)
         /* Caller didn't pass a context to update, so create a new one. */
@@ -169,7 +171,7 @@ UNICORN_EXPORT int ul_context_save(lua_State *L) {
 }
 
 
-UNICORN_EXPORT int ul_context_restore(lua_State *L) {
+int ul_context_restore(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     uc_context *context = ul_tocontext(L, 2);
 
@@ -180,13 +182,13 @@ UNICORN_EXPORT int ul_context_restore(lua_State *L) {
 }
 
 
-UNICORN_EXPORT int ul_close(lua_State *L) {
+int ul_close(lua_State *L) {
     ul_free_engine_object(L, 1);
     return 0;
 }
 
 
-UNICORN_EXPORT int ul_query(lua_State *L) {
+int ul_query(lua_State *L) {
     size_t result;
 
     uc_engine *engine = ul_toengine(L, 1);
@@ -201,14 +203,14 @@ UNICORN_EXPORT int ul_query(lua_State *L) {
 }
 
 
-UNICORN_EXPORT int ul_errno(lua_State *L) {
+int ul_errno(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     lua_pushinteger(L, uc_errno(engine));
     return 1;
 }
 
 
-UNICORN_EXPORT int ul_emu_start(lua_State *L) {
+int ul_emu_start(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     uint64_t start = (uint64_t)luaL_checkinteger(L, 2);
     uint64_t end = (uint64_t)luaL_checkinteger(L, 3);
@@ -222,7 +224,7 @@ UNICORN_EXPORT int ul_emu_start(lua_State *L) {
 }
 
 
-UNICORN_EXPORT int ul_emu_stop(lua_State *L) {
+int ul_emu_stop(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     uc_err error = uc_emu_stop(engine);
 
