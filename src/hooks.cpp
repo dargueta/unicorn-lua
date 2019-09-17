@@ -4,7 +4,6 @@
 #include "unicornlua/engine.h"
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
 
@@ -33,18 +32,7 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index);
 static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
-void ul_hook_get_hook_table(lua_State *L, int index) {
-    auto engine_object = get_engine_struct(L, index);
-
-    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
-    if (lua_isnil(L, -1))
-        luaL_error(L, "No hook table found for the given engine.");
-}
-
-
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
-    ul_hook_get_hook_table(L, eng_index);
-
     HookInfo *hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
     hook_info->L = L;
     hook_info->engine = ul_toengine(L, eng_index);
@@ -55,16 +43,6 @@ static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) 
      * to find the right Lua function to call. */
     lua_pushvalue(L, cb_index);
     hook_info->callback_func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-    /* Callback function popped off the top. Hook object at TOS, followed by the
-     * hook table.
-     *
-     * Store the hook in the hook table using a light userdata with the pointer
-     * to the hook C struct as the key. */
-    lua_pushlightuserdata(L, (void *)hook_info);
-    lua_swaptoptwo(L);
-    lua_settable(L, -3);
-
     return hook_info;
 }
 
@@ -240,7 +218,7 @@ int ul_hook_add(lua_State *L) {
 
     int n_args = lua_gettop(L);
 
-    uc_engine *engine = ul_toengine(L, 1);
+    auto engine_object = get_engine_struct(L, 1);
     int hook_type = luaL_checkinteger(L, 2);
     /* Callback function is at position 3 */
 
@@ -269,6 +247,7 @@ int ul_hook_add(lua_State *L) {
     }
 
     HookInfo *hook_info = _create_hook_object(L, 1, 3);
+    engine_object->hooks.insert(hook_info);
 
     /* If the caller gave us a sixth argument, it's data to pass to the callback.
      * Create a reference to it and store that in the hook struct. */
@@ -292,11 +271,15 @@ int ul_hook_add(lua_State *L) {
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
 
     if (n_args < 6)
-        error = uc_hook_add(engine, &hook_info->hook, hook_type, c_callback,
-                            (void *)hook_info, start, end);
+        error = uc_hook_add(
+            engine_object->engine, &hook_info->hook, hook_type, c_callback,
+            (void *)hook_info, start, end
+        );
     else
-        error = uc_hook_add(engine, &hook_info->hook, hook_type, c_callback,
-                            (void *)hook_info, start, end, extra_argument);
+        error = uc_hook_add(
+            engine_object->engine, &hook_info->hook, hook_type, c_callback,
+            (void *)hook_info, start, end, extra_argument
+        );
 
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -309,17 +292,11 @@ int ul_hook_add(lua_State *L) {
 
 
 int ul_hook_del(lua_State *L) {
-    ul_hook_del_by_indexes(L, 1, 2);
-    return 0;
-}
-
-
-int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index) {
-    engine_index = lua_absindex(L, engine_index);
-    hook_handle_index = lua_absindex(L, hook_handle_index);
-
-    HookInfo *hook_info = (HookInfo *)luaL_checklightuserdata(L, hook_handle_index);
+    HookInfo *hook_info = (HookInfo *)luaL_checklightuserdata(L, 2);
     ul_destroy_hook(hook_info);
+
+    auto engine = get_engine_struct(L, 1);
+    engine->hooks.erase(hook_info);
     return 0;
 }
 

@@ -43,6 +43,37 @@ const luaL_Reg kEngineInstanceMethods[] = {
 };
 
 
+UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
+
+
+void UCLuaEngine::close() {
+    if (engine == nullptr) {
+        luaL_error(L, "Attempted to close already-closed engine: %p", this);
+        return;
+    }
+
+    for (auto hook : hooks)
+        ul_destroy_hook(hook);
+    hooks.clear();
+
+    uc_err error = uc_close(engine);
+    if (error != UC_ERR_OK)
+        ul_crash_on_error(L, error);
+
+    // Signal subsequent calls that this engine is already closed.
+    engine = nullptr;
+}
+
+
+UCLuaEngine::~UCLuaEngine() {
+    // Only close the engine if it hasn't already been closed. It's perfectly legitimate
+    // for the user to close the engine before it gets garbage-collected, and so we don't
+    // want to crash on garbage collection if they did so.
+    if (engine != nullptr)
+        close();
+}
+
+
 void ul_init_engines_lib(lua_State *L) {
     /* Create a table with weak values where the engine pointer to engine object
      * mappings will be stored. */
@@ -61,10 +92,11 @@ void ul_init_engines_lib(lua_State *L) {
 }
 
 
-void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
-    auto engine_object = \
-        reinterpret_cast<UCLuaEngine *>(lua_newuserdata(L, sizeof(UCLuaEngine)));
-    engine_object->engine = const_cast<uc_engine *>(engine);
+void ul_create_engine_object(lua_State *L, uc_engine *engine) {
+    // Create a block of memory for the engine userdata and then create the UCLuaEngine
+    // in there using "placement new".
+    auto udata = lua_newuserdata(L, sizeof(UCLuaEngine));
+    new (udata) UCLuaEngine(L, engine);
 
     luaL_setmetatable(L, kEngineMetatableName);
 
@@ -75,9 +107,6 @@ void ul_create_engine_object(lua_State *L, const uc_engine *engine) {
     lua_pushvalue(L, -3);   /* Duplicate engine object as value */
     lua_settable(L, -3);
     lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
-
-    lua_newtable(L);
-    engine_object->hook_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
 
@@ -86,33 +115,7 @@ void ul_free_engine_object(lua_State *L, int engine_index) {
 
     /* Deliberately not using ul_toengine, see below. */
     auto engine_object = get_engine_struct(L, engine_index);
-
-    /* If the engine is already closed, don't try closing it again. Since the
-     * engine is automatically closed when it gets garbage collected, if the
-     * user manually closes it first this will result in an attempt to close an
-     * already-closed engine. */
-    if (engine_object->engine == nullptr)
-        return;
-
-    lua_geti(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
-    int hook_table_index = lua_absindex(L, -1);
-
-    /* Release all hooks */
-    lua_pushnil(L);
-    while ((lua_next(L, hook_table_index)) != 0) {
-        /* Hook object at TOS, light userdata used by Lua underneath it. */
-        ul_hook_del_by_indexes(L, engine_index, -2);
-        lua_pop(L, 1);
-    }
-
-    /* Remove hook table from stack and free it. */
-    lua_pop(L, 1);
-    luaL_unref(L, LUA_REGISTRYINDEX, engine_object->hook_table_ref);
-    engine_object->hook_table_ref = LUA_NOREF;
-
-    uc_err error = uc_close(engine_object->engine);
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    engine_object->close();
 
     /* Garbage collection should remove the engine object from the pointer map
      * table but it might not be doing it soon enough. */
@@ -193,11 +196,9 @@ int ul_query(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
 
-
     uc_err error = uc_query(engine, query_type, &result);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
-
 
     lua_pushinteger(L, result);
     return 1;

@@ -7,8 +7,11 @@
 #ifndef INCLUDE_UNICORNLUA_ENGINE_H_
 #define INCLUDE_UNICORNLUA_ENGINE_H_
 
+#include <set>
+
 #include <unicorn/unicorn.h>
 
+#include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 
 extern const char * const kContextMetatableName;
@@ -18,18 +21,17 @@ extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
 
-/**
- * Information used by the library to wrap a Unicorn engine.
- */
-typedef struct {
-    /** The Unicorn engine this struct wraps. */
-    uc_engine *engine;
+class UCLuaEngine {
+public:
+    UCLuaEngine(lua_State *L, uc_engine *engine);
+    ~UCLuaEngine();
 
-    /**
-     * A reference to the engine's hook table.
-     */
-    int hook_table_ref;
-} UCLuaEngine;
+    void close();
+
+    lua_State *L;
+    uc_engine *engine;
+    std::set<HookInfo *> hooks;
+};
 
 
 /**
@@ -38,7 +40,7 @@ typedef struct {
  * @param L         A pointer to the current Lua state.
  * @param engine    A pointer to the engine we want to create the Lua object for.
  */
-void ul_create_engine_object(lua_State *L, const uc_engine *engine);
+void ul_create_engine_object(lua_State *L, uc_engine *engine);
 
 
 /**

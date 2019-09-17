@@ -54,20 +54,12 @@ int ul_hook_add(lua_State *L);
  */
 int ul_hook_del(lua_State *L);
 
-/**
- * Delete a hook from an engine using the hook's handle.
- *
- * @param engine_index  The stack index of the engine to delete the hook from.
- * @param hook_handle_index  The stack index of the hook's handle. The handle is
- *     a light userdata object returned after calling `engine:hook_add()`. This
- *     is the only way a specific hook can be deleted from Lua code.
- */
-int ul_hook_del_by_indexes(lua_State *L, int engine_index, int hook_handle_index);
 
 /**
  * Get the callback function for the given hook and push it on the stack.
  */
 void ul_hook_get_callback(const HookInfo *hook_data);
+
 
 void ul_destroy_hook(HookInfo *hook);
 
