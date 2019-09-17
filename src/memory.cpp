@@ -25,7 +25,7 @@ int ul_mem_read(lua_State *L) {
     uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
     size_t length = (size_t)luaL_checkinteger(L, 3);
 
-    char *data = new char[length];
+    char data[length];
 
     uc_err error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {
@@ -34,7 +34,6 @@ int ul_mem_read(lua_State *L) {
     }
 
     lua_pushlstring(L, data, length);
-    delete data;
     return 1;
 }
 

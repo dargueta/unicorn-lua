@@ -30,14 +30,21 @@ else
 	LDFLAGS += --strip-all -O1
 endif
 
-CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 -Wall -Wextra -Werror -Wpedantic -pedantic-errors -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 -Wall -Wextra -Werror -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LDFLAGS += -fno-rtti -fpic -shared -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 
 # These must come at the end of the link command, after the object files. Thus, we're
 # forced to use a separate variable.
-LINK_LIBRARIES = -lunicorn -lpthread
+ifeq ($(PLATFORM), macosx)
+	# OSX requires linking the Lua library to be able to use it from Lua.
+	LINK_LIBRARIES = -llua -lunicorn -lpthread
+else
+	# Linux doesn't require linking with the Lua library. In fact, doing so breaks the
+	# linker because it requires using -fPIC instead of -fpic.
+	LINK_LIBRARIES = -lunicorn -lpthread
+endif
 
 SHARED_LIB_FILE=$(INSTALL_STAGING_DIR)/_clib.$(LIB_EXTENSION)
 
