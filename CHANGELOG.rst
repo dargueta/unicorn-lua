@@ -9,6 +9,14 @@ Changes
 * Overhauled ``configure`` script to allow using the operating system's Lua installation. Using a
   virtual environment is no longer forced.
 
+Move to C++
+~~~~~~~~~~~
+
+This is now a C++ project coded to be compatible with C++11 and higher. I did this because managing
+an engine's hooks using a Lua table instead of inside the library was unwieldy and prone to memory
+leaks or spurious crashes, especially in low-memory situations. Moving to C++ and using template
+containers sounded like the least amount of work.
+
 Significant refactor
 ~~~~~~~~~~~~~~~~~~~~
 
