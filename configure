@@ -329,7 +329,7 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
             ("MIPS_ASM_SOURCE_FILES", mips_source_files),
             ("BUSTED_CLI_ARGS", busted_cli_args),
             ("LIB_EXTENSION", ext),
-            ("PLATFORM", platform),
+            ("DETECTED_PLATFORM", platform),
             ("X86_ASM", x86_asm),
             ("X86_ASM_FLAGS", x86_asm_flags),
             ("MIPS_ASM", mips_asm),

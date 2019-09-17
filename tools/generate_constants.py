@@ -5,6 +5,7 @@ work with an installed library rather than from the source code. The headers mus
 present, but that's all that's required.
 """
 
+import configparser
 import datetime
 import logging
 import os
@@ -13,6 +14,8 @@ import sys
 import pycparser
 from pycparser import c_ast
 from pycparser import plyparser
+
+HERE = os.path.dirname(__file__)
 
 
 def evaluate_constant(node, enum_item):
@@ -86,6 +89,23 @@ class EnumVisitor(c_ast.NodeVisitor):
         self.enums[node.name] = all_enum_values
 
 
+def get_gcc_predefines():
+    """Get a dict of macros we need to predefine for this platform.
+
+    Preprocessing a header file will fail on some platforms because the Python C parser
+    can't find identifiers defined internally by the compiler. By defining them
+    ourselves in the call to GCC we can hack our way around this problem for any
+    platform, albeit a bit inelegantly.
+    """
+    config = configparser.ConfigParser(default_section="common")
+    config.read(os.path.join(HERE, "gcc_predefs.ini"))
+
+    predefs = config.defaults()
+    if config.has_section(sys.platform):
+        predefs.update(dict(config.items(sys.platform)))
+    return predefs
+
+
 def generate_constants_for_file(header_file, output_file):
     # type: (str, str) -> bool
     """Generate a constants file from a Unicorn header.
@@ -103,9 +123,14 @@ def generate_constants_for_file(header_file, output_file):
     header_file = os.path.abspath(header_file)
     logging.info("Processing file: %s", header_file)
 
+    predefs = get_gcc_predefines()
+    command_parameters = ["-E", "-std=c11"]
+    for name, value in predefs.items():
+        command_parameters.extend(("-D", "%s=%s" % (name, value)))
+
     try:
         ast = pycparser.parse_file(
-            header_file, use_cpp=True, cpp_path="gcc", cpp_args=["-E", "-std=c11"]
+            header_file, use_cpp=True, cpp_path="gcc", cpp_args=command_parameters
         )
     except plyparser.ParseError as err:
         logging.error(

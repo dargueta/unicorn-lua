@@ -37,7 +37,7 @@ DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 
 # These must come at the end of the link command, after the object files. Thus, we're
 # forced to use a separate variable.
-ifeq ($(PLATFORM), macosx)
+ifeq ($(DETECTED_PLATFORM), macosx)
 	# OSX requires linking the Lua library to be able to use it from Lua.
 	LINK_LIBRARIES = -llua -lunicorn -lpthread
 else
