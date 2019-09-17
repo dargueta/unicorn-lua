@@ -305,8 +305,13 @@ void ul_destroy_hook(HookInfo *hook) {
     /* Remove the hard reference to the hook's callback function, and overwrite
      * the reference ID in the C struct. This way, accidental reuse of the hook
      * struct will fail. */
-    luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->callback_func_ref);
-    luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->user_data_ref);
+    if (hook->callback_func_ref != LUA_NOREF)
+        luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->callback_func_ref);
+
+    // FIXME (dargueta): This unref is causing segfaults on unload somehow
+    if (hook->user_data_ref != LUA_NOREF)
+        luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->user_data_ref);
+
     hook->callback_func_ref = LUA_NOREF;
     hook->user_data_ref = LUA_NOREF;
 
