@@ -46,6 +46,16 @@ const luaL_Reg kEngineInstanceMethods[] = {
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
 
 
+void UCLuaEngine::add_hook(HookInfo *hook) {
+    hooks.insert(hook);
+}
+
+
+void UCLuaEngine::remove_hook(HookInfo *hook) {
+    hooks.erase(hook);
+}
+
+
 void UCLuaEngine::close() {
     if (engine == nullptr) {
         luaL_error(L, "Attempted to close already-closed engine: %p", this);

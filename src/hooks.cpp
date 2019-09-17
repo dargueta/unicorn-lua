@@ -33,7 +33,7 @@ static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
 static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
-    HookInfo *hook_info = (HookInfo *)lua_newuserdata(L, sizeof(*hook_info));
+    HookInfo *hook_info = new HookInfo;
     hook_info->L = L;
     hook_info->engine = ul_toengine(L, eng_index);
     hook_info->hook = 0;
@@ -247,7 +247,6 @@ int ul_hook_add(lua_State *L) {
     }
 
     HookInfo *hook_info = _create_hook_object(L, 1, 3);
-    engine_object->hooks.insert(hook_info);
 
     /* If the caller gave us a sixth argument, it's data to pass to the callback.
      * Create a reference to it and store that in the hook struct. */
@@ -267,8 +266,10 @@ int ul_hook_add(lua_State *L) {
 
     /* Figure out which C hook we need */
     void *c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
-    if (c_callback == nullptr)
+    if (c_callback == nullptr) {
+        delete hook_info;
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
+    }
 
     if (n_args < 6)
         error = uc_hook_add(
@@ -281,8 +282,12 @@ int ul_hook_add(lua_State *L) {
             (void *)hook_info, start, end, extra_argument
         );
 
-    if (error != UC_ERR_OK)
+    if (error != UC_ERR_OK) {
+        delete hook_info;
         return ul_crash_on_error(L, error);
+    }
+
+    engine_object->add_hook(hook_info);
 
     /* Return the hook struct as light userdata. Lua code can use this to remove
      * a hook before the engine is closed. */
@@ -292,11 +297,12 @@ int ul_hook_add(lua_State *L) {
 
 
 int ul_hook_del(lua_State *L) {
-    HookInfo *hook_info = (HookInfo *)luaL_checklightuserdata(L, 2);
+    auto hook_info = (HookInfo *)lua_topointer(L, 2);
     ul_destroy_hook(hook_info);
 
     auto engine = get_engine_struct(L, 1);
-    engine->hooks.erase(hook_info);
+    engine->remove_hook(hook_info);
+    delete hook_info;
     return 0;
 }
 
@@ -308,7 +314,6 @@ void ul_destroy_hook(HookInfo *hook) {
     if (hook->callback_func_ref != LUA_NOREF)
         luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->callback_func_ref);
 
-    // FIXME (dargueta): This unref is causing segfaults on unload somehow
     if (hook->user_data_ref != LUA_NOREF)
         luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->user_data_ref);
 
