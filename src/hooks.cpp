@@ -57,8 +57,7 @@ void ul_hook_get_callback(const HookInfo *hook_data) {
 
 
 /* The C wrapper for a code execution hook. */
-static void code_hook(uc_engine *uc, uint64_t address, uint32_t size,
-                      void *user_data) {
+static void code_hook(uc_engine *uc, uint64_t address, uint32_t size, void *user_data) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -87,8 +86,7 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
 }
 
 
-static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
-                             void *user_data) {
+static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size, void *user_data) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -101,15 +99,16 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size,
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
     lua_call(L, 4, 1);
 
-    uint32_t return_value = (uint32_t)luaL_checkinteger(L, -1);
+    auto return_value = static_cast<uint32_t>(luaL_checkinteger(L, -1));
     lua_pop(L, 1);
 
     return return_value;
 }
 
 
-static void port_out_hook(uc_engine *uc, uint32_t port, int size, uint32_t value,
-                          void *user_data) {
+static void port_out_hook(
+    uc_engine *uc, uint32_t port, int size, uint32_t value, void *user_data
+) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -125,8 +124,10 @@ static void port_out_hook(uc_engine *uc, uint32_t port, int size, uint32_t value
 }
 
 
-static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address,
-                               int size, int64_t value, void *user_data) {
+static void memory_access_hook(
+    uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value,
+    void *user_data
+) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -143,9 +144,10 @@ static void memory_access_hook(uc_engine *uc, uc_mem_type type, uint64_t address
 }
 
 
-static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
-                                    uint64_t address, int size, int64_t value,
-                                    void *user_data) {
+static bool invalid_mem_access_hook(
+    uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value,
+    void *user_data
+) {
     lua_State *L = ((HookInfo *)user_data)->L;
 
     /* Push the callback function onto the stack. */
@@ -160,7 +162,7 @@ static bool invalid_mem_access_hook(uc_engine *uc, uc_mem_type type,
     lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
     lua_call(L, 6, 1);
 
-    bool return_value = (bool)luaL_checkboolean(L, -1);
+    bool return_value = luaL_checkboolean(L, -1);
     lua_pop(L, 1);
 
     return return_value;
@@ -233,7 +235,7 @@ int ul_hook_add(lua_State *L) {
             /* Start address given but no end address. Presumably the user wants
              * the hook to apply for all memory at and above this address. */
             start = (uint64_t)luaL_optinteger(L, 4, 0);
-            end = ~0;
+            end = UINT64_MAX;
             break;
         case 5:
         case 6:
@@ -260,7 +262,7 @@ int ul_hook_add(lua_State *L) {
     /* We can't use luaL_optinteger for argument 7 because there can be data at
      * index n_args + 1. We have to check the stack size first. */
     if (n_args >= 7)
-        extra_argument = (int)luaL_checkinteger(L, 7);
+        extra_argument = luaL_checkinteger(L, 7);
     else
         extra_argument = LUA_NOREF;
 
