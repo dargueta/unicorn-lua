@@ -5,10 +5,49 @@
 #ifndef INCLUDE_UNICORNLUA_HOOKS_H_
 #define INCLUDE_UNICORNLUA_HOOKS_H_
 
+#include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
 
-struct HookInfo_;
-typedef struct HookInfo_ HookInfo;
+
+class Hook {
+public:
+    Hook(lua_State *L, uc_engine *engine);
+    Hook(
+        lua_State *L, uc_engine *engine, uc_hook hook_handle,
+        int callback_func_ref=LUA_NOREF, int user_data_ref=LUA_REFNIL
+    );
+    ~Hook();
+
+    uc_engine *engine() noexcept;
+    lua_State *L() noexcept;
+    uc_hook get_hook_handle() const noexcept;
+    void set_hook_handle(uc_hook hook_handle) noexcept;
+
+    int set_callback(int cb_index);
+    int get_callback() const noexcept;
+    void push_callback();
+
+    int set_user_data(int ud_index);
+    int get_user_data() const noexcept;
+    void push_user_data();
+
+private:
+    lua_State *L_;          ///< The Lua state used by this hook.
+    uc_engine *engine_;     ///< The engine this hook is bound to.
+    uc_hook hook_handle_;   ///< The hook handle used by Unicorn.
+
+    /**
+     * A reference in the global registry for this hook's callback function.
+     */
+    int callback_func_ref_;
+
+    /**
+     * A reference in the global registry to a user-defined object to pass to
+     * this hook's callback function.
+     */
+    int user_data_ref_;
+    bool is_handle_set_;
+};
 
 
 /**
@@ -42,6 +81,7 @@ typedef struct HookInfo_ HookInfo;
  */
 int ul_hook_add(lua_State *L);
 
+
 /**
  * Delete a hook. Implements `engine:hook_del()`.
  *
@@ -58,9 +98,6 @@ int ul_hook_del(lua_State *L);
 /**
  * Get the callback function for the given hook and push it on the stack.
  */
-void ul_hook_get_callback(const HookInfo *hook_data);
-
-
-void ul_destroy_hook(HookInfo *hook);
+void ul_hook_get_callback(Hook *hook);
 
 #endif  /* INCLUDE_UNICORNLUA_HOOKS_H_ */

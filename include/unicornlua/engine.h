@@ -26,15 +26,15 @@ public:
     UCLuaEngine(lua_State *L, uc_engine *engine);
     ~UCLuaEngine();
 
-    void add_hook(HookInfo *hook);
-    void remove_hook(HookInfo *hook);
+    void add_hook(Hook *hook);
+    void remove_hook(Hook *hook);
     void close();
 
     lua_State *L;
     uc_engine *engine;
 
 private:
-    std::set<HookInfo *> hooks;
+    std::set<Hook *> hooks;
 };
 
 

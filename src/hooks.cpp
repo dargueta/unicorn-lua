@@ -7,50 +7,94 @@
 #include "unicornlua/utils.h"
 
 
-/**
- * A struct used for holding information about an active hook.
- */
-struct HookInfo_ {
-    lua_State *L;           /**< The Lua state used by this hook. */
-    uc_engine *engine;      /**< The engine this hook is bound to. */
-    uc_hook hook;           /**< The hook handle used by Unicorn. */
-
-    /**
-     * A reference in the global registry for this hook's callback function.
-     */
-    int callback_func_ref;
-
-    /**
-     * A reference in the global registry to a user-defined object to pass to
-     * this hook's callback function.
-     */
-    int user_data_ref;
-};
+Hook::Hook(lua_State *L, uc_engine *engine)
+    : L_(L), engine_(engine), hook_handle_(0), callback_func_ref_(LUA_NOREF),
+      user_data_ref_(LUA_REFNIL), is_handle_set_(false) {}
 
 
-static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index);
-static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
+Hook::Hook(
+    lua_State *L, uc_engine *engine, uc_hook hook_handle, int callback_func_ref,
+    int user_data_ref
+)
+    : L_(L), engine_(engine), hook_handle_(hook_handle),
+      callback_func_ref_(callback_func_ref), user_data_ref_(user_data_ref),
+      is_handle_set_(true) {}
 
 
-static HookInfo *_create_hook_object(lua_State *L, int eng_index, int cb_index) {
-    HookInfo *hook_info = new HookInfo;
-    hook_info->L = L;
-    hook_info->engine = ul_toengine(L, eng_index);
-    hook_info->hook = 0;
+Hook::~Hook() {
+    if ((callback_func_ref_ != LUA_NOREF) && (callback_func_ref_ != LUA_REFNIL))
+        luaL_unref(L_, LUA_REGISTRYINDEX, callback_func_ref_);
 
-    /* Push a copy of the callback function on the top of the stack and store a
-     * reference to it in the registry. This will make it easy for C callbacks
-     * to find the right Lua function to call. */
-    lua_pushvalue(L, cb_index);
-    hook_info->callback_func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    return hook_info;
+    if ((user_data_ref_ != LUA_NOREF) && (user_data_ref_ != LUA_REFNIL))
+        luaL_unref(L_, LUA_REGISTRYINDEX, user_data_ref_);
+
+    if (is_handle_set_) {
+        uc_err error = uc_hook_del(engine_, hook_handle_);
+        if (error != UC_ERR_OK)
+            ul_crash_on_error(L_, error);
+    }
 }
 
 
-void ul_hook_get_callback(const HookInfo *hook_data) {
-    lua_State *L = hook_data->L;
+uc_engine *Hook::engine() noexcept { return engine_; }
 
-    lua_geti(L, LUA_REGISTRYINDEX, hook_data->callback_func_ref);
+
+lua_State *Hook::L() noexcept { return L_; }
+
+
+uc_hook Hook::get_hook_handle() const noexcept { return hook_handle_; }
+
+
+void Hook::set_hook_handle(uc_hook hook_handle) noexcept {
+    hook_handle_ = hook_handle;
+    is_handle_set_ = true;
+}
+
+
+int Hook::set_callback(int cb_index) {
+    lua_pushvalue(L_, cb_index);
+    int new_callback_ref = luaL_ref(L_, LUA_REGISTRYINDEX);
+
+    if ((callback_func_ref_ != LUA_NOREF) && (callback_func_ref_ != LUA_REFNIL))
+        luaL_unref(L_, LUA_REGISTRYINDEX, callback_func_ref_);
+    callback_func_ref_ = new_callback_ref;
+    return new_callback_ref;
+}
+
+
+int Hook::get_callback() const noexcept { return callback_func_ref_; }
+
+
+void Hook::push_callback() {
+    lua_geti(L_, LUA_REGISTRYINDEX, callback_func_ref_);
+}
+
+
+int Hook::set_user_data(int ud_index) {
+    lua_pushvalue(L_, ud_index);
+    int new_data_ref = luaL_ref(L_, LUA_REGISTRYINDEX);
+
+    if ((user_data_ref_ != LUA_NOREF) && (user_data_ref_ != LUA_REFNIL))
+        luaL_unref(L_, LUA_REGISTRYINDEX, user_data_ref_);
+    user_data_ref_ = new_data_ref;
+    return new_data_ref;
+}
+
+
+int Hook::get_user_data() const noexcept { return user_data_ref_; }
+
+
+void Hook::push_user_data() {
+    lua_geti(L_, LUA_REGISTRYINDEX, user_data_ref_);
+}
+
+
+static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
+
+
+void ul_hook_get_callback(Hook *hook) {
+    lua_State *L = hook->L();
+    hook->push_callback();
     if (lua_isnil(L, -1))
         luaL_error(L, "No callback function found for the given hook.");
 }
@@ -58,45 +102,48 @@ void ul_hook_get_callback(const HookInfo *hook_data) {
 
 /* The C wrapper for a code execution hook. */
 static void code_hook(uc_engine *uc, uint64_t address, uint32_t size, void *user_data) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 4, 0);
 }
 
 
 static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)intno);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 3, 0);
 }
 
 
 static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size, void *user_data) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 4, 1);
 
     auto return_value = static_cast<uint32_t>(luaL_checkinteger(L, -1));
@@ -109,17 +156,18 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size, void *user_
 static void port_out_hook(
     uc_engine *uc, uint32_t port, int size, uint32_t value, void *user_data
 ) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
     lua_pushinteger(L, (lua_Unsigned)port);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 5, 0);
 }
 
@@ -128,10 +176,11 @@ static void memory_access_hook(
     uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value,
     void *user_data
 ) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -139,7 +188,7 @@ static void memory_access_hook(
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 6, 0);
 }
 
@@ -148,10 +197,11 @@ static bool invalid_mem_access_hook(
     uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value,
     void *user_data
 ) {
-    lua_State *L = ((HookInfo *)user_data)->L;
+    auto hook = reinterpret_cast<Hook *>(user_data);
+    lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback((HookInfo *)user_data);
+    ul_hook_get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -159,7 +209,7 @@ static bool invalid_mem_access_hook(
     lua_pushinteger(L, (lua_Unsigned)address);
     lua_pushinteger(L, (lua_Unsigned)size);
     lua_pushinteger(L, (lua_Unsigned)value);
-    lua_geti(L, LUA_REGISTRYINDEX, ((HookInfo *)user_data)->user_data_ref);
+    hook->push_user_data();
     lua_call(L, 6, 1);
 
     bool return_value = luaL_checkboolean(L, -1);
@@ -248,16 +298,13 @@ int ul_hook_add(lua_State *L) {
             return luaL_error(L, "Expected 3-7 arguments, got %d.", n_args);
     }
 
-    HookInfo *hook_info = _create_hook_object(L, 1, 3);
+    Hook *hook_info = new Hook(L, engine_object->engine);
+    hook_info->set_callback(3);
 
     /* If the caller gave us a sixth argument, it's data to pass to the callback.
      * Create a reference to it and store that in the hook struct. */
-    if (!lua_isnoneornil(L, 6)) {
-        lua_pushvalue(L, 6);
-        hook_info->user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    }
-    else
-        hook_info->user_data_ref = LUA_NOREF;
+    if (!lua_isnoneornil(L, 6))
+        hook_info->set_user_data(6);
 
     /* We can't use luaL_optinteger for argument 7 because there can be data at
      * index n_args + 1. We have to check the stack size first. */
@@ -273,14 +320,16 @@ int ul_hook_add(lua_State *L) {
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
     }
 
+    uc_hook hook_handle;
+
     if (n_args < 6)
         error = uc_hook_add(
-            engine_object->engine, &hook_info->hook, hook_type, c_callback,
+            engine_object->engine, &hook_handle, hook_type, c_callback,
             (void *)hook_info, start, end
         );
     else
         error = uc_hook_add(
-            engine_object->engine, &hook_info->hook, hook_type, c_callback,
+            engine_object->engine, &hook_handle, hook_type, c_callback,
             (void *)hook_info, start, end, extra_argument
         );
 
@@ -289,41 +338,21 @@ int ul_hook_add(lua_State *L) {
         return ul_crash_on_error(L, error);
     }
 
+    hook_info->set_hook_handle(hook_handle);
     engine_object->add_hook(hook_info);
 
-    /* Return the hook struct as light userdata. Lua code can use this to remove
-     * a hook before the engine is closed. */
+    // Return the hook struct as light userdata. Lua code can use this to remove a hook
+    // a hook before the engine is closed. Hooks will remain attached even if this
+    // handle gets garbage-collected.
     lua_pushlightuserdata(L, (void *)hook_info);
     return 1;
 }
 
 
 int ul_hook_del(lua_State *L) {
-    auto hook_info = (HookInfo *)lua_topointer(L, 2);
-    ul_destroy_hook(hook_info);
-
+    auto hook_info = (Hook *)lua_topointer(L, 2);
     auto engine = get_engine_struct(L, 1);
+
     engine->remove_hook(hook_info);
-    delete hook_info;
     return 0;
-}
-
-
-void ul_destroy_hook(HookInfo *hook) {
-    /* Remove the hard reference to the hook's callback function, and overwrite
-     * the reference ID in the C struct. This way, accidental reuse of the hook
-     * struct will fail. */
-    if (hook->callback_func_ref != LUA_NOREF)
-        luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->callback_func_ref);
-
-    if (hook->user_data_ref != LUA_NOREF)
-        luaL_unref(hook->L, LUA_REGISTRYINDEX, hook->user_data_ref);
-
-    hook->callback_func_ref = LUA_NOREF;
-    hook->user_data_ref = LUA_NOREF;
-
-    /* Remove the hook from the engine. */
-    uc_err error = uc_hook_del(hook->engine, hook->hook);
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(hook->L, error);
 }

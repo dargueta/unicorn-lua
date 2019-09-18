@@ -46,13 +46,14 @@ const luaL_Reg kEngineInstanceMethods[] = {
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
 
 
-void UCLuaEngine::add_hook(HookInfo *hook) {
+void UCLuaEngine::add_hook(Hook *hook) {
     hooks.insert(hook);
 }
 
 
-void UCLuaEngine::remove_hook(HookInfo *hook) {
+void UCLuaEngine::remove_hook(Hook *hook) {
     hooks.erase(hook);
+    delete hook;
 }
 
 
@@ -62,8 +63,10 @@ void UCLuaEngine::close() {
         return;
     }
 
+    // Shared pointers will automatically deallocate the hooks once they're no longer
+    // referenced so we don't need to delete these one by one.
     for (auto hook : hooks)
-        ul_destroy_hook(hook);
+        delete hook;
     hooks.clear();
 
     uc_err error = uc_close(engine);
@@ -77,7 +80,7 @@ void UCLuaEngine::close() {
 
 UCLuaEngine::~UCLuaEngine() {
     // Only close the engine if it hasn't already been closed. It's perfectly legitimate
-    // for the user to close the engine before it gets garbage-collected, and so we don't
+    // for the user to close the engine before it gets garbage-collected, so we don't
     // want to crash on garbage collection if they did so.
     if (engine != nullptr)
         close();
