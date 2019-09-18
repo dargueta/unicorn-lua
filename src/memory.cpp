@@ -22,18 +22,18 @@ int ul_mem_write(lua_State *L) {
 
 int ul_mem_read(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
-    size_t length = (size_t)luaL_checkinteger(L, 3);
+    auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
+    auto length = static_cast<size_t>(luaL_checkinteger(L, 3));
 
-    char data[length];
-
+    char *data = new char[length];
     uc_err error = uc_mem_read(engine, address, data, length);
     if (error != UC_ERR_OK) {
-        free(data);
+        delete[] data;
         return ul_crash_on_error(L, error);
     }
 
     lua_pushlstring(L, data, length);
+    delete[] data;
     return 1;
 }
 
