@@ -13,7 +13,7 @@ env:
 
 os:
   - linux
-  - osx
+#  - osx
 
 before_install:
   # NOTE: This will break the builds when Travis changes the version(s) of Python they
