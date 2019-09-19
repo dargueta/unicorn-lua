@@ -1,6 +1,12 @@
 Changes
 =======
 
+1.0b4 (unreleased)
+------------------
+
+* Fix memory leak when writing multiple registers
+
+
 1.0b3 (2019-09-18)
 ------------------
 
