@@ -96,7 +96,10 @@ void ul_hook_get_callback(Hook *hook) {
     lua_State *L = hook->L();
     hook->push_callback();
     if (lua_isnil(L, -1))
-        luaL_error(L, "No callback function found for the given hook.");
+        luaL_error(
+            L, "No callback function found for hook %p attached to engine %p", hook,
+            hook->engine()
+        );
 }
 
 
