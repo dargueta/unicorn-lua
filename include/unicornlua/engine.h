@@ -35,7 +35,15 @@ public:
     );
     void remove_hook(Hook *hook);
 
-    Context *create_context();
+    /**
+     * Create a Context object in memory managed by Lua, and push it on the Lua stack.
+     *
+     * There's deliberately no way to create a @ref Context *not* in Lua. Unlike hooks,
+     * there's no reason to keep a context around once it's no longer used inside Lua.
+     * Thus, there isn't really any use in allowing a @ref Context to be created in the
+     * heap.
+     */
+    Context *create_context_in_lua();
     void restore_from_context(Context *context);
     void remove_context(Context *context);
 
@@ -45,8 +53,7 @@ public:
     uc_engine *engine;
 
 private:
-    std::set<Hook *> hooks;
-    std::set<Context *> contexts;
+    std::set<Hook *> hooks_;
 };
 
 

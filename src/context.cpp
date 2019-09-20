@@ -67,11 +67,10 @@ int ul_context_save(lua_State *L) {
     if (lua_gettop(L) < 2) {
         // Caller didn't provide a context, create a new one and push it to the stack
         // so we can return it to the caller.
-        context = engine->create_context();
-        lua_pushlightuserdata(L, context);
+        context = engine->create_context_in_lua();
     }
     else
-        context = (Context *)lua_topointer(L, 2);
+        context = get_context_struct(L, 2);
 
     context->update();
     return 1;
@@ -80,7 +79,7 @@ int ul_context_save(lua_State *L) {
 
 int ul_context_restore(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
-    auto context = (Context *)lua_topointer(L, 2);
+    auto context = get_context_struct(L, 2);
 
     engine->restore_from_context(context);
     return 0;

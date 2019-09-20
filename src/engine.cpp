@@ -58,7 +58,7 @@ UCLuaEngine::~UCLuaEngine() {
 
 Hook *UCLuaEngine::create_empty_hook() {
     Hook *hook = new Hook(this->L, this->engine);
-    hooks.insert(hook);
+    hooks_.insert(hook);
     return hook;
 }
 
@@ -69,13 +69,13 @@ Hook *UCLuaEngine::create_hook(
     Hook *hook = new Hook(
         this->L, this->engine, hook_handle, callback_func_ref, user_data_ref
     );
-    hooks.insert(hook);
+    hooks_.insert(hook);
     return hook;
 }
 
 
 void UCLuaEngine::remove_hook(Hook *hook) {
-    hooks.erase(hook);
+    hooks_.erase(hook);
     delete hook;
 }
 
@@ -86,13 +86,9 @@ void UCLuaEngine::close() {
         return;
     }
 
-    for (auto hook : hooks)
+    for (auto hook : hooks_)
         delete hook;
-    hooks.clear();
-
-    for (auto context : contexts)
-        delete context;
-    contexts.clear();
+    hooks_.clear();
 
     uc_err error = uc_close(engine);
     if (error != UC_ERR_OK)
@@ -103,9 +99,11 @@ void UCLuaEngine::close() {
 }
 
 
-Context *UCLuaEngine::create_context() {
-    Context *context = new Context(*this);
-    contexts.insert(context);
+Context *UCLuaEngine::create_context_in_lua() {
+    auto context = (Context *)lua_newuserdata(L, sizeof(Context));
+    new (context) Context(*this);
+
+    luaL_setmetatable(L, kContextMetatableName);
     return context;
 }
 
@@ -118,7 +116,6 @@ void UCLuaEngine::restore_from_context(Context *context) {
 
 
 void UCLuaEngine::remove_context(Context *context) {
-    contexts.erase(context);
     delete context;
 }
 
@@ -162,16 +159,14 @@ int ul_close(lua_State *L) {
     auto engine_object = get_engine_struct(L, 1);
     engine_object->close();
 
-    /* Garbage collection should remove the engine object from the pointer map
-     * table but it might not be doing it soon enough. */
+    // Garbage collection should remove the engine object from the pointer map table,
+    // but we might as well do it here anyway.
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
     lua_pushlightuserdata(L, (void *)engine_object->engine);
     lua_pushnil(L);
     lua_settable(L, -3);
-    lua_pop(L, 1);          /* Remove pointer map */
+    lua_pop(L, 1);
 
-    /* Clear out the engine pointer so we know it's closed now. */
-    engine_object->engine = nullptr;
     return 0;
 }
 
