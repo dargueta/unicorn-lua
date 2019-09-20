@@ -1,8 +1,12 @@
 #include <unicorn/unicorn.h>
 
+#include "unicornlua/errors.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/context.h"
 #include "unicornlua/utils.h"
+
+
+const char * const kContextMetatableName = "unicornlua__context_meta";
 
 
 Context::Context(UCLuaEngine& engine, uc_context *context)
@@ -27,47 +31,26 @@ void Context::update() {
 
     if (!context_) {
         error = uc_context_alloc(engine_.engine, &context_);
-        if (error != UC_ERR_OK) {
-            ul_crash_on_error(engine_.L, error);
-            return;
-        }
+        if (error != UC_ERR_OK)
+            throw UnicornLibraryError(error);
     }
 
     error = uc_context_save(engine_.engine, context_);
-    if (error != UC_ERR_OK) {
-        ul_crash_on_error(engine_.L, error);
-        return;
-    }
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
 }
 
 
 void Context::release() {
     uc_err error = uc_free(context_);
     context_ = nullptr;
-    if (error != UC_ERR_OK) {
-        ul_crash_on_error(engine_.L, error);
-        return;
-    }
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
 }
 
 
 bool Context::is_released() const noexcept {
     return context_ == nullptr;
-}
-
-
-
-
-int ul_context_alloc(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    uc_context *context = (uc_context *)lua_newuserdata(L, sizeof(context));
-    luaL_setmetatable(L, kContextMetatableName);
-
-    uc_err error = uc_context_alloc(engine, &context);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
-
-    return 1;
 }
 
 

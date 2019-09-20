@@ -2,6 +2,7 @@
 #include <unicorn/x86.h>
 
 #include "unicornlua/engine.h"
+#include "unicornlua/errors.h"
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/utils.h"
@@ -21,7 +22,7 @@ Hook::Hook(
       is_handle_set_(true) {}
 
 
-Hook::~Hook() {
+Hook::~Hook() noexcept(false) {
     if ((callback_func_ref_ != LUA_NOREF) && (callback_func_ref_ != LUA_REFNIL))
         luaL_unref(L_, LUA_REGISTRYINDEX, callback_func_ref_);
 
@@ -31,7 +32,7 @@ Hook::~Hook() {
     if (is_handle_set_) {
         uc_err error = uc_hook_del(engine_, hook_handle_);
         if (error != UC_ERR_OK)
-            ul_crash_on_error(L_, error);
+            throw UnicornLibraryError(error);
     }
 }
 

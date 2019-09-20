@@ -27,7 +27,6 @@
 int ul_arch_supported(lua_State *L);
 
 int ul_close(lua_State *L);
-int ul_context_alloc(lua_State *L);
 int ul_context_restore(lua_State *L);
 int ul_context_save(lua_State *L);
 int ul_emu_start(lua_State *L);

@@ -13,6 +13,9 @@
 #include "unicornlua/lua.h"
 
 
+extern const char * const kContextMetatableName;
+
+
 class Context {
     friend class UCLuaEngine;
 
@@ -34,7 +37,6 @@ private:
 };
 
 
-int ul_context_alloc(lua_State *L);
 int ul_context_save(lua_State *L);
 int ul_context_restore(lua_State *L);
 

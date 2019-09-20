@@ -20,7 +20,7 @@ protected:
     );
 
 public:
-    ~Hook();
+    ~Hook() noexcept(false);
 
     uc_engine *engine() noexcept;
     lua_State *L() noexcept;

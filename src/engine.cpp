@@ -5,11 +5,11 @@ extern "C" {
 
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/errors.h"
 #include "unicornlua/hooks.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
-const char * const kContextMetatableName = "unicornlua__context_meta";
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
@@ -96,7 +96,7 @@ void UCLuaEngine::close() {
 
     uc_err error = uc_close(engine);
     if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+        throw UnicornLibraryError(error);
 
     // Signal subsequent calls that this engine is already closed.
     engine = nullptr;
@@ -109,10 +109,11 @@ Context *UCLuaEngine::create_context() {
     return context;
 }
 
+
 void UCLuaEngine::restore_from_context(Context *context) {
     uc_err error = uc_context_restore(engine, context->get_handle());
     if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+        throw UnicornLibraryError(error);
 }
 
 
