@@ -32,7 +32,7 @@ int ul_mem_read(lua_State *L) {
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
-    lua_pushlstring(L, data, length);
+    lua_pushlstring(L, data.get(), length);
     return 1;
 }
 

@@ -26,7 +26,12 @@ public:
     UCLuaEngine(lua_State *L, uc_engine *engine);
     ~UCLuaEngine();
 
-    void add_hook(Hook *hook);
+    Hook *create_empty_hook();
+    Hook *create_hook(
+        uc_hook hook_handle,
+        int callback_func_ref=LUA_NOREF,
+        int user_data_ref=LUA_REFNIL
+    );
     void remove_hook(Hook *hook);
     void close();
 

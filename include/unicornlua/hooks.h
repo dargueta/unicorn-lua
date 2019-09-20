@@ -10,12 +10,16 @@
 
 
 class Hook {
-public:
+    friend class UCLuaEngine;
+
+protected:
     Hook(lua_State *L, uc_engine *engine);
     Hook(
         lua_State *L, uc_engine *engine, uc_hook hook_handle,
         int callback_func_ref=LUA_NOREF, int user_data_ref=LUA_REFNIL
     );
+
+public:
     ~Hook();
 
     uc_engine *engine() noexcept;

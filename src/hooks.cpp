@@ -301,7 +301,7 @@ int ul_hook_add(lua_State *L) {
             return luaL_error(L, "Expected 3-7 arguments, got %d.", n_args);
     }
 
-    Hook *hook_info = new Hook(L, engine_object->engine);
+    Hook *hook_info = engine_object->create_empty_hook();
     hook_info->set_callback(3);
 
     /* If the caller gave us a sixth argument, it's data to pass to the callback.
@@ -319,7 +319,7 @@ int ul_hook_add(lua_State *L) {
     /* Figure out which C hook we need */
     void *c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
     if (c_callback == nullptr) {
-        delete hook_info;
+        engine_object->remove_hook(hook_info);
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
     }
 
@@ -337,12 +337,11 @@ int ul_hook_add(lua_State *L) {
         );
 
     if (error != UC_ERR_OK) {
-        delete hook_info;
+        engine_object->remove_hook(hook_info);
         return ul_crash_on_error(L, error);
     }
 
     hook_info->set_hook_handle(hook_handle);
-    engine_object->add_hook(hook_info);
 
     // Return the hook struct as light userdata. Lua code can use this to remove a hook
     // a hook before the engine is closed. Hooks will remain attached even if this

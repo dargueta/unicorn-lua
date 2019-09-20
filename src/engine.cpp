@@ -46,8 +46,21 @@ const luaL_Reg kEngineInstanceMethods[] = {
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
 
 
-void UCLuaEngine::add_hook(Hook *hook) {
+Hook *UCLuaEngine::create_empty_hook() {
+    Hook *hook = new Hook(this->L, this->engine);
     hooks.insert(hook);
+    return hook;
+}
+
+
+Hook *UCLuaEngine::create_hook(
+    uc_hook hook_handle, int callback_func_ref, int user_data_ref
+) {
+    Hook *hook = new Hook(
+        this->L, this->engine, hook_handle, callback_func_ref, user_data_ref
+    );
+    hooks.insert(hook);
+    return hook;
 }
 
 
@@ -63,8 +76,6 @@ void UCLuaEngine::close() {
         return;
     }
 
-    // Shared pointers will automatically deallocate the hooks once they're no longer
-    // referenced so we don't need to delete these one by one.
     for (auto hook : hooks)
         delete hook;
     hooks.clear();
