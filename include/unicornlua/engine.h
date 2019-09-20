@@ -51,24 +51,6 @@ private:
 
 
 /**
- * Create a Lua engine object wrapping the initialized uc_engine pointer.
- *
- * @param L         A pointer to the current Lua state.
- * @param engine    A pointer to the engine we want to create the Lua object for.
- */
-void ul_create_engine_object(lua_State *L, uc_engine *engine);
-
-
-/**
- * Free an engine and all its associated resources, including hooks.
- *
- * @param L         A pointer to the current Lua state.
- * @param index     The index on the Lua stack of the engine object to free.
- */
-void ul_free_engine_object(lua_State *L, int index);
-
-
-/**
  * Given a `uc_engine` pointer, find the corresponding Lua object and push it.
  *
  * @param L         A pointer to the current Lua state.

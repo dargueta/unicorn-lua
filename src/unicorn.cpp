@@ -34,7 +34,20 @@ int ul_open(lua_State *L) {
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
-    ul_create_engine_object(L, engine);
+    // Create a block of memory for the engine userdata and then create the UCLuaEngine
+    // in there using "placement new".
+    auto udata = lua_newuserdata(L, sizeof(UCLuaEngine));
+    new (udata) UCLuaEngine(L, engine);
+
+    luaL_setmetatable(L, kEngineMetatableName);
+
+    // Add a mapping of the engine pointer to the engine object so that hook callbacks can
+    // get the engine object knowing only the pointer.
+    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+    lua_pushlightuserdata(L, (void *)engine);
+    lua_pushvalue(L, -3);   /* Duplicate engine object as value */
+    lua_settable(L, -3);
+    lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
     return 1;
 }
 

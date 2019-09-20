@@ -141,44 +141,6 @@ void ul_init_engines_lib(lua_State *L) {
 }
 
 
-void ul_create_engine_object(lua_State *L, uc_engine *engine) {
-    // Create a block of memory for the engine userdata and then create the UCLuaEngine
-    // in there using "placement new".
-    auto udata = lua_newuserdata(L, sizeof(UCLuaEngine));
-    new (udata) UCLuaEngine(L, engine);
-
-    luaL_setmetatable(L, kEngineMetatableName);
-
-    /* Add a mapping of the engine pointer to the engine object so that hook
-     * callbacks can get the engine object knowing only the pointer. */
-    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine);
-    lua_pushvalue(L, -3);   /* Duplicate engine object as value */
-    lua_settable(L, -3);
-    lua_pop(L, 1);      /* Remove pointer map, engine object at TOS again */
-}
-
-
-void ul_free_engine_object(lua_State *L, int engine_index) {
-    engine_index = lua_absindex(L, engine_index);
-
-    /* Deliberately not using ul_toengine, see below. */
-    auto engine_object = get_engine_struct(L, engine_index);
-    engine_object->close();
-
-    /* Garbage collection should remove the engine object from the pointer map
-     * table but it might not be doing it soon enough. */
-    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine_object->engine);
-    lua_pushnil(L);
-    lua_settable(L, -3);
-    lua_pop(L, 1);          /* Remove pointer map */
-
-    /* Clear out the engine pointer so we know it's closed now. */
-    engine_object->engine = nullptr;
-}
-
-
 void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
     lua_pushlightuserdata(L, (void *)engine);
@@ -196,7 +158,20 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 
 
 int ul_close(lua_State *L) {
-    ul_free_engine_object(L, 1);
+    /* Deliberately not using ul_toengine, see below. */
+    auto engine_object = get_engine_struct(L, 1);
+    engine_object->close();
+
+    /* Garbage collection should remove the engine object from the pointer map
+     * table but it might not be doing it soon enough. */
+    lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
+    lua_pushlightuserdata(L, (void *)engine_object->engine);
+    lua_pushnil(L);
+    lua_settable(L, -3);
+    lua_pop(L, 1);          /* Remove pointer map */
+
+    /* Clear out the engine pointer so we know it's closed now. */
+    engine_object->engine = nullptr;
     return 0;
 }
 
