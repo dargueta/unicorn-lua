@@ -4,6 +4,7 @@ extern "C" {
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/common.h"
+#include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/utils.h"
 
@@ -72,12 +73,6 @@ static const luaL_Reg kUnicornLibraryFunctions[] = {
     {"open", ul_open},
     {"strerror", ul_strerror},
     {"version", ul_version},
-    {nullptr, nullptr}
-};
-
-
-static const luaL_Reg kContextMetamethods[] = {
-    {"__gc", ul_free},
     {nullptr, nullptr}
 };
 

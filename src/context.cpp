@@ -4,9 +4,15 @@
 #include "unicornlua/engine.h"
 #include "unicornlua/context.h"
 #include "unicornlua/utils.h"
+#include "unicornlua/unicornlua.h"
 
 
 const char * const kContextMetatableName = "unicornlua__context_meta";
+
+const luaL_Reg kContextMetamethods[] = {
+    {"__gc", ul_free},
+    {nullptr, nullptr}
+};
 
 
 Context::Context(UCLuaEngine& engine, uc_context *context)

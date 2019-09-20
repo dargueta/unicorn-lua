@@ -14,7 +14,7 @@
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 
-extern const char * const kContextMetatableName;
+
 extern const char * const kEngineMetatableName;
 extern const char * const kEnginePointerMapName;
 extern const luaL_Reg kEngineInstanceMethods[];

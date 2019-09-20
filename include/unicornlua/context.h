@@ -14,6 +14,7 @@
 
 
 extern const char * const kContextMetatableName;
+extern const luaL_Reg kContextMetamethods[];
 
 
 class Context {
