@@ -46,6 +46,15 @@ const luaL_Reg kEngineInstanceMethods[] = {
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
 
 
+UCLuaEngine::~UCLuaEngine() {
+    // Only close the engine if it hasn't already been closed. It's perfectly legitimate
+    // for the user to close the engine before it gets garbage-collected, so we don't
+    // want to crash on garbage collection if they did so.
+    if (engine != nullptr)
+        close();
+}
+
+
 Hook *UCLuaEngine::create_empty_hook() {
     Hook *hook = new Hook(this->L, this->engine);
     hooks.insert(hook);
@@ -80,6 +89,10 @@ void UCLuaEngine::close() {
         delete hook;
     hooks.clear();
 
+    for (auto context : contexts)
+        delete context;
+    contexts.clear();
+
     uc_err error = uc_close(engine);
     if (error != UC_ERR_OK)
         ul_crash_on_error(L, error);
@@ -89,12 +102,73 @@ void UCLuaEngine::close() {
 }
 
 
-UCLuaEngine::~UCLuaEngine() {
-    // Only close the engine if it hasn't already been closed. It's perfectly legitimate
-    // for the user to close the engine before it gets garbage-collected, so we don't
-    // want to crash on garbage collection if they did so.
-    if (engine != nullptr)
-        close();
+Context *UCLuaEngine::create_context() {
+    Context *context = new Context(*this);
+    contexts.insert(context);
+    return context;
+}
+
+void UCLuaEngine::restore_from_context(Context *context) {
+    uc_err error = uc_context_restore(engine, context->get_handle());
+    if (error != UC_ERR_OK)
+        ul_crash_on_error(L, error);
+}
+
+
+void UCLuaEngine::remove_context(Context *context) {
+    contexts.erase(context);
+    delete context;
+}
+
+
+Context::Context(UCLuaEngine& engine, uc_context *context)
+    : engine_(engine), context_(context) {}
+
+
+Context::Context(UCLuaEngine& engine)
+    : engine_(engine), context_(nullptr) {}
+
+
+Context::~Context() {
+    if (context_)
+        release();
+}
+
+
+uc_context *Context::get_handle() const noexcept { return context_; }
+
+
+void Context::update() {
+    uc_err error;
+
+    if (!context_) {
+        error = uc_context_alloc(engine_.engine, &context_);
+        if (error != UC_ERR_OK) {
+            ul_crash_on_error(engine_.L, error);
+            return;
+        }
+    }
+
+    error = uc_context_save(engine_.engine, context_);
+    if (error != UC_ERR_OK) {
+        ul_crash_on_error(engine_.L, error);
+        return;
+    }
+}
+
+
+void Context::release() {
+    uc_err error = uc_free(context_);
+    context_ = nullptr;
+    if (error != UC_ERR_OK) {
+        ul_crash_on_error(engine_.L, error);
+        return;
+    }
+}
+
+
+bool Context::is_released() const noexcept {
+    return context_ == nullptr;
 }
 
 
@@ -184,27 +258,28 @@ int ul_context_alloc(lua_State *L) {
 
 
 int ul_context_save(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    if (lua_gettop(L) < 2)
-        /* Caller didn't pass a context to update, so create a new one. */
-        ul_context_alloc(L);
+    auto engine = get_engine_struct(L, 1);
+    Context *context;
 
-    uc_context *context = ul_tocontext(L, 2);
-    uc_err error = uc_context_save(engine, context);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+    if (lua_gettop(L) < 2) {
+        // Caller didn't provide a context, create a new one and push it to the stack
+        // so we can return it to the caller.
+        context = engine->create_context();
+        lua_pushlightuserdata(L, context);
+    }
+    else
+        context = (Context *)lua_topointer(L, 2);
 
+    context->update();
     return 1;
 }
 
 
 int ul_context_restore(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    uc_context *context = ul_tocontext(L, 2);
+    auto engine = get_engine_struct(L, 1);
+    auto context = (Context *)lua_topointer(L, 2);
 
-    uc_err error = uc_context_restore(engine, context);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+    engine->restore_from_context(context);
     return 0;
 }
 

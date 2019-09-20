@@ -21,6 +21,30 @@ extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
 
+class UCLuaEngine;
+
+
+class Context {
+    friend class UCLuaEngine;
+
+protected:
+    Context(UCLuaEngine& engine);
+    Context(UCLuaEngine& engine, uc_context *context);
+
+public:
+    ~Context();
+
+    void update();
+    void release();
+    bool is_released() const noexcept;
+    uc_context *get_handle() const noexcept;
+
+private:
+    UCLuaEngine& engine_;
+    uc_context *context_;
+};
+
+
 class UCLuaEngine {
 public:
     UCLuaEngine(lua_State *L, uc_engine *engine);
@@ -28,11 +52,14 @@ public:
 
     Hook *create_empty_hook();
     Hook *create_hook(
-        uc_hook hook_handle,
-        int callback_func_ref=LUA_NOREF,
-        int user_data_ref=LUA_REFNIL
+        uc_hook hook_handle, int callback_func_ref, int user_data_ref
     );
     void remove_hook(Hook *hook);
+
+    Context *create_context();
+    void restore_from_context(Context *context);
+    void remove_context(Context *context);
+
     void close();
 
     lua_State *L;
@@ -40,6 +67,7 @@ public:
 
 private:
     std::set<Hook *> hooks;
+    std::set<Context *> contexts;
 };
 
 

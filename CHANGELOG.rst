@@ -5,6 +5,9 @@ Changes
 ------------------
 
 * Fix memory leak when writing multiple registers
+* Made creating hooks and contexts the responsibility of the UCLuaEngine class, so
+  they're always destroyed when the engine is closed, and no other functions are allowed
+  to create them without the Engine's knowledge. This eliminates memory leaks.
 
 
 1.0b3 (2019-09-18)
