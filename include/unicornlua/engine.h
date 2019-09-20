@@ -21,28 +21,7 @@ extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
 
-class UCLuaEngine;
-
-
-class Context {
-    friend class UCLuaEngine;
-
-protected:
-    Context(UCLuaEngine& engine);
-    Context(UCLuaEngine& engine, uc_context *context);
-
-public:
-    ~Context();
-
-    void update();
-    void release();
-    bool is_released() const noexcept;
-    uc_context *get_handle() const noexcept;
-
-private:
-    UCLuaEngine& engine_;
-    uc_context *context_;
-};
+class Context;
 
 
 class UCLuaEngine {

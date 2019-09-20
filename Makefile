@@ -125,6 +125,7 @@ $(INSTALL_STAGING_DIR)/%.lua : $(SRC_ROOT)/%.lua | $(INSTALL_STAGING_DIR)
 	cp $^ $@
 
 $(OBJECT_DIR)/compat.o: $(SRC_ROOT)/compat.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
+$(OBJECT_DIR)/compat.o: $(SRC_ROOT)/context.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
 $(OBJECT_DIR)/engine.o: $(SRC_ROOT)/engine.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
 $(OBJECT_DIR)/hooks.o: $(SRC_ROOT)/hooks.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
 $(OBJECT_DIR)/memory.o: $(SRC_ROOT)/memory.cpp $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
