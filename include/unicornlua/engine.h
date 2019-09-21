@@ -29,10 +29,35 @@ public:
     UCLuaEngine(lua_State *L, uc_engine *engine);
     ~UCLuaEngine();
 
+    /**
+     * Create a @ref Hook object and assign it to this engine, but don't bind it yet.
+     *
+     * This is useful when creating a hook but not all the pieces have been put together
+     * yet. It's used in only one specific case so this function will eventually be
+     * removed.
+     *
+     * @deprecated
+     */
     Hook *create_empty_hook();
+
+    /**
+     * Create a fully initialized @ref Hook and assign it to this engine.
+     *
+     * @param hook_handle   The handle for this hook as returned by the Unicorn library.
+     * @param callback_func_ref
+     *     A reference in the C registry to a Lua function that serves as the callback
+     *     to execute when the hook is triggered.
+     * @param user_data_ref
+     *     Optional. A reference in the C registry to a Lua object that'll be passed to
+     *     the hook callback on every invocation. If not given, ``nil`` will be used.
+     *
+     * @return The initialized @ref Hook.
+     */
     Hook *create_hook(
-        uc_hook hook_handle, int callback_func_ref, int user_data_ref
+        uc_hook hook_handle, int callback_func_ref, int user_data_ref=LUA_REFNIL
     );
+
+    /** Detach and destroy a hook bound to this engine. */
     void remove_hook(Hook *hook);
 
     /**
@@ -47,6 +72,11 @@ public:
     void restore_from_context(Context *context);
     void remove_context(Context *context);
 
+    void start(
+        uint64_t start_addr, uint64_t end_addr, uint64_t timeout=0,
+        size_t n_instructions=0
+    );
+    void stop();
     void close();
 
     lua_State *L;
@@ -79,8 +109,8 @@ void ul_init_engines_lib(lua_State *L);
 /**
  * Return the value on the stack at @a index as a uc_engine pointer.
  *
- * If the value at @a index is @e not a uc_engine struct, or the engine has
- * already been closed, a Lua error will be thrown.
+ * If the value at @a index is @e not a @ref UCLuaEngine, or the engine has already been
+ * closed, a Lua error will be thrown.
  *
  * @param L         A pointer to the current Lua state.
  * @param index     The index on the Lua stack of the value to convert.

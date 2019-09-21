@@ -80,6 +80,22 @@ void UCLuaEngine::remove_hook(Hook *hook) {
 }
 
 
+void UCLuaEngine::start(
+    uint64_t start_addr, uint64_t end_addr, uint64_t timeout, size_t n_instructions
+) {
+    uc_err error = uc_emu_start(engine, start_addr, end_addr, timeout, n_instructions);
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+}
+
+
+void UCLuaEngine::stop() {
+    uc_err error = uc_emu_stop(engine);
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+}
+
+
 void UCLuaEngine::close() {
     if (engine == nullptr) {
         luaL_error(L, "Attempted to close already-closed engine: %p", this);
@@ -193,25 +209,20 @@ int ul_errno(lua_State *L) {
 
 
 int ul_emu_start(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
+    auto engine = get_engine_struct(L, 1);
     auto start = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto end = static_cast<uint64_t>(luaL_checkinteger(L, 3));
     auto timeout = static_cast<uint64_t>(luaL_optinteger(L, 4, 0));
     auto n_instructions = static_cast<size_t>(luaL_optinteger(L, 5, 0));
 
-    uc_err error = uc_emu_start(engine, start, end, timeout, n_instructions);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+    engine->start(start, end, timeout, n_instructions);
     return 0;
 }
 
 
 int ul_emu_stop(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    uc_err error = uc_emu_stop(engine);
-
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+    auto engine = get_engine_struct(L, 1);
+    engine->stop();
     return 0;
 }
 
