@@ -7,8 +7,11 @@ extern "C" {
 #include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/hooks.h"
+#include "unicornlua/memory.h"
+#include "unicornlua/registers.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
+
 
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";

@@ -45,4 +45,11 @@ uc_context *ul_tocontext(lua_State *L, int index);
  */
 void ul_create_weak_table(lua_State *L, const char *mode);
 
+struct NamedIntConst {
+    const char *name;
+    lua_Integer value;
+};
+
+int load_int_constants(lua_State *L, const struct NamedIntConst *constants);
+
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

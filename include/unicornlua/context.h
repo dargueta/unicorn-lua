@@ -12,7 +12,6 @@
 #include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
 
-
 extern const char * const kContextMetatableName;
 extern const luaL_Reg kContextMetamethods[];
 
@@ -44,6 +43,5 @@ int ul_context_restore(lua_State *L);
 
 #define get_context_struct(L, index)   \
     reinterpret_cast<Context *>(luaL_checkudata((L), (index), kContextMetatableName))
-
 
 #endif  /* INCLUDE_UNICORNLUA_CONTEXT_H_ */

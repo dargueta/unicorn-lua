@@ -14,7 +14,6 @@
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
 
-
 extern const char * const kEngineMetatableName;
 extern const char * const kEnginePointerMapName;
 extern const luaL_Reg kEngineInstanceMethods[];
@@ -122,5 +121,16 @@ uc_engine *ul_toengine(lua_State *L, int index);
 
 #define get_engine_struct(L, index)   \
     reinterpret_cast<UCLuaEngine *>(luaL_checkudata((L), (index), kEngineMetatableName))
+
+
+void ul_init_engines_lib(lua_State *L);
+void ul_get_engine_object(lua_State *L, const uc_engine *engine);
+int ul_close(lua_State *L);
+int ul_query(lua_State *L);
+int ul_errno(lua_State *L);
+int ul_emu_start(lua_State *L);
+
+int ul_emu_stop(lua_State *L);
+uc_engine *ul_toengine(lua_State *L, int index);
 
 #endif  /* INCLUDE_UNICORNLUA_ENGINE_H_ */

@@ -3,7 +3,6 @@ extern "C" {
 }
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/common.h"
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/utils.h"
@@ -56,7 +55,7 @@ int ul_open(lua_State *L) {
 }
 
 
-int ul_strerror(lua_State *L) {
+static int ul_strerror(lua_State *L) {
     auto error = static_cast<uc_err>(luaL_checkinteger(L, 1));
     lua_pushstring(L, uc_strerror(error));
     return 1;

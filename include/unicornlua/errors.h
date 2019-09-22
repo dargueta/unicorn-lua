@@ -11,7 +11,6 @@
 
 #include "unicornlua/lua.h"
 
-
 /**
  * Exception class for translating Unicorn error codes into C++ exceptions.
  */

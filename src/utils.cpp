@@ -1,12 +1,11 @@
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/common.h"
 #include "unicornlua/lua.h"
+#include "unicornlua/utils.h"
 
 
 extern const char * const kEngineMetatableName;
 extern const char * const kContextMetatableName;
-extern const char * const kEnginePointerMapName;
 
 
 int ul_crash_on_error(lua_State *L, uc_err error) {
@@ -35,22 +34,9 @@ void ul_create_weak_table(lua_State *L, const char *mode) {
 }
 
 
-void lua_movetotop(lua_State *L, int index) {
-    index = lua_absindex(L, index);
-    lua_pushvalue(L, index);
-    lua_remove(L, index);
-}
-
-
 int luaL_checkboolean(lua_State *L, int index) {
     luaL_checktype(L, index, LUA_TBOOLEAN);
     return lua_toboolean(L, index);
-}
-
-
-void *luaL_checklightuserdata(lua_State *L, int index) {
-    luaL_checktype(L, index, LUA_TLIGHTUSERDATA);
-    return lua_touserdata(L, index);
 }
 
 
