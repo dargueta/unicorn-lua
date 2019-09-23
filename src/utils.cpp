@@ -34,19 +34,9 @@ void ul_create_weak_table(lua_State *L, const char *mode) {
 }
 
 
-int luaL_checkboolean(lua_State *L, int index) {
-    luaL_checktype(L, index, LUA_TBOOLEAN);
-    return lua_toboolean(L, index);
-}
-
-
-int load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
-    int i;
-
-    for (i = 0; constants[i].name != nullptr; ++i) {
+void load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
+    for (int i = 0; constants[i].name != nullptr; ++i) {
         lua_pushinteger(L, constants[i].value);
         lua_setfield(L, -2, constants[i].name);
     }
-
-    return i;
 }

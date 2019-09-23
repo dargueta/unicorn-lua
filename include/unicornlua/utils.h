@@ -50,6 +50,6 @@ struct NamedIntConst {
     lua_Integer value;
 };
 
-int load_int_constants(lua_State *L, const struct NamedIntConst *constants);
+void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */
