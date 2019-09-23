@@ -1,15 +1,12 @@
-extern "C" {
-#include <lua.h>
-}
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/hooks.h"
+#include "unicornlua/lua.h"
 #include "unicornlua/memory.h"
 #include "unicornlua/registers.h"
-#include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
 
@@ -118,6 +115,15 @@ void UCLuaEngine::close() {
 }
 
 
+size_t UCLuaEngine::query(uc_query_type query_type) const {
+    size_t result;
+    uc_err error = uc_query(engine, query_type, &result);
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+    return result;
+}
+
+
 Context *UCLuaEngine::create_context_in_lua() {
     auto context = (Context *)lua_newuserdata(L, sizeof(Context));
     new (context) Context(*this);
@@ -131,11 +137,6 @@ void UCLuaEngine::restore_from_context(Context *context) {
     uc_err error = uc_context_restore(engine, context->get_handle());
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
-}
-
-
-void UCLuaEngine::remove_context(Context *context) {
-    delete context;
 }
 
 
@@ -191,14 +192,10 @@ int ul_close(lua_State *L) {
 
 
 int ul_query(lua_State *L) {
-    size_t result;
-    uc_engine *engine = ul_toengine(L, 1);
-    auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
+    auto engine_object = get_engine_struct(L, 1);
+    auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 2));
 
-    uc_err error = uc_query(engine, query_type, &result);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
-
+    size_t result = engine_object->query(query_type);
     lua_pushinteger(L, result);
     return 1;
 }

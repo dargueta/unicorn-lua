@@ -69,7 +69,6 @@ public:
      */
     Context *create_context_in_lua();
     void restore_from_context(Context *context);
-    void remove_context(Context *context);
 
     void start(
         uint64_t start_addr, uint64_t end_addr, uint64_t timeout=0,
@@ -77,6 +76,7 @@ public:
     );
     void stop();
     void close();
+    size_t query(uc_query_type query_type) const;
 
     lua_State *L;
     uc_engine *engine;
@@ -123,13 +123,10 @@ uc_engine *ul_toengine(lua_State *L, int index);
     reinterpret_cast<UCLuaEngine *>(luaL_checkudata((L), (index), kEngineMetatableName))
 
 
-void ul_init_engines_lib(lua_State *L);
-void ul_get_engine_object(lua_State *L, const uc_engine *engine);
 int ul_close(lua_State *L);
 int ul_query(lua_State *L);
 int ul_errno(lua_State *L);
 int ul_emu_start(lua_State *L);
-
 int ul_emu_stop(lua_State *L);
 uc_engine *ul_toengine(lua_State *L, int index);
 
