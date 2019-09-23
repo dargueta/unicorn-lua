@@ -13,7 +13,12 @@ env:
 
 os:
   - linux
-#  - osx
+  - osx
+
+# OSX compatibility is currently an ambition, not a requirement.
+matrix:
+  allow_failures:
+    - os: osx
 
 before_install:
   # NOTE: This will break the builds when Travis changes the version(s) of Python they
