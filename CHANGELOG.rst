@@ -4,6 +4,8 @@ Changes
 1.0b4 (unreleased)
 ------------------
 
+**Official support for OSX!**
+
 * Fix memory leak when writing multiple registers
 * Made creating hooks and contexts the responsibility of the UCLuaEngine class, so
   they're always destroyed when the engine is closed, and no other functions are allowed
@@ -11,6 +13,8 @@ Changes
   leaks.
 * Fixed bug where ``engine:query(SOME_QUERY_type)`` would look at the first argument (the
   engine) for the query type, instead of the second argument.
+* Removed a number of unused or nearly-unused functions, made some others static that
+  didn't need to be/probably shouldn't be shared.
 
 
 1.0b3 (2019-09-18)
