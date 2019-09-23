@@ -1,8 +1,5 @@
 include Makefile.in
 
-vpath %.h $(INCLUDE_BASE) $(UNICORN_INCLUDE_PATH)
-vpath %.o $(OBJECT_DIR)
-vpath %.c $(SRC_ROOT)
 
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
 EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples

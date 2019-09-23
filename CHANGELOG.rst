@@ -7,7 +7,10 @@ Changes
 * Fix memory leak when writing multiple registers
 * Made creating hooks and contexts the responsibility of the UCLuaEngine class, so
   they're always destroyed when the engine is closed, and no other functions are allowed
-  to create them without the Engine's knowledge. This eliminates memory leaks.
+  to create them without the Engine's knowledge. This eliminates some kinds of memory
+  leaks.
+* Fixed bug where ``engine:query(SOME_QUERY_type)`` would look at the first argument (the
+  engine) for the query type, instead of the second argument.
 
 
 1.0b3 (2019-09-18)

@@ -8,7 +8,7 @@ extern "C" {
 #include "unicornlua/utils.h"
 
 
-int ul_version(lua_State *L) {
+static int ul_version(lua_State *L) {
     unsigned major, minor;
 
     uc_version(&major, &minor);
@@ -18,14 +18,14 @@ int ul_version(lua_State *L) {
 }
 
 
-int ul_arch_supported(lua_State *L) {
+static int ul_arch_supported(lua_State *L) {
     auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, -1));
     lua_pushboolean(L, uc_arch_supported(architecture));
     return 1;
 }
 
 
-int ul_open(lua_State *L) {
+static int ul_open(lua_State *L) {
     auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, 1));
     auto mode = static_cast<uc_mode>(luaL_checkinteger(L, 2));
 
