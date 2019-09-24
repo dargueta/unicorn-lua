@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.0b4 (unreleased)
+1.0b4 (2019-09-23)
 ------------------
 
 **Official support for OSX!**
