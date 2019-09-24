@@ -21,23 +21,9 @@ matrix:
     - os: windows
 
 before_install:
-  # NOTE: This will break the builds when Travis changes the version(s) of Python they
-  # have installed.
-  - |
-    if [[ $TRAVIS_OS_NAME = 'windows' ]]; then
-      choco install python python2 strawberryperl
-      export PATH="/c/Python37:/c/Python37/Scripts:/c/Python27:/c/Python27/Scripts:$PATH"
-      alias python3="/c/Python37/python.exe"
-      alias python2="/c/Python27/python.exe"
-    fi
-  - |
-    if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
-      pyenv local 2.7.15 3.7.1
-    fi
+  - bash ./travis-setup.sh
 
 install:
-  # Use `python3 -m pip` instead of `pip` because Windows is finicky
-  - python3 -m pip install -U -r python-requirements.txt
   - git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-${UNICORN_VERSION}
   - pushd unicorn-${UNICORN_VERSION}
   - git fetch --all --tags --prune
