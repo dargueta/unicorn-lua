@@ -1,14 +1,14 @@
-extern "C" {
-#include <lua.h>
-}
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/hooks.h"
-#include "unicornlua/unicornlua.h"
+#include "unicornlua/lua.h"
+#include "unicornlua/memory.h"
+#include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
+
 
 const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
@@ -63,17 +63,6 @@ Hook *UCLuaEngine::create_empty_hook() {
 }
 
 
-Hook *UCLuaEngine::create_hook(
-    uc_hook hook_handle, int callback_func_ref, int user_data_ref
-) {
-    Hook *hook = new Hook(
-        this->L, this->engine, hook_handle, callback_func_ref, user_data_ref
-    );
-    hooks_.insert(hook);
-    return hook;
-}
-
-
 void UCLuaEngine::remove_hook(Hook *hook) {
     hooks_.erase(hook);
     delete hook;
@@ -115,6 +104,20 @@ void UCLuaEngine::close() {
 }
 
 
+size_t UCLuaEngine::query(uc_query_type query_type) const {
+    size_t result;
+    uc_err error = uc_query(engine, query_type, &result);
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+    return result;
+}
+
+
+uc_err UCLuaEngine::get_errno() const {
+    return uc_errno(engine);
+}
+
+
 Context *UCLuaEngine::create_context_in_lua() {
     auto context = (Context *)lua_newuserdata(L, sizeof(Context));
     new (context) Context(*this);
@@ -131,14 +134,9 @@ void UCLuaEngine::restore_from_context(Context *context) {
 }
 
 
-void UCLuaEngine::remove_context(Context *context) {
-    delete context;
-}
-
-
 void ul_init_engines_lib(lua_State *L) {
-    /* Create a table with weak values where the engine pointer to engine object
-     * mappings will be stored. */
+    // Create a table with weak values where the engine pointer to engine object
+    // mappings will be stored.
     ul_create_weak_table(L, "v");
     lua_setfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
 
@@ -149,7 +147,7 @@ void ul_init_engines_lib(lua_State *L) {
     luaL_setfuncs(L, kEngineInstanceMethods, 0);
     lua_setfield(L, -2, "__index");
 
-    /* Remove the metatables from the stack. */
+    // Remove the metatables from the stack.
     lua_pop(L, 2);
 }
 
@@ -160,20 +158,23 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
     lua_gettable(L, -2);
 
     if (lua_isnil(L, -1)) {
-        /* Remove nil and engine pointer map at TOS */
+        // Remove nil and engine pointer map at TOS
         lua_pop(L, 2);
-        luaL_error(L, "No engine object is registered for pointer %p.", engine);
+        throw LuaBindingError(
+            "No engine object is registered for the given pointer. It may have been"
+            " deleted already."
+        );
     }
 
-    /* Remove the engine pointer map from the stack. */
+    // Remove the engine pointer map from the stack.
     lua_remove(L, -2);
 }
 
 
 int ul_close(lua_State *L) {
-    /* Deliberately not using ul_toengine, see below. */
     auto engine_object = get_engine_struct(L, 1);
-    engine_object->close();
+    if (engine_object->engine)
+        engine_object->close();
 
     // Garbage collection should remove the engine object from the pointer map table,
     // but we might as well do it here anyway.
@@ -188,22 +189,18 @@ int ul_close(lua_State *L) {
 
 
 int ul_query(lua_State *L) {
-    size_t result;
-    uc_engine *engine = ul_toengine(L, 1);
-    auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 1));
+    auto engine_object = get_engine_struct(L, 1);
+    auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 2));
 
-    uc_err error = uc_query(engine, query_type, &result);
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
-
+    size_t result = engine_object->query(query_type);
     lua_pushinteger(L, result);
     return 1;
 }
 
 
 int ul_errno(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    lua_pushinteger(L, uc_errno(engine));
+    auto engine = get_engine_struct(L, 1);
+    lua_pushinteger(L, engine->get_errno());
     return 1;
 }
 
@@ -230,7 +227,7 @@ int ul_emu_stop(lua_State *L) {
 uc_engine *ul_toengine(lua_State *L, int index) {
     auto engine_object = get_engine_struct(L, index);
     if (engine_object->engine == nullptr)
-        luaL_error(L, "Attempted to use closed engine.");
+        throw LuaBindingError("Attempted to use closed engine.");
 
     return engine_object->engine;
 }

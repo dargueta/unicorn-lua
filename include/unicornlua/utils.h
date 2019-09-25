@@ -25,18 +25,6 @@ int ul_crash_on_error(lua_State *L, uc_err error);
 
 
 /**
- * Return the value on the stack at @a index as a uc_context pointer.
- *
- * If the value at @a index is @e not a uc_context struct, or the context has
- * already been freed, a Lua error will be thrown.
- *
- * @param L         A pointer to the current Lua state.
- * @param index     The index of the value to return.
- */
-uc_context *ul_tocontext(lua_State *L, int index);
-
-
-/**
  * Create a new weak table with the given key mode, and push it onto the stack.
  *
  * @param L         A pointer to the current Lua state.
@@ -44,5 +32,12 @@ uc_context *ul_tocontext(lua_State *L, int index);
  *                  description of valid modes and how they work.
  */
 void ul_create_weak_table(lua_State *L, const char *mode);
+
+struct NamedIntConst {
+    const char *name;
+    lua_Integer value;
+};
+
+void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

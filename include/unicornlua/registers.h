@@ -20,10 +20,6 @@
 #endif
 
 
-/**
- *
- * @tparam N    The number of bytes in this emulated floating-point number.
- */
 class SoftFloat80;
 class SoftFloat128;
 

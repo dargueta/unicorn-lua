@@ -1,15 +1,18 @@
 unicorn-lua
 ===========
 
-|build-status| |lua-versions|
+|build-status| |lua-versions| |platforms|
 
 .. |build-status| image:: https://travis-ci.org/dargueta/unicorn-lua.svg?branch=master
    :alt: Build status
    :target: https://travis-ci.org/dargueta/unicorn-lua
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%2C%205.2%2C%205.3%2C%20LuaJIT%202.0-blue.svg
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%20LuaJIT2.0-blue
    :alt: Lua versions
    :target: https://www.lua.org
+
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
+   :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
 
@@ -18,7 +21,7 @@ may be made here and there. The C API is currently subject to change without
 warning.
 
 At the moment I'm only testing this on unmodified Lua 5.1 - 5.3 and LuaJIT 2.0
-on Linux systems. I cannot guarantee the library will behave as expected on all
+on Linux and OSX. I cannot guarantee the library will behave as expected on all
 host platforms, though I will try.
 
 Known Limitations
