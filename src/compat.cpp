@@ -15,7 +15,7 @@ LUA_API void lua_seti(lua_State *L, int index, lua_Integer n) {
     // then swap the two.
     lua_pushinteger(L, n);  // Push key, stack is [... V K]
     lua_pushvalue(L, -2);   // Push value again, stack is [... V K V]
-    lua_remove(L, lua_gettop(L) - 2);   // Remove the original value, stack is [... K V]
+    lua_remove(L, -3);      // Remove the original value, stack is [... K V]
     lua_settable(L, index);
 }
 
