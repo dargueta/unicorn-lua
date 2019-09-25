@@ -63,17 +63,6 @@ Hook *UCLuaEngine::create_empty_hook() {
 }
 
 
-Hook *UCLuaEngine::create_hook(
-    uc_hook hook_handle, int callback_func_ref, int user_data_ref
-) {
-    Hook *hook = new Hook(
-        this->L, this->engine, hook_handle, callback_func_ref, user_data_ref
-    );
-    hooks_.insert(hook);
-    return hook;
-}
-
-
 void UCLuaEngine::remove_hook(Hook *hook) {
     hooks_.erase(hook);
     delete hook;
@@ -146,8 +135,8 @@ void UCLuaEngine::restore_from_context(Context *context) {
 
 
 void ul_init_engines_lib(lua_State *L) {
-    /* Create a table with weak values where the engine pointer to engine object
-     * mappings will be stored. */
+    // Create a table with weak values where the engine pointer to engine object
+    // mappings will be stored.
     ul_create_weak_table(L, "v");
     lua_setfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
 
@@ -158,7 +147,7 @@ void ul_init_engines_lib(lua_State *L) {
     luaL_setfuncs(L, kEngineInstanceMethods, 0);
     lua_setfield(L, -2, "__index");
 
-    /* Remove the metatables from the stack. */
+    // Remove the metatables from the stack.
     lua_pop(L, 2);
 }
 
@@ -169,7 +158,7 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
     lua_gettable(L, -2);
 
     if (lua_isnil(L, -1)) {
-        /* Remove nil and engine pointer map at TOS */
+        // Remove nil and engine pointer map at TOS
         lua_pop(L, 2);
         throw LuaBindingError(
             "No engine object is registered for the given pointer. It may have been"
