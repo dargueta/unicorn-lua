@@ -7,7 +7,10 @@
 #ifndef INCLUDE_UNICORNLUA_COMPAT_H_
 #define INCLUDE_UNICORNLUA_COMPAT_H_
 
-#include "unicornlua/lua.h"
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+}
 
 
 /* Compatibility stuff for Lua < 5.3 */
