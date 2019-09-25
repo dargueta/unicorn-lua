@@ -15,16 +15,6 @@ int ul_crash_on_error(lua_State *L, uc_err error) {
 }
 
 
-uc_context *ul_tocontext(lua_State *L, int index) {
-    auto context = reinterpret_cast<uc_context *>(
-        luaL_checkudata(L, index, kContextMetatableName)
-    );
-    if (context == nullptr)
-        luaL_error(L, "Attempted to use closed context.");
-    return context;
-}
-
-
 void ul_create_weak_table(lua_State *L, const char *mode) {
     lua_newtable(L);
     lua_createtable(L, 0, 1);

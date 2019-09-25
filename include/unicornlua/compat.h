@@ -51,6 +51,8 @@ extern "C" {
     /* Copied and pasted from the 5.3 implementation. */
     LUALIB_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 
+    LUALIB_API void lua_rawsetp(lua_State *L, int index, const void *p);
+
     #define luaL_newlibtable(L, l)  lua_createtable((L), 0, sizeof(l) / sizeof(*(l)))
     #define luaL_newlib(L, l)       (luaL_newlibtable((L),(l)), luaL_setfuncs((L),(l),0))
 #endif

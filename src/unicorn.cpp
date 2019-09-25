@@ -46,9 +46,8 @@ static int ul_open(lua_State *L) {
     // Add a mapping of the uc_engine pointer to the engine object we just created, so
     // that hook callbacks can get the engine object knowing only the uc_engine pointer.
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine);
-    lua_pushvalue(L, -3);   // Duplicate engine object as value
-    lua_settable(L, -3);
+    lua_pushvalue(L, -2);   // Duplicate engine object as value
+    lua_rawsetp(L, -2, engine);
     lua_pop(L, 1);      // Remove pointer map, engine object at TOS again
 
     return 1;
