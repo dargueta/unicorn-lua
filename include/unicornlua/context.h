@@ -20,7 +20,7 @@ class Context {
     friend class UCLuaEngine;
 
 protected:
-    Context(UCLuaEngine& engine);
+    explicit Context(UCLuaEngine& engine);
     Context(UCLuaEngine& engine, uc_context *context);
 
 public:
