@@ -124,6 +124,11 @@ size_t UCLuaEngine::query(uc_query_type query_type) const {
 }
 
 
+uc_err UCLuaEngine::get_errno() const {
+    return uc_errno(engine);
+}
+
+
 Context *UCLuaEngine::create_context_in_lua() {
     auto context = (Context *)lua_newuserdata(L, sizeof(Context));
     new (context) Context(*this);
@@ -172,15 +177,15 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
         );
     }
 
-    /* Remove the engine pointer map from the stack. */
+    // Remove the engine pointer map from the stack.
     lua_remove(L, -2);
 }
 
 
 int ul_close(lua_State *L) {
-    /* Deliberately not using ul_toengine, see below. */
     auto engine_object = get_engine_struct(L, 1);
-    engine_object->close();
+    if (engine_object->engine)
+        engine_object->close();
 
     // Garbage collection should remove the engine object from the pointer map table,
     // but we might as well do it here anyway.
@@ -205,8 +210,8 @@ int ul_query(lua_State *L) {
 
 
 int ul_errno(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
-    lua_pushinteger(L, uc_errno(engine));
+    auto engine = get_engine_struct(L, 1);
+    lua_pushinteger(L, engine->get_errno());
     return 1;
 }
 

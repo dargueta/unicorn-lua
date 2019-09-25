@@ -77,6 +77,7 @@ public:
     void stop();
     void close();
     size_t query(uc_query_type query_type) const;
+    uc_err get_errno() const;
 
     lua_State *L;
     uc_engine *engine;
