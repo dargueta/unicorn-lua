@@ -18,6 +18,10 @@ void UnicornLibraryError::rethrow_as_lua_error(lua_State *L) {
 }
 
 
-void UnicornLuaError::rethrow_as_lua_error(lua_State *L) {
+LuaBindingError::LuaBindingError(const char *message)
+    : std::runtime_error(message) {}
+
+
+void LuaBindingError::rethrow_as_lua_error(lua_State *L) {
     luaL_error(L, what());
 }

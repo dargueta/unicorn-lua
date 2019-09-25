@@ -1,5 +1,7 @@
 /**
  * Exceptions for the Lua bindings for the Unicorn CPU emulator.
+ *
+ * @file errors.h
  */
 
 #ifndef INCLUDE_UNICORNLUA_ERRORS_H_
@@ -34,8 +36,9 @@ private:
  * operation fails. Rather, this exception is used when something goes wrong with the
  * glue code, such as when Lua passes the wrong kind of argument to a function.
  */
-class UnicornLuaError : public std::runtime_error {
+class LuaBindingError : public std::runtime_error {
 public:
+    explicit LuaBindingError(const char *message);
     void rethrow_as_lua_error(lua_State *L);
 };
 

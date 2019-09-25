@@ -166,7 +166,10 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
     if (lua_isnil(L, -1)) {
         /* Remove nil and engine pointer map at TOS */
         lua_pop(L, 2);
-        luaL_error(L, "No engine object is registered for pointer %p.", engine);
+        throw LuaBindingError(
+            "No engine object is registered for the given pointer. It may have been"
+            " deleted already."
+        );
     }
 
     /* Remove the engine pointer map from the stack. */
@@ -230,7 +233,7 @@ int ul_emu_stop(lua_State *L) {
 uc_engine *ul_toengine(lua_State *L, int index) {
     auto engine_object = get_engine_struct(L, index);
     if (engine_object->engine == nullptr)
-        luaL_error(L, "Attempted to use closed engine.");
+        throw LuaBindingError("Attempted to use closed engine.");
 
     return engine_object->engine;
 }
