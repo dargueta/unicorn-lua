@@ -14,6 +14,7 @@ MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.cpp)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
+DOCTEST_HEADER=$(TESTS_BASE)/c/doctest.h
 
 CFLAGS ?=
 LDFLAGS ?=
@@ -23,12 +24,16 @@ ifeq ($(IS_DEBUG), true)
 	CFLAGS += -Og -ggdb
 	LDFLAGS += -O0
 else
-	CFLAGS += -Ofast
+	CFLAGS += -Ofast -DNDEBUG
 	LDFLAGS += --strip-all -O1
 endif
 
-CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 -Wall -Wextra -Werror -Wpedantic -I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
-LDFLAGS += -fno-rtti -fpic -L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
+INCLUDE_FLAGS=-I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
+LIB_SEARCH_FLAGS=-L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
+W_FLAGS=-Wall -Wextra -Werror -Wpedantic
+
+CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 $(W_FLAGS) $(INCLUDE_FLAGS)
+LDFLAGS += -fno-rtti -fpic $(LIB_SEARCH_FLAGS)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 
@@ -51,7 +56,7 @@ all: $(OBJECT_DIR) $(INSTALL_STAGING_DIR) $(SHARED_LIB_FILE) $(X86_BINARY_IMAGES
 
 .PHONY: clean
 clean:
-	rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR)
+	rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) $(DOCTEST_HEADER)
 
 
 .PHONY: docs
@@ -60,8 +65,18 @@ docs: $(DOXYGEN_OUTPUT_BASE)
 $(DOXYGEN_OUTPUT_BASE): $(C_SOURCE_FILES) $(C_HEADER_FILES) Doxyfile
 	doxygen
 
+$(DOCTEST_HEADER):
+	curl -fG -o $@ https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
+
+
+$(OBJECT_DIR)/cpp_tests: $(TESTS_C_FILES) $(DOCTEST_HEADER)
+	$(CXX) $(W_FLAGS) $(INCLUDE_FLAGS) $(LIB_SEARCH_FLAGS) -L$(INSTALL_STAGING_DIR) \
+	-o $@ $(TESTS_C_FILES) $(OBJECTS) $(LINK_LIBRARIES) -llua
+
+
 .PHONY: test_c
-test_c: $(SHARED_LIB_FILE)
+test_c: $(SHARED_LIB_FILE) $(OBJECT_DIR)/cpp_tests
+	$(OBJECT_DIR)/cpp_tests
 
 
 .PHONY: test_lua

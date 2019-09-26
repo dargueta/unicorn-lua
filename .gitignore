@@ -5,6 +5,7 @@
 *.a
 .git/
 build/
+tests/c/doctest.h
 .downloaded/
 venv/
 .idea/
