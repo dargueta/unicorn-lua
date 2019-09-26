@@ -84,10 +84,10 @@ LUA_API int lua_absindex(lua_State *L, int index) {
 LUA_API void lua_rawsetp(lua_State *L, int index, const void *p) {
     index = lua_absindex(L, index);
 
-    lua_pushlightuserdata(L, p);    // Push key, stack is [ ... V K ]
-    lua_pushvalue(L, -2);           // Push value, stack is [ ... V K V ]
-    lua_rawset(L, index);           // Set table, stack is [ ... V ]
-    lua_pop(L, 1);
+    lua_pushlightuserdata(L, (void *)p);    // Push key, stack is [ ... V K ]
+    lua_pushvalue(L, -2);   // Push value, stack is [ ... V K V ]
+    lua_rawset(L, index);   // Set table, stack is [ ... V ]
+    lua_pop(L, 1);          // Remove extra value, stack is back to how it was.
 }
 
 #endif
