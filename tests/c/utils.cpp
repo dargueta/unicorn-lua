@@ -1,5 +1,6 @@
 #include <cstring>
 #include <csetjmp>
+#include <stdexcept>
 
 #include "doctest.h"
 #include <unicorn/unicorn.h>
@@ -56,11 +57,10 @@ TEST_CASE("[ul_create_weak_table] basic test -- weak values") {
 
 #endif
 
-static jmp_buf gCrashJmpBuffer;
-static const char *gExpectedErrorMessage;
+jmp_buf gCrashJmpBuffer;
+const char *gExpectedErrorMessage;
 
-
-static int crash_handler(lua_State *L) {
+int crash_handler(lua_State *L) {
     const char *error_message = lua_tostring(L, -1);
     CHECK_MESSAGE(
         strcmp(gExpectedErrorMessage, error_message) == 0,
@@ -76,6 +76,7 @@ TEST_CASE("ul_crash_on_error() panics with the right error message") {
     lua_State *L = luaL_newstate();
     gExpectedErrorMessage = uc_strerror(UC_ERR_OK);
 
+#if !IS_LUAJIT
     int recover_flag = setjmp(gCrashJmpBuffer);
     if (recover_flag == 0) {
         lua_atpanic(L, crash_handler);
@@ -86,5 +87,22 @@ TEST_CASE("ul_crash_on_error() panics with the right error message") {
     // Returned from the crash handler so we know that the error message matched what
     // we wanted.
     CHECK_EQ(recover_flag, 123);
+#else
+    try {
+        ul_crash_on_error(L, UC_ERR_OK);
+    }
+    catch (...) {
+        // Some sort of unhandled exception happened. LuaJIT doesn't provide a way for us
+        // to see inside that exception, but we *can* check the error message.
+        CHECK_MESSAGE(
+            strcmp(lua_tostring(L, -1), uc_strerror(UC_ERR_OK)) == 0,
+            "Error message doesn't match what's expected."
+        );
+        return;
+    }
+    // If we get out here then an exception wasn't thrown.
+    throw std::runtime_error("Exception wasn't thrown.");
+#endif
+
     lua_close(L);
 }

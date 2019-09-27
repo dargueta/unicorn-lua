@@ -287,6 +287,8 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
         )
         mips_source_files = ""
 
+    is_luajit = args.venv_version.startswith("luajit")
+
     search_paths = determine_lua_paths(exe_paths["luarocks"])
     variables = collections.OrderedDict(
         (
@@ -303,6 +305,7 @@ def generate_makefile_parameters(args, exe_paths, install_version, base_dir, pla
             ("LUA_EXE", os.path.join(bin_root, "lua")),
             ("LUAC_EXE", os.path.join(bin_root, "luac")),
             ("UNICORN_LIB_PATH", args.uc_lib),
+            ("IS_LUAJIT", "1" if is_luajit else "0"),
             ("UNICORN_INCLUDE_PATH", args.uc_headers),
             ("LUAROCKS_EXE", os.path.join(bin_root, "luarocks")),
             ("LUA_CUSTOM_CPATH", search_paths["cpath"]),
