@@ -1,6 +1,8 @@
 #include <cstring>
+#include <csetjmp>
 
 #include "doctest.h"
+#include <unicorn/unicorn.h>
 
 #include "unicornlua/lua.h"
 #include "unicornlua/utils.h"
@@ -53,3 +55,36 @@ TEST_CASE("[ul_create_weak_table] basic test -- weak values") {
 }
 
 #endif
+
+static jmp_buf gCrashJmpBuffer;
+static const char *gExpectedErrorMessage;
+
+
+static int crash_handler(lua_State *L) {
+    const char *error_message = lua_tostring(L, -1);
+    CHECK_MESSAGE(
+        strcmp(gExpectedErrorMessage, error_message) == 0,
+        "Error messages don't match."
+    );
+
+    // Error message matches, jump back into the test.
+    longjmp(gCrashJmpBuffer, 123);
+}
+
+
+TEST_CASE("ul_crash_on_error() panics with the right error message") {
+    lua_State *L = luaL_newstate();
+    gExpectedErrorMessage = uc_strerror(UC_ERR_OK);
+
+    int recover_flag = setjmp(gCrashJmpBuffer);
+    if (recover_flag == 0) {
+        lua_atpanic(L, crash_handler);
+        ul_crash_on_error(L, UC_ERR_OK);
+        // Execution won't continue past here (inside this block)
+    }
+
+    // Returned from the crash handler so we know that the error message matched what
+    // we wanted.
+    CHECK_EQ(recover_flag, 123);
+    lua_close(L);
+}
