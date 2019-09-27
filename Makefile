@@ -92,8 +92,9 @@ test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
 	$(BUSTED_EXE) $(BUSTED_CLI_ARGS)
 
 
+# TODO (dargueta): Somehow get OBJECT_DIR and INSTALL_STAGING_DIR out of the deps here.
 .PHONY: test
-test: test_c test_lua
+test: $(OBJECT_DIR) $(INSTALL_STAGING_DIR) $(SHARED_LIB_FILE) test_lua test_c
 
 
 .PHONY: examples
@@ -150,5 +151,5 @@ $(OBJECT_DIR)/registers.o: $(SRC_ROOT)/registers.cpp $(SRC_ROOT)/utils.cpp $(GLO
 $(OBJECT_DIR)/unicorn.o: $(C_SOURCES) | $(OBJECT_DIR)
 $(OBJECT_DIR)/utils.o: $(SRC_ROOT)/utils.cpp $(GLOBAL_HEADERS) | $(OBJECT_DIR)
 
-$(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR)
+$(SHARED_LIB_FILE): $(OBJECTS) | $(INSTALL_STAGING_DIR) $(LUA_AUTOGEN_FILES) $(LUA_SOURCE_FILES)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LINK_LIBRARIES)
