@@ -22,7 +22,7 @@ warning.
 
 At the moment I'm only testing this on unmodified Lua 5.1 - 5.3 and LuaJIT 2.0
 on Linux and OSX. I cannot guarantee the library will behave as expected on all
-host platforms, though I will try.
+host platforms, though I will try. (LuaJIT on OSX is particularly finicky.)
 
 Known Limitations
 -----------------

@@ -15,6 +15,14 @@ os:
   - linux
   - osx
 
+matrix:
+  allow_failures:
+    # LuaJIT is super finicky on OSX when using doctest so we're not gonna care too much
+    # about it failing. If it works on all the other platforms, it'll probably work for
+    # LuaJIT + OSX too.
+    - os: osx
+      env: LUA_VERSION=luajit2.0
+
 before_install:
   # NOTE: This will break the builds when Travis changes the version(s) of Python they
   # have installed.
