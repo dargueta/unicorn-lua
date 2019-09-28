@@ -21,10 +21,10 @@ LDFLAGS ?=
 IS_DEBUG ?= true
 
 ifeq ($(IS_DEBUG), true)
-	CFLAGS += -Og -ggdb
+	CFLAGS += -Og -ggdb -frtti
 	LDFLAGS += -O0
 else
-	CFLAGS += -Ofast -DNDEBUG
+	CFLAGS += -Ofast -DNDEBUG -fno-rtti -fvisibility=hidden
 	LDFLAGS += --strip-all -O1
 endif
 
@@ -32,8 +32,8 @@ INCLUDE_FLAGS=-I$(INCLUDE_BASE) -I$(LUA_INCLUDE_PATH) -I$(UNICORN_INCLUDE_PATH)
 LIB_SEARCH_FLAGS=-L$(LUA_LIB_PATH) -L$(UNICORN_LIB_PATH)
 W_FLAGS=-Wall -Wextra -Werror -Wpedantic
 
-CFLAGS += -c -fno-rtti -fpic -fvisibility=hidden -std=c++11 $(W_FLAGS) $(INCLUDE_FLAGS)
-LDFLAGS += -fno-rtti -fpic $(LIB_SEARCH_FLAGS)
+CFLAGS += -c -fpic -std=c++11 $(W_FLAGS) $(INCLUDE_FLAGS)
+LDFLAGS += -fpic $(LIB_SEARCH_FLAGS)
 
 DOXYGEN_OUTPUT_BASE=$(REPO_ROOT)/docs/api
 

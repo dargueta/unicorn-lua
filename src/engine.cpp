@@ -86,10 +86,8 @@ void UCLuaEngine::stop() {
 
 
 void UCLuaEngine::close() {
-    if (engine == nullptr) {
-        luaL_error(L, "Attempted to close already-closed engine: %p", this);
-        return;
-    }
+    if (engine == nullptr)
+        throw LuaBindingError("Attempted to close already-closed engine.");
 
     for (auto hook : hooks_)
         delete hook;
