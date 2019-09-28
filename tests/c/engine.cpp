@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "doctest.h"
+#include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/lua.h"
@@ -20,7 +21,6 @@ public:
     }
 
     virtual ~EngineFixture() {
-        // Don't close engine_handle and uclua_engine since we
         lua_close(L);
     }
 
@@ -32,10 +32,9 @@ public:
 
 class AutoclosingEngineFixture : public EngineFixture {
 public:
-    ~AutoclosingEngineFixture() {
+    ~AutoclosingEngineFixture() override {
         // Don't close engine_handle since the uclua_engine will get it for us.
-        if (uclua_engine != nullptr)
-            delete uclua_engine;
+        delete uclua_engine;
     }
 };
 
@@ -68,4 +67,27 @@ TEST_CASE_FIXTURE(
     "UCLuaEngine::query() raises exception when given a bad query type"
 ) {
     CHECK_THROWS_AS(uclua_engine->query(UC_QUERY_MODE), UnicornLibraryError);
+}
+
+
+TEST_CASE_FIXTURE(AutoclosingEngineFixture, "errno() on clean engine works") {
+    // We haven't done anything with the engine so its status should be fine.
+    CHECK(uclua_engine->get_errno() == UC_ERR_OK);
+}
+
+// TODO (dargueta): Force the engine into a bad state to verify ::get_errno()
+
+TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
+    CHECK_MESSAGE(lua_gettop(L) == 0, "The Lua stack should be empty.");
+
+    Context *context = uclua_engine->create_context_in_lua();
+    CHECK_NE(context, nullptr);
+
+    CHECK_MESSAGE(
+        lua_gettop(L) == 1, "Expecting a context object on the stack."
+    );
+    CHECK_MESSAGE(
+        lua_type(L, 1) == LUA_TUSERDATA, "Object at top of stack should be userdata."
+    );
+    // TODO (dargueta): Check metatable of object on the stack
 }
