@@ -10,7 +10,6 @@
 
 
 // TODO (dargueta): Something's wrong with this test and it's not working right.
-#if 0
 
 TEST_CASE("[ul_create_weak_table] basic test -- weak values") {
     lua_State *L = luaL_newstate();
@@ -26,8 +25,8 @@ TEST_CASE("[ul_create_weak_table] basic test -- weak values") {
     // Verify the metatable is correct
     CHECK_MESSAGE(lua_getmetatable(L, -1) != 0, "Metatable is missing.");
     lua_getfield(L, -1, "__mode");
-    CHECK_FALSE_MESSAGE(lua_isnil(L, -1), "__mode not set in metatable.");
-    CHECK_MESSAGE(strcmp(lua_tostring(L, -1), "v") == 0, "__mode isn't \"v\"");
+    REQUIRE_FALSE_MESSAGE(lua_isnil(L, -1), "__mode not set in metatable.");
+    REQUIRE_MESSAGE(strcmp(lua_tostring(L, -1), "v") == 0, "__mode isn't \"v\"");
 
     // Remove __mode value and the metatable from the stack. Our test table is back at the
     // top of the stack.
@@ -55,7 +54,6 @@ TEST_CASE("[ul_create_weak_table] basic test -- weak values") {
     lua_close(L);
 }
 
-#endif
 
 jmp_buf gCrashJmpBuffer;
 const char *gExpectedErrorMessage;
