@@ -13,6 +13,7 @@ MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 TESTS_BASE=$(REPO_ROOT)/tests
 TESTS_C_FILES=$(wildcard $(TESTS_BASE)/c/*.cpp)
+TESTS_H_FILES=$(wildcard $(TESTS_BASE)/c/*.h)
 TESTS_LUA_FILES=$(wildcard $(TESTS_BASE)/lua/*.lua)
 DOCTEST_HEADER=$(TESTS_BASE)/c/doctest.h
 
@@ -21,10 +22,10 @@ LDFLAGS ?=
 IS_DEBUG ?= true
 
 ifeq ($(IS_DEBUG), true)
-	CFLAGS += -Og -ggdb -frtti
+	CFLAGS += -Og -ggdb -frtti -D DOCTEST_CONFIG_NO_COMPARISON_WARNING_SUPPRESSION
 	LDFLAGS += -O0
 else
-	CFLAGS += -Ofast -DNDEBUG -fno-rtti -fvisibility=hidden
+	CFLAGS += -Ofast -D NDEBUG -D DOCTEST_CONFIG_DISABLE -fno-rtti -fvisibility=hidden
 	LDFLAGS += --strip-all -O1
 endif
 
@@ -69,7 +70,7 @@ $(DOCTEST_HEADER):
 	curl -fG -o $@ https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
 
 
-$(OBJECT_DIR)/cpp_tests: $(TESTS_C_FILES) $(DOCTEST_HEADER)
+$(OBJECT_DIR)/cpp_tests: $(TESTS_C_FILES) $(TESTS_H_FILES) $(DOCTEST_HEADER)
 	$(CXX) -std=c++11 $(W_FLAGS) $(INCLUDE_FLAGS) $(LIB_SEARCH_FLAGS) -L$(INSTALL_STAGING_DIR) \
 	-DIS_LUAJIT=$(IS_LUAJIT) -o $@ $(TESTS_C_FILES) $(OBJECTS) $(LINK_LIBRARIES) -llua -ldl
 

@@ -1,45 +1,11 @@
 #include <unicorn/unicorn.h>
 
 #include "doctest.h"
+#include "fixtures.h"
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/lua.h"
-
-
-class EngineFixture {
-public:
-    EngineFixture() : engine_handle(nullptr), uclua_engine(nullptr), L(nullptr) {
-        L = luaL_newstate();
-        ul_init_engines_lib(L);
-        REQUIRE_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack.");
-
-        uc_err error = uc_open(UC_ARCH_MIPS, UC_MODE_32, &engine_handle);
-        REQUIRE_MESSAGE(error == UC_ERR_OK, "Failed to create a MIPS engine.");
-
-        uclua_engine = new UCLuaEngine(L, engine_handle);
-        REQUIRE(uclua_engine->L != nullptr);
-        REQUIRE(uclua_engine->engine != nullptr);
-        REQUIRE(lua_gettop(L) == 0);
-    }
-
-    virtual ~EngineFixture() {
-        lua_close(L);
-    }
-
-    uc_engine *engine_handle;
-    UCLuaEngine *uclua_engine;
-    lua_State *L;
-};
-
-
-class AutoclosingEngineFixture : public EngineFixture {
-public:
-    ~AutoclosingEngineFixture() override {
-        // Don't close engine_handle since the uclua_engine will get it for us.
-        delete uclua_engine;
-    }
-};
 
 
 TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() sets engine handle to null") {

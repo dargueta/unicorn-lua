@@ -1,12 +1,12 @@
 #include <cstring>
 
+#include "doctest.h"
+#include "fixtures.h"
 #include "unicornlua/compat.h"
 #include "unicornlua/lua.h"
-#include "doctest.h"
 
 
-TEST_CASE("[5.3 compat] lua_seti() basic") {
-    lua_State *L = luaL_newstate();
+TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     lua_newtable(L);
     lua_pushliteral(L, "This is a string.");
 
@@ -26,13 +26,10 @@ TEST_CASE("[5.3 compat] lua_seti() basic") {
 
     const char *result = lua_tostring(L, -1);
     CHECK_EQ(strcmp(result, "This is a string."), 0);
-
-    lua_close(L);
 }
 
 
-TEST_CASE("[5.3 compat] lua_geti() basic") {
-    lua_State *L = luaL_newstate();
+TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_geti() basic") {\
     lua_newtable(L);
     lua_pushinteger(L, 1234567890);
 
@@ -49,8 +46,6 @@ TEST_CASE("[5.3 compat] lua_geti() basic") {
     // Should be an integer...
     CHECK_EQ(lua_type(L, -1), LUA_TNUMBER);
     CHECK_EQ(lua_tointeger(L, -1), 1234567890);
-
-    lua_close(L);
 }
 
 
