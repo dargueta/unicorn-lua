@@ -11,6 +11,8 @@ class EngineFixture {
 public:
     EngineFixture() : engine_handle(nullptr), uclua_engine(nullptr), L(nullptr) {
         L = luaL_newstate();
+        ul_init_engines_lib(L);
+        REQUIRE_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack.");
 
         uc_err error = uc_open(UC_ARCH_MIPS, UC_MODE_32, &engine_handle);
         REQUIRE_MESSAGE(error == UC_ERR_OK, "Failed to create a MIPS engine.");
@@ -18,6 +20,7 @@ public:
         uclua_engine = new UCLuaEngine(L, engine_handle);
         REQUIRE(uclua_engine->L != nullptr);
         REQUIRE(uclua_engine->engine != nullptr);
+        REQUIRE(lua_gettop(L) == 0);
     }
 
     virtual ~EngineFixture() {
@@ -79,33 +82,32 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "errno() on clean engine works") {
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
-    REQUIRE_MESSAGE(lua_gettop(L) == 0, "The Lua stack should be empty.");
+    CHECK_MESSAGE(lua_gettop(L) == 0, "The Lua stack should be empty.");
 
     Context *context = uclua_engine->create_context_in_lua();
-    REQUIRE_NE(context, nullptr);
+    CHECK_NE(context, nullptr);
 
-    REQUIRE_MESSAGE(
+    CHECK_MESSAGE(
         lua_gettop(L) == 1, "Expecting a context object on the stack."
     );
-    REQUIRE_MESSAGE(
+    CHECK_MESSAGE(
         lua_type(L, 1) == LUA_TUSERDATA, "Object at top of stack should be userdata."
     );
 
-    REQUIRE_MESSAGE(
+    CHECK_MESSAGE(
         lua_touserdata(L, 1) == context,
         "TOS isn't the context object we were expecting."
     );
 
     // Metatable of the context is at index 2, the expected metatable is at index 3.
-    REQUIRE_MESSAGE(
+    CHECK_MESSAGE(
         lua_getmetatable(L, 1) != 0, "Context object has no metatable."
     );
     luaL_getmetatable(L, kContextMetatableName);
 
-    /*
+    CHECK(lua_gettop(L) == 3);
     CHECK_MESSAGE(
         lua_compare(L, 2, 3, LUA_OPEQ) == 1,
         "Context metatable doesn't match the expected one."
     );
-     */
 }
