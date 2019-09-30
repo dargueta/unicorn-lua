@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.h"
@@ -145,7 +147,8 @@ void ul_init_engines_lib(lua_State *L) {
     luaL_setfuncs(L, kEngineInstanceMethods, 0);
     lua_setfield(L, -2, "__index");
 
-    // Remove the metatables from the stack.
+    luaL_newmetatable(L, kContextMetatableName);
+    luaL_setfuncs(L, kContextMetamethods, 0);
     lua_pop(L, 2);
 }
 

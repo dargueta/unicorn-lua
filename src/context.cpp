@@ -4,13 +4,20 @@
 #include "unicornlua/engine.h"
 #include "unicornlua/context.h"
 #include "unicornlua/utils.h"
-#include "unicornlua/unicornlua.h"
 
 
 const char * const kContextMetatableName = "unicornlua__context_meta";
 
+
+static int call_release(lua_State *L) {
+    Context *context = get_context_struct(L, 1);
+    context->release();
+    return 0;
+}
+
+
 const luaL_Reg kContextMetamethods[] = {
-    {"__gc", ul_free},
+    {"__gc", call_release},
     {nullptr, nullptr}
 };
 

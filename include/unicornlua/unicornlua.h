@@ -17,7 +17,4 @@
     #error "Library must be compiled against version 1.x of Unicorn."
 #endif
 
-
-int ul_free(lua_State *L);
-
 #endif  /* INCLUDE_UNICORNLUA_UNICORNLUA_H_ */
