@@ -29,7 +29,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
 }
 
 
-TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_geti() basic") {\
+TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_geti() basic") {
     lua_newtable(L);
     lua_pushinteger(L, 1234567890);
 

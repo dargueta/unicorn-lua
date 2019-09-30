@@ -48,8 +48,6 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "errno() on clean engine works") {
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
-    CHECK_MESSAGE(lua_gettop(L) == 0, "The Lua stack should be empty.");
-
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
 

@@ -68,7 +68,9 @@ int crash_handler(lua_State *L) {
 }
 
 
-TEST_CASE_FIXTURE(LuaFixture, "ul_crash_on_error() panics with the right error message") {
+TEST_CASE_FIXTURE(
+    LuaFixture, "ul_crash_on_error() panics with the right error message"
+) {
     gExpectedErrorMessage = uc_strerror(UC_ERR_OK);
 
 #if !IS_LUAJIT
@@ -87,8 +89,8 @@ TEST_CASE_FIXTURE(LuaFixture, "ul_crash_on_error() panics with the right error m
         ul_crash_on_error(L, UC_ERR_OK);
     }
     catch (...) {
-        // Some sort of unhandled exception happened. LuaJIT doesn't provide a way for us
-        // to see inside that exception, but we *can* check the error message.
+        // Some sort of unhandled exception happened. LuaJIT doesn't provide a way for
+        // us to see inside that exception, but we *can* check the error message.
         CHECK_MESSAGE(
             strcmp(lua_tostring(L, -1), uc_strerror(UC_ERR_OK)) == 0,
             "Error message doesn't match what's expected."
@@ -96,6 +98,6 @@ TEST_CASE_FIXTURE(LuaFixture, "ul_crash_on_error() panics with the right error m
         return;
     }
     // If we get out here then an exception wasn't thrown.
-    throw std::runtime_error("Exception wasn't thrown.");
+    FAIL("Exception wasn't thrown.");
 #endif
 }
