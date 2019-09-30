@@ -70,8 +70,17 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     luaL_getmetatable(L, kContextMetatableName);
 
     CHECK(lua_gettop(L) == 3);
+
+#if LUA_VERSION_NUM < 502
+    // lua_compare() was added in 5.2, so we have to use lua_equal() here.
+    CHECK_MESSAGE(
+        lua_equal(L, 2, 3) == 1,
+        "Context metatable doesn't match the expected one."
+    );
+#else
     CHECK_MESSAGE(
         lua_compare(L, 2, 3, LUA_OPEQ) == 1,
         "Context metatable doesn't match the expected one."
     );
+#endif
 }
