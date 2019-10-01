@@ -164,7 +164,7 @@ def generate_constants_for_file(header_file, output_file):
 
 def main():
     # type: () -> int
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)-5s] %(message)s")
+    logging.basicConfig(level=logging.WARNING, format="[%(levelname)-5s] %(message)s")
     if len(sys.argv) != 3:
         logging.error(
             "Script takes two arguments, the path to a header file and the path to the"
