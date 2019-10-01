@@ -16,6 +16,7 @@ TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() sets engine handle to nul
     );
 }
 
+
 TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() crashes if you call it twice") {
     uclua_engine->close();
     CHECK_MESSAGE(
