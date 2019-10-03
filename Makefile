@@ -86,10 +86,8 @@ test_c: $(SHARED_LIB_FILE) $(OBJECT_DIR)/cpp_tests
 
 .PHONY: test_lua
 test_lua: $(SHARED_LIB_FILE) $(TESTS_LUA_FILES)
-	LD_LIBRARY_PATH="$(UNICORN_LIB_PATH):$(LD_LIBRARY_PATH)"    \
 	LUA_CPATH="$(LUA_CUSTOM_CPATH);$(BUILD_LUA_CPATH)"          \
 	LUA_PATH="$(LUA_CUSTOM_LPATH);$(BUILD_LUA_PATH)"            \
-	PATH="$(LUA_CUSTOM_EXEPATH):$(PATH)"                        \
 	$(BUSTED_EXE) $(BUSTED_CLI_ARGS)
 
 
