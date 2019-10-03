@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project("unicorn_lua" VERSION 0.1 LANGUAGES CXX)
 
 # SHOULD BE SET BY THE CONFIGURE SCRIPT
-set(LUA_FULL_VERSION 5.1.5)
-set(LUA_SHORT_VERSION 5.1)
+set(LUA_FULL_VERSION 5.3.5)
+set(LUA_SHORT_VERSION 5.3)
 set(USING_VENV ON)
 set(IS_LUAJIT OFF)
 # </PREDEFINED>
@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 
-set(LOCAL_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/unicorn")
+find_package(Python3 REQUIRED)
 
 find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)
@@ -129,13 +129,17 @@ execute_process(
     OUTPUT_VARIABLE LUA_CUSTOM_LPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-message(STATUS "Found Luarocks installation directories: ${LUA_CUSTOM_LPATH}")
 execute_process(
     COMMAND ${LUAROCKS_EXE} path --lr-cpath
     OUTPUT_VARIABLE LUA_CUSTOM_CPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 message(STATUS "Found Luarocks C installation directories: ${LUA_CUSTOM_CPATH}")
+execute_process(
+    COMMAND ${LUA_EXE} -e "print(string.match('${LUA_CUSTOM_CPATH}', '^([^?]+)'))"
+    OUTPUT_VARIABLE LUA_INSTALL_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 
 if (${LUA_FULL_VERSION} VERSION_LESS "5.3")
@@ -154,12 +158,20 @@ include_directories(
 file(GLOB LIBRARY_CPP_SOURCES "src/*.cpp")
 file(GLOB TESTS_CPP_SOURCES "tests/c/*.cpp")
 
-add_library(unicornlua SHARED ${LIBRARY_CPP_SOURCES})
+list(
+    TRANSFORM ARCHITECTURE_SLUGS
+    PREPEND "${CMAKE_CURRENT_BINARY_DIR}/"
+    OUTPUT_VARIABLE _arch_files
+)
+list(TRANSFORM _arch_files APPEND ".cpp")
+
+add_library(
+    unicornlua SHARED ${LIBRARY_CPP_SOURCES} ${_arch_files}
+)
 set_target_properties(
     unicornlua PROPERTIES
     PREFIX ""
-    OUTPUT_NAME "init"
-    LIBRARY_OUTPUT_DIRECTORY "${LOCAL_INSTALL_DIR}"
+    OUTPUT_NAME "unicorn"
 )
 
 add_executable(
@@ -168,9 +180,14 @@ add_executable(
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/c/doctest.h
 )
 
-target_compile_features(unicornlua PUBLIC cxx_std_11)
-target_compile_features(cpp_test PUBLIC cxx_std_11)
 
+# Apparently OSX requires this stuff: https://stackoverflow.com/q/42371892
+if (CMAKE_HOST_APPLE)
+    target_link_options(unicornlua BEFORE PUBLIC -dynamiclib -undefined dynamic_lookup)
+endif()
+
+target_link_libraries(unicornlua LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
+target_link_libraries(cpp_test LINK_PUBLIC unicornlua ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     add_compile_options(-Wall -Wextra -Werror -Wpedantic)
@@ -185,14 +202,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 
-# Create commands for autogenerating all the Lua constant files.
+# Create commands for autogenerating all the constants files.
 foreach(ARCH IN ITEMS ${ARCHITECTURE_SLUGS})
     add_custom_command(
-        OUTPUT "${LOCAL_INSTALL_DIR}/${ARCH}_const.lua"
-        COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${ARCH}.h ${LOCAL_INSTALL_DIR}/${ARCH}_const.lua"
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${ARCH}.cpp"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${ARCH}.h" "${CMAKE_CURRENT_BINARY_DIR}/${ARCH}.cpp"
     )
-    add_custom_target(arch_${ARCH} ALL DEPENDS "${LOCAL_INSTALL_DIR}/${ARCH}_const.lua")
-    add_dependencies(unicornlua arch_${ARCH})
 endforeach()
 
 
@@ -211,8 +226,6 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/busted-runner.sh"
 )
 
-target_link_libraries(unicornlua LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
-target_link_libraries(cpp_test LINK_PUBLIC unicornlua ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
 
 enable_testing()
 add_test(NAME cpp_unit_tests COMMAND cpp_test)
@@ -224,10 +237,7 @@ add_test(
 
 
 install(
-    DIRECTORY ${LOCAL_INSTALL_DIR}
+    TARGETS unicornlua
+    LIBRARY
     DESTINATION ${LUA_INSTALL_DIR}
-    FILES_MATCHING PATTERN "*.lua"
-                   PATTERN "*.so"
-                   PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
-
