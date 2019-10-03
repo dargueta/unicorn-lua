@@ -153,6 +153,7 @@ include_directories(
     "include"
     ${UNICORN_HEADERS_PATH}
     ${LUA_HEADERS_PATH}
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 file(GLOB LIBRARY_CPP_SOURCES "src/*.cpp")
@@ -177,7 +178,7 @@ set_target_properties(
 add_executable(
     cpp_test
     ${TESTS_CPP_SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/c/doctest.h
+    ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
 )
 
 
@@ -213,8 +214,8 @@ endforeach()
 
 # Pull the doctest.h file we need for unit testing
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/tests/c/doctest.h
-    COMMAND curl -fGs -o ${CMAKE_CURRENT_SOURCE_DIR}/tests/c/doctest.h https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
+    COMMAND curl -fGs -o ${CMAKE_CURRENT_BINARY_DIR}/doctest.h https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
 )
 
 configure_file(
