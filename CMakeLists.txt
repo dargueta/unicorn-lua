@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project("unicorn_lua" VERSION 0.1 LANGUAGES CXX)
+project(UnicornLua VERSION 0.1 LANGUAGES CXX)
 
 # SHOULD BE SET BY THE CONFIGURE SCRIPT
 set(LUA_FULL_VERSION 5.3.5)
@@ -134,111 +134,14 @@ execute_process(
     OUTPUT_VARIABLE LUA_CUSTOM_CPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-message(STATUS "Found Luarocks C installation directories: ${LUA_CUSTOM_CPATH}")
-execute_process(
-    COMMAND ${LUA_EXE} -e "print(string.match('${LUA_CUSTOM_CPATH}', '^([^?]+)'))"
-    OUTPUT_VARIABLE LUA_INSTALL_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
 
 
-if (${LUA_FULL_VERSION} VERSION_LESS "5.3")
-    set(BUSTED_CLI_ARGS --exclude-tags="int64only")
-else()
-    set(BUSTED_CLI_ARGS "")
-endif()
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
+find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
 
-include_directories(
-    "include"
-    ${UNICORN_HEADERS_PATH}
-    ${LUA_HEADERS_PATH}
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-file(GLOB LIBRARY_CPP_SOURCES "src/*.cpp")
-file(GLOB TESTS_CPP_SOURCES "tests/c/*.cpp")
-
-list(
-    TRANSFORM ARCHITECTURE_SLUGS
-    PREPEND "${CMAKE_CURRENT_BINARY_DIR}/"
-    OUTPUT_VARIABLE _arch_files
-)
-list(TRANSFORM _arch_files APPEND ".cpp")
-
-add_library(
-    unicornlua SHARED ${LIBRARY_CPP_SOURCES} ${_arch_files}
-)
-set_target_properties(
-    unicornlua PROPERTIES
-    PREFIX ""
-    OUTPUT_NAME "unicorn"
-)
-
-add_executable(
-    cpp_test
-    ${TESTS_CPP_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
-)
-
-
-# Apparently OSX requires this stuff: https://stackoverflow.com/q/42371892
-if (CMAKE_HOST_APPLE)
-    target_link_options(unicornlua BEFORE PUBLIC -dynamiclib -undefined dynamic_lookup)
-endif()
-
-target_link_libraries(unicornlua LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
-target_link_libraries(cpp_test LINK_PUBLIC unicornlua ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY})
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
-    add_compile_options(-Wall -Wextra -Werror -Wpedantic)
-    if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        add_compile_options(-Ofast -fno-rtti)
-    else()
-        add_compile_options(-O0 -ggdb -frtti)
-    endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # Visual studio options
-    message(FATAL_ERROR "Visual studio not supported yet.")
-endif()
-
-
-# Create commands for autogenerating all the constants files.
-foreach(ARCH IN ITEMS ${ARCHITECTURE_SLUGS})
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${ARCH}.cpp"
-        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${ARCH}.h" "${CMAKE_CURRENT_BINARY_DIR}/${ARCH}.cpp"
-    )
-endforeach()
-
-
-# Pull the doctest.h file we need for unit testing
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
-    COMMAND curl -fGs -o ${CMAKE_CURRENT_BINARY_DIR}/doctest.h https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
-)
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/busted-config-template.lua"
-    "${CMAKE_CURRENT_BINARY_DIR}/.busted"
-)
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/busted-runner-template.sh"
-    "${CMAKE_CURRENT_BINARY_DIR}/busted-runner.sh"
-)
-
-
-enable_testing()
-add_test(NAME cpp_unit_tests COMMAND cpp_test)
-add_test(
-    NAME lua_tests
-    COMMAND sh "${CMAKE_CURRENT_BINARY_DIR}/busted-runner.sh"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-
-install(
-    TARGETS unicornlua
-    LIBRARY
-    DESTINATION ${LUA_INSTALL_DIR}
-)
+add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
+add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
+add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/test_lua")    # Tests with Lua code
