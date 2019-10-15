@@ -1,15 +1,3 @@
-if (NOT DEFINED ARCHITECTURE_SLUGS)
-    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
-endif()
-
-
-execute_process(
-    COMMAND ${LUA_EXE} -e "print(string.match('${LUA_CUSTOM_CPATH}', '^([^?]+)'))"
-    OUTPUT_VARIABLE LUA_INSTALL_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 file(GLOB LIBRARY_CPP_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
@@ -82,6 +70,7 @@ if (CMAKE_HOST_APPLE)
 endif()
 
 
+find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}

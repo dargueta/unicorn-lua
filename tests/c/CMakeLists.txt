@@ -8,9 +8,10 @@ include_directories(
 file(GLOB TESTS_CPP_SOURCES "${PROJECT_SOURCE_DIR}/tests/c/*.cpp")
 
 # Pull the doctest.h file we need for unit testing
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
-    COMMAND curl -fGs -o ${CMAKE_CURRENT_BINARY_DIR}/doctest.h https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
+file(
+    DOWNLOAD
+    https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
+    "${CMAKE_CURRENT_BINARY_DIR}/doctest.h"
 )
 
 add_executable(
@@ -20,7 +21,7 @@ add_executable(
 )
 
 target_link_libraries(
-    cpp_test LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
+    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
 
 
