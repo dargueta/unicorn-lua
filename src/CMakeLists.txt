@@ -69,7 +69,7 @@ endif()
 
 
 find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
-find_library(PTHREADS_LIBRARY NAMES pthread libpthread)
+find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )

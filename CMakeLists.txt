@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(UnicornLua VERSION 0.1 LANGUAGES CXX)
 
-include("${PROJECT_SOURCE_DIR}/cmake/configuration.cmake")
+include("${PROJECT_SOURCE_DIR}/configuration.cmake")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -167,8 +167,6 @@ if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
 endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-set(BUILT_LIBRARY_SEARCH_DIR "${CMAKE_CURRENT_BINARY_DIR}/lib")
-
 enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code

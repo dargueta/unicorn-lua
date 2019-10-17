@@ -4,6 +4,8 @@ else()
     set(BUSTED_CLI_ARGS "")
 endif()
 
+# TODO (dargueta): Try to get the path from the unicornlua_library target instead.
+set(BUILT_LIBRARY_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/busted-config-template.lua"
@@ -13,7 +15,6 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/busted-runner-template.sh"
     "${CMAKE_CURRENT_BINARY_DIR}/busted-runner.sh"
 )
-
 
 add_test(
     NAME lua_tests

@@ -41,5 +41,9 @@ install:
   - sudo ./make.sh install
   - popd
 
-script: |
-  ./configure && cmake -S . -B build && cd build && make && ctest --output-on-failure
+  # Debugging
+  - cmake --version
+  - python2 -V
+  - python3 -V
+
+script: ./configure && cd build && make && ctest --output-on-failure

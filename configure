@@ -9,7 +9,6 @@ import sys
 
 
 LOG = logging.getLogger(__name__)
-HOME = os.path.expanduser("~")
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -38,12 +37,8 @@ PLATFORM_ALIASES = {
     "cygwin": "posix",
 }
 
-
-CONSTANTS_FILE_SLUGS = ["arm", "arm64", "m68k", "mips", "sparc", "x86"]
-
 DEFAULT_LUAROCKS_VERSION = "3.2.1"
 DEFAULT_LUA_VERSION = "5.3"
-REQUIRED_ROCKS = {"busted", "lcurses"}
 
 # Detect if we're in a CI environment. This works for Travis, CircleCI, and
 # AppVeyor. (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
@@ -212,10 +207,10 @@ def main():
         install_version = get_system_lua_version()
         LOG.info("Using OS installation, Lua %s", install_version)
 
-    LOG.info("Generating Makefile parameters...")
-    makefile_params = generate_cmake_parameters(args, install_version, lua_platform)
-    with open("cmake/configuration.cmake", "w") as fd:
-        fd.write("\n".join('set(%s "%s")' % kv for kv in makefile_params.items()))
+    LOG.info("Generating CMake parameters...")
+    cmake_params = generate_cmake_parameters(args, install_version, lua_platform)
+    with open("configuration.cmake", "w") as fd:
+        fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 
     # Remove all build artifacts from a previous build, since we're probably switching
     # Lua versions.
@@ -224,8 +219,22 @@ def main():
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
 
+    if not os.path.exists(build_dir):
+        os.mkdir(build_dir)
+
     LOG.info("Setting up environment...")
-    run(["cmake", "-S", HERE, "-B", build_dir])
+    original_directory = os.getcwd()
+    try:
+        # Ideally we'd use `-S HERE -B build_dir` but CMake < 3.13 doesn't support those
+        # arguments. For compatibility, we do it the old way: move into the build
+        # directory and pass the source directory as the sole positional argument.
+        os.chdir(build_dir)
+        run(["cmake", HERE])
+    finally:
+        # chdir back to the original directory. Travis gets confused about where it is
+        # if we don't do this, even though theoretically the current working directory
+        # is local to the process.
+        os.chdir(original_directory)
 
 
 if __name__ == "__main__":
