@@ -40,4 +40,6 @@ install:
   - ./make.sh
   - sudo ./make.sh install
   - popd
-  - curl -L http://git.io/lenv | perl
+
+script: |
+  ./configure && cmake -S . -B build && cd build && make && ctest --output-on-failure
