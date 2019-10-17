@@ -15,7 +15,17 @@ list(TRANSFORM _arch_files APPEND ".cpp")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-add_library(unicornlua_library SHARED ${LIBRARY_CPP_SOURCES})
+# Create commands for autogenerating all the constants files.
+foreach(_file IN ITEMS ${_arch_files})
+    get_filename_component(_slug "${_file}" NAME_WE)
+    add_custom_command(
+        OUTPUT "${_file}"
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    )
+endforeach()
+
+add_library(unicornlua_library SHARED ${LIBRARY_CPP_SOURCES} ${_arch_files})
 
 target_include_directories(
     unicornlua_library
@@ -24,18 +34,6 @@ target_include_directories(
     ${UNICORN_HEADERS_PATH}
     ${LUA_HEADERS_PATH}
 )
-
-# Create commands for autogenerating all the constants files.
-foreach(_file IN ITEMS ${_arch_files})
-    get_filename_component(_slug "${_file}" NAME_WE)
-    add_custom_target(
-        arch_${_slug}
-        "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"
-        BYPRODUCTS "${_file}"
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    )
-    add_dependencies(unicornlua_library "arch_${_slug}")
-endforeach()
 
 
 # Override the default naming for the library. On POSIX systems the prefix "lib" is

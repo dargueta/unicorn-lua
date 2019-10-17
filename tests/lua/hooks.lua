@@ -1,5 +1,5 @@
 local unicorn = require 'unicorn'
-local x86 = require 'unicorn.x86_const'
+local x86 = require 'unicorn.x86'
 
 
 describe('Hook tests', function ()

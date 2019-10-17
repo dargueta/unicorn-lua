@@ -1,5 +1,5 @@
 local unicorn = require 'unicorn'
-local x86 = require 'unicorn.x86_const'
+local x86 = require 'unicorn.x86'
 
 describe('Register tests', function ()
   it('[x86] Read one register', function ()

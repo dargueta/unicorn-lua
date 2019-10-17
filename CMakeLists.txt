@@ -1,41 +1,45 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(UnicornLua VERSION 0.1 LANGUAGES CXX)
 
-# Created by the configuration script
-include("configuration.cmake.txt")
-
-
-if (NOT DEFINED ARCHITECTURE_SLUGS)
-    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
-endif()
-
+include("${PROJECT_SOURCE_DIR}/cmake/configuration.cmake")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 
+if (NOT DEFINED ARCHITECTURE_SLUGS)
+    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
+endif()
+
+
+# These are the rocks required for running tests and using examples.
+set(REQUIRED_ROCKS lcurses;busted)
+
 find_package(Python3 REQUIRED)
 
 
-if(USE_VIRTUALENV)
+function(download_lua)
+    set(LUA_TARBALL "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}.tar.gz")
+    set(LUA_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}")
+    set(LUA_ROOT "${LUA_DOWNLOAD_DIR}/install")
+
     message(STATUS "Downloading and extracting Lua...")
     file(
         DOWNLOAD
         "https://www.lua.org/ftp/lua-${LUA_FULL_VERSION}.tar.gz"
-        "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}.tar.gz"
+        "${LUA_TARBALL}"
     )
     execute_process(
-        COMMAND cmake -E tar -xz "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}.tar.gz"
+        COMMAND cmake -E tar -xz "${LUA_TARBALL}"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        OUTPUT_QUIET
     )
 
-    set(LUA_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}")
-    set(LUA_ROOT "${LUA_DOWNLOAD_DIR}/install")
 
-    # Before building Lua we need to change where it looks for installed libraries. This
-    # way, we can determine the directory to install the built Unicorn binding with a
-    # single command, without worrying if we're using a virtual environment or not.
+    # Before building Lua we need to change where it looks for installed libraries. This way
+    # we can determine the directory to install the built Unicorn binding with one command,
+    # without worrying if we're using a virtual environment or not.
     message(STATUS "Configuring Lua...")
     file(READ "${LUA_DOWNLOAD_DIR}/src/luaconf.h" LUACONF_H_CONTENTS)
     string(
@@ -52,9 +56,8 @@ if(USE_VIRTUALENV)
         OUTPUT_QUIET
     )
 
-    set(LUA_EXE "${LUA_ROOT}/bin/lua")
-    set(LUA_HEADERS_PATH "${LUA_ROOT}/include")
-    set(LUA_LIBRARY "${LUA_ROOT}/lib/liblua.a")
+    # Install LuaRocks -------------------------------------------------------------
+
     set(LUAROCKS_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/luarocks-${LUAROCKS_VERSION}")
     set(LUAROCKS_INSTALL_DIR "${LUAROCKS_DOWNLOAD_DIR}-installation")
 
@@ -73,7 +76,6 @@ if(USE_VIRTUALENV)
     execute_process(
         COMMAND sh "${LUAROCKS_DOWNLOAD_DIR}/configure"
                    "--prefix=${LUAROCKS_INSTALL_DIR}"
-                   "--lua-version=${LUA_SHORT_VERSION}"
                    "--with-lua=${LUA_ROOT}"
                    "--force-config"
         WORKING_DIRECTORY "${LUAROCKS_DOWNLOAD_DIR}"
@@ -84,8 +86,23 @@ if(USE_VIRTUALENV)
         COMMAND make -C "${LUAROCKS_DOWNLOAD_DIR}" bootstrap
         OUTPUT_QUIET
     )
+endfunction(download_lua)
 
+
+
+if(USE_VIRTUALENV)
+    set(LUA_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}")
+    set(LUA_ROOT "${LUA_DOWNLOAD_DIR}/install")
+    set(LUA_EXE "${LUA_ROOT}/bin/lua")
+    set(LUA_HEADERS_PATH "${LUA_ROOT}/include")
+    set(LUA_LIBRARY "${LUA_ROOT}/lib/liblua.a")
+    set(LUAROCKS_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/luarocks-${LUAROCKS_VERSION}")
+    set(LUAROCKS_INSTALL_DIR "${LUAROCKS_DOWNLOAD_DIR}-installation")
     set(LUAROCKS_EXE "${LUAROCKS_INSTALL_DIR}/bin/luarocks")
+
+    if(NOT EXISTS "${LUA_EXE}")
+        download_lua()
+    endif()
 else()
     find_library(LUA_LIBRARY NAMES lua liblua)
     find_path(LUA_HEADERS_PATH NAMES lua.h)
@@ -119,24 +136,40 @@ execute_process(
 )
 
 message(STATUS "Installing required rocks...")
-execute_process(
-    COMMAND ${LUAROCKS_EXE} install busted lcurses
-    OUTPUT_QUIET
-)
+foreach(_rock IN ITEMS ${REQUIRED_ROCKS})
+    execute_process(
+        COMMAND ${LUAROCKS_EXE} install "${_rock}"
+        OUTPUT_QUIET
+        RESULT_VARIABLE rocks_install_result
+    )
+    if(NOT rocks_install_result EQUAL 0)
+        message(FATAL_ERROR "Installing rock ${_rock} failed.")
+    endif()
+endforeach()
+
 
 get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS_EXE}" DIRECTORY)
 set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
-find_path(UNICORN_HEADERS_PATH unicorn/unicorn.h)
+# These might be set by the user.
+if(NOT DEFINED UNICORN_LIBRARY)
+    find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
+endif()
+
+if(NOT DEFINED UNICORN_HEADERS_PATH)
+    find_path(UNICORN_HEADERS_PATH unicorn/unicorn.h)
+endif()
+
 if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
     message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
 endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+set(BUILT_LIBRARY_SEARCH_DIR "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
+enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code

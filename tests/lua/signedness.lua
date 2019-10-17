@@ -1,5 +1,5 @@
 local unicorn = require 'unicorn'
-local x86 = require 'unicorn.x86_const'
+local x86 = require 'unicorn.x86'
 
 describe('[x86] Signedness tests  #int64only', function ()
   -- While this behavior is undesirable, we do need to test it to ensure

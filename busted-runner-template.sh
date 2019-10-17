@@ -1,4 +1,4 @@
 #!/bin/sh
 
-eval "@LUAROCKS_EXE@ path"
-@BUSTED_EXE@ @BUSTED_CLI_ARGS@ -f @LUA_INSTALL_DIR@/busted-configuration.lua
+eval "$(@LUAROCKS_EXE@ path)"
+@BUSTED_EXE@ @BUSTED_CLI_ARGS@ -f @CMAKE_CURRENT_BINARY_DIR@/busted-configuration.lua

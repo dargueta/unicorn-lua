@@ -3,7 +3,7 @@
 describe('[x86] Basic register read/write', function ()
   it('Tutorial from website', function ()
     local unicorn = require 'unicorn'
-    local x86 = require 'unicorn.x86_const'
+    local x86 = require 'unicorn.x86'
 
     local X86_CODE32 = "\065\074" -- INC ecx; DEC edx
     local ADDRESS = 0x1000000

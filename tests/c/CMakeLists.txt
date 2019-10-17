@@ -24,6 +24,4 @@ target_link_libraries(
     cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
 
-
-enable_testing()
 add_test(NAME cpp_unit_tests COMMAND cpp_test)

@@ -15,9 +15,8 @@ configure_file(
 )
 
 
-enable_testing()
 add_test(
     NAME lua_tests
-    COMMAND sh "${CURRENT_BINARY_DIR}/busted-runner.sh"
+    COMMAND sh "${CMAKE_CURRENT_BINARY_DIR}/busted-runner.sh"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
