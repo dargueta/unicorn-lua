@@ -1,3 +1,8 @@
+if (NOT DEFINED ARCHITECTURE_SLUGS)
+    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
+endif()
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 file(GLOB LIBRARY_CPP_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
@@ -10,14 +15,14 @@ list(
     PREPEND "${CMAKE_CURRENT_BINARY_DIR}/"
     OUTPUT_VARIABLE _arch_files
 )
-list(TRANSFORM _arch_files APPEND ".cpp")
+list(TRANSFORM _arch_files APPEND "_const.cpp")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Create commands for autogenerating all the constants files.
-foreach(_file IN ITEMS ${_arch_files})
-    get_filename_component(_slug "${_file}" NAME_WE)
+foreach(_slug IN ITEMS ${ARCHITECTURE_SLUGS})
+    set(_file "${CMAKE_CURRENT_BINARY_DIR}/${_slug}_const.cpp")
     add_custom_command(
         OUTPUT "${_file}"
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"

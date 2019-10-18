@@ -10,10 +10,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if (NOT DEFINED ARCHITECTURE_SLUGS)
-    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
-endif()
-
 
 # These are the rocks required for running tests and using examples.
 set(REQUIRED_ROCKS lcurses;busted)

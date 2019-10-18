@@ -48,7 +48,7 @@ GENERATED_FILE_TEMPLATE = """\
  * Source: {header_file}
  * Generated: {now:%Y-%m-%d %I:%M %p}
  *
- * @file {slug}.cpp
+ * @file {slug}_const.cpp
  */
 
 #include <unicorn/unicorn.h>
@@ -61,7 +61,7 @@ static const struct NamedIntConst kConstants[] {{
     {{NULL, 0}}
 }};
 
-extern "C" UNICORN_EXPORT int luaopen_unicorn_{slug}(lua_State *L) {{
+extern "C" UNICORN_EXPORT int luaopen_unicorn_{slug}_const(lua_State *L) {{
     lua_createtable(L, 0, {n_values});
     load_int_constants(L, kConstants);
     return 1;
