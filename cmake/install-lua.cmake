@@ -36,16 +36,38 @@ function(install_lua)
     file(READ "${LUA_DOWNLOAD_DIR}/src/luaconf.h" LUACONF_H_CONTENTS)
     string(
         REGEX REPLACE
-        "#define[ \t]+LUA_ROOT[^\n]+\n" "#define LUA_ROOT \"${LUA_ROOT}/\"\n"
+        "#define[ \t]+LUA_ROOT[^\n]+\n"
+        "#define LUA_ROOT \"${LUA_ROOT}/\"\n"
         MODIFIED_LUACONF_H_CONTENTS
         "${LUACONF_H_CONTENTS}"
     )
     file(WRITE "${LUA_DOWNLOAD_DIR}/src/luaconf.h" "${MODIFIED_LUACONF_H_CONTENTS}")
 
+    # We also need to compile the code as position-independent. On Lua 5.1 the MYCFLAGS
+    # variable gets overwritten when compiling for some target platforms, so we can't
+    # pass "-fpic" that way. We need to modify the Makefile, similar to how we do above.
+    file(READ "${LUA_DOWNLOAD_DIR}/src/Makefile" LUA_SRC_MAKEFILE_CONTENTS)
+    string(
+        REGEX REPLACE
+        "MYCFLAGS=\""
+        "MYCFLAGS=\"-fpic "
+        MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
+        "${LUA_SRC_MAKEFILE_CONTENTS}"
+    )
+    string(
+        REGEX REPLACE
+        "MYCFLAGS=-D([^ ]+)"
+        "MYCFLAGS=\"-fpic -D\\1\""
+        MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
+        "${MODIFIED_LUA_SRC_MAKEFILE_CONTENTS}"
+    )
+    file(WRITE "${LUA_DOWNLOAD_DIR}/src/Makefile" "${MODIFIED_LUA_SRC_MAKEFILE_CONTENTS}")
+
+    # Done configuring Lua -----------------------------------------------------
+
     message(STATUS "Building Lua and installing to: ${LUA_ROOT}")
     execute_process(
-        COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fPIC\"" "${DETECTED_LUA_PLATFORM}" local
-        OUTPUT_QUIET
+        COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fpic\"" "${DETECTED_LUA_PLATFORM}" local
         RESULT_VARIABLE RESULT
     )
     if(NOT RESULT EQUAL 0)
