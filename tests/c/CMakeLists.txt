@@ -1,7 +1,7 @@
 include_directories(
     "${PROJECT_SOURCE_DIR}/include"
     ${UNICORN_HEADERS_PATH}
-    ${LUA_HEADERS_PATH}
+    ${LUA_INCLUDE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -20,6 +20,10 @@ add_executable(
     ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
 )
 
+if(IS_LUAJIT)
+    target_compile_definitions(cpp_test PUBLIC IS_LUAJIT=1)
+endif()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -28,7 +32,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 target_link_libraries(
-    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
+    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARIES}
 )
 
 add_test(NAME cpp_unit_tests COMMAND cpp_test)

@@ -32,9 +32,12 @@ target_include_directories(
     PRIVATE
     "${PROJECT_SOURCE_DIR}/include"
     ${UNICORN_HEADERS_PATH}
-    ${LUA_HEADERS_PATH}
+    ${LUA_INCLUDE_DIR}
 )
 
+if(IS_LUAJIT)
+    target_compile_definitions(unicornlua_library PUBLIC IS_LUAJIT=1)
+endif()
 
 # Override the default naming for the library. On POSIX systems the prefix "lib" is
 # added, and the default name (without the prefix) uses the project name. We want the
@@ -73,6 +76,11 @@ find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
+
+# For some reason this is required only for LuaJIT on *NIX platforms except OSX.
+if(IS_LUAJIT AND UNIX AND NOT APPLE)
+    target_link_libraries(unicornlua_library LINK_PUBLIC dl)
+endif()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

@@ -46,4 +46,4 @@ install:
   - python2 -V
   - python3 -V
 
-script: ./configure && cd build && make && ctest --output-on-failure
+script: ./configure --venv-version $LUA_VERSION && cd build && cmake .. && make && ctest --output-on-failure

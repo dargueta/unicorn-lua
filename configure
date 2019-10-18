@@ -154,12 +154,19 @@ def get_system_lua_version():
 
 
 def generate_cmake_parameters(args, install_version, platform):
-    is_luajit = args.venv_version.startswith("luajit")
+    if args.use_venv:
+        is_luajit = args.venv_version.startswith("luajit")
+    else:
+        # Do not support installing to LuaJIT on the OS platform
+        is_luajit = False
+
     short_version = install_version.rpartition(".")[0]
     values = {
         "LUA_FULL_VERSION": install_version,
         "LUA_SHORT_VERSION": short_version,
         "IS_LUAJIT": "YES" if is_luajit else "NO",
+        "LUAJIT_FULL_VERSION": SPECIFIC_VERSIONS["luajit"] if is_luajit else "",
+        "LUAJIT_SHORT_VERSION": SUPPORTED_LUA_VERSIONS["luajit"] if is_luajit else "",
         "USE_VIRTUALENV": "YES" if args.use_venv else "NO",
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": args.luarocks_version,
@@ -196,7 +203,10 @@ def main():
 
     if args.use_venv:
         if args.venv_version in SPECIFIC_VERSIONS:
-            install_version = SPECIFIC_VERSIONS[args.venv_version]
+            if args.venv_version.startswith("luajit"):
+                install_version = SPECIFIC_VERSIONS["5.1"]
+            else:
+                install_version = SPECIFIC_VERSIONS[args.venv_version]
         else:
             raise ErrorExit(
                 "Unsupported Lua version: %r. Use --help to see supported versions."
@@ -221,20 +231,6 @@ def main():
 
     if not os.path.exists(build_dir):
         os.mkdir(build_dir)
-
-    LOG.info("Setting up environment...")
-    original_directory = os.getcwd()
-    try:
-        # Ideally we'd use `-S HERE -B build_dir` but CMake < 3.13 doesn't support those
-        # arguments. For compatibility, we do it the old way: move into the build
-        # directory and pass the source directory as the sole positional argument.
-        os.chdir(build_dir)
-        run(["cmake", HERE])
-    finally:
-        # chdir back to the original directory. Travis gets confused about where it is
-        # if we don't do this, even though theoretically the current working directory
-        # is local to the process.
-        os.chdir(original_directory)
 
 
 if __name__ == "__main__":
