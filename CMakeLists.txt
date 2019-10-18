@@ -22,39 +22,84 @@ find_package(Python3 REQUIRED)
 function(download_lua)
     set(LUA_TARBALL "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}.tar.gz")
     set(LUA_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/lua-${LUA_FULL_VERSION}")
-    set(LUA_ROOT "${LUA_DOWNLOAD_DIR}/install")
+
+    # Vanilla Lua 5.1 has a different local installation root than 5.2+.
+    if(NOT IS_LUAJIT AND (LUA_SHORT_VERSION VERSION_EQUAL "5.1"))
+        set(LUA_ROOT "${LUA_DOWNLOAD_DIR}")
+    else()
+        set(LUA_ROOT "${LUA_DOWNLOAD_DIR}/install")
+    endif()
 
     message(STATUS "Downloading and extracting Lua...")
-    file(
-        DOWNLOAD
-        "https://www.lua.org/ftp/lua-${LUA_FULL_VERSION}.tar.gz"
-        "${LUA_TARBALL}"
-    )
+    if(IS_LUAJIT)
+        file(
+            DOWNLOAD
+            "https://www.luajit.org/download/LuaJIT-${LUA_FULL_VERSION}.tar.gz"
+            "${LUA_TARBALL}"
+        )
+    else()
+        file(
+            DOWNLOAD
+            "https://www.lua.org/ftp/lua-${LUA_FULL_VERSION}.tar.gz"
+            "${LUA_TARBALL}"
+        )
+    endif()
     execute_process(
         COMMAND cmake -E tar -xz "${LUA_TARBALL}"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
         OUTPUT_QUIET
+        RESULT_VARIABLE RESULT
     )
+    if(NOT RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to extract Lua tarball.")
+    endif()
 
 
-    # Before building Lua we need to change where it looks for installed libraries. This way
-    # we can determine the directory to install the built Unicorn binding with one command,
-    # without worrying if we're using a virtual environment or not.
     message(STATUS "Configuring Lua...")
-    file(READ "${LUA_DOWNLOAD_DIR}/src/luaconf.h" LUACONF_H_CONTENTS)
-    string(
-        REGEX REPLACE
-        "#define[ \t]+LUA_ROOT[^\n]+\n" "#define LUA_ROOT \"${LUA_ROOT}/\"\n"
-        MODIFIED_LUACONF_H_CONTENTS
-        "${LUACONF_H_CONTENTS}"
-    )
-    file(WRITE "${LUA_DOWNLOAD_DIR}/src/luaconf.h" "${MODIFIED_LUACONF_H_CONTENTS}")
+    if(NOT IS_LUAJIT)
+        # Before building normal Lua we need to change where it looks for installed
+        # libraries. This way we can determine the directory to install the built Unicorn
+        # binding with one command, without worrying if we're using a virtual environment
+        # or not.
+        file(READ "${LUA_DOWNLOAD_DIR}/src/luaconf.h" LUACONF_H_CONTENTS)
+        string(
+            REGEX REPLACE
+            "#define[ \t]+LUA_ROOT[^\n]+\n" "#define LUA_ROOT \"${LUA_ROOT}/\"\n"
+            MODIFIED_LUACONF_H_CONTENTS
+            "${LUACONF_H_CONTENTS}"
+        )
+        file(WRITE "${LUA_DOWNLOAD_DIR}/src/luaconf.h" "${MODIFIED_LUACONF_H_CONTENTS}")
+    endif()
 
     message(STATUS "Building Lua and installing to: ${LUA_ROOT}")
-    execute_process(
-        COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fPIC\"" "${DETECTED_LUA_PLATFORM}" local
-        OUTPUT_QUIET
-    )
+    if(NOT IS_LUAJIT)
+        execute_process(
+            COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fPIC\"" "${DETECTED_LUA_PLATFORM}" local
+            OUTPUT_QUIET
+            RESULT_VARIABLE RESULT
+        )
+        if(NOT RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to build Lua.")
+        endif()
+    else()
+        execute_process(
+            COMMAND make -C "${LUA_DOWNLOAD_DIR}" "PREFIX=${LUA_ROOT}" "CFLAGS=\"$ENV{CFLAGS} -fPIC\""
+            OUTPUT_QUIET
+            RESULT_VARIABLE RESULT
+        )
+        if(NOT RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to build LuaJIT.")
+        endif()
+
+        execute_process(
+            COMMAND make -C "${LUA_DOWNLOAD_DIR}" "PREFIX=${LUA_ROOT}" "DESTDIR=${LUA_ROOT}" install
+            OUTPUT_QUIET
+            RESULT_VARIABLE RESULT
+        )
+        if(NOT RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to install LuaJIT.")
+        endif()
+    endif()
 
     # Install LuaRocks -------------------------------------------------------------
 
@@ -70,7 +115,12 @@ function(download_lua)
     execute_process(
         COMMAND cmake -E tar -xz "${CMAKE_CURRENT_BINARY_DIR}/luarocks-${LUAROCKS_VERSION}.tar.gz"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        OUTPUT_QUIET
+        RESULT_VARIABLE RESULT
     )
+    if(NOT RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to extract LuaRocks.")
+    endif()
 
     message(STATUS "Building LuaRocks...")
     execute_process(
@@ -79,13 +129,21 @@ function(download_lua)
                    "--with-lua=${LUA_ROOT}"
                    "--force-config"
         WORKING_DIRECTORY "${LUAROCKS_DOWNLOAD_DIR}"
+        RESULT_VARIABLE RESULT
     )
+    if(NOT RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to build LuaRocks.")
+    endif()
 
     message(STATUS "Installing LuaRocks to: ${LUAROCKS_INSTALL_DIR}")
     execute_process(
         COMMAND make -C "${LUAROCKS_DOWNLOAD_DIR}" bootstrap
         OUTPUT_QUIET
+        RESULT_VARIABLE RESULT
     )
+    if(NOT RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to install required rocks.")
+    endif()
 endfunction(download_lua)
 
 

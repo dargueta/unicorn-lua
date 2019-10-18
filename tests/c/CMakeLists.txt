@@ -21,7 +21,7 @@ add_executable(
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
-    #target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
+    target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     message(FATAL_ERROR "Visual studio not supported yet.")
