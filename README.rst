@@ -30,6 +30,13 @@ Known Limitations
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
 
+LuaJIT Installation
+~~~~~~~~~~~~~~~~~~~
+
+When building for LuaJIT, you *must* build using a virtual environment. The configure
+script doesn't support using your OS's LuaJIT installation yet.
+
+
 64-bit Integers
 ~~~~~~~~~~~~~~~
 
@@ -166,8 +173,8 @@ Because ``end`` is a Lua keyword, ``mem_regions()`` returns tables whose record
 names are ``begins``, ``ends``, and ``perms`` rather than ``begin``, ``end``,
 ``perms``.
 
-Development
------------
+Requirements
+------------
 
 This project has the following dependencies. Ensure you have them installed
 before using.
@@ -175,11 +182,10 @@ before using.
 * Configuration:
 
   * Python 3.3 or higher
-  * `lenv`_ for testing on multiple versions of Lua
 
 * For building and running:
 
-  * ``make``, either the GNU version or a compatible implementation
+  * `cmake`_
   * `Unicorn CPU Emulator`_ library must be installed or at least built
 
 * Some examples have additional dependencies; see their READMEs for details.
@@ -257,7 +263,7 @@ text, see ``LICENSE.txt``.
 .. [2] *Programming in Lua*, 4th Edition. Forgot the page.
 .. [3] I personally use pyenv_ for this, but you can use other tools like pipenv_.
 
-.. _lenv: https://github.com/mah0x211/lenv
+.. _cmake: https://cmake.org
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
 .. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
 .. _pyenv: https://github.com/pyenv/pyenv
