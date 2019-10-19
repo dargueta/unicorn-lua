@@ -13,7 +13,11 @@ env:
 
 os:
   - linux
-  #- osx
+  - osx
+
+# We need CMake 3.12+ so we peg the version of XCode to the lowest version that'll work.
+# TODO (dargueta): Test more than one version of XCode
+osx_image: xcode10
 
 matrix:
   allow_failures:
@@ -30,6 +34,10 @@ before_install:
     if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
       pyenv local 2.7.15 3.7.1
     fi
+  - cmake --version
+  - python2 -V
+  - python3 -V
+
 
 install:
   - pip3 install -U -r python-requirements.txt
@@ -40,10 +48,5 @@ install:
   - ./make.sh
   - sudo ./make.sh install
   - popd
-
-  # Debugging
-  - cmake --version
-  - python2 -V
-  - python3 -V
 
 script: ./configure --venv-version $LUA_VERSION && cd build && cmake .. && make && ctest --output-on-failure
