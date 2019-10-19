@@ -68,6 +68,7 @@ function(install_lua)
     message(STATUS "Building Lua and installing to: ${LUA_ROOT}")
     execute_process(
         COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fpic\"" "${DETECTED_LUA_PLATFORM}" local
+        OUTPUT_QUIET
         RESULT_VARIABLE RESULT
     )
     if(NOT RESULT EQUAL 0)

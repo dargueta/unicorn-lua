@@ -26,6 +26,7 @@ function(install_luarocks)
                    "--with-lua-include=${LUA_INCLUDE_DIR}"
                    "--force-config"
         WORKING_DIRECTORY "${LUAROCKS_DOWNLOAD_DIR}"
+        OUTPUT_QUIET
         RESULT_VARIABLE RESULT
     )
     if(NOT RESULT EQUAL 0)
