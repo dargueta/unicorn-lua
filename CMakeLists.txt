@@ -6,6 +6,8 @@ include("${PROJECT_SOURCE_DIR}/cmake/install-lua.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/install-luajit.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/install-luarocks.cmake")
 
+option(BUILD_DOCS "Build documentation" ON)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -16,9 +18,8 @@ set(REQUIRED_ROCKS lcurses;busted)
 
 find_package(Python3 REQUIRED)
 
-
 if(USE_VIRTUALENV)
-    if(NOT DEFINED LUA_EXE)
+    if(NOT EXISTS "${LUA_EXE}")
         if(IS_LUAJIT)
             install_luajit()
         else()
@@ -109,3 +110,23 @@ enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
+
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Doxyfile.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+        @ONLY
+    )
+
+    add_custom_target(
+        docs ALL
+        COMMAND ${DOXYGEN_EXECUTABLE}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+  message("Doxygen needs to be installed to generate the documentation.")
+endif()

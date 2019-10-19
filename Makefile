@@ -2,7 +2,7 @@ include Makefile.in
 
 
 INCLUDE_UC_BASE=$(INCLUDE_BASE)/unicornlua
-EXAMPLES_ROOT=$(REPO_ROOT)/docs/examples
+EXAMPLES_ROOT=$(REPO_ROOT)/examples
 BUILD_LUA_CPATH=$(BUILD_DIR)/?.$(LIB_EXTENSION);$(BUILD_DIR)/?/init.$(LIB_EXTENSION)
 BUILD_LUA_PATH=$(BUILD_DIR)/?.lua;$(BUILD_DIR)/?/init.lua
 
