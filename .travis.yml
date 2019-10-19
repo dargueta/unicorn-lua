@@ -15,9 +15,9 @@ os:
   - linux
   - osx
 
-# We need CMake 3.12+ so we peg the version of XCode to the lowest version that'll work.
+# We need CMake 3.13+ so we peg the version of XCode to the lowest version that'll work.
 # TODO (dargueta): Test more than one version of XCode
-osx_image: xcode10
+osx_image: xcode10.2
 
 matrix:
   allow_failures:
@@ -49,4 +49,4 @@ install:
   - sudo ./make.sh install
   - popd
 
-script: ./configure --venv-version $LUA_VERSION && cd build && cmake .. && make && ctest --output-on-failure
+script: ./configure --venv-version $LUA_VERSION && cd build && cmake -DCMAKE_VERBOSE_MAKEFILE=YES .. && make && ctest --output-on-failure
