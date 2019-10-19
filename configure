@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import logging
 import os
 import shutil
@@ -228,9 +229,6 @@ def main():
     LOG.info("Cleaning up...")
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
-
-    if not os.path.exists(build_dir):
-        os.mkdir(build_dir)
 
 
 if __name__ == "__main__":

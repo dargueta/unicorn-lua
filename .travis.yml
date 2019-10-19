@@ -1,5 +1,5 @@
 dist: bionic
-sudo: false
+sudo: true
 language: cpp
 
 env:
@@ -15,9 +15,13 @@ os:
   - linux
   - osx
 
-# We need CMake 3.13+ so we peg the version of XCode to the lowest version that'll work.
-# TODO (dargueta): Test more than one version of XCode
-osx_image: xcode10.2
+addons:
+  apt:
+    packages:
+      - cmake
+    sources:
+      - kalakris-cmake
+    update: true
 
 matrix:
   allow_failures:
@@ -34,10 +38,17 @@ before_install:
     if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
       pyenv local 2.7.15 3.7.1
     fi
-  - cmake --version
+  # The default version of cmake on these images is too old. Install the snap version on
+  # Linux, and upgrade it via brew on OSX.
+  - |
+    if [[ $TRAVIS_OS_NAME = 'osx' ]]; then
+      brew upgrade cmake
+    fi
+  # Debugging
   - python2 -V
   - python3 -V
-
+  - cmake --version
+  - which cmake
 
 install:
   - pip3 install -U -r python-requirements.txt
@@ -49,4 +60,9 @@ install:
   - sudo ./make.sh install
   - popd
 
-script: ./configure --venv-version $LUA_VERSION && cd build && cmake -DCMAKE_VERBOSE_MAKEFILE=YES .. && make && ctest --output-on-failure
+script: |
+  ./configure --venv-version $LUA_VERSION           && \
+  cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=YES  && \
+  cd build                                          && \
+  make                                              && \
+  ctest --output-on-failure

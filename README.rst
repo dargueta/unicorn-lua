@@ -183,7 +183,7 @@ before using.
 
 * For building and running:
 
-  * `cmake`_
+  * `cmake`_ 3.13 or higher
   * `Unicorn CPU Emulator`_ library must be installed or at least built.
 
 * Some examples have additional dependencies; see their READMEs for details.
@@ -200,10 +200,9 @@ directory of this repository, and run the following:
 .. code-block:: sh
 
     ./configure
-    cd build
-    cmake ..
-    make
-    make install
+    cmake -S . -B build
+    make -C build
+    make -C build install
 
 You may need superuser privileges. If installation fails, try ``sudo make install``.
 

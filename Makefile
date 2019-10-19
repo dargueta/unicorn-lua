@@ -25,10 +25,7 @@ clean:
 
 $(BUILD_DIR):
 	rm -rf $(BUILD_DIR)
-	mkdir $(BUILD_DIR)
-	pushd $(BUILD_DIR)
-	cmake ..
-	popd
+	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)
