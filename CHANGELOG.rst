@@ -5,6 +5,9 @@ Changes
 ------------------
 
 * Switch build system to CMake
+  * C++ documentation is now generated in the ``build/docs`` directory
+  * Library binary is now generated in ``build/lib``
+* Moved examples to root directory of repo instead of as a subdirectory of ``docs``
 * Add unit tests to C++ code directly, not just from Lua
 * Fix wrong destructor being called on contexts
 * Removed some dead code

@@ -179,22 +179,20 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* Configuration:
-
-  * Python 3.3 or higher
+* Configuration: Python 3.3 or higher
 
 * For building and running:
 
   * `cmake`_
-  * `Unicorn CPU Emulator`_ library must be installed or at least built
+  * `Unicorn CPU Emulator`_ library must be installed or at least built.
 
 * Some examples have additional dependencies; see their READMEs for details.
 
 Configuration
 ~~~~~~~~~~~~~
 
-Before building the library, you must configure the repository for your system
-using the ``configure`` script. Because it uses Python and requires some additional
+Before doing **anything**, you must configure the repository for your system using
+the ``configure`` script. Because it uses Python and requires some additional
 packages, you may want to create a virtual environment for this project first. [3]_
 
 Install the Python dependencies it requires:
@@ -222,6 +220,14 @@ If you're developing and want to use a specific version of Lua (5.3 in this exam
 
 For details on other customization options, run ``python3 configure --help``.
 
+Setting Up the Build Environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After running the ``configure`` script there'll be a new empty directory in the
+repo called ``build``. Change over to this directory and run ``cmake ..``. It'll
+create the build system for you, including creating the Lua virtual environment
+if you requested it.
+
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -235,6 +241,15 @@ script, just a list.
     make docs       # Build the documentation pages
     make examples   # Build but do not run examples (that must be done manually)
     make test       # Run all unit tests
+
+Build artifacts will appear in the ``build`` directory:
+
+* ``build/lib`` contains the built Lua library for Unicorn; ``unicorn.dll`` if
+  you're running Windows, ``unicorn.so`` otherwise.
+* ``build/docs`` contains the HTML documentation
+
+Everything else in there isn't of much interest unless you're directly modifying
+the CMake configuration.
 
 Examples
 ~~~~~~~~
