@@ -108,11 +108,26 @@ endif()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
+
+cmake_policy(PUSH)
+cmake_policy(SET CMP0026 OLD)
+get_property(BUILT_LIBRARY_FILE_PATH TARGET unicornlua_library PROPERTY LOCATION)
+cmake_policy(POP)
+
+get_filename_component(BUILT_LIBRARY_DIRECTORY "${BUILT_LIBRARY_FILE_PATH}" DIRECTORY)
+
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
 
-find_package(Doxygen)
 
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/makefile-variables.in"
+    "${PROJECT_SOURCE_DIR}/Makefile.in"
+    @ONLY
+)
+
+
+find_package(Doxygen)
 if(DOXYGEN_FOUND)
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Doxyfile.in"
@@ -121,7 +136,7 @@ if(DOXYGEN_FOUND)
     )
 
     add_custom_target(
-        docs ALL
+        docs
         COMMAND ${DOXYGEN_EXECUTABLE}
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Generating API documentation with Doxygen"
