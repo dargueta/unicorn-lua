@@ -188,6 +188,40 @@ before using.
 
 * Some examples have additional dependencies; see their READMEs for details.
 
+Just Installing?
+----------------
+
+If you just want to install this library, open a terminal, navigate to the root
+directory of this repository, and run the following:
+
+*NIX Systems (including MacOS and Cygwin)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    ./configure
+    cd build
+    cmake ..
+    make
+    make install
+
+You may need superuser privileges. If installation fails, try ``sudo make install``.
+
+Windows
+^^^^^^^
+
+*Support coming soon*
+
+..
+    python3 configure
+    chdir build
+    cmake ..
+    make
+    make install
+
+Development
+-----------
+
 Configuration
 ~~~~~~~~~~~~~
 
