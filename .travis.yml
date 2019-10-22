@@ -15,6 +15,9 @@ os:
   - linux
   - osx
 
+# Needed for CMake 3.12+
+osx_image: xcode10
+
 addons:
   apt:
     packages:
@@ -38,12 +41,6 @@ before_install:
     if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
       pyenv local 2.7.15 3.7.1
     fi
-  # The default version of cmake on these images is too old. Install the snap version on
-  # Linux, and upgrade it via brew on OSX.
-  - |
-    if [[ $TRAVIS_OS_NAME = 'osx' ]]; then
-      brew upgrade cmake
-    fi
   # Debugging
   - python2 -V
   - python3 -V
@@ -61,8 +58,9 @@ install:
   - popd
 
 script: |
-  ./configure --venv-version $LUA_VERSION           && \
-  cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=YES  && \
-  cd build                                          && \
-  make                                              && \
+  ./configure --venv-version $LUA_VERSION   && \
+  mkdir build                               && \
+  cd build                                  && \
+  cmake -DCMAKE_VERBOSE_MAKEFILE=YES ..     && \
+  make                                      && \
   ctest --output-on-failure
