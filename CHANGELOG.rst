@@ -7,9 +7,12 @@ Changes
 * Switch build system to CMake
   * C++ documentation is now generated in the ``build/docs`` directory
   * Library binary is now generated in ``build/lib``
+
 * Moved examples to root directory of repo instead of as a subdirectory of ``docs``
 * Add unit tests to C++ code directly, not just from Lua
-* Fix wrong destructor being called on contexts
+* Fix wrong destructor being called on Context objects
+* Fix wrong library file extension on OSX -- should be ``.so`` not ``.dylib``
+* Fix buffer overflow when reading 64-bit register on a 32-bit architecture
 * Removed some dead code
 * Fixed odd bug in backport of ``lua_seti()`` that coincidentally worked, but only when
   the Lua stack was small.
