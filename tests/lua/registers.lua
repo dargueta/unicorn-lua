@@ -47,7 +47,7 @@ describe('Register tests', function ()
                                           x86.UC_X86_REG_EDX,
                                           x86.UC_X86_REG_CL)
     assert.are.equals(0x1a2b, ax, 'Wrong value for AX')
-    assert.are.equals(0x3c4d5e6f, edx, 'EWrong value for DX')
+    assert.are.equals(0x3c4d5e6f, edx, 'Wrong value for DX')
     assert.are.equals(cl, 0x78, 'Wrong value for CL')
   end)
 

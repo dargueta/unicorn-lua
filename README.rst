@@ -30,6 +30,13 @@ Known Limitations
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
 
+LuaJIT Installation
+~~~~~~~~~~~~~~~~~~~
+
+When building for LuaJIT, you *must* build using a virtual environment. The configure
+script doesn't support using your OS's LuaJIT installation yet.
+
+
 64-bit Integers
 ~~~~~~~~~~~~~~~
 
@@ -166,29 +173,73 @@ Because ``end`` is a Lua keyword, ``mem_regions()`` returns tables whose record
 names are ``begins``, ``ends``, and ``perms`` rather than ``begin``, ``end``,
 ``perms``.
 
-Development
------------
+Requirements
+------------
 
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* Configuration:
-
-  * Python 3.3 or higher
-  * `lenv`_ for testing on multiple versions of Lua
+* Configuration: Python 3.3 or higher
 
 * For building and running:
 
-  * ``make``, either the GNU version or a compatible implementation
-  * `Unicorn CPU Emulator`_ library must be installed or at least built
+  * `cmake`_ 3.12 or higher. Run ``cmake --version`` if you're not sure what version you have.
+  * `Unicorn CPU Emulator`_ library must be installed or at least built.
 
 * Some examples have additional dependencies; see their READMEs for details.
+
+Just Installing?
+----------------
+
+If you just want to install this library, open a terminal, navigate to the root
+directory of this repository, and run the following:
+
+*NIX Systems (including MacOS and Cygwin)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CMake 1.13+:
+
+.. code-block:: sh
+
+    ./configure
+    cmake -S . -B build
+    make -C build
+    make -C build install
+
+CMake 1.12+:
+
+.. code-block:: sh
+
+    ./configure
+    mkdir build
+    cd build
+    cmake ..
+    make
+    make install
+
+You may need superuser privileges to install. If installation fails, try
+``sudo make install``.
+
+Windows
+^^^^^^^
+
+*Support coming soon*
+
+..
+    python3 configure
+    chdir build
+    cmake ..
+    make
+    make install
+
+Development
+-----------
 
 Configuration
 ~~~~~~~~~~~~~
 
-Before building the library, you must configure the repository for your system
-using the ``configure`` script. Because it uses Python and requires some additional
+Before doing **anything**, you must configure the repository for your system using
+the ``configure`` script. Because it uses Python and requires some additional
 packages, you may want to create a virtual environment for this project first. [3]_
 
 Install the Python dependencies it requires:
@@ -216,6 +267,14 @@ If you're developing and want to use a specific version of Lua (5.3 in this exam
 
 For details on other customization options, run ``python3 configure --help``.
 
+Setting Up the Build Environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After running the ``configure`` script there'll be a new empty directory in the
+repo called ``build``. Change over to this directory and run ``cmake ..``. It'll
+create the build system for you, including creating the Lua virtual environment
+if you requested it.
+
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -229,6 +288,15 @@ script, just a list.
     make docs       # Build the documentation pages
     make examples   # Build but do not run examples (that must be done manually)
     make test       # Run all unit tests
+
+Build artifacts will appear in the ``build`` directory:
+
+* ``build/lib`` contains the built Lua library for Unicorn; ``unicorn.dll`` if
+  you're running Windows, ``unicorn.so`` otherwise.
+* ``build/docs`` contains the HTML documentation
+
+Everything else in there isn't of much interest unless you're directly modifying
+the CMake configuration.
 
 Examples
 ~~~~~~~~
@@ -257,7 +325,7 @@ text, see ``LICENSE.txt``.
 .. [2] *Programming in Lua*, 4th Edition. Forgot the page.
 .. [3] I personally use pyenv_ for this, but you can use other tools like pipenv_.
 
-.. _lenv: https://github.com/mah0x211/lenv
+.. _cmake: https://cmake.org
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
 .. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
 .. _pyenv: https://github.com/pyenv/pyenv
