@@ -194,8 +194,8 @@ Just Installing?
 If you just want to install this library, open a terminal, navigate to the root
 directory of this repository, and run the following:
 
-*NIX Systems (including MacOS and Cygwin)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NIX Systems (MacOS, Cygwin, Linux, etc.)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CMake 1.13+:
 
