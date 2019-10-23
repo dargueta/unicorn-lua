@@ -1,10 +1,11 @@
 Changes
 =======
 
-1.0b5 (unreleased)
+1.0b5 (2019-10-23)
 ------------------
 
 * Switch build system to CMake
+
   * C++ documentation is now generated in the ``build/docs`` directory
   * Library binary is now generated in ``build/lib``
 
