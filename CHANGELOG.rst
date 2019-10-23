@@ -14,6 +14,7 @@ Changes
 * Fix wrong destructor being called on Context objects
 * Fix wrong library file extension on OSX -- should be ``.so`` not ``.dylib``
 * Fix buffer overflow when reading 64-bit register on a 32-bit architecture
+* Fixed wrong installation directory -- library should go to Lua's `lib` dir, not LuaRocks
 * Removed some dead code
 * Fixed odd bug in backport of ``lua_seti()`` that coincidentally worked, but only when
   the Lua stack was small.
