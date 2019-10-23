@@ -16,8 +16,7 @@ clean:
 
 
 $(BUILD_DIR):
-	rm -rf $(BUILD_DIR)
-	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)
+	$(error You must create the build directory with CMake. See the README for details.)
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)
@@ -40,7 +39,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 .PHONY: test
 test: $(BUILD_DIR) $(SHARED_LIB_FILE)
-	cd $(BUILD_DIR) && ctest --output-on-failure
+	make -C $(BUILD_DIR) test "ARGS=--output-on-failure"
 
 
 .PHONY: run_example
