@@ -46,11 +46,12 @@ endif()
 
 # Override the default naming for the library. On POSIX systems the prefix "lib" is
 # added, and the default name (without the prefix) uses the project name. We want the
-# end result to be `unicorn.<ext>`.
+# output file to be `unicorn.dll` on Windows, `unicorn.so` everywhere else.
 set_target_properties(
     unicornlua_library PROPERTIES
     PREFIX ""
     OUTPUT_NAME "unicorn"
+    SUFFIX "${LUA_CLIB_EXTENSION}"
 )
 
 

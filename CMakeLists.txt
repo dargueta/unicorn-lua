@@ -107,6 +107,15 @@ if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
     message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
 endif()
 
+# Lua looks for C libraries with the file extension `.dll` on Windows, and `.so` on all
+# other platforms. Since the OSX extension is `.dylib` we can't use CMAKE_SHARED_LIBRARY_SUFFIX
+# so we have to override it ourselves.
+if(CMAKE_HOST_WIN32)
+    set(LUA_CLIB_EXTENSION ".dll")
+else()
+    set(LUA_CLIB_EXTENSION ".so")
+endif()
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
@@ -120,7 +129,6 @@ get_filename_component(BUILT_LIBRARY_DIRECTORY "${BUILT_LIBRARY_FILE_PATH}" DIRE
 
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
-
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/makefile-variables.in"
