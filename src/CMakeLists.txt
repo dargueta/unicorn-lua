@@ -72,22 +72,24 @@ endif()
 
 # Apparently OSX requires this stuff: https://stackoverflow.com/q/42371892
 if (CMAKE_HOST_APPLE)
-    # target_link_options(unicornlua_library BEFORE PRIVATE -dynamiclib -undefined dynamic_lookup)
     # Normally we'd use target_link_options() for this but upgrading to CMake 3.13 has
     # proven to be an utter pain on Travis CI so I'm using the 3.12-compatible workaround
     # to get this to work.
-    target_link_libraries(unicornlua_library INTERFACE "-dynamiclib -undefined dynamic_lookup")
+    target_link_libraries(unicornlua_library PUBLIC "-undefined dynamic_lookup")
+
+    # For CMake 3.13+
+    # target_link_options(unicornlua_library BEFORE PUBLIC -undefined dynamic_lookup)
 endif()
 
 
 find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
-    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
+    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
 )
 
 # For some reason this is required only for LuaJIT on *NIX platforms except OSX.
-if(IS_LUAJIT AND UNIX AND NOT APPLE)
+if(IS_LUAJIT AND UNIX AND (NOT APPLE))
     target_link_libraries(unicornlua_library LINK_PUBLIC dl)
 endif()
 

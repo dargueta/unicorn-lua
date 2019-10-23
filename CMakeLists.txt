@@ -27,6 +27,9 @@ if(USE_VIRTUALENV)
         endif()
     endif()
     install_luarocks()
+
+    # Need this so we'll have the same variables as find_package(Lua)
+    set(LUA_LIBRARIES "${LUA_LIBRARY}")
 else()
     find_package(Lua REQUIRED)
 
@@ -41,7 +44,6 @@ else()
         DOC "Luarocks installation program"
     )
 endif()
-
 
 execute_process(
     COMMAND ${LUAROCKS_EXE} path --lr-path
