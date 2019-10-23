@@ -24,6 +24,11 @@ $(SHARED_LIB_FILE): $(BUILD_DIR)
 	make -C $(BUILD_DIR)
 
 
+.PHONY: install
+install: $(SHARED_LIB_FILE)
+	make -C $(BUILD_DIR) install
+
+
 .PHONY: docs
 docs:
 	make -C $(BUILD_DIR) docs

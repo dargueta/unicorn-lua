@@ -1,6 +1,6 @@
 return {
   _all = {
-    cpath = "@BUILT_LIBRARY_DIRECTORY@/?@CMAKE_SHARED_LIBRARY_SUFFIX@;;",
+    cpath = "@BUILT_LIBRARY_DIRECTORY@/?@LUA_CLIB_EXTENSION@;;",
     lua = "@LUA_EXE@",
     verbose = true,
     shuffle = true,
