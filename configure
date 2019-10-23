@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
 import logging
 import os
 import shutil
@@ -72,10 +71,8 @@ def parse_args():
     # CircleCI.
     if IN_CI_ENVIRONMENT:
         LOG.info("CI enviornent detected, altering script defaults.")
-        default_lua_version = os.environ["LUA_VERSION"]
         default_log_level = logging.DEBUG
     else:
-        default_lua_version = None
         default_log_level = logging.INFO
 
     parser.add_argument(
@@ -134,7 +131,7 @@ def parse_args():
         metavar="VERSION",
         dest="venv_version",
         choices=tuple(SUPPORTED_LUA_VERSIONS),
-        default=default_lua_version,
+        default=DEFAULT_LUA_VERSION,
         help="The Lua version to use in the virtual environment. If not given, defaults"
         " to the OS's Lua's version, or %s if Lua isn't installed at all. Implies"
         " --use-venv. Supported values: %s"
