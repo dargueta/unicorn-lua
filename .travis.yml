@@ -16,10 +16,6 @@ os:
   - osx
   - windows
 
-matrix:
-  allow_failures:
-    - os: windows
-
 # Needed for CMake 3.12+
 osx_image: xcode10
 
@@ -33,6 +29,7 @@ addons:
 
 matrix:
   allow_failures:
+    - os: windows
     # LuaJIT is super finicky on OSX when using doctest so we're not gonna care too much
     # about it failing. If it works on all the other platforms, it'll probably work for
     # LuaJIT + OSX too.
