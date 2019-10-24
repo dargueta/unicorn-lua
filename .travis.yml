@@ -38,9 +38,10 @@ matrix:
 
 before_install:
   - bash ./travis-setup.sh
-  # Debugging
-  - python2 -V
-  - python3 -V
+  # Debugging stuff. The `|| true` is necessary for Windows, which only has an executable
+  # named `python`. Whether you get Python 2 or 3 depends on $PATH.
+  - python2 -V || true
+  - python3 -V || true
   - cmake --version
   - which cmake
 
