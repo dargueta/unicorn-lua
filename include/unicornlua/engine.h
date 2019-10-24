@@ -32,29 +32,10 @@ public:
      * Create a @ref Hook object and assign it to this engine, but don't bind it yet.
      *
      * This is useful when creating a hook but not all the pieces have been put together
-     * yet. It's used in only one specific case so this function will eventually be
+     * yet. It's used in only one specific case so this function may eventually be
      * removed.
-     *
-     * @deprecated
      */
     Hook *create_empty_hook();
-
-    /**
-     * Create a fully initialized @ref Hook and assign it to this engine.
-     *
-     * @param hook_handle   The handle for this hook as returned by the Unicorn library.
-     * @param callback_func_ref
-     *     A reference in the C registry to a Lua function that serves as the callback
-     *     to execute when the hook is triggered.
-     * @param user_data_ref
-     *     Optional. A reference in the C registry to a Lua object that'll be passed to
-     *     the hook callback on every invocation. If not given, ``nil`` will be used.
-     *
-     * @return The initialized @ref Hook.
-     */
-    Hook *create_hook(
-        uc_hook hook_handle, int callback_func_ref, int user_data_ref=LUA_REFNIL
-    );
 
     /** Detach and destroy a hook bound to this engine. */
     void remove_hook(Hook *hook);
@@ -77,6 +58,7 @@ public:
     void stop();
     void close();
     size_t query(uc_query_type query_type) const;
+    uc_err get_errno() const;
 
     lua_State *L;
     uc_engine *engine;

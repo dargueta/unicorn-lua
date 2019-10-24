@@ -99,9 +99,4 @@ int ul_hook_add(lua_State *L);
 int ul_hook_del(lua_State *L);
 
 
-/**
- * Get the callback function for the given hook and push it on the stack.
- */
-void ul_hook_get_callback(Hook *hook);
-
 #endif  /* INCLUDE_UNICORNLUA_HOOKS_H_ */

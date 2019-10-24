@@ -1,3 +1,5 @@
+#include <cassert>
+
 extern "C" {
 #include <lua.h>
 }
@@ -46,9 +48,8 @@ static int ul_open(lua_State *L) {
     // Add a mapping of the uc_engine pointer to the engine object we just created, so
     // that hook callbacks can get the engine object knowing only the uc_engine pointer.
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine);
-    lua_pushvalue(L, -3);   // Duplicate engine object as value
-    lua_settable(L, -3);
+    lua_pushvalue(L, -2);   // Duplicate engine object as value
+    lua_rawsetp(L, -2, engine);
     lua_pop(L, 1);      // Remove pointer map, engine object at TOS again
 
     return 1;
@@ -59,14 +60,6 @@ static int ul_strerror(lua_State *L) {
     auto error = static_cast<uc_err>(luaL_checkinteger(L, 1));
     lua_pushstring(L, uc_strerror(error));
     return 1;
-}
-
-
-int ul_free(lua_State *L) {
-    uc_err error = uc_free(*(void **)lua_touserdata(L, 1));
-    if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
-    return 0;
 }
 
 
@@ -198,9 +191,6 @@ static const struct NamedIntConst kModuleConstants[] = {
 
 extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State *L) {
     ul_init_engines_lib(L);
-
-    luaL_newmetatable(L, kContextMetatableName);
-    luaL_setfuncs(L, kContextMetamethods, 0);
 
     luaL_newlib(L, kUnicornLibraryFunctions);
     load_int_constants(L, kModuleConstants);

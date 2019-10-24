@@ -93,7 +93,7 @@ void Hook::push_user_data() {
 static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
-void ul_hook_get_callback(Hook *hook) {
+static void get_callback(Hook *hook) {
     lua_State *L = hook->L();
     hook->push_callback();
     if (lua_isnil(L, -1))
@@ -110,7 +110,7 @@ static void code_hook(uc_engine *uc, uint64_t address, uint32_t size, void *user
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -126,7 +126,7 @@ static void interrupt_hook(uc_engine *uc, uint32_t intno, void *user_data) {
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -141,7 +141,7 @@ static uint32_t port_in_hook(uc_engine *uc, uint32_t port, int size, void *user_
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -164,7 +164,7 @@ static void port_out_hook(
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -184,7 +184,7 @@ static void memory_access_hook(
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);
@@ -205,7 +205,7 @@ static bool invalid_mem_access_hook(
     lua_State *L = hook->L();
 
     /* Push the callback function onto the stack. */
-    ul_hook_get_callback(hook);
+    get_callback(hook);
 
     /* Push the arguments */
     ul_get_engine_object(L, uc);

@@ -1,7 +1,25 @@
 Changes
 =======
 
-1.0b4 (unreleased)
+1.0b5 (2019-10-23)
+------------------
+
+* Switch build system to CMake
+
+  * C++ documentation is now generated in the ``build/docs`` directory
+  * Library binary is now generated in ``build/lib``
+
+* Moved examples to root directory of repo instead of as a subdirectory of ``docs``
+* Add unit tests to C++ code directly, not just from Lua
+* Fix wrong destructor being called on Context objects
+* Fix wrong library file extension on OSX -- should be ``.so`` not ``.dylib``
+* Fix buffer overflow when reading 64-bit register on a 32-bit architecture
+* Fixed wrong installation directory -- library should go to Lua's `lib` dir, not LuaRocks
+* Removed some dead code
+* Fixed odd bug in backport of ``lua_seti()`` that coincidentally worked, but only when
+  the Lua stack was small.
+
+1.0b4 (2019-09-23)
 ------------------
 
 **Official support for OSX!**
@@ -11,7 +29,7 @@ Changes
   they're always destroyed when the engine is closed, and no other functions are allowed
   to create them without the Engine's knowledge. This eliminates some kinds of memory
   leaks.
-* Fixed bug where ``engine:query(SOME_QUERY_type)`` would look at the first argument (the
+* Fixed bug where ``engine:query(SOME_QUERY_TYPE)`` would look at the first argument (the
   engine) for the query type, instead of the second argument.
 * Removed a number of unused or nearly-unused functions, made some others static that
   didn't need to be/probably shouldn't be shared.

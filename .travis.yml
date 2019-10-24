@@ -20,8 +20,32 @@ matrix:
   allow_failures:
     - os: windows
 
+# Needed for CMake 3.12+
+osx_image: xcode10
+
+addons:
+  apt:
+    packages:
+      - cmake
+    sources:
+      - kalakris-cmake
+    update: true
+
+matrix:
+  allow_failures:
+    # LuaJIT is super finicky on OSX when using doctest so we're not gonna care too much
+    # about it failing. If it works on all the other platforms, it'll probably work for
+    # LuaJIT + OSX too.
+    - os: osx
+      env: LUA_VERSION=luajit2.0
+
 before_install:
   - bash ./travis-setup.sh
+  # Debugging
+  - python2 -V
+  - python3 -V
+  - cmake --version
+  - which cmake
 
 install:
   - git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-${UNICORN_VERSION}
@@ -31,4 +55,11 @@ install:
   - ./make.sh
   - sudo ./make.sh install
   - popd
-  - curl -L http://git.io/lenv | perl
+
+script: |
+  ./configure --venv-version $LUA_VERSION   && \
+  mkdir build                               && \
+  cd build                                  && \
+  cmake -DCMAKE_VERBOSE_MAKEFILE=YES ..     && \
+  make                                      && \
+  ctest --output-on-failure

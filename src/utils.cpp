@@ -4,24 +4,10 @@
 #include "unicornlua/utils.h"
 
 
-extern const char * const kEngineMetatableName;
-extern const char * const kContextMetatableName;
-
-
 int ul_crash_on_error(lua_State *L, uc_err error) {
     const char *message = uc_strerror(error);
     lua_pushstring(L, message);
     return lua_error(L);
-}
-
-
-uc_context *ul_tocontext(lua_State *L, int index) {
-    auto context = reinterpret_cast<uc_context *>(
-        luaL_checkudata(L, index, kContextMetatableName)
-    );
-    if (context == nullptr)
-        luaL_error(L, "Attempted to use closed context.");
-    return context;
 }
 
 
