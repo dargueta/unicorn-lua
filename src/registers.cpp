@@ -259,7 +259,7 @@ std::array<uclua_float32, 16> Register::as_16xf32() const {
 int ul_reg_write(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = luaL_checkinteger(L, 2);
-    auto value = static_cast<lua_Unsigned>(luaL_checkinteger(L, 3));
+    auto value = static_cast<uint_least64_t>(luaL_checkinteger(L, 3));
 
     uc_err error = uc_reg_write(engine, register_id, &value);
     if (error != UC_ERR_OK)
@@ -269,7 +269,7 @@ int ul_reg_write(lua_State *L) {
 
 
 int ul_reg_read(lua_State *L) {
-    lua_Unsigned value = 0;
+    uint_least64_t value = 0;
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = luaL_checkinteger(L, 2);
 
@@ -299,7 +299,7 @@ int ul_reg_write_batch(lua_State *L) {
         lua_pop(L, 1);
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<lua_Integer[]> values(new lua_Integer[n_registers]);
+    std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
     std::unique_ptr<void *[]> p_values(new void *[n_registers]);
 
     /* Iterate through the register/value pairs and put them in the corresponding
@@ -326,7 +326,7 @@ int ul_reg_read_batch(lua_State *L) {
     int n_registers = lua_gettop(L) - 1;
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<lua_Integer[]> values(new lua_Integer[n_registers]);
+    std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
     std::unique_ptr<void *[]> p_values(new void *[n_registers]);
 
     for (int i = 0; i < n_registers; ++i) {
@@ -334,7 +334,7 @@ int ul_reg_read_batch(lua_State *L) {
         p_values[i] = &values[i];
     }
 
-    memset(values.get(), 0, n_registers * sizeof(lua_Integer));
+    memset(values.get(), 0, n_registers * sizeof(int_least64_t));
     uc_err error = uc_reg_read_batch(
         engine, register_ids.get(), p_values.get(), n_registers
     );

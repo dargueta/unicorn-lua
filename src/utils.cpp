@@ -4,10 +4,6 @@
 #include "unicornlua/utils.h"
 
 
-extern const char * const kEngineMetatableName;
-extern const char * const kContextMetatableName;
-
-
 int ul_crash_on_error(lua_State *L, uc_err error) {
     const char *message = uc_strerror(error);
     lua_pushstring(L, message);
