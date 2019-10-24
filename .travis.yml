@@ -29,7 +29,6 @@ addons:
 
 matrix:
   allow_failures:
-    - os: windows
     # LuaJIT is super finicky on OSX when using doctest so we're not gonna care too much
     # about it failing. If it works on all the other platforms, it'll probably work for
     # LuaJIT + OSX too.
@@ -37,7 +36,7 @@ matrix:
       env: LUA_VERSION=luajit2.0
 
 before_install:
-  - bash ./travis-setup.sh
+  - bash ci/travis-setup.sh
   # Debugging stuff. The `|| true` is necessary for Windows, which only has an executable
   # named `python`. Whether you get Python 2 or 3 depends on $PATH.
   - python2 -V || true
@@ -45,14 +44,7 @@ before_install:
   - cmake --version
   - which cmake
 
-install:
-  - git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-${UNICORN_VERSION}
-  - pushd unicorn-${UNICORN_VERSION}
-  - git fetch --all --tags --prune
-  - git checkout ${UNICORN_VERSION}
-  - ./make.sh
-  - sudo ./make.sh install
-  - popd
+install: bash ci/travis-install.sh
 
 script: |
   ./configure --venv-version $LUA_VERSION   && \
