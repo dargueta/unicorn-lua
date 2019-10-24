@@ -43,7 +43,6 @@ uclua_float80 read_float80(const char *data) {
             case 3:
                 return NAN;
             default:
-                // This should NEVER happen.
                 throw std::logic_error(
                     "BUG: Bit masking on bits 63-62 of float80 significand got an"
                     " unexpected value. This should never happen."
@@ -89,7 +88,6 @@ void write_float80(uclua_float80 value, char *buffer) {
 
     int exponent;
     uclua_float80 float_significand = frexp(value, &exponent);
-    uint64_t int_significand;
 
     if ((exponent <= -16383) || (exponent >= 16384))
         throw std::domain_error(
@@ -100,17 +98,16 @@ void write_float80(uclua_float80 value, char *buffer) {
     // The high bit of the significand is always set for normal numbers, and clear for
     // denormal numbers. This means the significand is 63 bits, not 64, hence why we
     // multiply here by 2^63 and not 2^64.
+    uint64_t int_significand = float_significand * 2e63;
     if (f_type == FP_NORMAL) {
-        int_significand = 0x8000000000000000ULL | (uint64_t)(float_significand * 2e63);
+        int_significand |= 0x8000000000000000ULL;
         exponent += 16383;
     }
-    else {
-        int_significand = (uint64_t)(float_significand * 2e63);
+    else
         exponent = 0;
-    }
 
     *reinterpret_cast<uint64_t *>(buffer) = int_significand;
-    *reinterpret_cast<uint16_t *>(buffer + 8) = (uint16_t)exponent | sign_bit;
+    *reinterpret_cast<uint16_t *>(buffer + 8) = ((uint16_t)exponent) | sign_bit;
 }
 
 
