@@ -195,7 +195,7 @@ If you just want to install this library, open a terminal, navigate to the root
 directory of this repository, and run the following:
 
 NIX Systems (MacOS, Cygwin, Linux, etc.)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CMake 1.13+:
 
@@ -221,7 +221,7 @@ You may need superuser privileges to install. If installation fails, try
 ``sudo make install``.
 
 Windows
-^^^^^^^
+~~~~~~~
 
 *Support coming soon*
 
