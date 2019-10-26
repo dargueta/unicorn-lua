@@ -1,3 +1,5 @@
+set -e
+
 # NOTE: This will break the builds when Travis changes the version(s) of Python they
 # have installed.
 if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
