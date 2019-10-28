@@ -78,14 +78,10 @@ function(install_lua)
     if(WIN32)
         # On Windows; PATH has no effect if you're not running in a shell so we need to
         # copy the Lua DLL over to the binary directory so the Lua executable finds it.
-        execute_process(
-            COMMAND cmake -E copy_if_different ${LUA_ROOT}/lib/lua*.dll ${LUA_ROOT}/bin
-            OUTPUT_QUIET
-            RESULT_VARIABLE RESULT
+        file(
+            INSTALL "${LUA_ROOT}/lib" DESTINATION "${LUA_ROOT}/bin"
+            FILES_MATCHING "*.dll"
         )
-        if(NOT RESULT EQUAL 0)
-            message(FATAL_ERROR "Failed to copy Lua libraries from ${LUA_ROOT}/lib to ${LUA_ROOT}/bin")
-        endif()
     endif()
 
     set(LUA_EXE "${LUA_ROOT}/bin/lua" PARENT_SCOPE)
