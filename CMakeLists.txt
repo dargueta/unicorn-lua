@@ -153,5 +153,5 @@ if(DOXYGEN_FOUND)
         VERBATIM
     )
 else()
-  message("Doxygen needs to be installed to generate the documentation.")
+    message("Doxygen needs to be installed to generate the documentation.")
 endif()
