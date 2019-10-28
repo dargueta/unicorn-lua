@@ -47,27 +47,29 @@ function(install_lua)
     # variable gets overwritten when compiling for some target platforms, so we can't
     # pass "-fpic" that way. We need to modify the Makefile, similar to how we do above.
     file(READ "${LUA_DOWNLOAD_DIR}/src/Makefile" LUA_SRC_MAKEFILE_CONTENTS)
-    string(
-        REGEX REPLACE
-        "MYCFLAGS=\""
-        "MYCFLAGS=\"-fpic "
-        MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
-        "${LUA_SRC_MAKEFILE_CONTENTS}"
-    )
-    string(
-        REGEX REPLACE
-        "MYCFLAGS=-D([^ ]+)"
-        "MYCFLAGS=\"-fpic -D\\1\""
-        MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
-        "${MODIFIED_LUA_SRC_MAKEFILE_CONTENTS}"
-    )
+    if(LUA_SHORT_VERSION VERSION_EQUAL "5.1")
+        string(
+            REGEX REPLACE
+            'MYCFLAGS="'
+            'MYCFLAGS="-fpic '
+            MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
+            "${LUA_SRC_MAKEFILE_CONTENTS}"
+        )
+        string(
+            REGEX REPLACE
+            'MYCFLAGS=-([^ \n]+)'
+            'MYCFLAGS="-fpic -\\1"'
+            MODIFIED_LUA_SRC_MAKEFILE_CONTENTS
+            "${MODIFIED_LUA_SRC_MAKEFILE_CONTENTS}"
+        )
+    endif()
     file(WRITE "${LUA_DOWNLOAD_DIR}/src/Makefile" "${MODIFIED_LUA_SRC_MAKEFILE_CONTENTS}")
 
     # Done configuring Lua -----------------------------------------------------
 
     message(STATUS "Building Lua and installing to: ${LUA_ROOT}")
     execute_process(
-        COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=\"-fpic\"" "${DETECTED_LUA_PLATFORM}" local
+        COMMAND make -C "${LUA_DOWNLOAD_DIR}" "MYCFLAGS=-fpic" "${DETECTED_LUA_PLATFORM}" local
         OUTPUT_QUIET
         RESULT_VARIABLE RESULT
     )
