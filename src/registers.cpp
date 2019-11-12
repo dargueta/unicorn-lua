@@ -269,15 +269,17 @@ int ul_reg_write(lua_State *L) {
 
 
 int ul_reg_read(lua_State *L) {
-    uint_least64_t value = 0;
+    register_buffer_type value_buffer;
+    memset(value_buffer, 0, sizeof(value_buffer));
+
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = luaL_checkinteger(L, 2);
 
-    uc_err error = uc_reg_read(engine, register_id, &value);
+    uc_err error = uc_reg_read(engine, register_id, value_buffer);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
-    lua_pushinteger(L, value);
+    lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(value_buffer));
     return 1;
 }
 
@@ -326,7 +328,7 @@ int ul_reg_read_batch(lua_State *L) {
     int n_registers = lua_gettop(L) - 1;
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
+    std::unique_ptr<register_buffer_type[]> values(new register_buffer_type[n_registers]);
     std::unique_ptr<void *[]> p_values(new void *[n_registers]);
 
     for (int i = 0; i < n_registers; ++i) {
@@ -334,7 +336,7 @@ int ul_reg_read_batch(lua_State *L) {
         p_values[i] = &values[i];
     }
 
-    memset(values.get(), 0, n_registers * sizeof(int_least64_t));
+    memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
     uc_err error = uc_reg_read_batch(
         engine, register_ids.get(), p_values.get(), n_registers
     );
@@ -342,7 +344,7 @@ int ul_reg_read_batch(lua_State *L) {
         return ul_crash_on_error(L, error);
 
     for (int i = 0; i < n_registers; ++i)
-        lua_pushinteger(L, values[i]);
+        lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(values[i]));
 
     return n_registers;
 }
