@@ -1,6 +1,13 @@
 Changes
 =======
 
+1.0b6 (unreleased)
+------------------
+
+* Completely fixed buffer overflow when reading registers over 64 bits. (Closes `issue #3`_)
+
+.. _issue #3: https://github.com/dargueta/unicorn-lua/issues/3
+
 1.0b5 (2019-10-23)
 ------------------
 
