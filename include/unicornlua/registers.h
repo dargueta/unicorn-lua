@@ -368,7 +368,7 @@ int ul_reg_write_as(lua_State *L);
  * @warning There's no way to represent a signaling or "indefinite" NaN in C++.
  * Both of these values are returned as std::NAN.
  */
-uclua_float80 read_float80(const uint8_t *data);
+uclua_float80 read_float80(const char *data);
 
 
 /**
