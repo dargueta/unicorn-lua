@@ -287,6 +287,227 @@ std::array<uclua_float32, 16> Register::as_16xf32() const {
     return array_cast<uclua_float32, 16>();
 }
 
+void Register::push_to_lua(lua_State *L) const {
+    int i;
+
+    std::array<int16_t, 16> values_16xi16;
+    std::array<int16_t, 4> values_4xi16;
+    std::array<int16_t, 8> values_8xi16;
+    std::array<int32_t, 16> values_16xi32;
+    std::array<int32_t, 2> values_2xi32;
+    std::array<int32_t, 4> values_4xi32;
+    std::array<int32_t, 8> values_8xi32;
+    std::array<int64_t, 2> values_2xi64;
+    std::array<int64_t, 4> values_4xi64;
+    std::array<int64_t, 8> values_8xi64;
+    std::array<int8_t, 16> values_16xi8;
+    std::array<int8_t, 32> values_32xi8;
+    std::array<int8_t, 64> values_64xi8;
+    std::array<int8_t, 8> values_8xi8;
+    std::array<uclua_float32, 16> values_16xf32;
+    std::array<uclua_float32, 4> values_4xf32;
+    std::array<uclua_float32, 8> values_8xf32;
+    std::array<uclua_float64, 2> values_2xf64;
+    std::array<uclua_float64, 4> values_4xf64;
+    std::array<uclua_float64, 8> values_8xf64;
+
+    switch (kind_) {
+        case UL_REG_TYPE_INT8:
+            lua_pushinteger(L, this->as_int8());
+            break;
+        case UL_REG_TYPE_INT16:
+            lua_pushinteger(L, this->as_int16());
+            break;
+        case UL_REG_TYPE_INT32:
+            lua_pushinteger(L, this->as_int32());
+            break;
+        case UL_REG_TYPE_FLOAT32:
+            lua_pushnumber(L, this->as_float32());
+            break;
+        case UL_REG_TYPE_INT64:
+            lua_pushinteger(L, this->as_int64());
+            break;
+        case UL_REG_TYPE_FLOAT64:
+            lua_pushnumber(L, this->as_float64());
+            break;
+        case UL_REG_TYPE_INT8_ARRAY_8:
+            values_8xi8 = this->as_8xi8();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xi8[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT16_ARRAY_4:
+            values_4xi16 = this->as_4xi16();
+            lua_createtable(L, 4, 0);
+            for (i = 0; i < 4; ++i) {
+                lua_pushinteger(L, values_4xi16[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT32_ARRAY_2:
+            values_2xi32 = this->as_2xi32();
+            lua_createtable(L, 2, 0);
+            for (i = 0; i < 2; ++i) {
+                lua_pushinteger(L, values_2xi32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT64_ARRAY_1:
+            lua_createtable(L, 1, 0);
+            lua_pushinteger(L, this->as_int64());
+            lua_seti(L, -2, 1);
+            break;
+        case UL_REG_TYPE_FLOAT80:
+            /* Probably gonna lose precision here */
+            lua_pushnumber(L, this->as_float80());
+            break;
+        case UL_REG_TYPE_INT8_ARRAY_16:
+            values_16xi8 = this->as_16xi8();
+            lua_createtable(L, 16, 0);
+            for (i = 0; i < 16; ++i) {
+                lua_pushinteger(L, values_16xi8[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT16_ARRAY_8:
+            values_8xi16 = this->as_8xi16();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xi16[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT32_ARRAY_4:
+            values_4xi32 = this->as_4xi32();
+            lua_createtable(L, 4, 0);
+            for (i = 0; i < 4; ++i) {
+                lua_pushinteger(L, values_4xi32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT64_ARRAY_2:
+            values_2xi64 = this->as_2xi64();
+            lua_createtable(L, 2, 0);
+            for (i = 0; i < 2; ++i) {
+                lua_pushinteger(L, values_2xi64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT32_ARRAY_4:
+            values_4xf32 = this->as_4xf32();
+            lua_createtable(L, 4, 0);
+            for (i = 0; i < 4; ++i) {
+                lua_pushinteger(L, values_4xf32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT64_ARRAY_2:
+            values_2xf64 = this->as_2xf64();
+            lua_createtable(L, 2, 0);
+            for (i = 0; i < 2; ++i) {
+                lua_pushinteger(L, values_2xf64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT8_ARRAY_32:
+            values_32xi8 = this->as_32xi8();
+            lua_createtable(L, 32, 0);
+            for (i = 0; i < 32; ++i) {
+                lua_pushinteger(L, values_32xi8[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT16_ARRAY_16:
+            values_16xi16 = this->as_16xi16();
+            lua_createtable(L, 16, 0);
+            for (i = 0; i < 16; ++i) {
+                lua_pushinteger(L, values_16xi16[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT32_ARRAY_8:
+            values_8xi32 = this->as_8xi32();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xi32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT64_ARRAY_4:
+            values_4xi64 = this->as_4xi64();
+            lua_createtable(L, 4, 0);
+            for (i = 0; i < 4; ++i) {
+                lua_pushinteger(L, values_4xi64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT32_ARRAY_8:
+            values_8xf32 = this->as_8xf32();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xf32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT64_ARRAY_4:
+            values_4xf64 = this->as_4xf64();
+            lua_createtable(L, 4, 0);
+            for (i = 0; i < 4; ++i) {
+                lua_pushinteger(L, values_4xf64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT8_ARRAY_64:
+            values_64xi8 = this->as_64xi8();
+            lua_createtable(L, 64, 0);
+            for (i = 0; i < 64; ++i) {
+                lua_pushinteger(L, values_64xi8[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT32_ARRAY_16:
+            values_16xi32 = this->as_16xi32();
+            lua_createtable(L, 16, 0);
+            for (i = 0; i < 16; ++i) {
+                lua_pushinteger(L, values_16xi32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT64_ARRAY_8:
+            values_8xi64 = this->as_8xi64();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xi64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT32_ARRAY_16:
+            values_16xf32 = this->as_16xf32();
+            lua_createtable(L, 16, 0);
+            for (i = 0; i < 16; ++i) {
+                lua_pushinteger(L, values_16xf32[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_FLOAT64_ARRAY_8:
+            values_8xf64 = this->as_8xf64();
+            lua_createtable(L, 8, 0);
+            for (i = 0; i < 8; ++i) {
+                lua_pushinteger(L, values_8xf64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+
+        case UL_REG_TYPE_UNKNOWN:
+        default:
+            /* Invalid register type */
+            lua_pushnil(L);
+            break;
+    }
+}
+
 
 int ul_reg_write(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);

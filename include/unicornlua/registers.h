@@ -316,6 +316,8 @@ public:
      */
     std::array<int64_t, 8> as_8xi64() const;
 
+    void push_to_lua(lua_State *L) const;
+
 private:
     template <class T, int N> std::array<T, N> array_cast() const;
 
