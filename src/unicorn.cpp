@@ -7,6 +7,7 @@ extern "C" {
 
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
 
 
@@ -184,6 +185,37 @@ static const struct NamedIntConst kModuleConstants[] = {
     {"UC_PROT_WRITE", UC_PROT_WRITE},
     {"UC_PROT_EXEC", UC_PROT_EXEC},
     {"UC_PROT_ALL", UC_PROT_ALL},
+
+    // These are only defined by the Lua binding for the purpose of reading and
+    // writing registers other than 8/16/32/64-bit integers.
+    {"UL_REG_TYPE_INT8", RegisterDataType::UL_REG_TYPE_INT8},
+    {"UL_REG_TYPE_INT16", RegisterDataType::UL_REG_TYPE_INT16},
+    {"UL_REG_TYPE_INT32", RegisterDataType::UL_REG_TYPE_INT32},
+    {"UL_REG_TYPE_FLOAT32", RegisterDataType::UL_REG_TYPE_FLOAT32},
+    {"UL_REG_TYPE_INT64", RegisterDataType::UL_REG_TYPE_INT64},
+    {"UL_REG_TYPE_FLOAT64", RegisterDataType::UL_REG_TYPE_FLOAT64},
+    {"UL_REG_TYPE_INT8_ARRAY_8", RegisterDataType::UL_REG_TYPE_INT8_ARRAY_8},
+    {"UL_REG_TYPE_INT16_ARRAY_4", RegisterDataType::UL_REG_TYPE_INT16_ARRAY_4},
+    {"UL_REG_TYPE_INT32_ARRAY_2", RegisterDataType::UL_REG_TYPE_INT32_ARRAY_2},
+    {"UL_REG_TYPE_INT64_ARRAY_1", RegisterDataType::UL_REG_TYPE_INT64_ARRAY_1},
+    {"UL_REG_TYPE_FLOAT80", RegisterDataType::UL_REG_TYPE_FLOAT80},
+    {"UL_REG_TYPE_INT8_ARRAY_16", RegisterDataType::UL_REG_TYPE_INT8_ARRAY_16},
+    {"UL_REG_TYPE_INT16_ARRAY_8", RegisterDataType::UL_REG_TYPE_INT16_ARRAY_8},
+    {"UL_REG_TYPE_INT32_ARRAY_4", RegisterDataType::UL_REG_TYPE_INT32_ARRAY_4},
+    {"UL_REG_TYPE_INT64_ARRAY_2", RegisterDataType::UL_REG_TYPE_INT64_ARRAY_2},
+    {"UL_REG_TYPE_FLOAT32_ARRAY_4", RegisterDataType::UL_REG_TYPE_FLOAT32_ARRAY_4},
+    {"UL_REG_TYPE_FLOAT64_ARRAY_2", RegisterDataType::UL_REG_TYPE_FLOAT64_ARRAY_2},
+    {"UL_REG_TYPE_INT8_ARRAY_32", RegisterDataType::UL_REG_TYPE_INT8_ARRAY_32},
+    {"UL_REG_TYPE_INT16_ARRAY_16", RegisterDataType::UL_REG_TYPE_INT16_ARRAY_16},
+    {"UL_REG_TYPE_INT32_ARRAY_8", RegisterDataType::UL_REG_TYPE_INT32_ARRAY_8},
+    {"UL_REG_TYPE_INT64_ARRAY_4", RegisterDataType::UL_REG_TYPE_INT64_ARRAY_4},
+    {"UL_REG_TYPE_FLOAT32_ARRAY_8", RegisterDataType::UL_REG_TYPE_FLOAT32_ARRAY_8},
+    {"UL_REG_TYPE_FLOAT64_ARRAY_4", RegisterDataType::UL_REG_TYPE_FLOAT64_ARRAY_4},
+    {"UL_REG_TYPE_INT8_ARRAY_64", RegisterDataType::UL_REG_TYPE_INT8_ARRAY_64},
+    {"UL_REG_TYPE_INT32_ARRAY_16", RegisterDataType::UL_REG_TYPE_INT32_ARRAY_16},
+    {"UL_REG_TYPE_INT64_ARRAY_8", RegisterDataType::UL_REG_TYPE_INT64_ARRAY_8},
+    {"UL_REG_TYPE_FLOAT32_ARRAY_16", RegisterDataType::UL_REG_TYPE_FLOAT32_ARRAY_16},
+    {"UL_REG_TYPE_FLOAT64_ARRAY_8", RegisterDataType::UL_REG_TYPE_FLOAT64_ARRAY_8},
 
     {nullptr, 0}
 };
