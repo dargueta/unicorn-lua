@@ -1,4 +1,5 @@
 #include <array>
+#include <cerrno>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -14,7 +15,7 @@
 #include "unicornlua/utils.h"
 
 
-uclua_float80 read_float80(const char *data) {
+uclua_float80 read_float80(const uint8_t *data) {
     uint64_t significand = *reinterpret_cast<const uint64_t *>(data);
     int exponent = *reinterpret_cast<const uint16_t *>(data + 8) & 0x7fff;
     bool sign = (*reinterpret_cast<const uint16_t *>(data + 8) & 0x8000) != 0;
@@ -23,58 +24,87 @@ uclua_float80 read_float80(const char *data) {
     if (sign)
         signed_significand *= -1;
 
+    // Clear errno before starting because we use it to indicate that the return
+    // value is valid on some FPUs but not others, or if the NaN is a signaling
+    // one.
+    errno = 0;
+
     if (exponent == 0) {
         if (significand == 0)
             return 0.0;
-        return ldexp(signed_significand, exponent - 16382);
+        return ldexp(signed_significand, -16382);
     }
     else if (exponent == 0x7fff) {
-        switch ((significand & 0xc000000000000000ULL) >> 62) {
+        // Top two bits of the significand will tell us what kind of number this
+        // is and aren't used for storing a value.
+        switch ((significand >> 62) & 3) {
             case 0:
-                if ((significand & 0x3fffffffffffffffULL) == 0)
+                if (significand == 0)
                     return sign ? -INFINITY : +INFINITY;
-                return NAN;
+
+                // Significand is non-zero, fall through to next case.
+                __attribute__ ((fallthrough));
             case 1:
+                /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
+                 * treat this as an invalid operand and will explode. Compromise
+                 * by setting errno and returning NaN instead of throwing an
+                 * exception.
+                 */
+                errno = EINVAL;
                 return NAN;
             case 2:
                 if ((significand & 0x3fffffffffffffffULL) == 0)
                     return sign ? -INFINITY : +INFINITY;
+
+                // Else: This is a signaling NaN. We don't want to throw an
+                // exception because Lua is just reading the registers of the
+                // processor, not using them.
+                errno = EDOM;
                 return NAN;
             case 3:
+                /* If the significand is 0, this is an indefinite value (result
+                 * of 0/0, infinity/infinity, etc.). Otherwise, this is a quiet
+                 * NaN. In either case, we return NAN.
+                 */
                 return NAN;
             default:
                 throw std::logic_error(
-                    "BUG: Bit masking on bits 63-62 of float80 significand got an"
-                    " unexpected value. This should never happen."
+                    "BUG: Bit masking on bits 63-62 of float80 significand got"
+                    " an unexpected value. This should never happen."
                 );
         }
     }
 
     // Regular number!
     if (significand & 0x8000000000000000ULL)
-        return ldexp(signed_significand, exponent - 16383);
+        // Normalized value. Clear the high bit of the significand.
+        return ldexp(signed_significand - 0x8000000000000000ULL, exponent - 16383);
+
+    // Unnormal number. Invalid on 80387+; 80287 and earlier use a different
+    // exponent bias.
+    errno = EINVAL;
     return ldexp(signed_significand, exponent - 16382);
 }
 
 
-void write_float80(uclua_float80 value, char *buffer) {
+void write_float80(uclua_float80 value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
-    uint16_t sign_bit = (value < 0) ? 0x8000 : 0;
+    uint16_t sign_bit = std::signbit(value) ? 0x8000 : 0;
 
     switch (f_type) {
         case FP_INFINITE:
             // TODO (dargueta): This won't work on a big-endian machine
             *reinterpret_cast<uint64_t *>(buffer) = 0x8000000000000000;
             *reinterpret_cast<uint16_t *>(buffer + 8) = 0x7fff | sign_bit;
-            break;
+            return;
         case FP_NAN:
             *reinterpret_cast<uint64_t *>(buffer) = 0xffffffffffffffff;
             *reinterpret_cast<uint16_t *>(buffer + 8) = 0xffff;
-            break;
+            return;
         case FP_ZERO:
             *reinterpret_cast<uint64_t *>(buffer) = 0;
             *reinterpret_cast<uint16_t *>(buffer + 8) = 0;
-            break;
+            return;
         case FP_SUBNORMAL:
         case FP_NORMAL:
             break;

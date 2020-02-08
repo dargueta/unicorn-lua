@@ -321,7 +321,7 @@ public:
 private:
     template <class T, int N> std::array<T, N> array_cast() const;
 
-    char data_[64];
+    uint8_t data_[64];
     RegisterDataType kind_;
 };
 
@@ -368,7 +368,7 @@ int ul_reg_write_as(lua_State *L);
  * @warning There's no way to represent a signaling or "indefinite" NaN in C++.
  * Both of these values are returned as std::NAN.
  */
-uclua_float80 read_float80(const char *data);
+uclua_float80 read_float80(const uint8_t *data);
 
 
 /**
