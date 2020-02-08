@@ -15,6 +15,9 @@ os:
   - linux
   - osx
 
+python:
+  - "3.7"
+
 # Needed for CMake 3.12+
 osx_image: xcode10
 
@@ -22,6 +25,8 @@ addons:
   apt:
     packages:
       - cmake
+      - python3-pip
+      - python-dev
     sources:
       - kalakris-cmake
     update: true
@@ -37,13 +42,14 @@ matrix:
 before_install:
   # NOTE: This will break the builds when Travis changes the version(s) of Python they
   # have installed.
-  - |
-    if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
-      pyenv local 2.7.15 3.7.1
-    fi
+  # - |
+  #   if [[ $TRAVIS_OS_NAME = 'linux' ]]; then
+  #     pyenv local 2.7.15 3.7.1
+  #   fi
+  - pip3 install -U pip setuptools
   # Debugging
-  - python2 -V
-  - python3 -V
+  - pip3 --version
+  - python3 -V || true
   - cmake --version
   - which cmake
 
