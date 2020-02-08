@@ -43,7 +43,11 @@ uclua_float80 read_float80(const uint8_t *data) {
                     return sign ? -INFINITY : +INFINITY;
 
                 // Significand is non-zero, fall through to next case.
-                __attribute__ ((fallthrough));
+                // Clang for some reason doesn't like this directive but GCC needs
+                // it so we skip it if we're on Clang.
+                #ifndef __clang__
+                    __attribute__ ((fallthrough));
+                #endif
             case 1:
                 /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
                  * treat this as an invalid operand and will explode. Compromise
