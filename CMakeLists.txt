@@ -16,7 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # These are the rocks required for running tests and using examples.
 set(REQUIRED_ROCKS lcurses;busted)
 
-find_package(Python3 REQUIRED)
+#find_package(Python3 REQUIRED)
 
 if(USE_VIRTUALENV)
     if(NOT EXISTS "${LUA_EXE}")
