@@ -257,69 +257,112 @@ uclua_float80 Register::as_float80() const {
 std::array<int8_t, 8> Register::as_8xi8() const {
     return array_cast<int8_t, 8>();
 }
+
+
 std::array<int16_t, 4> Register::as_4xi16() const {
     return array_cast<int16_t, 4>();
 }
+
+
 std::array<int32_t, 2> Register::as_2xi32() const {
     return array_cast<int32_t, 2>();
 }
+
+
 std::array<int64_t, 1> Register::as_1xi64() const {
     return array_cast<int64_t, 1>();
 }
+
+
 std::array<uclua_float32, 4> Register::as_4xf32() const {
     return array_cast<uclua_float32 , 4>();
 }
+
+
 std::array<uclua_float64, 2> Register::as_2xf64() const {
     return array_cast<uclua_float64 , 2>();
 }
+
+
 std::array<int8_t, 16> Register::as_16xi8() const {
     return array_cast<int8_t, 16>();
 }
+
+
 std::array<int16_t, 8> Register::as_8xi16() const {
     return array_cast<int16_t, 8>();
 }
+
+
 std::array<int32_t, 4> Register::as_4xi32() const {
     return array_cast<int32_t, 4>();
 }
+
+
 std::array<int64_t, 2> Register::as_2xi64() const {
     return array_cast<int64_t, 2>();
 }
+
+
 std::array<uclua_float32, 8> Register::as_8xf32() const {
     return array_cast<uclua_float32, 8>();
 }
+
+
 std::array<uclua_float64, 4> Register::as_4xf64() const {
     return array_cast<uclua_float64, 4>();
 }
+
+
 std::array<int8_t, 32> Register::as_32xi8() const {
     return array_cast<int8_t, 32>();
 }
+
+
 std::array<int16_t, 16> Register::as_16xi16() const {
     return array_cast<int16_t, 16>();
 }
+
+
 std::array<int32_t, 8> Register::as_8xi32() const {
     return array_cast<int32_t, 8>();
 }
+
+
 std::array<int64_t, 4> Register::as_4xi64() const {
     return array_cast<int64_t, 4>();
 }
+
+
 std::array<int8_t, 64> Register::as_64xi8() const {
     return array_cast<int8_t, 64>();
 }
+
+
 std::array<int16_t, 32> Register::as_32xi16() const {
     return array_cast<int16_t, 32>();
 }
+
+
 std::array<int32_t, 16> Register::as_16xi32() const {
     return array_cast<int32_t, 16>();
 }
+
+
 std::array<int64_t, 8> Register::as_8xi64() const {
     return array_cast<int64_t, 8>();
 }
+
+
 std::array<uclua_float64, 8> Register::as_8xf64() const {
     return array_cast<uclua_float64, 8>();
 }
+
+
 std::array<uclua_float32, 16> Register::as_16xf32() const {
     return array_cast<uclua_float32, 16>();
 }
+
 
 void Register::push_to_lua(lua_State *L) const {
     int i;
