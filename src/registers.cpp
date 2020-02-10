@@ -737,6 +737,18 @@ int ul_reg_write(lua_State *L) {
 }
 
 
+int ul_reg_write_as(lua_State *L) {
+    uc_engine *engine = ul_toengine(L, 1);
+    int register_id = luaL_checkinteger(L, 2);
+    Register reg = Register::from_lua(L, 3, 4);
+
+    uc_err error = uc_reg_write(engine, register_id, reg.data_);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+    return 0;
+}
+
+
 int ul_reg_read(lua_State *L) {
     register_buffer_type value_buffer;
     memset(value_buffer, 0, sizeof(value_buffer));
@@ -749,6 +761,25 @@ int ul_reg_read(lua_State *L) {
         return ul_crash_on_error(L, error);
 
     lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(value_buffer));
+    return 1;
+}
+
+
+int ul_reg_read_as(lua_State *L) {
+    uc_engine *engine = ul_toengine(L, 1);
+    int register_id = luaL_checkinteger(L, 2);
+    auto read_as_type = static_cast<RegisterDataType>(luaL_checkinteger(L, 3));
+
+    register_buffer_type value_buffer;
+    memset(value_buffer, 0, sizeof(value_buffer));
+
+    uc_err error = uc_reg_read(engine, register_id, value_buffer);
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    Register register_obj(value_buffer, read_as_type);
+    register_obj.push_to_lua(L);
+
     return 1;
 }
 
