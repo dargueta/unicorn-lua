@@ -128,24 +128,23 @@ describe('Register tests', function ()
   end)
 
   describe('Read registers in alternate formats', function ()
-    it('Read MM0 as two 32-bit integers', function ()
+    it('Read R9 as two 32-bit integers', function ()
       local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
       uc:mem_map(0, 2^20)
 
-      -- movq    mm0, [qw_value]
-      -- qw_value: dq 0x000deadbeefcafe
-      uc:mem_write(0, '\015\111\004\037\008\000\000\000\254\202\239\190\173\222\000\000')
+      -- mov    r9, 0x0000deadcafebeef
+      uc:mem_write(0, '\073\185\239\190\254\202\173\222\000\000')
       uc:emu_start(0, 2^20, 0, 1)
 
-      -- First ensure that the MM0 register contains the value we expect
-      assert.are.equals(0x000deadbeefcafe, uc:reg_read(x86.UC_X86_REG_MM0))
+      -- First ensure that the R9 register contains the value we expect
+      assert.are.equals(0x0000deadcafebeef, uc:reg_read(x86.UC_X86_REG_R9))
 
       local registers = uc:reg_read_as(
-        x86.UC_X86_REG_MM0, unicorn.UL_REG_TYPE_INT32_ARRAY_2
+        x86.UC_X86_REG_R9, unicorn.UL_REG_TYPE_INT32_ARRAY_2
       )
 
-      assert.are.equals(0x0000dead, registers[1])
-      assert.are.equals(0xbeefcafe, registers[2])
+      assert.are.equals(0xbeef, registers[1])
+      assert.are.equals(0x0000, registers[2])
     end)
   end)
 end)

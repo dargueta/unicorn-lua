@@ -1,3 +1,4 @@
+#include <array>
 #include <cerrno>
 #include <cmath>
 #include <cstring>
@@ -211,3 +212,87 @@ TEST_CASE("write_float80(): 3.141592654 -> 4000C90FDAA2922A8000") {
     CHECK(memcmp(expected, result, 10) == 0);
 }
 #endif
+
+
+TEST_CASE("Register::as_int8()") {
+    Register reg("\xb6", UL_REG_TYPE_INT8);
+    CHECK_EQ(reg.as_int8(), -74);
+}
+
+
+TEST_CASE("Register::as_int16(): 0x7FB6 == 32694") {
+    Register reg("\xb6\x7f", UL_REG_TYPE_INT16);
+    CHECK_EQ(reg.as_int16(), 0x7fb6);
+}
+
+
+TEST_CASE("Register::as_int16(): 0x8ED1 == -28975") {
+    Register reg("\xd1\x8e", UL_REG_TYPE_INT16);
+    CHECK_EQ(reg.as_int16(), -28975);
+}
+
+
+TEST_CASE("Register::as_int32(): 0x19E07F88 == 434143112") {
+    Register reg("\x88\x7f\xe0\x19", UL_REG_TYPE_INT32);
+    CHECK_EQ(reg.as_int32(), 434143112);
+}
+
+
+TEST_CASE("Register::as_int32(): 0xF9E07F88 == -102727800") {
+    Register reg("\x88\x7f\xe0\xf9", UL_REG_TYPE_INT32);
+    CHECK_EQ(reg.as_int32(), -102727800);
+}
+
+
+TEST_CASE("Register::as_int64(): 0x0000DEADCAFEBEEF == 244838016401135") {
+    Register reg("\xef\xbe\xfe\xca\xad\xde\x00\x00", UL_REG_TYPE_INT64);
+    CHECK_EQ(reg.as_int64(), 244838016401135);
+}
+
+
+TEST_CASE("Register::as_int64(): 0xCAFEBEEF00000000 == -3819405500257140736") {
+    Register reg("\x00\x00\x00\x00\xef\xbe\xfe\xca", UL_REG_TYPE_INT64);
+    CHECK_EQ(reg.as_int64(), -3819405500257140736);
+}
+
+
+TEST_CASE("Register::as_float32(): 3.141592654") {
+    uclua_float32 value = 3.141592654;
+    Register reg((const char *)&value, UL_REG_TYPE_FLOAT32);
+    CHECK_EQ(reg.as_float32(), doctest::Approx(value));
+}
+
+
+TEST_CASE("Register::as_float64(): 1.4142135623730951") {
+    uclua_float64 value = 1.4142135623730951;
+    Register reg((const char *)&value, UL_REG_TYPE_FLOAT64);
+    CHECK_EQ(reg.as_float64(), doctest::Approx(value));
+}
+
+
+// TODO (dargueta): Figure out what's broken
+#if 0
+TEST_CASE("Register::as_float80(): 2.71828182845904524") {
+    uint8_t value[10];
+    write_float80(2.71828182845904524, value);
+
+    Register reg(value, UL_REG_TYPE_FLOAT80);
+    CHECK_EQ(reg.as_float80(), doctest::Approx(2.71828182845904524));
+}
+#endif
+
+
+TEST_CASE("Register::as_8xi8()") {
+    std::array<int8_t, 8> expected{0x0a, 0x1b, 0x2c, 0x3d, 0x4e, 0x5f, 0x6a, 0x7b};
+    Register reg(expected.data(), UL_REG_TYPE_INT8_ARRAY_8);
+
+    CHECK_EQ(reg.as_8xi8(), expected);
+}
+
+
+TEST_CASE("Register::as_4xi16()") {
+    std::array<int16_t, 4> expected{0x0a1b, 0x2c3d, 0x4e5f, 0x6a7b};
+    Register reg(expected.data(), UL_REG_TYPE_INT16_ARRAY_4);
+
+    CHECK_EQ(reg.as_4xi16(), expected);
+}
