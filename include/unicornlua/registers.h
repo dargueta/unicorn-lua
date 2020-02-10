@@ -338,7 +338,7 @@ private:
  * low 32 or 64 bits are accessible to Lua. Eventually we'll figure out how to
  * use the rest.
 */
-typedef char register_buffer_type[64];
+typedef uint8_t register_buffer_type[64];
 
 
 /**
