@@ -576,12 +576,9 @@ void Register::push_to_lua(lua_State *L) const {
                 lua_seti(L, -2, i + 1);
             }
             break;
-
         case UL_REG_TYPE_UNKNOWN:
         default:
-            /* Invalid register type */
-            lua_pushnil(L);
-            break;
+            throw LuaBindingError("Register is uninitialized or has no known type.");
     }
 }
 
@@ -771,9 +768,12 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
 int ul_reg_write(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = luaL_checkinteger(L, 2);
-    auto value = static_cast<uint_least64_t>(luaL_checkinteger(L, 3));
+    register_buffer_type buffer;
 
-    uc_err error = uc_reg_write(engine, register_id, &value);
+    memset(buffer, 0, sizeof(buffer));
+    *reinterpret_cast<int_least64_t *>(buffer) = static_cast<int_least64_t>(luaL_checkinteger(L, 3));
+
+    uc_err error = uc_reg_write(engine, register_id, buffer);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
