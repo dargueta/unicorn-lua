@@ -97,6 +97,7 @@ class Register {
 public:
     Register();
     Register(const void *buffer, RegisterDataType kind);
+    static Register from_lua(lua_State *L, int value_index, int kind_index);
 
     /**
      * Assign a value to this register from memory.
@@ -318,10 +319,14 @@ public:
 
     void push_to_lua(lua_State *L) const;
 
+    /**
+     * The raw data.
+     */
+    uint8_t data_[64];
+
 private:
     template <class T, int N> std::array<T, N> array_cast() const;
 
-    uint8_t data_[64];
     RegisterDataType kind_;
 };
 
