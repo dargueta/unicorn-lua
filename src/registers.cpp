@@ -148,7 +148,7 @@ void write_float80(uclua_float80 value, uint8_t *buffer) {
 template <class T, int N>
 std::array<T, N> Register::array_cast() const {
     std::array<T, N> value{};
-    memcpy(value.data(), data_, value.size());
+    memcpy(value.data(), data_, sizeof(value));
     return value;
 }
 

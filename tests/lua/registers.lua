@@ -143,8 +143,8 @@ describe('Register tests', function ()
         x86.UC_X86_REG_R9, unicorn.UL_REG_TYPE_INT32_ARRAY_2
       )
 
-      assert.are.equals(0xbeef, registers[1])
-      assert.are.equals(0x0000, registers[2])
+      assert.are.equals(-889274641, registers[1])  -- 0xcafebeef as a signed number
+      assert.are.equals(0xdead, registers[2])
     end)
   end)
 end)
