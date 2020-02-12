@@ -296,3 +296,47 @@ TEST_CASE("Register::as_4xi16()") {
 
     CHECK_EQ(reg.as_4xi16(), expected);
 }
+
+
+TEST_CASE("Register::as_2xi32()") {
+    std::array<int32_t, 2> expected{-65536, 0x1234abcd};
+    Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_2);
+
+    CHECK_EQ(reg.as_2xi32(), expected);
+}
+
+
+TEST_CASE("Register::as_1xi64()") {
+    std::array<int64_t, 1> expected{-0x655361234abcd};
+    Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_2);
+
+    CHECK_EQ(reg.as_1xi64(), expected);
+}
+
+
+TEST_CASE("Register::as_8xi16()") {
+    std::array<int16_t, 8> expected{32767, -9, 1234, 12345, -18438, 0, 85, 913};
+    Register reg(expected.data(), UL_REG_TYPE_INT16_ARRAY_8);
+
+    CHECK_EQ(reg.as_8xi16(), expected);
+}
+
+
+/*
+
+UL_REG_TYPE_INT32_ARRAY_4
+UL_REG_TYPE_INT64_ARRAY_2
+UL_REG_TYPE_FLOAT32_ARRAY_4
+UL_REG_TYPE_FLOAT64_ARRAY_2
+UL_REG_TYPE_INT8_ARRAY_32
+UL_REG_TYPE_INT16_ARRAY_16
+UL_REG_TYPE_INT32_ARRAY_8
+UL_REG_TYPE_INT64_ARRAY_4
+UL_REG_TYPE_FLOAT32_ARRAY_8
+UL_REG_TYPE_FLOAT64_ARRAY_4
+UL_REG_TYPE_INT8_ARRAY_64
+UL_REG_TYPE_INT32_ARRAY_16
+UL_REG_TYPE_INT64_ARRAY_8
+UL_REG_TYPE_FLOAT32_ARRAY_16
+UL_REG_TYPE_FLOAT64_ARRAY_8
+*/
