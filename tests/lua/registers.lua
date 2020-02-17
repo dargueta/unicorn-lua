@@ -165,4 +165,14 @@ describe('Register tests', function ()
       assert.are.same({80, 14, -49, -8, -107, 118, 5, 88}, registers)
     end)
   end)
+  describe('Write registers in alternate formats', function ()
+    it('Write to RCX as two 32-bit signed integers.', function ()
+      local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+
+      uc:reg_write_as(
+        x86.UC_X86_REG_RCX, {-123456, 500}, unicorn.UL_REG_TYPE_INT32_ARRAY_2
+      )
+      assert.are.equals(0x000001f4fffe1dc0, uc:reg_read(x86.UC_X86_REG_RCX))
+    end)
+  end)
 end)
