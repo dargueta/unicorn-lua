@@ -9,7 +9,7 @@ New Features
 
 When reading or writing a register you can now specify how the register should be
 interpreted, e.g. as a 64-bit float or a pair of 32-bit floats, and so on. (Closes
-`issue #2`_ and `issue #6`_, partially solves `issue #5`_).
+`issue #2`_, `issue #6`_ and `issue #5`_ *except* for the x87 ST(x) registers.)
 
 .. code-block:: lua
 
@@ -29,10 +29,10 @@ Bugfixes
 Completely fixed buffer overflow when reading registers over 64 bits. (Closes
 `issue #3`_)
 
-.. _issue #3: https://github.com/dargueta/unicorn-lua/issues/3
 .. _issue #2: https://github.com/dargueta/unicorn-lua/issues/2
-.. _issue #6: https://github.com/dargueta/unicorn-lua/issues/6
+.. _issue #3: https://github.com/dargueta/unicorn-lua/issues/3
 .. _issue #5: https://github.com/dargueta/unicorn-lua/issues/5
+.. _issue #6: https://github.com/dargueta/unicorn-lua/issues/6
 
 1.0b5 (2019-10-23)
 ------------------
