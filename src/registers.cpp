@@ -20,10 +20,6 @@ uclua_float80 read_float80(const uint8_t *data) {
     int exponent = *reinterpret_cast<const uint16_t *>(data + 8) & 0x7fff;
     bool sign = (*reinterpret_cast<const uint16_t *>(data + 8) & 0x8000) != 0;
 
-    uclua_float80 signed_significand = significand;
-    if (sign)
-        signed_significand *= -1;
-
     // Clear errno before starting because we use it to indicate that the return
     // value is valid on some FPUs but not others, or if the NaN is a signaling
     // one.
@@ -32,7 +28,10 @@ uclua_float80 read_float80(const uint8_t *data) {
     if (exponent == 0) {
         if (significand == 0)
             return 0.0;
-        return ldexp(signed_significand, -16382);
+        else if (sign)
+            return ldexp(-significand, -16382);
+        else
+            return ldexp(significand, -16382);
     }
     else if (exponent == 0x7fff) {
         // Top two bits of the significand will tell us what kind of number this
@@ -79,15 +78,19 @@ uclua_float80 read_float80(const uint8_t *data) {
         }
     }
 
-    // Regular number!
+    // If the high bit of the significand is set, this is a normal value. Ignore
+    // the high bit of the significand and compensate for the exponent bias.
+    uclua_float80 f_part = (significand & 0x7fffffffffffffffULL);
+    if (sign)
+        f_part *= -1;
+
     if (significand & 0x8000000000000000ULL)
-        // Normalized value. Clear the high bit of the significand.
-        return ldexp(signed_significand - 0x8000000000000000ULL, exponent - 16383);
+        return ldexp(f_part, exponent - 16383);
 
     // Unnormal number. Invalid on 80387+; 80287 and earlier use a different
     // exponent bias.
     errno = EINVAL;
-    return ldexp(signed_significand, exponent - 16382);
+    return ldexp(f_part, exponent - 16382);
 }
 
 
@@ -131,10 +134,10 @@ void write_float80(uclua_float80 value, uint8_t *buffer) {
 
     // The high bit of the significand is always set for normal numbers, and clear for
     // denormal numbers. This means the significand is 63 bits, not 64, hence why we
-    // multiply here by 2^63 and not 2^64.
-    uint64_t int_significand = float_significand * 2e63;
+    // multiply here by 2^62 and not 2^63.
+    uint64_t int_significand = float_significand * (1ULL << 63);
     if (f_type == FP_NORMAL) {
-        int_significand |= 0x8000000000000000ULL;
+        int_significand |= 1ULL << 63;
         exponent += 16383;
     }
     else
