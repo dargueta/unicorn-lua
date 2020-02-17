@@ -14,8 +14,8 @@ TEST_CASE("read_float80(): all zeros = 0") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
-    CHECK(result == 0.0);
+    CHECK_EQ(errno, 0);
+    CHECK_EQ(result, 0.0);
 }
 
 
@@ -23,7 +23,7 @@ TEST_CASE("read_float80(): fp indefinite, sign = 0") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0xc0, 0xff, 0x7f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isnan(result));
 }
 
@@ -32,7 +32,7 @@ TEST_CASE("read_float80(): fp indefinite, sign = 1") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0xc0, 0xff, 0xff};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isnan(result));
 }
 
@@ -41,9 +41,9 @@ TEST_CASE("read_float80(): +INF") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isinf(result));
-    CHECK(std::signbit(result) == false);
+    CHECK_FALSE(std::signbit(result));
 }
 
 
@@ -51,9 +51,9 @@ TEST_CASE("read_float80(): -INF") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isinf(result));
-    CHECK(std::signbit(result) == true);
+    CHECK(std::signbit(result));
 }
 
 
@@ -61,7 +61,7 @@ TEST_CASE("read_float80(): qNaN, sign = 0") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0xc0, 0xff, 0x7f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isnan(result));
 }
 
@@ -70,7 +70,7 @@ TEST_CASE("read_float80(): qNaN, sign = 1") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0xc0, 0xff, 0xff};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
     CHECK(std::isnan(result));
 }
 
@@ -96,12 +96,12 @@ TEST_CASE("read_float80(): 3FFF8000000000000001 == 1.0") {
     const uint8_t data[] = {1, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x3f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
 
     uclua_float80 float_significand = frexp(result, &exponent);
-    CHECK(exponent == 1);
-    CHECK(float_significand == 0.5);
-    CHECK(result == 1.0);
+    CHECK_EQ(exponent, 1);
+    CHECK_EQ(float_significand, 0.5);
+    CHECK_EQ(result, 1.0);
 }
 
 
@@ -110,12 +110,12 @@ TEST_CASE("read_float80(): 3FFE8000000000000001 == 0.5") {
     const uint8_t data[] = {1, 0, 0, 0, 0, 0, 0, 0x80, 0xfe, 0x3f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
 
     uclua_float80 float_significand = frexp(result, &exponent);
-    CHECK(exponent == 0);
-    CHECK(float_significand == 0.5);
-    CHECK(result == 0.5);
+    CHECK_EQ(exponent, 0);
+    CHECK_EQ(float_significand, 0.5);
+    CHECK_EQ(result, 0.5);
 }
 
 
@@ -124,12 +124,12 @@ TEST_CASE("read_float80(): 3FFE8000000000000100 == 1.0") {
     const uint8_t data[] = {4, 0, 0, 0, 0, 0, 0, 0x80, 0xfe, 0x3f};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
 
     uclua_float80 float_significand = frexp(result, &exponent);
-    CHECK(exponent == 2);
-    CHECK(float_significand == 0.5);
-    CHECK(result == 2.0);
+    CHECK_EQ(exponent, 2);
+    CHECK_EQ(float_significand, 0.5);
+    CHECK_EQ(result, 2.0);
 }
 
 
@@ -140,12 +140,12 @@ TEST_CASE("read_float80(): 4000C90FDAA2922A8000 == 3.141592654") {
     const uint8_t data[] = {0, 0x80, 0x2a, 0x92, 0xa2, 0xda, 0x0f, 0xc9, 0, 0x40};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
 
     uclua_float80 float_significand = frexp(result, &exponent);
-    CHECK(exponent == 2);
-    CHECK(float_significand == 0.7853981635);
-    CHECK(result == 3.141592654);
+    CHECK_EQ(exponent, 2);
+    CHECK_EQ(float_significand, 0.7853981635);
+    CHECK_EQ(result, 3.141592654);
 }
 
 
@@ -154,12 +154,12 @@ TEST_CASE("read_float80(): C000C90FDAA2922A8000 == -3.141592654") {
     const uint8_t data[] = {0, 0x80, 0x2a, 0x92, 0xa2, 0xda, 0x0f, 0xc9, 0, 0xc0};
 
     uclua_float80 result = read_float80(data);
-    CHECK(errno == 0);
+    CHECK_EQ(errno, 0);
 
     uclua_float80 float_significand = frexp(result, &exponent);
-    CHECK(exponent == 2);
-    CHECK(float_significand == -0.7853981635);
-    CHECK(result == -3.141592654);
+    CHECK_EQ(exponent, 2);
+    CHECK_EQ(float_significand, -0.7853981635);
+    CHECK_EQ(result, -3.141592654);
 }
 #endif
 
@@ -169,7 +169,7 @@ TEST_CASE("write_float80(): 0 -> 00000000000000000000") {
     uint8_t result[10];
 
     write_float80(0, result);
-    CHECK(memcmp(expected, result, 10) == 0);
+    CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 
 
@@ -180,7 +180,7 @@ TEST_CASE("write_float80(): NaN -> FFFFFFFFFFFFFFFFFFFF") {
     uint8_t result[10];
 
     write_float80(NAN, result);
-    CHECK(memcmp(expected, result, 10) == 0);
+    CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 
 
@@ -189,7 +189,7 @@ TEST_CASE("write_float80(): +INF -> 7FFF8000000000000000") {
     uint8_t result[10];
 
     write_float80(INFINITY, result);
-    CHECK(memcmp(expected, result, 10) == 0);
+    CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 
 
@@ -198,7 +198,7 @@ TEST_CASE("write_float80(): -INF -> FFFF8000000000000000") {
     uint8_t result[10];
 
     write_float80(-INFINITY, result);
-    CHECK(memcmp(expected, result, 10) == 0);
+    CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 
 
@@ -211,7 +211,7 @@ TEST_CASE("write_float80(): 3.141592654 -> 4000C90FDAA2922A8000") {
     uint8_t result[10];
 
     write_float80(3.141592654, result);
-    CHECK(memcmp(expected, result, 10) == 0);
+    CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 #endif
 
@@ -276,6 +276,7 @@ TEST_CASE("Register::as_float64(): 1.4142135623730951") {
 #if 0
 TEST_CASE("Register::as_float80(): 2.71828182845904524") {
     uint8_t value[10];
+
     write_float80(2.71828182845904524, value);
 
     Register reg(value, UL_REG_TYPE_FLOAT80);
