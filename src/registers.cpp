@@ -253,7 +253,10 @@ uclua_float64 Register::as_float64() const noexcept {
 
 
 uclua_float80 Register::as_float80() const {
-    return read_float80(data_);
+    throw LuaBindingError(
+        "Error: Writing 80-bit floating-point numbers is currently not supported."
+    );
+    //return read_float80(data_);
 }
 
 
@@ -440,9 +443,15 @@ void Register::push_to_lua(lua_State *L) const {
             lua_seti(L, -2, 1);
             break;
         case UL_REG_TYPE_FLOAT80:
-            /* Probably gonna lose precision here */
+            throw LuaBindingError(
+                "Error: Reading 80-bit floating-point numbers is currently not"
+                " supported."
+            );
+            /*
+            // Probably gonna lose precision here
             lua_pushnumber(L, this->as_float80());
             break;
+            */
         case UL_REG_TYPE_INT8_ARRAY_16:
             values_16xi8 = this->as_16xi8();
             lua_createtable(L, 16, 0);
