@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.0b6 (unreleased)
+1.0b6 (2020-02-17)
 ------------------
 
 New Features
