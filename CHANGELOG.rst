@@ -4,9 +4,35 @@ Changes
 1.0b6 (unreleased)
 ------------------
 
-* Completely fixed buffer overflow when reading registers over 64 bits. (Closes `issue #3`_)
+New Features
+~~~~~~~~~~~~
 
+When reading or writing a register you can now specify how the register should be
+interpreted, e.g. as a 64-bit float or a pair of 32-bit floats, and so on. (Closes
+`issue #2`_, `issue #6`_ and `issue #5`_ *except* for the x87 ST(x) registers.)
+
+.. code-block:: lua
+
+    -- Read register MM0 as an array of two 32-bit integers
+    local regs = engine:reg_read_as(x86.UC_X86_REG_MM0, uc.UL_REG_TYPE_INT32_ARRAY_2)
+
+Note: you cannot read/write multiple registers at the same time with this feature.
+
+A variety of register types have been implemented, pretty much entirely based on what
+the x86 instruction set and its extensions support, so they may not all be appropriate
+for the architecture your Unicorn engine is running. These constants start with
+``UL_REG_TYPE_`` and can be found in the main ``unicorn`` module.
+
+Bugfixes
+~~~~~~~~
+
+Completely fixed buffer overflow when reading registers over 64 bits. (Closes
+`issue #3`_)
+
+.. _issue #2: https://github.com/dargueta/unicorn-lua/issues/2
 .. _issue #3: https://github.com/dargueta/unicorn-lua/issues/3
+.. _issue #5: https://github.com/dargueta/unicorn-lua/issues/5
+.. _issue #6: https://github.com/dargueta/unicorn-lua/issues/6
 
 1.0b5 (2019-10-23)
 ------------------

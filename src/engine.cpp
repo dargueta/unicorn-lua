@@ -39,8 +39,10 @@ const luaL_Reg kEngineInstanceMethods[] = {
     {"mem_write", ul_mem_write},
     {"query", ul_query},
     {"reg_read", ul_reg_read},
+    {"reg_read_as", ul_reg_read_as},
     {"reg_read_batch", ul_reg_read_batch},
     {"reg_write", ul_reg_write},
+    {"reg_write_as", ul_reg_write_as},
     {"reg_write_batch", ul_reg_write_batch},
     {nullptr, nullptr}
 };
