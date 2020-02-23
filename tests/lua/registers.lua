@@ -126,4 +126,53 @@ describe('Register tests', function ()
       end)
     end)
   end)
+
+  describe('Read registers in alternate formats', function ()
+    it('Read R9 as two 32-bit signed integers', function ()
+      local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+      uc:mem_map(0, 2^20)
+
+      -- mov    r9, 0x0000deadcafebeef
+      uc:mem_write(0, '\073\185\239\190\254\202\173\222\000\000')
+      uc:emu_start(0, 2^20, 0, 1)
+
+      -- First ensure that the R9 register contains the value we expect
+      assert.are.equals(0x0000deadcafebeef, uc:reg_read(x86.UC_X86_REG_R9))
+
+      local registers = uc:reg_read_as(
+        x86.UC_X86_REG_R9, unicorn.UL_REG_TYPE_INT32_ARRAY_2
+      )
+
+      -- n.b. 0xcafebeef is a signed 32-bit number
+      assert.are.same({-889274641, 0xdead}, registers)
+    end)
+
+    it('Read RCX as eight 8-bit signed integers', function ()
+      local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+      uc:mem_map(0, 2^20)
+
+      -- mov    rcx, 0x58057695f8cf0e50
+      uc:mem_write(0, '\072\185\080\014\207\248\149\118\005\088')
+      uc:emu_start(0, 2^20, 0, 1)
+
+      -- First ensure that the RCX register contains the value we expect
+      assert.are.equals(0x58057695f8cf0e50, uc:reg_read(x86.UC_X86_REG_RCX))
+
+      local registers = uc:reg_read_as(
+        x86.UC_X86_REG_RCX, unicorn.UL_REG_TYPE_INT8_ARRAY_8
+      )
+
+      assert.are.same({80, 14, -49, -8, -107, 118, 5, 88}, registers)
+    end)
+  end)
+  describe('Write registers in alternate formats', function ()
+    it('Write to RCX as two 32-bit signed integers.', function ()
+      local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+
+      uc:reg_write_as(
+        x86.UC_X86_REG_RCX, {-123456, 500}, unicorn.UL_REG_TYPE_INT32_ARRAY_2
+      )
+      assert.are.equals(0x000001f4fffe1dc0, uc:reg_read(x86.UC_X86_REG_RCX))
+    end)
+  end)
 end)

@@ -16,16 +16,17 @@ os:
   - osx
   - windows
 
+python:
+  - "3.7"
+
 # Needed for CMake 3.12+
 osx_image: xcode10
 
 addons:
   apt:
     packages:
-      - cmake
-    sources:
-      - kalakris-cmake
-    update: true
+      - python3-pip
+      - python-dev
 
 matrix:
   allow_failures:
@@ -43,7 +44,6 @@ before_install:
   - python2 -V || true
   - python3 -V || true
   - cmake --version
-  - which cmake
 
 install: bash ci/travis-install.sh
 

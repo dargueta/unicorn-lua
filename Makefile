@@ -39,7 +39,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 .PHONY: test
 test: $(BUILD_DIR) $(SHARED_LIB_FILE)
-	make -C $(BUILD_DIR) test "ARGS=--output-on-failure"
+	make -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 .PHONY: run_example

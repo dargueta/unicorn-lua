@@ -25,7 +25,7 @@ foreach(_slug IN ITEMS ${ARCHITECTURE_SLUGS})
     set(_file "${CMAKE_CURRENT_BINARY_DIR}/${_slug}_const.cpp")
     add_custom_command(
         OUTPUT "${_file}"
-        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"
+        COMMAND "python3" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
 endforeach()
