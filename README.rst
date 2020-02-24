@@ -78,21 +78,12 @@ This doesn't affect how arguments are passed *to* the library, only values retur
 Floating-point Registers
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Straight-up don't work. Everything is read as an integer so you're going to get
-back whatever the binary representation of a floating-point integer is on your
-machine, which can differ between architectures. This is fixable, but is going
-to be tedious and error-prone for architectures other than x86 and MIPS because
-I'm not as familiar with those.
+The 80-bit ST(x) registers on x86 architectures can't be read from or written to
+properly; a bug in the current encoding/decoding code gives garbage values so I've
+disabled it for the time being. Even if it did work, because Lua's floating-point
+numbers are by default at most 64 bits, you're still going to lose precision when
+reading the registers.
 
-Big-Endian Hosts
-~~~~~~~~~~~~~~~~
-
-Reading from/writing to registers on a big-endian host system won't work for
-registers that aren't the same size as a Lua integer. This is because the library
-currently has no concept of register sizes and thus doesn't know how to do
-typecasts. Due to how byte order works this doesn't matter on a little-endian
-host, but on a big-endian host it'll result in things like a 16-bit register
-getting returned to Lua as 0x7fff000000000000 instead of 0x7fff.
 
 Emergency Collection and Memory Leaks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
