@@ -1,6 +1,14 @@
 Changes
 =======
 
+1.0b7 (2020-02-25)
+------------------
+
+* Added a lot of documentation. See the ``docs`` directory.
+* Updated issues list in README
+* Updated copyright years in license file
+* Minor code cleanup
+
 1.0b6 (2020-02-17)
 ------------------
 
