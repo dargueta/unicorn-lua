@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.h"

@@ -1,12 +1,8 @@
-#include <cassert>
-
-extern "C" {
-#include <lua.h>
-}
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/lua.h"
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
 
