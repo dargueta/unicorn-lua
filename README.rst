@@ -11,7 +11,7 @@ unicorn-lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey
    :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
@@ -214,9 +214,8 @@ You may need superuser privileges to install. If installation fails, try
 Windows
 ~~~~~~~
 
-*Support coming soon*
+.. code-block:: sh
 
-..
     python3 configure
     chdir build
     cmake ..
