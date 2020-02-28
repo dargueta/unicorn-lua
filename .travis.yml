@@ -37,11 +37,12 @@ matrix:
       env: LUA_VERSION=luajit2.0
 
 before_install:
+  # `setuptools` isn't always installed. Odd, because it used to be...
+  - pip3 install -U pip setuptools
   - bash ci/travis-setup.sh
   # Debugging stuff. The `|| true` is necessary for Windows, which only has an executable
   # named `python`. Whether you get Python 2 or 3 depends on $PATH.
   - python -V
-  - python2 -V || true
   - python3 -V || true
   - cmake --version
 
