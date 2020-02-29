@@ -5,41 +5,13 @@ work with an installed library rather than from the source code. The headers mus
 present, but that's all that's required.
 """
 
-import configparser
+import ast
+import collections
 import datetime
 import logging
 import os
+import re
 import sys
-
-import pycparser
-from pycparser import c_ast
-from pycparser import plyparser
-
-HERE = os.path.dirname(__file__)
-
-
-def evaluate_constant(node, enum_item):
-    # type: (c_ast.Enum, c_ast.Enumerator) -> int
-    """Evaluate a pycparser.c_ast.Constant object into an integer."""
-    if enum_item.value.type != "int":
-        raise NotImplementedError(
-            "Unsupported datatype `%s` for enum item %s::%s."
-            % (enum_item.value.type, node.name, enum_item.name)
-        )
-    return int(enum_item.value.value)
-
-
-def evaluate_binop_expression(node, enum_item):
-    # type: (c_ast.Enum, c_ast.Enumerator) -> int
-    """Evaluate `X << Y` where X and Y are integer constants."""
-    if enum_item.value.op != "<<":
-        raise NotImplementedError(
-            '%s::%s is defined using an unsupported operator: "%s"'
-            % (node.name, enum_item.name, enum_item.value.op)
-        )
-    lhs = enum_item.value.left
-    rhs = enum_item.value.right
-    return int(lhs.value) << int(rhs.value)
 
 
 GENERATED_FILE_TEMPLATE = """\
@@ -57,8 +29,8 @@ GENERATED_FILE_TEMPLATE = """\
 #include "unicornlua/utils.h"
 
 static const struct NamedIntConst kConstants[] {{
-    {values},
-    {{NULL, 0}}
+{values},
+    {{nullptr, 0}}
 }};
 
 extern "C" UNICORN_EXPORT int luaopen_unicorn_{slug}_const(lua_State *L) {{
@@ -69,62 +41,115 @@ extern "C" UNICORN_EXPORT int luaopen_unicorn_{slug}_const(lua_State *L) {{
 """
 
 
-class EnumVisitor(c_ast.NodeVisitor):
-    """Node visitor for extracting enums from a header file."""
+def clean_line(line):
+    if "//" in line:
+        line, _sep, comment = line.partition("//")
+    if "/*" in line:
+        line, _sep, comment = line.partition("/*")
+        comment, _sep, _trash = comment.partition("*/")
+    else:
+        comment = ""
 
-    def __init__(self):
-        self.enums = {}
+    return line.strip(), comment.strip()
 
-    def visit_Enum(self, node):
-        # type: (c_ast.Enum) -> None
-        next_value = 0
-        all_enum_values = {}
 
-        for enum_item in node.values:
-            if enum_item.value is None:
-                value = next_value
-            elif isinstance(enum_item.value, c_ast.ID):
-                # Enum value is assigned to another value; assume it's a preexisting
-                # enum value.
-                if enum_item.value.name not in all_enum_values:
-                    raise ValueError(
-                        "Enum item `%s::%s` references unrecognized identifier `%s`."
-                        % (node.name, enum_item.name, enum_item.value.name)
-                    )
-                value = all_enum_values[enum_item.value.name]
-            elif isinstance(enum_item.value, c_ast.Constant):
-                value = evaluate_constant(node, enum_item)
-            elif isinstance(enum_item.value, c_ast.BinaryOp):
-                value = evaluate_binop_expression(node, enum_item)
-            else:
-                raise TypeError(
-                    "Unexpected node type when processing enum item `%s::%s`: %r"
-                    % (node.name, enum_item.name, enum_item.value)
+def generate_constants_in_one_go(header_file):
+    resolved_values = collections.OrderedDict()
+    raw_matches = {}
+    comments = {}
+
+    with open(header_file, "r") as fd:
+        all_file_lines = collections.OrderedDict(
+            [
+                (lineno, line.strip())
+                for lineno, line in enumerate(fd, start=1)
+                if not line.isspace()
+            ]
+        )
+
+    line_iterator = iter(all_file_lines.items())
+
+    for lineno, line in line_iterator:
+        line, comment = clean_line(line)
+
+        # First check to see if this is a #define statement
+        match = re.match(r"^#define\s+UC_(?P<id>\w+)\s+(?P<value>.*)$", line)
+        if match:
+            name = "UC_" + match.group("id")
+            raw_value = match.group("value")
+            try:
+                resolved_values[name] = ast.literal_eval(raw_value)
+            except (NameError, SyntaxError, ValueError):
+                raw_matches[name] = raw_value
+            continue
+
+        # Not a #define; see if it's an enum.
+        if "enum uc_" not in line.lower():
+            continue
+
+        # This is the beginning of an enum. Subsequent lines until the closing `}` are
+        # part of it. We need to keep track because enums without an explicitly defined
+        # value are incremented by one from the previous enum value.
+        next_enum_value = 0
+        enum_start_line = lineno
+        while True:
+            lineno, line = next(line_iterator, (None, None))
+            if line is None:
+                # Hit EOF before we hit the end of the enum. That's odd.
+                logging.warning(
+                    "Hit EOF before end of enum beginning on line %d.", enum_start_line
                 )
-            next_value = value + 1
-            all_enum_values[enum_item.name] = value
-        self.enums[node.name] = all_enum_values
+                break
+            elif "}" in line:
+                break
 
+            line, comment = clean_line(line)
 
-def get_gcc_predefines():
-    """Get a dict of macros we need to predefine for this platform.
+            # Sometimes we have multiple enum definitions on one line. We need to handle
+            # these one at a time. Splitting the line by commas should be enough to
+            # separate out multiple expressions.
+            for expression in line.strip(",").split(","):
+                expression = expression.strip()
+                if not expression:
+                    continue
 
-    Preprocessing a header file will fail on some platforms because the Python C parser
-    can't find identifiers defined internally by the compiler. By defining them
-    ourselves in the call to GCC we can hack our way around this problem for any
-    platform, albeit a bit inelegantly.
-    """
-    config = configparser.ConfigParser(default_section="common")
-    config.read(os.path.join(HERE, "gcc_predefs.ini"))
+                # See if this enum value is being assigned rather than implicit.
+                match = re.match(r"^UC_(?P<id>\w+)\s*=\s*(?P<expr>.+)$", expression)
+                if match:
+                    # Enum value is assigned. Whatever's on the right-hand side, any
+                    # names it references must already be defined.
+                    name = "UC_" + match.group("id")
+                    raw_value = match.group("expr")
+                    try:
+                        real_value = eval(raw_value, resolved_values)
+                    except NameError as nerr:
+                        logging.error(
+                            "Failed to resolve %r on line %d: %s", name, lineno, nerr
+                        )
+                        continue
+                    resolved_values[name] = real_value
+                    next_enum_value = real_value + 1
+                else:
+                    # Not an explicit assignment. Expect this expression to be just a
+                    # single identifier.
+                    match = re.match(r"^UC_(\w+)$", expression)
+                    if match:
+                        resolved_values["UC_" + match.group(1)] = next_enum_value
+                        next_enum_value += 1
+                    else:
+                        raise SyntaxError(
+                            "Couldn't match any expression type to: %r" % expression
+                        )
 
-    predefs = config.defaults()
-    if config.has_section(sys.platform):
-        predefs.update(dict(config.items(sys.platform)))
-    return predefs
+    for name, raw_value in raw_matches.items():
+        if name not in resolved_values:
+            resolved_values[name] = eval(raw_value, resolved_values)
+
+    return resolved_values
 
 
 def generate_constants_for_file(header_file, output_file):
-    # type: (str, str) -> bool
+    # type: (str, str) -> None
     """Generate a constants file from a Unicorn header.
 
     Arguments:
@@ -133,35 +158,11 @@ def generate_constants_for_file(header_file, output_file):
             this is an absolute path.
         output_file (str):
             The path to the Lua file to create that'll contain these defined constants.
-
-    Returns:
-        bool: True if the operation succeeded, False otherwise.
     """
     header_file = os.path.abspath(header_file)
     logging.info("Processing file: %s", header_file)
 
-    predefs = get_gcc_predefines()
-    command_parameters = ["-E", "-std=c11"]
-    for name, value in predefs.items():
-        command_parameters.extend(("-D", "%s=%s" % (name, value)))
-
-    try:
-        ast = pycparser.parse_file(
-            header_file, use_cpp=True, cpp_path="gcc", cpp_args=command_parameters
-        )
-    except plyparser.ParseError as err:
-        logging.error(
-            "%s while processing `%s`: %s", type(err).__name__, header_file, err
-        )
-        return False
-
-    enum_visitor = EnumVisitor()
-    enum_visitor.visit(ast)
-
-    all_value_pairs = {}
-
-    for values in enum_visitor.enums.values():
-        all_value_pairs.update(values)
+    all_value_pairs = generate_constants_in_one_go(header_file)
 
     with open(output_file, "w") as out_fd:
         out_fd.write(
@@ -176,13 +177,12 @@ def generate_constants_for_file(header_file, output_file):
             )
         )
 
-    logging.info("Finished. Found %d enum(s) in file.", len(enum_visitor.enums))
-    return True
+    logging.info("Finished. Found %d constant(s) in file.", len(all_value_pairs))
 
 
 def main():
     # type: () -> int
-    logging.basicConfig(level=logging.WARNING, format="[%(levelname)-5s] %(message)s")
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)-5s] %(message)s")
     if len(sys.argv) != 3:
         logging.error(
             "Script takes two arguments, the path to a header file and the path to the"
@@ -191,9 +191,8 @@ def main():
         return 1
 
     logging.info("Generating `%s`...", sys.argv[2])
-    if generate_constants_for_file(os.path.abspath(sys.argv[1]), sys.argv[2]):
-        return 0
-    return 1
+    generate_constants_for_file(os.path.abspath(sys.argv[1]), sys.argv[2])
+    return 0
 
 
 if __name__ == "__main__":

@@ -1,2 +1,0 @@
-# Requirements for the Python scripts
-pycparser>=2.0

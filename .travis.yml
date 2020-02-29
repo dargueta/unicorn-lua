@@ -43,7 +43,6 @@ before_install:
   - cmake --version
 
 install:
-  - pip3 install -U -r python-requirements.txt
   - git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-${UNICORN_VERSION}
   - pushd unicorn-${UNICORN_VERSION}
   - git fetch --all --tags --prune
