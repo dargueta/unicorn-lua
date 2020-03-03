@@ -1,7 +1,8 @@
 describe('Memory tests', function ()
   it('Writes to memory and reads it back', function ()
     local unicorn = require 'unicorn'
-    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    local uc_const = require 'unicorn.unicorn_const'
+    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
     uc:mem_map(0, 2 ^ 20)
 

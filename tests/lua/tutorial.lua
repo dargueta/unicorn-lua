@@ -3,13 +3,14 @@
 describe('[x86] Basic register read/write', function ()
   it('Tutorial from website', function ()
     local unicorn = require 'unicorn'
+    local uc_const = require 'unicorn.unicorn_const'
     local x86 = require 'unicorn.x86_const'
 
     local X86_CODE32 = "\065\074" -- INC ecx; DEC edx
     local ADDRESS = 0x1000000
 
     -- Initialize emulator in X86-32bit mode
-    local mu = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    local mu = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
     -- map 2MB memory for this emulation
     mu:mem_map(ADDRESS, 2 ^ 21)
