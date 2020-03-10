@@ -1,6 +1,30 @@
 Changes
 =======
 
+1.0b8 (Unreleased)
+------------------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+* Removed the non-standard ``UC_MILLISECOND_SCALE`` constant. You must use the
+  original (misspelled) constant defined in the Unicorn library's code,
+  ``UC_MILISECOND_SCALE``.
+* In line with the other API bindings, constants in the global ``unicorn`` namespace
+  have been moved to ``unicorn.unicorn_const``.
+* All register type constants have been moved to ``unicorn.registers_const`` and
+  have lost their ``UL_`` prefix. The example given for 1.0b6 below will now need
+  to be:
+
+.. code-block:: lua
+
+    local regs_const = require "unicorn.registers_const"
+
+    local regs = engine:reg_read_as(
+        x86_const.UC_X86_REG_MM0,
+        regs_const.REG_TYPE_INT32_ARRAY_2
+    )
+
 1.0b7 (2020-02-25)
 ------------------
 
@@ -22,7 +46,7 @@ interpreted, e.g. as a 64-bit float or a pair of 32-bit floats, and so on. (Clos
 .. code-block:: lua
 
     -- Read register MM0 as an array of two 32-bit integers
-    local regs = engine:reg_read_as(x86.UC_X86_REG_MM0, uc.UL_REG_TYPE_INT32_ARRAY_2)
+    local regs = engine:reg_read_as(x86_const.UC_X86_REG_MM0, unicorn.UL_REG_TYPE_INT32_ARRAY_2)
 
 Note: you cannot read/write multiple registers at the same time with this feature.
 

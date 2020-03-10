@@ -1,5 +1,6 @@
 describe("Ensure library loads don't crash.", function ()
   it('Import base library', function () require 'unicorn' end)
+  it('[unicorn] require', function () require 'unicorn.unicorn_const' end)
   it('[arm] require', function() require 'unicorn.arm_const' end)
   it('[arm64] require', function () require 'unicorn.arm64_const' end)
   it('[m68k] require', function () require 'unicorn.m68k_const' end)

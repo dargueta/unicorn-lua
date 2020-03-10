@@ -1,5 +1,5 @@
-if (NOT DEFINED ARCHITECTURE_SLUGS)
-    set(ARCHITECTURE_SLUGS arm;arm64;mips;m68k;sparc;x86)
+if (NOT DEFINED HEADER_SLUGS)
+    set(HEADER_SLUGS arm;arm64;mips;m68k;sparc;x86;unicorn)
 endif()
 
 
@@ -11,17 +11,17 @@ file(GLOB LIBRARY_CPP_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 # architecture-specific values. This takes the architecture slugs and turns them into
 # file paths.
 list(
-    TRANSFORM ARCHITECTURE_SLUGS
+    TRANSFORM HEADER_SLUGS
     PREPEND "${CMAKE_CURRENT_BINARY_DIR}/"
-    OUTPUT_VARIABLE _arch_files
+    OUTPUT_VARIABLE _const_files
 )
-list(TRANSFORM _arch_files APPEND "_const.cpp")
+list(TRANSFORM _const_files APPEND "_const.cpp")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Create commands for autogenerating all the constants files.
-foreach(_slug IN ITEMS ${ARCHITECTURE_SLUGS})
+foreach(_slug IN ITEMS ${HEADER_SLUGS})
     set(_file "${CMAKE_CURRENT_BINARY_DIR}/${_slug}_const.cpp")
     add_custom_command(
         OUTPUT "${_file}"
@@ -30,7 +30,7 @@ foreach(_slug IN ITEMS ${ARCHITECTURE_SLUGS})
     )
 endforeach()
 
-add_library(unicornlua_library SHARED ${LIBRARY_CPP_SOURCES} ${_arch_files})
+add_library(unicornlua_library SHARED ${LIBRARY_CPP_SOURCES} ${_const_files})
 
 target_include_directories(
     unicornlua_library
