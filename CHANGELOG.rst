@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.0b8 (Unreleased)
+1.0b8 (2020-03-09)
 ------------------
 
 Breaking Changes
