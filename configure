@@ -86,13 +86,6 @@ def parse_args():
         "--lua-lib", metavar="PATH", help="The path to the Lua library file."
     )
     parser.add_argument(
-        "--luarocks-version",
-        metavar="VERSION",
-        default=DEFAULT_LUAROCKS_VERSION,
-        help="The version of LuaRocks to use when installing Lua as a virtual"
-        " environment. Ignored if --use-venv is not set.",
-    )
-    parser.add_argument(
         "--uc-headers",
         metavar="PATH",
         help="The path to the directory holding the Unicorn header files.",
