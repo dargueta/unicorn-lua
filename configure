@@ -78,11 +78,6 @@ def parse_args():
         " first directory in Lua's `packages.cpath`.",
     )
     parser.add_argument(
-        "--lua-headers",
-        metavar="PATH",
-        help="The path to the directory holding the Lua header files.",
-    )
-    parser.add_argument(
         "--lua-lib", metavar="PATH", help="The path to the Lua library file."
     )
     parser.add_argument(
@@ -94,28 +89,36 @@ def parse_args():
         "--uc-lib", metavar="PATH", help="The path to the Unicorn shared library file."
     )
     parser.add_argument(
-        "--use-venv",
-        action="store_true",
-        help="Use a virtual environment instead of the OS's Lua. This allows you to use"
-        " a different version of Lua than your OS, or isolate changes to a copy of your"
-        " OS's Lua.",
+        "--use-venv", action="store_true", default=False
     )
     parser.add_argument(
-        "--venv-version",
-        metavar="VERSION",
-        dest="venv_version",
-        choices=tuple(SUPPORTED_LUA_VERSIONS),
-        default=DEFAULT_LUA_VERSION,
-        help="The Lua version to use in the virtual environment. If not given, defaults"
-        " to the OS's Lua's version, or %s if Lua isn't installed at all. Implies"
-        " --use-venv. Supported values: %s"
-        % (DEFAULT_LUA_VERSION, ", ".join(SUPPORTED_LUA_VERSIONS)),
+        "--lua-exe-path",
+        metavar="PATH",
+        help="The path to the Lua executable to use for testing. Defaults to the"
+        " system's Lua installation.",
+        default=shutil.which("lua"),
+    )
+    parser.add_argument(
+        "--luarocks-path",
+        metavar="PATH",
+        help="The path to the LuaRocks executable to install libraries with. Defaults"
+        " to the system's LuaRocks executable.",
+        default=shutil.which("luarocks"),
+    )
+    parser.add_argument(
+        "--lua-headers",
+        metavar="PATH",
+        help="The path to the Lua headers files.",
+    )
+    parser.add_argument(
+        "--lua-library",
+        metavar="PATH",
+        help="The path to the Lua library to use for linking.",
     )
     return parser.parse_args()
 
 
-def get_system_lua_version():
-    lua_exe = shutil.which("lua")
+def get_lua_version(lua_exe=shutil.which("lua")):
     if not lua_exe:
         raise ErrorExit(
             "Lua not installed on OS or not in PATH environment variable. You must use"
@@ -143,6 +146,10 @@ def generate_cmake_parameters(args, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": args.luarocks_version,
         "BUILD_TYPE": args.build_type,
+        "LUA_EXE": args.lua_path,
+        "LUAROCKS_EXE": args.luarocks_path,
+        # Need plural for compatibility with CMake
+        "LUA_LIBRARIES": args.lua_library or "",
     }
 
     if args.uc_lib:
@@ -170,23 +177,10 @@ def main():
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
 
-    if args.venv_version:
-        args.use_venv = True
-
+    install_version = get_lua_version(args.lua_exe_path)
     if args.use_venv:
-        if args.venv_version in SPECIFIC_VERSIONS:
-            if args.venv_version.startswith("luajit"):
-                install_version = SPECIFIC_VERSIONS["5.1"]
-            else:
-                install_version = SPECIFIC_VERSIONS[args.venv_version]
-        else:
-            raise ErrorExit(
-                "Unsupported Lua version: %r. Use --help to see supported versions."
-                % args.venv_version
-            )
         LOG.info("Using virtual environment, Lua %s", install_version)
     else:
-        install_version = get_system_lua_version()
         LOG.info("Using OS installation, Lua %s", install_version)
 
     LOG.info("Generating CMake parameters...")
