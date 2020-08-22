@@ -3,7 +3,7 @@ unicorn-lua
 
 |build-status| |lua-versions| |platforms|
 
-.. |build-status| image:: https://travis-ci.org/dargueta/unicorn-lua.svg?branch=master
+.. |build-status| image:: https://travis-ci.com/dargueta/unicorn-lua.svg?branch=master
    :alt: Build status
    :target: https://travis-ci.org/dargueta/unicorn-lua
 
