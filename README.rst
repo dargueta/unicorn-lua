@@ -5,7 +5,7 @@ unicorn-lua
 
 .. |build-status| image:: https://travis-ci.com/dargueta/unicorn-lua.svg?branch=master
    :alt: Build status
-   :target: https://travis-ci.org/dargueta/unicorn-lua
+   :target: https://travis-ci.com/dargueta/unicorn-lua
 
 .. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0-blue
    :alt: Lua versions
