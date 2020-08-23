@@ -54,7 +54,7 @@ install:
 
 script: |
   ./tools/lua_venv.py -l $LUA_VERSION ~/__lua${LUA_VERSION}
-  ./configure --use-venv --lua-exe-path ~/__lua${LUA_VERSION}  \
+  ./configure --use-venv --lua-exe-path ~/__lua${LUA_VERSION}
   mkdir build                               && \
   cd build                                  && \
   cmake -DCMAKE_VERBOSE_MAKEFILE=YES ..     && \
