@@ -11,7 +11,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 # These are the rocks required for running tests and using examples.
-set(REQUIRED_ROCKS lcurses;busted)
+if (IN_CI_ENVIRONMENT)
+    set(REQUIRED_ROCKS busted)
+else()
+    set(REQUIRED_ROCKS lcurses;busted)
+endif()
+
 
 #find_package(Python3 REQUIRED)
 

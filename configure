@@ -15,11 +15,13 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 CONFIG = configparser.ConfigParser(interpolation=None)
 CONFIG.read(os.path.join(HERE, "tools", "lua_settings.ini"))
 
+
 SUPPORTED_LUA_VERSIONS = tuple(CONFIG["supported_versions"].keys())
 SPECIFIC_VERSIONS = CONFIG["specific_versions"]
 PLATFORM_ALIASES = CONFIG["platform_targets"]
 DEFAULT_LUAROCKS_VERSION = CONFIG["luarocks"]["default_version"]
 DEFAULT_LUA_VERSION = CONFIG["lua"]["default_version"]
+
 
 # Detect if we're in a CI environment. This works for Travis, CircleCI, and
 # AppVeyor. (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
@@ -146,10 +148,14 @@ def generate_cmake_parameters(args, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": args.luarocks_version,
         "BUILD_TYPE": args.build_type,
+<<<<<<< HEAD
         "LUA_EXE": args.lua_path,
         "LUAROCKS_EXE": args.luarocks_path,
         # Need plural for compatibility with CMake
         "LUA_LIBRARIES": args.lua_library or "",
+=======
+        "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
+>>>>>>> master
     }
 
     if args.uc_lib:
