@@ -16,6 +16,7 @@ SUPPORTED_LUA_VERSIONS = {
     "5.1": "5.1",
     "5.2": "5.2",
     "5.3": "5.3",
+    "5.4": "5.4",
     "luajit": "2.0",
     "luajit2.0": "2.0",
 }
@@ -25,6 +26,7 @@ SPECIFIC_VERSIONS = {
     "5.1": "5.1.5",
     "5.2": "5.2.3",
     "5.3": "5.3.5",
+    "5.4": "5.4.0",
     "luajit": "2.0.5",
     "luajit2.0": "2.0.5",
 }
@@ -37,7 +39,7 @@ PLATFORM_ALIASES = {
     "cygwin": "posix",
 }
 
-DEFAULT_LUAROCKS_VERSION = "3.2.1"
+DEFAULT_LUAROCKS_VERSION = "3.3.1"
 DEFAULT_LUA_VERSION = "5.3"
 
 # Detect if we're in a CI environment. This works for Travis, CircleCI, and
@@ -169,6 +171,7 @@ def generate_cmake_parameters(args, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": args.luarocks_version,
         "BUILD_TYPE": args.build_type,
+        "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
     }
 
     if args.uc_lib:
