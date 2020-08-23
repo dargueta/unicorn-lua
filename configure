@@ -148,14 +148,11 @@ def generate_cmake_parameters(args, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": args.luarocks_version,
         "BUILD_TYPE": args.build_type,
-<<<<<<< HEAD
         "LUA_EXE": args.lua_path,
         "LUAROCKS_EXE": args.luarocks_path,
         # Need plural for compatibility with CMake
         "LUA_LIBRARIES": args.lua_library or "",
-=======
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
->>>>>>> master
     }
 
     if args.uc_lib:
