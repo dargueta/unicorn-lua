@@ -4,6 +4,7 @@
 
 import argparse
 import configparser
+import json
 import logging
 import os
 import re
@@ -17,7 +18,7 @@ from urllib import request
 LOG = logging.getLogger(__name__)
 HERE = os.path.dirname(__file__)
 
-CONFIG = configparser.ConfigParser(interpolation=False)
+CONFIG = configparser.ConfigParser(interpolation=None)
 CONFIG.read(os.path.join(HERE, "lua_settings.ini"))
 
 SUPPORTED_LUA_VERSIONS = tuple(CONFIG["supported_versions"].keys())
@@ -100,7 +101,7 @@ def configure_lua(args, extract_dir):
             fd.write(makefile_contents)
 
 
-def compile_lua(args, lua_platform, extract_dir):
+def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     """Compile Lua.
 
     Arguments:
@@ -138,22 +139,22 @@ def compile_lua(args, lua_platform, extract_dir):
     if args.lua_version.startswith("luajit"):
         short_version = args.lua_version[6:]
         return {
-            "LUA_ROOT": install_to,
-            "LUA_EXE": os.path.join(install_to, "bin", "luajit"),
-            "LUA_INCLUDE": os.path.join(
+            "lua_root": install_to,
+            "lua_exe": os.path.join(install_to, "bin", "luajit"),
+            "lua_include": os.path.join(
                 install_to, "include", "luajit-" + short_version
             ),
-            "LUA_LIB": os.path.join(install_to, "lib", "libluajit-5.1.a"),
-            "IS_LUAJIT": "1",
+            "lua_lib": os.path.join(install_to, "lib", "libluajit-5.1.a"),
+            "is_luajit": True,
         }
 
     # else: Regular Lua
     return {
-        "LUA_ROOT": install_to,
-        "LUA_EXE": os.path.join(install_to, "bin", "lua"),
-        "LUA_INCLUDE": os.path.join(install_to, "include"),
-        "LUA_LIB": os.path.join(install_to, "lib", "liblua.a"),
-        "IS_LUAJIT": "0",
+        "lua_root": install_to,
+        "lua_exe": os.path.join(install_to, "bin", "lua"),
+        "lua_include": os.path.join(install_to, "include"),
+        "lua_lib": os.path.join(install_to, "lib", "liblua.a"),
+        "is_luajit": False,
     }
 
 
@@ -216,8 +217,8 @@ def install_luarocks(lua_path_info, install_to, extract_dir):
         [
             os.path.join(extract_dir, "configure"),
             "--prefix=" + install_to,
-            "--with-lua=" + lua_path_info["LUA_ROOT"],
-            "--with-lua-include=" + lua_path_info["LUA_INCLUDE"],
+            "--with-lua=" + lua_path_info["lua_root"],
+            "--with-lua-include=" + lua_path_info["lua_include"],
             "--force-config",
         ],
         cwd=extract_dir,
@@ -275,7 +276,7 @@ def get_luarocks_paths(luarocks_exe):
         LOG.error("Failed to pull LuaRocks C library path.")
         raise ErrorExit(result.stderr)
 
-    return {"LUAROCKS_LPATH": lpath, "LUAROCKS_CPATH": result.stdout.strip()}
+    return {"luarocks_lpath": lpath, "luarocks_cpath": result.stdout.strip()}
 
 
 ########################################################################################
@@ -285,14 +286,10 @@ def get_luarocks_paths(luarocks_exe):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--cmake",
-        help="Write file locations and other information to this file for use by CMake"
-        " later.",
-    )
-    parser.add_argument(
-        "--makefile",
-        help="Write file locations and other information to this file for use in a"
-        " makefile.",
+        "-o", "--config-out",
+        help="Write file locations and other information to this file for use by the"
+        " `configure` script. If not given, results are written to STDOUT.",
+        metavar="PATH",
     )
     parser.add_argument(
         "-l",
@@ -378,17 +375,12 @@ def main():
     else:
         LOG.info("Not installing LuaRocks.")
 
-    if args.cmake:
-        LOG.info("Writing configuration variables to `%s` ...", args.cmake)
-        with open(args.cmake, "w") as fd:
-            fd.write(
-                "\n".join('set(%s "%s")' % kv for kv in configuration_variables.items())
-            )
-
-    if args.makefile:
-        LOG.info("Writing configuration variables to `%s` ...", args.makefile)
-        with open(args.makefile, "w") as fd:
-            fd.write("\n".join("%s=%s" % kv for kv in configuration_variables.items()))
+    if args.config_out:
+        LOG.info("Writing configuration variables to `%s` ...", args.config_out)
+        with open(args.config_out, "w") as fd:
+            json.dump(configuration_variables, fd, indent=2)
+    else:
+        print(json.dumps(configuration_variables, indent=2))
 
 
 if __name__ == "__main__":
