@@ -2,6 +2,7 @@
 
 import argparse
 import configparser
+import json
 import logging
 import os
 import shutil
@@ -74,15 +75,6 @@ def parse_args():
         default="debug",
     )
     parser.add_argument(
-        "--install-path",
-        metavar="PATH",
-        help="The directory to install the compiled Lua library into. Defaults to the"
-        " first directory in Lua's `packages.cpath`.",
-    )
-    parser.add_argument(
-        "--lua-lib", metavar="PATH", help="The path to the Lua library file."
-    )
-    parser.add_argument(
         "--uc-headers",
         metavar="PATH",
         help="The path to the directory holding the Unicorn header files.",
@@ -98,14 +90,12 @@ def parse_args():
         metavar="PATH",
         help="The path to the Lua executable to use for testing. Defaults to the"
         " system's Lua installation.",
-        default=shutil.which("lua"),
     )
     parser.add_argument(
         "--luarocks-path",
         metavar="PATH",
         help="The path to the LuaRocks executable to install libraries with. Defaults"
         " to the system's LuaRocks executable.",
-        default=shutil.which("luarocks"),
     )
     parser.add_argument(
         "--lua-headers",
@@ -116,6 +106,13 @@ def parse_args():
         "--lua-library",
         metavar="PATH",
         help="The path to the Lua library to use for linking.",
+    )
+    parser.add_argument(
+        "--venv-config",
+        metavar="PATH",
+        help="The path to a JSON file containing the output of the tools/lua_venv.py"
+        " script. The variables in here will be used as defaults for arguments not"
+        " specified on the command line. Implies --use-venv."
     )
     return parser.parse_args()
 
@@ -130,47 +127,67 @@ def get_lua_version(lua_exe=shutil.which("lua")):
     return version
 
 
-def generate_cmake_parameters(args, install_version, platform):
-    if args.use_venv:
-        is_luajit = args.venv_version.startswith("luajit")
-    else:
-        # Do not support installing to LuaJIT on the OS platform
-        is_luajit = False
+def set_defaults_from_config(args):
+    result = vars(args)
+    if not args.venv_config:
+        result["use_venv"] = False
+        result["is_luajit"] = False
+        return result
 
+    with open(args.venv_config, "r") as fd:
+        config = json.load(fd)
+
+    result.update({
+        "lua_exe_path": args.lua_exe_path or config.get("lua_exe"),
+        "lua_headers": args.lua_headers or config.get("lua_include"),
+        "lua_library": args.lua_library or config.get("lua_lib"),
+        "luarocks_path": args.luarocks_path or config.get("luarocks_exe"),
+        "luarocks_version": config.get("luarocks_version"),
+        "is_luajit": config.get("is_luajit"),
+        "use_venv": True
+    })
+    return result
+
+
+def generate_cmake_parameters(settings, install_version, platform):
+    is_luajit = settings["is_luajit"]
     short_version = install_version.rpartition(".")[0]
+
     values = {
         "LUA_FULL_VERSION": install_version,
         "LUA_SHORT_VERSION": short_version,
         "IS_LUAJIT": "YES" if is_luajit else "NO",
         "LUAJIT_FULL_VERSION": SPECIFIC_VERSIONS["luajit"] if is_luajit else "",
         "LUAJIT_SHORT_VERSION": SUPPORTED_LUA_VERSIONS["luajit"] if is_luajit else "",
-        "USE_VIRTUALENV": "YES" if args.use_venv else "NO",
+        "USE_VIRTUALENV": "YES" if settings["use_venv"] else "NO",
         "DETECTED_LUA_PLATFORM": platform,
-        "LUAROCKS_VERSION": args.luarocks_version,
-        "BUILD_TYPE": args.build_type,
-        "LUA_EXE": args.lua_path,
-        "LUAROCKS_EXE": args.luarocks_path,
+        "LUAROCKS_VERSION": settings["luarocks_version"],
+        "BUILD_TYPE": settings["build_type"],
+        "LUA_EXE": settings["lua_exe_path"],
+        "LUAROCKS_EXE": settings["luarocks_path"],
         # Need plural for compatibility with CMake
-        "LUA_LIBRARIES": args.lua_library or "",
+        "LUA_LIBRARIES": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
     }
 
-    if args.uc_lib:
-        values["UNICORN_LIBRARY"] = args.uc_lib
-    if args.uc_headers:
+    if settings["uc_lib"]:
+        values["UNICORN_LIBRARY"] = settings["uc_lib"]
+    if settings["uc_headers"]:
         # Since we include using <unicorn/unicorn.h> we actually need the path to the
         # directory *above* the unicorn headers. If the user gave us a path to the
         # Unicorn directory, take its parent.
-        if os.path.basename(args.uc_headers) == "unicorn":
-            values["UNICORN_HEADERS_PATH"] = os.path.dirname(args.uc_headers)
+        if os.path.basename(settings["uc_headers"]) == "unicorn":
+            values["UNICORN_HEADERS_PATH"] = os.path.dirname(settings["uc_headers"])
         else:
-            values["UNICORN_HEADERS_PATH"] = args.uc_headers
+            values["UNICORN_HEADERS_PATH"] = settings["uc_headers"]
 
     return values
 
 
 def main():
     args = parse_args()
+    settings = set_defaults_from_config(args)
+
     logging.basicConfig(
         format="[%(levelname)-5s] %(message)s", level=args.logging_level
     )
@@ -180,14 +197,14 @@ def main():
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
 
-    install_version = get_lua_version(args.lua_exe_path)
-    if args.use_venv:
+    install_version = get_lua_version(settings["lua_exe_path"])
+    if settings["use_venv"]:
         LOG.info("Using virtual environment, Lua %s", install_version)
     else:
         LOG.info("Using OS installation, Lua %s", install_version)
 
     LOG.info("Generating CMake parameters...")
-    cmake_params = generate_cmake_parameters(args, install_version, lua_platform)
+    cmake_params = generate_cmake_parameters(settings, install_version, lua_platform)
     with open("configuration.cmake", "w") as fd:
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 

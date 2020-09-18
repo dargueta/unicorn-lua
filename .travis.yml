@@ -53,8 +53,8 @@ install:
   - popd
 
 script: |
-  ./tools/lua_venv.py -l $LUA_VERSION ~/__lua${LUA_VERSION}
-  ./configure --use-venv --lua-exe-path ~/__lua${LUA_VERSION}
+  ./tools/lua_venv.py -l --config-out ~/settings.json $LUA_VERSION ~/__lua${LUA_VERSION}
+  ./configure --venv-config ~/settings.json
   mkdir build                               && \
   cd build                                  && \
   cmake -DCMAKE_VERBOSE_MAKEFILE=YES ..     && \

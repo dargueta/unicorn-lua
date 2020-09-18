@@ -130,7 +130,7 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
         ["make", "-C", extract_dir] + run_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Compilation failed.")
@@ -184,7 +184,7 @@ def install_lua(lua_version, install_to, extract_dir):
         ["make", "-C", extract_dir, "install"] + run_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Installation failed.")
@@ -197,8 +197,7 @@ def install_lua(lua_version, install_to, extract_dir):
 
 def download_luarocks(download_dir):
     response = request.urlopen(
-        "https://luarocks.org/releases/luarocks-%s.tar.gz"
-        % CONFIG["luarocks"]["default_version"]
+        "https://luarocks.org/releases/luarocks-%s.tar.gz" % LUAROCKS_VERSION
     )
     if response.status != 200:
         raise ErrorExit(
@@ -224,7 +223,7 @@ def install_luarocks(lua_path_info, install_to, extract_dir):
         cwd=extract_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Failed to configure LuaRocks.")
@@ -235,7 +234,7 @@ def install_luarocks(lua_path_info, install_to, extract_dir):
         ["make", "-C", extract_dir, "bootstrap"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Failed to install LuaRocks.")
@@ -258,7 +257,7 @@ def get_luarocks_paths(luarocks_exe):
         [luarocks_exe, "path", "--lr-path"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Failed to pull LuaRocks library path.")
@@ -270,7 +269,7 @@ def get_luarocks_paths(luarocks_exe):
         [luarocks_exe, "path", "--lr-cpath"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        universal_newlines=True,
     )
     if result.returncode != 0:
         LOG.error("Failed to pull LuaRocks C library path.")
@@ -286,7 +285,8 @@ def get_luarocks_paths(luarocks_exe):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-o", "--config-out",
+        "-o",
+        "--config-out",
         help="Write file locations and other information to this file for use by the"
         " `configure` script. If not given, results are written to STDOUT.",
         metavar="PATH",
@@ -371,7 +371,12 @@ def main():
             luarocks_paths = get_luarocks_paths(
                 os.path.join(luarocks_install_to, "bin", "luarocks")
             )
+
             configuration_variables.update(luarocks_paths)
+            configuration_variables["luarocks_exe"] = os.path.join(
+                luarocks_install_to, "bin", "luarocks"
+            )
+            configuration_variables["luarocks_version"] = LUAROCKS_VERSION
     else:
         LOG.info("Not installing LuaRocks.")
 
