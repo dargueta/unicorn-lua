@@ -20,10 +20,7 @@ endif()
 
 #find_package(Python3 REQUIRED)
 
-if(USE_VIRTUALENV)
-    # Need this so we'll have the same variables as find_package(Lua)
-    set(LUA_LIBRARIES "${LUA_LIBRARY}")
-else()
+if(NOT USE_VIRTUALENV)
     find_package(Lua REQUIRED)
 
     find_program(

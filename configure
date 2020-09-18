@@ -17,7 +17,7 @@ CONFIG = configparser.ConfigParser(interpolation=None)
 CONFIG.read(os.path.join(HERE, "tools", "lua_settings.ini"))
 
 
-SUPPORTED_LUA_VERSIONS = tuple(CONFIG["supported_versions"].keys())
+SUPPORTED_LUA_VERSIONS = CONFIG["supported_versions"]
 SPECIFIC_VERSIONS = CONFIG["specific_versions"]
 PLATFORM_ALIASES = CONFIG["platform_targets"]
 DEFAULT_LUAROCKS_VERSION = CONFIG["luarocks"]["default_version"]
@@ -165,6 +165,7 @@ def generate_cmake_parameters(settings, install_version, platform):
         "BUILD_TYPE": settings["build_type"],
         "LUA_EXE": settings["lua_exe_path"],
         "LUAROCKS_EXE": settings["luarocks_path"],
+        "LUA_INCLUDE_DIR": settings["lua_headers"] or "",
         # Need plural for compatibility with CMake
         "LUA_LIBRARIES": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
