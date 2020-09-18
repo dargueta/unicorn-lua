@@ -44,19 +44,8 @@ before_install:
   - cmake --version
 
 install:
-  - git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-${UNICORN_VERSION}
-  - pushd unicorn-${UNICORN_VERSION}
-  - git fetch --all --tags --prune
-  - git checkout ${UNICORN_VERSION}
-  - ./make.sh
-  - sudo ./make.sh install
-  - popd
+  - ./tools/ci/install-unicorn.sh ${UNICORN_VERSION}
+  - ./tools/ci/build-project.sh ${LUA_VERSION}
 
-script: |
-  ./tools/lua_venv.py -l --config-out ~/settings.json $LUA_VERSION ~/__lua${LUA_VERSION}
-  ./configure --venv-config ~/settings.json
-  mkdir build                               && \
-  cd build                                  && \
-  cmake -DCMAKE_VERBOSE_MAKEFILE=YES ..     && \
-  make                                      && \
+script:
   ctest --output-on-failure

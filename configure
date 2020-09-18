@@ -82,9 +82,7 @@ def parse_args():
     parser.add_argument(
         "--uc-lib", metavar="PATH", help="The path to the Unicorn shared library file."
     )
-    parser.add_argument(
-        "--use-venv", action="store_true", default=False
-    )
+    parser.add_argument("--use-venv", action="store_true", default=False)
     parser.add_argument(
         "--lua-exe-path",
         metavar="PATH",
@@ -98,9 +96,7 @@ def parse_args():
         " to the system's LuaRocks executable.",
     )
     parser.add_argument(
-        "--lua-headers",
-        metavar="PATH",
-        help="The path to the Lua headers files.",
+        "--lua-headers", metavar="PATH", help="The path to the Lua headers files.",
     )
     parser.add_argument(
         "--lua-library",
@@ -112,18 +108,26 @@ def parse_args():
         metavar="PATH",
         help="The path to a JSON file containing the output of the tools/lua_venv.py"
         " script. The variables in here will be used as defaults for arguments not"
-        " specified on the command line. Implies --use-venv."
+        " specified on the command line. Implies --use-venv.",
     )
     return parser.parse_args()
 
 
-def get_lua_version(lua_exe=shutil.which("lua")):
+def get_lua_version(lua_exe):
     if not lua_exe:
         raise ErrorExit(
             "Lua not installed on OS or not in PATH environment variable. You must use"
             " a virtual environment (see --use-venv) or install it on your OS."
         )
-    _lua, version, *_rest = run([lua_exe, "-v"]).split()
+
+    output = run([lua_exe, "-v"], stderr=None)
+    _lua, version, *_rest = output.strip().split()
+    return version
+
+
+def get_luarocks_version(luarocks_exe):
+    output = run([luarocks_exe, "--version"], stderr=None)
+    _abs_path, version, *_rest = output.strip().split()
     return version
 
 
@@ -132,20 +136,29 @@ def set_defaults_from_config(args):
     if not args.venv_config:
         result["use_venv"] = False
         result["is_luajit"] = False
+        result["luarocks_version"] = None
+        result["lua_short_version"] = None
+        result["lua_full_version"] = None
+        result["lua_exe_path"] = result["lua_exe_path"] or shutil.which("lua")
+        result["luarocks_path"] = result["luarocks_path"] or shutil.which("luarocks")
         return result
 
     with open(args.venv_config, "r") as fd:
         config = json.load(fd)
 
-    result.update({
-        "lua_exe_path": args.lua_exe_path or config.get("lua_exe"),
-        "lua_headers": args.lua_headers or config.get("lua_include"),
-        "lua_library": args.lua_library or config.get("lua_lib"),
-        "luarocks_path": args.luarocks_path or config.get("luarocks_exe"),
-        "luarocks_version": config.get("luarocks_version"),
-        "is_luajit": config.get("is_luajit"),
-        "use_venv": True
-    })
+    result.update(
+        {
+            "lua_exe_path": args.lua_exe_path or config.get("lua_exe"),
+            "lua_headers": args.lua_headers or config.get("lua_include"),
+            "lua_library": args.lua_library or config.get("lua_lib"),
+            "luarocks_path": args.luarocks_path or config.get("luarocks_exe"),
+            "luarocks_version": config.get("luarocks_version"),
+            "is_luajit": config.get("is_luajit") or False,
+            "lua_short_version": config.get("lua_short_version"),
+            "lua_full_version": config.get("lua_full_version"),
+            "use_venv": True,
+        }
+    )
     return result
 
 
@@ -198,14 +211,21 @@ def main():
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
 
-    install_version = get_lua_version(settings["lua_exe_path"])
+    if not settings["lua_full_version"]:
+        settings["lua_full_version"] = get_lua_version(settings["lua_exe_path"])
+
+    if settings["luarocks_path"] and not settings["luarocks_version"]:
+        settings["luarocks_version"] = get_luarocks_version(settings["luarocks_path"])
+
     if settings["use_venv"]:
-        LOG.info("Using virtual environment, Lua %s", install_version)
+        LOG.info("Using virtual environment, Lua %s", settings["lua_full_version"])
     else:
-        LOG.info("Using OS installation, Lua %s", install_version)
+        LOG.info("Using OS installation, Lua %s", settings["lua_full_version"])
 
     LOG.info("Generating CMake parameters...")
-    cmake_params = generate_cmake_parameters(settings, install_version, lua_platform)
+    cmake_params = generate_cmake_parameters(
+        settings, settings["lua_full_version"], lua_platform
+    )
     with open("configuration.cmake", "w") as fd:
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 
