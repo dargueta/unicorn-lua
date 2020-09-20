@@ -1,6 +1,23 @@
 Changes
 =======
 
+1.0rc1
+------
+
+Overhauled the build configuration system.
+
+* This no longer relies on convoluted CMake scripts to download and install Lua
+* Fixes the problem where LuaJIT had to be used in a virtual environment
+
+If you want to install this into a virtual environment as before, you now must use the
+``lua_venv.py`` script in the ``tools`` directory. See the README for more details on
+how it works.
+
+This is the first release candidate. No significant changes are likely to happen between
+now and 1.0.0; I plan on it being mostly just more testing, some code cleanup, and some
+bugfixes if any pop up.
+
+
 1.0b9 (2020-08-22)
 ------------------
 
@@ -31,6 +48,7 @@ Breaking Changes
         regs_const.REG_TYPE_INT32_ARRAY_2
     )
 
+
 1.0b7 (2020-02-25)
 ------------------
 
@@ -38,6 +56,7 @@ Breaking Changes
 * Updated issues list in README
 * Updated copyright years in license file
 * Minor code cleanup
+
 
 1.0b6 (2020-02-17)
 ------------------
@@ -72,6 +91,7 @@ Completely fixed buffer overflow when reading registers over 64 bits. (Closes
 .. _issue #5: https://github.com/dargueta/unicorn-lua/issues/5
 .. _issue #6: https://github.com/dargueta/unicorn-lua/issues/6
 
+
 1.0b5 (2019-10-23)
 ------------------
 
@@ -89,6 +109,7 @@ Completely fixed buffer overflow when reading registers over 64 bits. (Closes
 * Removed some dead code
 * Fixed odd bug in backport of ``lua_seti()`` that coincidentally worked, but only when
   the Lua stack was small.
+
 
 1.0b4 (2019-09-23)
 ------------------
@@ -136,6 +157,7 @@ Python binding.
 ``unicorn.x86`` is now ``unicorn.x86_const``. This'll allow us to create submodules with
 additional architecture-specific functionality, and mirrors the Python binding's structure
 more closely.
+
 
 1.0b2 (2019-08-21)
 ------------------

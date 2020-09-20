@@ -30,13 +30,6 @@ Known Limitations
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
 
-LuaJIT Installation
-~~~~~~~~~~~~~~~~~~~
-
-When building for LuaJIT, you *must* build using a virtual environment. The configure
-script doesn't support using your OS's LuaJIT installation yet.
-
-
 64-bit Integers
 ~~~~~~~~~~~~~~~
 
@@ -192,7 +185,7 @@ CMake 1.13+:
 
 .. code-block:: sh
 
-    ./configure
+    python3 configure
     cmake -S . -B build
     make -C build
     make -C build install
@@ -201,7 +194,7 @@ CMake 1.12:
 
 .. code-block:: sh
 
-    ./configure
+    python3 configure
     mkdir build
     cd build
     cmake ..
@@ -229,25 +222,48 @@ Development
 Configuration
 ~~~~~~~~~~~~~
 
-Before doing **anything**, you must configure the repository for your system using
-the ``configure`` script. If you're only building the library, you'll only need
-to do this once, unless you want to change the Lua version the library is being
-built for.
+Using a virtual environment for Lua is strongly recommended. You'll want to avoid
+using your OS's real Lua, and using virtual environments allows you to test with
+multiple versions of Lua.
 
-If you're only building for installation, configure the repo for your OS's
-installed version of Lua:
+With a Virtual Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create a separate execution environment, you can use
+the ``lua_venv.py`` script.
+
+.. code-block:: sh
+
+    python3 tools/lua_venv.py --config-out settings.json  \
+                              5.3                         \
+                              ~/my-virtualenvs/5.3/
+
+This will download Lua 5.3, install it in a directory named ``~/my-virtualenvs/5.3``,
+and write all the configuration information needed by ``configure`` into a file
+named ``settings.json``. *It is important that the directory you install Lua into
+doesn't already exist.*
+
+Once this is done,
+
+Using Your OS's Lua
+^^^^^^^^^^^^^^^^^^^
+
+It will probably suffice to run the configure script by itself:
 
 .. code-block:: sh
 
     python3 configure
 
-If you're developing and want to use a specific version of Lua (5.3 in this example):
+You may encounter problems with GCC claiming Lua's headers are missing, or it can't
+find the Lua library. In this case you'll need to find them yourself, and pass
+them to the configure script. For example:
 
 .. code-block:: sh
 
-    python3 configure --venv-version 5.3
+    make clean
+    python3 configure --lua-headers /usr/include/lua        \
+                      --lua-library /lib/lua/5.3/liblua.a
 
-For details on other customization options, run ``python3 configure --help``.
 
 Setting Up the Build Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
