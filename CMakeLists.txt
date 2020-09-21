@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(UnicornLua VERSION 0.1 LANGUAGES CXX)
 
 include("${PROJECT_SOURCE_DIR}/configuration.cmake")
-include("${PROJECT_SOURCE_DIR}/cmake/install-lua.cmake")
-include("${PROJECT_SOURCE_DIR}/cmake/install-luajit.cmake")
-include("${PROJECT_SOURCE_DIR}/cmake/install-luarocks.cmake")
 
 option(BUILD_DOCS "Build documentation" ON)
 
@@ -23,19 +20,7 @@ endif()
 
 #find_package(Python3 REQUIRED)
 
-if(USE_VIRTUALENV)
-    if(NOT EXISTS "${LUA_EXE}")
-        if(IS_LUAJIT)
-            install_luajit()
-        else()
-            install_lua()
-        endif()
-    endif()
-    install_luarocks()
-
-    # Need this so we'll have the same variables as find_package(Lua)
-    set(LUA_LIBRARIES "${LUA_LIBRARY}")
-else()
+if(NOT USE_VIRTUALENV)
     find_package(Lua REQUIRED)
 
     find_program(

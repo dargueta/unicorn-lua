@@ -42,6 +42,7 @@ extern "C" UNICORN_EXPORT int luaopen_unicorn_{slug}_const(lua_State *L) {{
 
 
 def clean_line(line):
+    """Strip whitespace off a line and separate out the comment, if any."""
     if "//" in line:
         line, _sep, comment = line.partition("//")
     if "/*" in line:
@@ -53,10 +54,10 @@ def clean_line(line):
     return line.strip(), comment.strip()
 
 
-def generate_constants_in_one_go(header_file):
+def parse_header_file(header_file):
+    """Parse a single header file to get all defined constants out of it."""
     resolved_values = collections.OrderedDict()
     raw_matches = {}
-    comments = {}
 
     with open(header_file, "r") as fd:
         all_file_lines = collections.OrderedDict(
@@ -70,7 +71,7 @@ def generate_constants_in_one_go(header_file):
     line_iterator = iter(all_file_lines.items())
 
     for lineno, line in line_iterator:
-        line, comment = clean_line(line)
+        line, _comment = clean_line(line)
 
         # First check to see if this is a #define statement
         match = re.match(r"^#define\s+UC_(?P<id>\w+)\s+(?P<value>.*)$", line)
@@ -101,9 +102,10 @@ def generate_constants_in_one_go(header_file):
                 )
                 break
             elif "}" in line:
+                # Hit the end of the enum.
                 break
 
-            line, comment = clean_line(line)
+            line, _comment = clean_line(line)
 
             # Sometimes we have multiple enum definitions on one line. We need to handle
             # these one at a time. Splitting the line by commas should be enough to
@@ -121,20 +123,21 @@ def generate_constants_in_one_go(header_file):
                     name = "UC_" + match.group("id")
                     raw_value = match.group("expr")
                     try:
-                        real_value = eval(raw_value, resolved_values)
+                        processed_value = eval(raw_value, resolved_values)
                     except NameError as nerr:
                         logging.error(
                             "Failed to resolve %r on line %d: %s", name, lineno, nerr
                         )
                         continue
-                    resolved_values[name] = real_value
-                    next_enum_value = real_value + 1
+                    resolved_values[name] = processed_value
+                    next_enum_value = processed_value + 1
                 else:
                     # Not an explicit assignment. Expect this expression to be just a
                     # single identifier.
                     match = re.match(r"^UC_(\w+)$", expression)
                     if match:
-                        resolved_values["UC_" + match.group(1)] = next_enum_value
+                        name = match.group(1)
+                        resolved_values["UC_" + name] = next_enum_value
                         next_enum_value += 1
                     else:
                         raise SyntaxError(
@@ -142,6 +145,8 @@ def generate_constants_in_one_go(header_file):
                         )
 
     for name, raw_value in raw_matches.items():
+        # Convert any remaining values that are still unresolved. This usually only
+        # applies to #define macros that reference other constants.
         if name not in resolved_values:
             resolved_values[name] = eval(raw_value, resolved_values)
 
@@ -149,7 +154,6 @@ def generate_constants_in_one_go(header_file):
 
 
 def generate_constants_for_file(header_file, output_file):
-    # type: (str, str) -> None
     """Generate a constants file from a Unicorn header.
 
     Arguments:
@@ -162,7 +166,10 @@ def generate_constants_for_file(header_file, output_file):
     header_file = os.path.abspath(header_file)
     logging.info("Processing file: %s", header_file)
 
-    all_value_pairs = generate_constants_in_one_go(header_file)
+    all_value_pairs = parse_header_file(header_file)
+    if not all_value_pairs:
+        logging.error("No constants found in header, refusing to write to output file.")
+        return
 
     with open(output_file, "w") as out_fd:
         out_fd.write(
@@ -181,12 +188,11 @@ def generate_constants_for_file(header_file, output_file):
 
 
 def main():
-    # type: () -> int
     logging.basicConfig(level=logging.INFO, format="[%(levelname)-5s] %(message)s")
     if len(sys.argv) != 3:
         logging.error(
             "Script takes two arguments, the path to a header file and the path to the"
-            " Lua file to generate."
+            " C++ file to generate."
         )
         return 1
 
