@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.0rc1
-------
+1.0rc1 (2020-09-20)
+-------------------
 
 Overhauled the build configuration system.
 
