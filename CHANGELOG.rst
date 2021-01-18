@@ -1,8 +1,19 @@
 Changes
 =======
 
-1.0 (2021-01-18)
-----------------
+1.1.0 (2021-01-18)
+------------------
+
+New Features
+~~~~~~~~~~~~
+
+* Added support for Unicorn 1.0.2.
+* Context objects now have an instance method, ``free()`` which can be used to
+  release the context's resources.
+
+
+1.0.0 (2021-01-18)
+------------------
 
 **First stable release!**
 

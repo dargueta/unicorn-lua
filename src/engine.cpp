@@ -123,12 +123,19 @@ Context *UCLuaEngine::create_context_in_lua() {
     new (context) Context(*this);
 
     luaL_setmetatable(L, kContextMetatableName);
+    context->update();
     return context;
 }
 
 
 void UCLuaEngine::restore_from_context(Context *context) {
-    uc_err error = uc_context_restore(engine, context->get_handle());
+    auto handle = context->get_handle();
+    if (handle == nullptr)
+        throw LuaBindingError(
+            "Attempted to use a context object that has already been freed."
+        );
+
+    uc_err error = uc_context_restore(engine, handle);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
@@ -149,6 +156,11 @@ void ul_init_engines_lib(lua_State *L) {
 
     luaL_newmetatable(L, kContextMetatableName);
     luaL_setfuncs(L, kContextMetamethods, 0);
+
+    lua_newtable(L);
+    luaL_setfuncs(L, kContextInstanceMethods, 0);
+    lua_setfield(L, -2, "__index");
+
     lua_pop(L, 2);
 }
 

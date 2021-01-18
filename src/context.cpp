@@ -22,6 +22,12 @@ const luaL_Reg kContextMetamethods[] = {
 };
 
 
+const luaL_Reg kContextInstanceMethods[] = {
+    {"free", call_release},
+    {nullptr, nullptr}
+};
+
+
 Context::Context(UCLuaEngine& engine, uc_context *context)
     : engine_(engine), context_(context) {}
 
@@ -55,7 +61,21 @@ void Context::update() {
 
 
 void Context::release() {
-    uc_err error = uc_free(context_);
+    uc_err error;
+
+    if (context_ == nullptr)
+        throw LuaBindingError(
+            "Attempted to free a context object that has already been freed."
+        );
+
+    #if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
+        /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
+        error = uc_context_free(context_);
+    #else
+        /* Unicorn 1.0.1 and lower uses uc_free(). */
+        error = uc_free(context_);
+    #endif
+
     context_ = nullptr;
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
@@ -76,10 +96,10 @@ int ul_context_save(lua_State *L) {
         // so we can return it to the caller.
         context = engine->create_context_in_lua();
     }
-    else
+    else {
         context = get_context_struct(L, 2);
-
-    context->update();
+        context->update();
+    }
     return 1;
 }
 
@@ -89,5 +109,13 @@ int ul_context_restore(lua_State *L) {
     auto context = get_context_struct(L, 2);
 
     engine->restore_from_context(context);
+    return 0;
+}
+
+
+int ul_context_free(lua_State *L) {
+    auto context = get_context_struct(L, 1);
+
+    context->release();
     return 0;
 }

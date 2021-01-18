@@ -17,4 +17,7 @@
     #error "Library must be compiled against version 1.x of Unicorn."
 #endif
 
+
+#define UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH    ((UC_VERSION_MAJOR << 16) | (UC_VERSION_MINOR << 8) | UC_VERSION_EXTRA)
+
 #endif  /* INCLUDE_UNICORNLUA_UNICORNLUA_H_ */

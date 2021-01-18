@@ -372,6 +372,19 @@ Arguments
 ``values``: A table mapping register IDs to the values to write to those registers.
 
 
+Contexts
+--------
+
+``free()``
+~~~~~~~~~~
+
+Release the resources of this context object. It can no longer be used.
+Note: (This still works correctly if the library is compiled against Unicorn
+1.0.1 and older, before Unicorn added ``uc_context_free()``.)
+
+*New in 1.1.0*
+
+
 Global Functions
 ----------------
 
