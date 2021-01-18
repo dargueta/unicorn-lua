@@ -1,6 +1,14 @@
 Changes
 =======
 
+1.0 (2021-01-18)
+----------------
+
+**First stable release!**
+
+No changes aside from updating the copyright year.
+
+
 1.0rc1 (2020-09-20)
 -------------------
 
