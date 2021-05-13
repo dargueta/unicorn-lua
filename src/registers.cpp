@@ -840,20 +840,12 @@ int ul_reg_read_as(lua_State *L) {
 
 
 int ul_reg_write_batch(lua_State *L) {
-    int n_registers;
-
     uc_engine *engine = ul_toengine(L, 1);
 
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
      * corresponding registers. */
-
-    /* Count the number of items in the table so we can allocate the buffers of
-     * the right size. We can't use luaL_len() because that doesn't tell us how
-     * many keys there are in the table, only entries in the array part. */
-    lua_pushnil(L);
-    for (n_registers = 0; lua_next(L, 2) != 0; ++n_registers)
-        lua_pop(L, 1);
+    int n_registers = count_table_elements(L, 2);
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
     std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
@@ -902,4 +894,33 @@ int ul_reg_read_batch(lua_State *L) {
         lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(values[i]));
 
     return n_registers;
+}
+
+
+int ul_reg_read_batch_as(lua_State *L) {
+    uc_engine *engine = ul_toengine(L, 1);
+    register_buffer_type value_buffer;
+
+    // Create the table we're going to return the register values in.
+    lua_newtable(L);
+    int result_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    lua_pushnil(L);
+    while (lua_next(L, 2) != 0) {
+        RegisterDataType format_id = (RegisterDataType)lua_tointeger(L, -1);
+        int register_id = (int)lua_tointeger(L, -2);
+
+        uc_err error = uc_reg_read(engine, register_id, value_buffer);
+        if (error != UC_ERR_OK)
+            return ul_crash_on_error(L, error);
+
+        Register register_obj(value_buffer, read_as_type);
+        register_obj.push_to_lua(L);
+        lua_rawseti(L, result_table_ref, register_id);
+        lua_pop(L, 1);
+    }
+
+    lua_geti(L, result_table_ref, LUA_REGISTRYINDEX);
+    luaL_unref(L, LUA_REGISTRYINDEX, result_table_ref);
+    return 1;
 }

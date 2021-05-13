@@ -26,3 +26,13 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
         lua_setfield(L, -2, constants[i].name);
     }
 }
+
+
+int count_table_elements(lua_State *L, int table_index) {
+    int count = 0;
+
+    lua_pushnil(L);
+    for (count = 0; lua_next(L, table_index) != 0; ++count)
+        lua_pop(L, 1);
+    return count;
+}
