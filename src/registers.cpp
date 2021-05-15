@@ -905,6 +905,7 @@ int ul_reg_read_batch_as(lua_State *L) {
     lua_newtable(L);
     int result_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
+    // FIXME (dargueta): Actually use a bulk read instead of going one at a time.
     lua_pushnil(L);
     while (lua_next(L, 2) != 0) {
         RegisterDataType format_id = (RegisterDataType)lua_tointeger(L, -1);
