@@ -915,7 +915,7 @@ int ul_reg_read_batch_as(lua_State *L) {
         if (error != UC_ERR_OK)
             return ul_crash_on_error(L, error);
 
-        Register register_obj(value_buffer, read_as_type);
+        Register register_obj(value_buffer, format_id);
         register_obj.push_to_lua(L);
         lua_rawseti(L, result_table_ref, register_id);
         lua_pop(L, 1);
