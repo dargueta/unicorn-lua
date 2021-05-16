@@ -98,6 +98,6 @@ extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State *L) {
     // Create a table in the library that contains the major, minor, and patch
     // numbers of the Lua binding. These are positional values, not fields.
     ul_create_unicornlua_version_table(L);
-    lua_setfield(L, -2, "UNICORNLUA_VERSION");
+    lua_setfield(L, -2, "LUA_LIBRARY_VERSION");
     return 1;
 }

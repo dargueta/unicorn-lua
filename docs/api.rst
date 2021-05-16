@@ -390,8 +390,8 @@ Globals
 
 These live in the ``unicorn`` namespace.
 
-``UNICORNLUA_VERSION``
-~~~~~~~~~~~~~~~~~~~~~~
+``LUA_LIBRARY_VERSION``
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a three-element table giving the major, minor, and patch versions of the
 Lua binding.
