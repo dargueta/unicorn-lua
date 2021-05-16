@@ -5,6 +5,8 @@ import configparser
 import json
 import logging
 import os
+import textwrap
+import re
 import shutil
 import subprocess
 import sys
@@ -24,8 +26,8 @@ DEFAULT_LUAROCKS_VERSION = CONFIG["luarocks"]["default_version"]
 DEFAULT_LUA_VERSION = CONFIG["lua"]["default_version"]
 
 
-# Detect if we're in a CI environment. This works for Travis, CircleCI, and
-# AppVeyor. (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
+# Detect if we're in a CI environment. This works for Travis, CircleCI, and AppVeyor.
+# (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
 IN_CI_ENVIRONMENT = os.getenv("CI", "").lower() == "true"
 
 
@@ -96,7 +98,9 @@ def parse_args():
         " to the system's LuaRocks executable.",
     )
     parser.add_argument(
-        "--lua-headers", metavar="PATH", help="The path to the Lua headers files.",
+        "--lua-headers",
+        metavar="PATH",
+        help="The path to the Lua headers files.",
     )
     parser.add_argument(
         "--lua-library",
@@ -129,6 +133,29 @@ def get_luarocks_version(luarocks_exe):
     output = run([luarocks_exe, "--version"], stderr=None)
     _abs_path, version, *_rest = output.strip().split()
     return version
+
+
+def get_lua_header_version(header_dir):
+    file_path = os.path.join(header_dir, "lua.h")
+    if not os.path.exists(file_path):
+        raise ErrorExit(
+            "Directory doesn't exist or header file `lua.h` is missing: " + header_dir
+        )
+
+    LOG.debug("Determining Lua version from header file at %s", file_path)
+    with open(file_path, "r") as fd:
+        contents = fd.read()
+
+    match = re.search(r"LUA_VERSION_NUM\s+(\d+)", contents)
+    if not match:
+        raise ErrorExit("Couldn't determine version of Lua header at: " + file_path)
+
+    integer_version = int(match[1])
+    major_version = integer_version // 100
+    minor_version = integer_version % 100
+
+    LOG.debug("Lua header defines version as %d.%d.", major_version, minor_version)
+    return "%d.%d" % (major_version, minor_version)
 
 
 def set_defaults_from_config(args):
@@ -183,6 +210,41 @@ def generate_cmake_parameters(settings, install_version, platform):
         "LUA_LIBRARIES": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
     }
+
+    if not settings["lua_library"] or not settings["lua_headers"]:
+        raise ErrorExit(
+            "The LUA_LIBRARIES and/or LUA_INCLUDE_DIR variables are empty. This usually"
+            " happens when Lua isn't installed locally or if your include paths aren't"
+            " set. You can either use a virtual environment (see tools/lua_env.py) or,"
+            " if you do have Lua already installed, you'll need to provide the include"
+            " and library paths to this script via the --lua-headers and --lua-library"
+            " options. If you're on a *NIX system, Lua headers are usually in"
+            " `/usr/include/lua<version>/` and the library is at"
+            " `/usr/lib/<architecture>/liblua<version>{.a, .so}`."
+        )
+
+    header_version = get_lua_header_version(settings["lua_headers"])
+
+    if settings["use_venv"]:
+        version_source = "Virtual environment"
+    else:
+        version_source = "OS"
+
+    # For LuaJIT, `short_version` is the version of LuaJIT, *not* Lua! Thus we have to
+    # special-case the version number check.
+    if is_luajit and header_version != "5.1":
+        raise ErrorExit(
+            "Mismatch between %s's LuaJIT and header version. LuaJIT implements 5.1,"
+            " but the header says %s. Either this is the wrong header, or this version"
+            " of LuaJIT implements an unexpected version of Lua. Header path: %s"
+            % (version_source, header_version, settings["lua_headers"])
+        )
+    elif not is_luajit and (header_version != short_version):
+        raise ErrorExit(
+            "Mismatch between Lua executable and header version. %s Lua version: %s;"
+            " header says %s. The path to the headers is likely wrong: %s"
+            % (version_source, short_version, header_version, settings["lua_headers"])
+        )
 
     if settings["uc_lib"]:
         values["UNICORN_LIBRARY"] = settings["uc_lib"]
@@ -244,7 +306,11 @@ if __name__ == "__main__":
         LOG.error("Killed.")
         sys.exit(2)
     except ErrorExit as exc:
-        LOG.error(str(exc))
+        if str(exc):
+            print()
+            multiline_message = textwrap.wrap(str(exc), width=80)
+            for line in multiline_message:
+                LOG.error(line)
         sys.exit(1)
     else:
         sys.exit(0)
