@@ -8,3 +8,20 @@ describe("Ensure library loads don't crash.", function ()
   it('[sparc] require', function () require 'unicorn.sparc_const' end)
   it('[x86] require', function () require 'unicorn.x86_const' end)
 end)
+
+
+describe('Ensure binding version number looks correct.', function ()
+  it('Check existence of version table', function()
+    local unicorn = require 'unicorn'
+    assert.is_not_nil(unicorn.LUA_LIBRARY_VERSION)
+  end)
+
+  it('Checks version table looks correct', function ()
+    local unicorn = require 'unicorn'
+    local major, minor, patch = table.unpack(unicorn.LUA_LIBRARY_VERSION)
+
+    assert.is_equal("number", type(major), 'Major version is borked')
+    assert.is_equal("number", type(minor), 'Minor version is borked')
+    assert.is_equal("number", type(patch), 'Patch version is borked')
+  end)
+end)
