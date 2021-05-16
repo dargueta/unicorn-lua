@@ -4,16 +4,34 @@
 #include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/registers.h"
+#include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
 
-static int ul_version(lua_State *L) {
+static int ul_unicorn_version(lua_State *L) {
     unsigned major, minor;
 
     uc_version(&major, &minor);
     lua_pushinteger(L, major);
     lua_pushinteger(L, minor);
     return 2;
+}
+
+
+// Create a three-element table that indicates the major, minor, and patch
+// versions of this Lua binding.
+static int ul_create_unicornlua_version_table(lua_State *L) {
+    lua_createtable(L, 3, 0);
+
+    lua_pushinteger(L, UNICORNLUA_VERSION_MAJOR);
+    lua_seti(L, -2, 1);
+
+    lua_pushinteger(L, UNICORNLUA_VERSION_MINOR);
+    lua_seti(L, -2, 2);
+
+    lua_pushinteger(L, UNICORNLUA_VERSION_PATCH);
+    lua_seti(L, -2, 3);
+    return 1;
 }
 
 
@@ -64,13 +82,22 @@ static const luaL_Reg kUnicornLibraryFunctions[] = {
     {"arch_supported", ul_arch_supported},
     {"open", ul_open},
     {"strerror", ul_strerror},
-    {"version", ul_version},
+    {"version", ul_unicorn_version},
     {nullptr, nullptr}
 };
 
 
 extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State *L) {
+    // Initialize the engine bits, such as the metatables that engine and context
+    // instances use.
     ul_init_engines_lib(L);
+
+    // Create the main library table with all of the global functions in it.
     luaL_newlib(L, kUnicornLibraryFunctions);
+
+    // Create a table in the library that contains the major, minor, and patch
+    // numbers of the Lua binding. These are positional values, not fields.
+    ul_create_unicornlua_version_table(L);
+    lua_setfield(L, -2, "UNICORNLUA_VERSION");
     return 1;
 }
