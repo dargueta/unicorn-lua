@@ -385,10 +385,16 @@ Note: (This still works correctly if the library is compiled against Unicorn
 *New in 1.1.0*
 
 
-Global Functions
-----------------
+Globals
+-------
 
-These functions live in the ``unicorn`` namespace.
+These live in the ``unicorn`` namespace.
+
+``LUA_LIBRARY_VERSION``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This is a three-element table giving the major, minor, and patch versions of the
+Lua binding.
 
 ``arch_supported(architecture)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
