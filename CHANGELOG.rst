@@ -1,6 +1,18 @@
 Changes
 =======
 
+1.1.1 (2021-05-15)
+------------------
+
+New Features
+~~~~~~~~~~~~
+
+* Added a global constant to the ``unicorn`` module named ``UNICORNLUA_VERSION``.
+  This is a three-element table giving the major, minor, and patch versions of
+  the Lua binding.
+* Added certain protections and better error messages in the ``configure`` script
+  to aid setting up your dev environment and debugging certain problems.
+
 1.1.0 (2021-01-18)
 ------------------
 
