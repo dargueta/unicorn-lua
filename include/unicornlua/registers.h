@@ -359,6 +359,15 @@ int ul_reg_read_as(lua_State *L);
 
 
 /**
+ * Like @ref ul_reg_read_as, but reads multiple registers at once.
+ *
+ * The argument to the Lua function is a table mapping the ID of the register to
+ * read to the format it should be read in.
+ */
+int ul_reg_read_batch_as(lua_State *L);
+
+
+/**
  * Write to a processor register as something other than as a plain integer.
  *
  * You'll need to use this for writing registers that aren't integers, or for

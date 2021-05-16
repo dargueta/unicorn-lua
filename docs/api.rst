@@ -299,7 +299,7 @@ integers, or array of floats.
 ``reg_read_batch(registers)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Read multiple registers in one function call.
+Read multiple integer registers in one function call.
 
 .. code-block:: lua
 
@@ -315,6 +315,44 @@ Returns
 ^^^^^^^
 
 A table of all the registers read, in the order given in the function call.
+
+
+``reg_read_batch_as(registers_and_types)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Nonstandard function*
+
+This is essentially ``reg_read_as()`` but allows you to read multiple registers
+at once.
+
+It reads multiple registers in one function call, reinterpreting them as
+dictated by the values of the table argument.
+
+.. code-block:: lua
+
+    local values = engine:reg_read_batch_as {
+        x86.UC_X86_REG_XMM0 = unicorn.UL_REG_TYPE_FLOAT32_ARRAY_4,
+        x86.UC_X86_REG_RAX = unicorn.UL_REG_TYPE_INT8_ARRAY_8
+    }
+
+    -- Example of a possible return value
+    --[[
+        {
+            x86.UC_X86_REG_XMM0 = {0.0, 3.1416, 2.71828, 1.0};
+            x86.UC_X86_REG_RAX = {127, -3, 0, 5, 23, 96, -19, -100}
+        }
+    ]]
+
+Arguments
+^^^^^^^^^
+
+``registers_and_types``: A table mapping the IDs of registers to read to a
+constant indicating how that register should be interpreted.
+
+Returns
+^^^^^^^
+
+A table mapping the register ID to the value(s) the register was interpreted as.
 
 
 ``reg_write(reg_id, value)``
@@ -427,6 +465,7 @@ Arguments
 Constants are in the ``unicorn`` namespace and begin with ``UC_ARCH_``. An
 unsupported architecture will trigger an error, so you may want to check to see
 if the architecture is supported first using ``arch_supported()``.
+
 * ``mode``: Mode flags specific to the architecture. For example, to start an
   ARM64 machine in big-endian mode, pass ``UC_MODE_BIG_ENDIAN``. Multiple flags
   must be OR'ed together. Not all architectures support all options; see the
