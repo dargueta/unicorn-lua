@@ -167,6 +167,19 @@ describe('Register tests', function ()
 
       assert.are.same({80, 14, -49, -8, -107, 118, 5, 88}, registers)
     end)
+
+    it('read_reg_batch_as() with one register', function()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_64)
+
+      uc:reg_write(x86.UC_X86_REG_RAX, 0x98765432)
+      local result = uc:reg_read_batch_as {
+        [x86.UC_X86_REG_RAX] = regs_const.REG_TYPE_INT16_ARRAY_4
+      }
+
+      -- Note that, because we're reading these back as signed 16-bit integers,
+      -- the 0x9876 value comes back as a negative number.
+      assert.are.same({[x86.UC_X86_REG_RAX] = {0x5432, -0x678a, 0, 0}}, result)
+    end)
   end)
   describe('Write registers in alternate formats', function ()
     it('Write to RCX as two 32-bit signed integers.', function ()

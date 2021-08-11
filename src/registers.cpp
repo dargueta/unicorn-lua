@@ -870,22 +870,34 @@ int ul_reg_write_batch(lua_State *L) {
 }
 
 
+static void prepare_batch_buffers(
+    int n_registers,
+    std::unique_ptr<register_buffer_type[]>& values,
+    std::unique_ptr<void *[]>& value_pointers
+) {
+    values.reset(new register_buffer_type[n_registers]);
+    value_pointers.reset(new void *[n_registers]);
+
+    for (int i = 0; i < n_registers; ++i)
+        value_pointers[i] = &values[i];
+    memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
+}
+
+
 int ul_reg_read_batch(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int n_registers = lua_gettop(L) - 1;
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<register_buffer_type[]> values(new register_buffer_type[n_registers]);
-    std::unique_ptr<void *[]> p_values(new void *[n_registers]);
+    std::unique_ptr<register_buffer_type[]> values;
+    std::unique_ptr<void *[]> value_pointers;
 
-    for (int i = 0; i < n_registers; ++i) {
+    prepare_batch_buffers(n_registers, values, value_pointers);
+    for (int i = 0; i < n_registers; ++i)
         register_ids[i] = (int)lua_tointeger(L, i + 2);
-        p_values[i] = &values[i];
-    }
 
-    memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
     uc_err error = uc_reg_read_batch(
-        engine, register_ids.get(), p_values.get(), n_registers
+        engine, register_ids.get(), value_pointers.get(), n_registers
     );
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -899,29 +911,46 @@ int ul_reg_read_batch(lua_State *L) {
 
 int ul_reg_read_batch_as(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    register_buffer_type value_buffer;
+    int n_registers = count_table_elements(L, 2);
 
-    // Create the table we're going to return the register values in.
-    lua_newtable(L);
-    int result_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    std::unique_ptr<int[]> register_ids(new int[n_registers]);
+    std::unique_ptr<int[]> value_types(new int[n_registers]);
+    std::unique_ptr<register_buffer_type[]> values;
+    std::unique_ptr<void *[]> value_pointers;
 
-    // FIXME (dargueta): Actually use a bulk read instead of going one at a time.
+    prepare_batch_buffers(n_registers, values, value_pointers);
+
+    // Iterate through the second argument -- a table mapping register IDs to
+    // the types we want them back as.
     lua_pushnil(L);
-    while (lua_next(L, 2) != 0) {
-        RegisterDataType format_id = (RegisterDataType)lua_tointeger(L, -1);
-        int register_id = (int)lua_tointeger(L, -2);
-
-        uc_err error = uc_reg_read(engine, register_id, value_buffer);
-        if (error != UC_ERR_OK)
-            return ul_crash_on_error(L, error);
-
-        Register register_obj(value_buffer, format_id);
-        register_obj.push_to_lua(L);
-        lua_rawseti(L, result_table_ref, register_id);
+    for (int i = 0; lua_next(L, 2) != 0; ++i) {
+        register_ids[i] = (int)luaL_checkinteger(L, -2);
+        value_types[i] = (int)luaL_checkinteger(L, -1);
         lua_pop(L, 1);
     }
 
-    lua_geti(L, result_table_ref, LUA_REGISTRYINDEX);
-    luaL_unref(L, LUA_REGISTRYINDEX, result_table_ref);
+    uc_err error = uc_reg_read_batch(
+        engine, register_ids.get(), value_pointers.get(), n_registers
+    );
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    // Create the table we're going to return the register values in. The result
+    // is a key-value mapping where the keys are the register IDs and the values
+    // are the typecasted values read from the registers.
+    lua_createtable(L, 0, n_registers);
+    for (int i = 0; i < n_registers; ++i) {
+        // Key: register ID
+        lua_pushinteger(L, register_ids[i]);
+
+        // Value: Deserialized register
+        auto register_object = Register(
+            value_pointers[i],
+            static_cast<RegisterDataType>(value_types[i])
+        );
+        register_object.push_to_lua(L);
+        lua_settable(L, -3);
+    }
+
     return 1;
 }

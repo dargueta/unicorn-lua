@@ -1,6 +1,16 @@
 Changes
 =======
 
+1.2.0 (2021-08-11)
+------------------
+
+New Features
+~~~~~~~~~~~~
+
+Added a new (non-standard) method to engines, ``reg_read_batch_as()``, which
+is like ``reg_read_as()`` but allows you to efficiently read multiple registers
+at the same time. See ``docs/api.rst`` for details.
+
 1.1.1 (2021-05-15)
 ------------------
 
