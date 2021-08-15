@@ -83,7 +83,7 @@ if (CMAKE_HOST_APPLE)
 endif()
 
 
-find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
+find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}

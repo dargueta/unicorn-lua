@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -ev
-
+set -euvx
 
 LUA_VERSION=$1
 
