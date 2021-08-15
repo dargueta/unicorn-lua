@@ -33,6 +33,7 @@ jobs:
           make
       - name: Run tests
         run: ctest --output-on-failure
+        working-directory: build
 
   # TODO (dargueta): Test on OSX
   # TODO (dargueta): Test on Windows?
