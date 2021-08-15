@@ -10,6 +10,7 @@
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
+    CHECK(!context->is_released());
 
     CHECK_MESSAGE(
         lua_gettop(L) == 1, "Expecting a context object on the stack."
@@ -49,16 +50,20 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
+    REQUIRE(!context->is_released());
 
     context->release();
+    REQUIRE(context->is_released());
 }
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
+    REQUIRE(!context->is_released());
 
     context->release();
+    REQUIRE(context->is_released());
     CHECK_THROWS_AS(context->release(), LuaBindingError);
 }
 
@@ -66,7 +71,9 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
+    REQUIRE(!context->is_released());
 
     context->release();
+    REQUIRE(context->is_released());
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 }

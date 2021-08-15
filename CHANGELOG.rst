@@ -7,9 +7,18 @@ Changes
 New Features
 ~~~~~~~~~~~~
 
-Added a new (non-standard) method to engines, ``reg_read_batch_as()``, which
-is like ``reg_read_as()`` but allows you to efficiently read multiple registers
-at the same time. See ``docs/api.rst`` for details.
+* Added a new (non-standard) method to engines, ``reg_read_batch_as()``, which
+  is like ``reg_read_as()`` but allows you to efficiently read multiple registers
+  at the same time. See ``docs/api.rst`` for details.
+* Added ``__close`` metamethod to engines and contexts, so they can now be used
+  with Lua 5.4's ``<close>`` local attribute.
+
+Bugfixes
+~~~~~~~~
+
+Fixed a crash when if a context object was explicitly freed, if it got
+garbage-collected the object may think it's a double free and throw an exception.
+This eliminates a long-standing bug in LuaJIT on Mac OS.
 
 Other Changes
 ~~~~~~~~~~~~~

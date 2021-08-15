@@ -11,13 +11,15 @@ const char * const kContextMetatableName = "unicornlua__context_meta";
 
 static int call_release(lua_State *L) {
     Context *context = get_context_struct(L, 1);
-    context->release();
+    if (!context->is_released())
+        context->release();
     return 0;
 }
 
 
 const luaL_Reg kContextMetamethods[] = {
     {"__gc", call_release},
+    {"__close", call_release},
     {nullptr, nullptr}
 };
 
@@ -37,7 +39,7 @@ Context::Context(UCLuaEngine& engine)
 
 
 Context::~Context() {
-    if (context_)
+    if (context_ != nullptr)
         release();
 }
 
@@ -48,7 +50,7 @@ uc_context *Context::get_handle() const noexcept { return context_; }
 void Context::update() {
     uc_err error;
 
-    if (!context_) {
+    if (context_ == nullptr) {
         error = uc_context_alloc(engine_.engine, &context_);
         if (error != UC_ERR_OK)
             throw UnicornLibraryError(error);
