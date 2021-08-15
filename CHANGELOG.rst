@@ -16,9 +16,10 @@ New Features
 Bugfixes
 ~~~~~~~~
 
-Fixed a crash when if a context object was explicitly freed, if it got
+Fixed a crash when if a context or engine object was explicitly freed, if it got
 garbage-collected the object may think it's a double free and throw an exception.
-This eliminates a long-standing bug in LuaJIT on Mac OS.
+This eliminates a long-standing bug in LuaJIT on Mac OS and an edge case on other
+platforms.
 
 Other Changes
 ~~~~~~~~~~~~~

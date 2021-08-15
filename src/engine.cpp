@@ -14,8 +14,18 @@ const char * const kEngineMetatableName = "unicornlua__engine_meta";
 const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
 
+// Close the engine only if it hasn't been closed already.
+static int maybe_close(lua_State *L) {
+    auto engine_object = get_engine_struct(L, 1);
+    if (engine_object->engine)
+        engine_object->close();
+    return 0;
+}
+
+
 const luaL_Reg kEngineMetamethods[] = {
-    {"__gc", ul_close},
+    {"__gc", maybe_close},
+    {"__close", maybe_close},
     {nullptr, nullptr}
 };
 
