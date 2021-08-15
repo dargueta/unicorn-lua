@@ -32,7 +32,11 @@ jobs:
           cmake -B build -S . -DCMAKE_VERBOSE_MAKEFILE=YES
           make
       - name: Run tests
-        run: ctest --output-on-failure
+        # We get a linker error if we don't mess with the library path. For some
+        # reason, /usr/lib64 isn't on the default search path.
+        run: |
+          export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
+          ctest --output-on-failure
         working-directory: build
 
   # TODO (dargueta): Test on OSX
