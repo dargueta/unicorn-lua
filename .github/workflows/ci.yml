@@ -3,17 +3,20 @@ name: CI
 on: [ push ]
 
 jobs:
-  testing-ubuntu:
-    runs-on: ubuntu-latest
+  testing:
+    runs-on: ${{ matrix.operating-system }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - lua-version: "5.1"
-          - lua-version: "5.2"
-          - lua-version: "5.3"
-          - lua-version: "5.4"
-          - lua-version: "luajit2.0"
+        operating-system:
+          - ubuntu-20.04
+          - macos-10.15
+        lua-version:
+          - "5.1"
+          - "5.2"
+          - "5.3"
+          - "5.4"
+          - "luajit2.0"
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python
@@ -36,8 +39,7 @@ jobs:
         # reason, /usr/lib64 isn't on the default search path.
         run: |
           export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
-          ctest --output-on-failure
+          ctest --output-on-failure --extra-verbose
         working-directory: build
 
-  # TODO (dargueta): Test on OSX
   # TODO (dargueta): Test on Windows?
