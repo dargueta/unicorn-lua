@@ -1,4 +1,5 @@
 include Makefile.in
+include build-target.in
 
 EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
@@ -7,12 +8,12 @@ MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 .PHONY: all
 all: $(BUILD_DIR)
-	make -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR)
 
 
 .PHONY: clean
 clean:
-	rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
+	$(RM) -r $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
 
 
 $(BUILD_DIR):
@@ -20,17 +21,17 @@ $(BUILD_DIR):
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)
-	make -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR)
 
 
 .PHONY: install
 install: $(SHARED_LIB_FILE)
-	make -C $(BUILD_DIR) install
+	$(MAKE) -C $(BUILD_DIR) install
 
 
 .PHONY: docs
 docs:
-	make -C $(BUILD_DIR) docs
+	$(MAKE) -C $(BUILD_DIR) docs
 
 
 .PHONY: examples
@@ -39,7 +40,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 .PHONY: test
 test: $(BUILD_DIR) $(SHARED_LIB_FILE)
-	make -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
+	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 .PHONY: run_example

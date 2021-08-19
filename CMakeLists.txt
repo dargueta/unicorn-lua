@@ -51,32 +51,32 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-message(STATUS "Installing required rocks...")
-if(USE_VIRTUALENV)
-    set(LUAROCKS_LOCAL_FLAG "")
-else()
-    set(LUAROCKS_LOCAL_FLAG "--local")
-endif()
-
-foreach(_rock IN ITEMS ${REQUIRED_ROCKS})
-    if(USE_VIRTUALENV)
-        execute_process(
-            COMMAND ${LUAROCKS_EXE} install "${_rock}"
-            OUTPUT_QUIET
-            RESULT_VARIABLE rocks_install_result
-        )
-    else()
-        execute_process(
-            COMMAND ${LUAROCKS_EXE} install "--local" "${_rock}"
-            OUTPUT_QUIET
-            RESULT_VARIABLE rocks_install_result
-        )
-    endif()
-
-    if(NOT rocks_install_result EQUAL 0)
-        message(FATAL_ERROR "Installing rock ${_rock} failed.")
-    endif()
-endforeach()
+#message(STATUS "Installing required rocks...")
+#if(USE_VIRTUALENV)
+#    set(LUAROCKS_LOCAL_FLAG "")
+#else()
+#    set(LUAROCKS_LOCAL_FLAG "--local")
+#endif()
+#
+#foreach(_rock IN ITEMS ${REQUIRED_ROCKS})
+#    if(USE_VIRTUALENV)
+#        execute_process(
+#            COMMAND ${LUAROCKS_EXE} install "${_rock}"
+#            OUTPUT_QUIET
+#            RESULT_VARIABLE rocks_install_result
+#        )
+#    else()
+#        execute_process(
+#            COMMAND ${LUAROCKS_EXE} install "--local" "${_rock}"
+#            OUTPUT_QUIET
+#            RESULT_VARIABLE rocks_install_result
+#        )
+#    endif()
+#
+#    if(NOT rocks_install_result EQUAL 0)
+#        message(FATAL_ERROR "Installing rock ${_rock} failed.")
+#    endif()
+#endforeach()
 
 
 get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS_EXE}" DIRECTORY)
@@ -110,16 +110,20 @@ endif()
 enable_testing()
 add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
 
-cmake_policy(PUSH)
-cmake_policy(SET CMP0026 OLD)
-get_property(BUILT_LIBRARY_FILE_PATH TARGET unicornlua_library PROPERTY LOCATION)
-cmake_policy(POP)
-
-get_filename_component(BUILT_LIBRARY_DIRECTORY "${BUILT_LIBRARY_FILE_PATH}" DIRECTORY)
+#cmake_policy(PUSH)
+#cmake_policy(SET CMP0026 OLD)
+#get_property(BUILT_LIBRARY_FILE_PATH TARGET unicornlua_library PROPERTY LOCATION)
+#cmake_policy(POP)
+#
+#get_filename_component(BUILT_LIBRARY_DIRECTORY "${BUILT_LIBRARY_FILE_PATH}" DIRECTORY)
 
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
 
+file(GENERATE
+    OUTPUT "${PROJECT_SOURCE_DIR}/build-target.in"
+    CONTENT "SHARED_LIB_FILE=$<TARGET_FILE:unicornlua_library>\nBUILT_LIBRARY_DIRECTORY=$<TARGET_FILE_DIR:unicornlua_library>\n"
+)
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/makefile-variables.in"
     "${PROJECT_SOURCE_DIR}/Makefile.in"
