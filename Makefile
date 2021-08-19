@@ -5,11 +5,6 @@ EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
-ifeq ($(USE_VIRTUALENV),YES)
-	LUAROCKS_ARGS=--local
-else
-	LUAROCKS_ARGS=
-endif
 
 .PHONY: all
 all: $(BUILD_DIR)
@@ -49,7 +44,7 @@ test: $(BUILD_DIR) $(SHARED_LIB_FILE) $(BUSTED_EXE)
 
 
 $(BUSTED_EXE):
-	$(LUAROCKS_EXE) install $(LUAROCKS_ARGS) busted
+	$(LUAROCKS_EXE) install busted
 
 
 .PHONY: run_example
