@@ -217,7 +217,7 @@ int ul_query(lua_State *L) {
     auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 2));
 
     size_t result = engine_object->query(query_type);
-    lua_pushinteger(L, result);
+    lua_pushinteger(L, static_cast<lua_Integer>(result));
     return 1;
 }
 

@@ -194,12 +194,12 @@ def main():
             "Script takes two arguments, the path to a header file and the path to the"
             " C++ file to generate."
         )
-        return 1
+        return sys.exit(1)
 
     logging.info("Generating `%s`...", sys.argv[2])
     generate_constants_for_file(os.path.abspath(sys.argv[1]), sys.argv[2])
-    return 0
+    return sys.exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

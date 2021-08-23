@@ -10,7 +10,7 @@ const char * const kContextMetatableName = "unicornlua__context_meta";
 
 
 static int call_release(lua_State *L) {
-    Context *context = get_context_struct(L, 1);
+    auto context = get_context_struct(L, 1);
     if (!context->is_released())
         context->release();
     return 0;
@@ -91,15 +91,14 @@ bool Context::is_released() const noexcept {
 
 int ul_context_save(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
-    Context *context;
 
     if (lua_gettop(L) < 2) {
         // Caller didn't provide a context, create a new one and push it to the stack
         // so we can return it to the caller.
-        context = engine->create_context_in_lua();
+        engine->create_context_in_lua();
     }
     else {
-        context = get_context_struct(L, 2);
+        auto context = get_context_struct(L, 2);
         context->update();
     }
     return 1;

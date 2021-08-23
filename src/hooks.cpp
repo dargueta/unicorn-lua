@@ -90,7 +90,7 @@ void Hook::push_user_data() {
 }
 
 
-static void *_get_c_callback_for_hook_type(int hook_type, int insn_code);
+static void *get_c_callback_for_hook_type(int hook_type, int insn_code);
 
 
 static void get_callback(Hook *hook) {
@@ -229,7 +229,7 @@ static bool invalid_mem_access_hook(
 }
 
 
-static void *_get_c_callback_for_hook_type(int hook_type, int insn_code) {
+static void *get_c_callback_for_hook_type(int hook_type, int insn_code) {
     switch (hook_type) {
         case UC_HOOK_INTR:
             return (void *)interrupt_hook;
@@ -324,7 +324,7 @@ int ul_hook_add(lua_State *L) {
         extra_argument = LUA_NOREF;
 
     /* Figure out which C hook we need */
-    void *c_callback = _get_c_callback_for_hook_type(hook_type, extra_argument);
+    void *c_callback = get_c_callback_for_hook_type(hook_type, extra_argument);
     if (c_callback == nullptr) {
         engine_object->remove_hook(hook_info);
         return luaL_error(L, "Unrecognized hook type: %d", hook_type);
