@@ -17,7 +17,7 @@ clean:
 
 
 $(BUILD_DIR):
-	$(error You must create the build directory with CMake. See the README for details.)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_VERBOSE_MAKEFILE=YES
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)

@@ -12,19 +12,27 @@ New Features
   at the same time. See ``docs/api.rst`` for details.
 * Added ``__close`` metamethod to engines and contexts, so they can now be used
   with Lua 5.4's ``<close>`` local attribute.
+* Added ``REG_TYPE_INT16_ARRAY_32``, a 32-element array of 16-bit integers.
+  I'd left it out by mistake.
+* [C++ API] All register buffers are now zeroed out upon initialization.
+* The Makefile now generates the build directory if you're on CMake 3.13+.
+* ``make install`` now builds the library if it hasn't been built already.
+* ``configure`` defaults to a release build; debug builds are opt-in.
 
 Bugfixes
 ~~~~~~~~
 
-Fixed a crash when if a context or engine object was explicitly freed, if it got
-garbage-collected the object may think it's a double free and throw an exception.
-This eliminates a long-standing bug in LuaJIT on Mac OS and an edge case on other
-platforms.
+* Fixed a crash when if a context or engine object was explicitly freed, if it got
+  garbage-collected the object may think it's a double free and throw an exception.
+  This eliminates a long-standing bug in LuaJIT on Mac OS and an edge case on other
+  platforms.
+* ``reg_read_as()`` truncated floats in arrays to integers due to a copy-paste error.
 
 Other Changes
 ~~~~~~~~~~~~~
 
-Switched to Github Actions for CI instead of Travis.
+* Switched to Github Actions for CI instead of Travis.
+* Removed a lot of C-isms from when this library was written in C.
 
 1.1.1 (2021-05-15)
 ------------------

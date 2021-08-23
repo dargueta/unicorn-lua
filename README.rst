@@ -186,9 +186,7 @@ CMake 1.13+:
 .. code-block:: sh
 
     python3 configure
-    cmake -S . -B build
-    make -C build
-    make -C build install
+    make install
 
 CMake 1.12:
 
@@ -198,7 +196,6 @@ CMake 1.12:
     mkdir build
     cd build
     cmake ..
-    make
     make install
 
 You may need superuser privileges to install. If installation fails, try
@@ -213,7 +210,6 @@ Windows
     python3 configure
     chdir build
     cmake ..
-    make
     make install
 
 Development

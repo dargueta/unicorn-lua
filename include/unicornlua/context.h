@@ -50,6 +50,6 @@ int ul_context_free(lua_State *L);
 
 
 #define get_context_struct(L, index)   \
-    reinterpret_cast<Context *>(luaL_checkudata((L), (index), kContextMetatableName))
+    (reinterpret_cast<Context *>(luaL_checkudata((L), (index), kContextMetatableName)))
 
 #endif  /* INCLUDE_UNICORNLUA_CONTEXT_H_ */

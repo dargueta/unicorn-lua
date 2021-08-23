@@ -3,7 +3,6 @@
 #include "unicornlua/context.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/registers.h"
 #include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 

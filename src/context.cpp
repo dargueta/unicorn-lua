@@ -9,23 +9,15 @@
 const char * const kContextMetatableName = "unicornlua__context_meta";
 
 
-static int call_release(lua_State *L) {
-    auto context = get_context_struct(L, 1);
-    if (!context->is_released())
-        context->release();
-    return 0;
-}
-
-
 const luaL_Reg kContextMetamethods[] = {
-    {"__gc", call_release},
-    {"__close", call_release},
+    {"__gc", ul_context_free},
+    {"__close", ul_context_free},
     {nullptr, nullptr}
 };
 
 
 const luaL_Reg kContextInstanceMethods[] = {
-    {"free", call_release},
+    {"free", ul_context_free},
     {nullptr, nullptr}
 };
 
@@ -70,13 +62,13 @@ void Context::release() {
             "Attempted to free a context object that has already been freed."
         );
 
-    #if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
-        /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
-        error = uc_context_free(context_);
-    #else
-        /* Unicorn 1.0.1 and lower uses uc_free(). */
-        error = uc_free(context_);
-    #endif
+#if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
+    /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
+    error = uc_context_free(context_);
+#else
+    /* Unicorn 1.0.1 and lower uses uc_free(). */
+    error = uc_free(context_);
+#endif
 
     context_ = nullptr;
     if (error != UC_ERR_OK)
@@ -116,7 +108,7 @@ int ul_context_restore(lua_State *L) {
 
 int ul_context_free(lua_State *L) {
     auto context = get_context_struct(L, 1);
-
-    context->release();
+    if (!context->is_released())
+        context->release();
     return 0;
 }
