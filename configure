@@ -203,7 +203,7 @@ def generate_cmake_parameters(settings, install_version, platform):
         "USE_VIRTUALENV": "YES" if settings["use_venv"] else "NO",
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": settings["luarocks_version"],
-        "CMAKE_BUILD_TYPE": settings["build_type"].title(),
+        "CMAKE_BUILD_TYPE": settings["build_type"].upper(),
         "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
         "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
         "LUA_EXE": settings["lua_exe_path"],
