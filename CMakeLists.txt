@@ -36,11 +36,6 @@ execute_process(
     OUTPUT_VARIABLE LUAROCKS_CPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-execute_process(
-    COMMAND ${LUA_EXE} -e "print(string.match(package.cpath, '^([^?]+)'))"
-    OUTPUT_VARIABLE LUA_INSTALL_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
 
 
 get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS_EXE}" DIRECTORY)

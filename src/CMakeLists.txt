@@ -93,8 +93,7 @@ endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-install(
-    TARGETS unicornlua_library
-    LIBRARY
-    DESTINATION ${LUA_INSTALL_DIR}
-)
+# Override the default destination. Normally it's ${CMAKE_INSTALL_PREFIX} plus
+# a platform-specific directory like "lib", "include", or "bin". We don't want
+# those, so we have to override the entire destination.
+install(TARGETS unicornlua_library LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}")

@@ -17,6 +17,9 @@ New Features
 * [C++ API] All register buffers are now zeroed out upon initialization.
 * The Makefile now generates the build directory if you're on CMake 3.13+.
 * ``make install`` now builds the library if it hasn't been built already.
+* Added ``--install-prefix`` to the configure script to control where the library
+  is installed. The appropriate Lua installation directory is now automatically
+  determined.
 * ``configure`` defaults to a release build; debug builds are opt-in.
 
 Bugfixes

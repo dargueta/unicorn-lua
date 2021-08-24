@@ -197,6 +197,7 @@ CMake 1.12:
     mkdir build
     cd build
     cmake ..
+    cd ..
     make install
 
 You may need superuser privileges to install. If installation fails, try

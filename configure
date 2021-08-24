@@ -114,6 +114,11 @@ def parse_args():
         " script. The variables in here will be used as defaults for arguments not"
         " specified on the command line. Implies --use-venv.",
     )
+    parser.add_argument(
+        "--install-prefix",
+        metavar="PATH",
+        help="The path to install the built library into."
+    )
     return parser.parse_args()
 
 
@@ -127,6 +132,21 @@ def get_lua_version(lua_exe):
     output = run([lua_exe, "-v"], stderr=None)
     _lua, version, *_rest = output.strip().split()
     return version
+
+
+def get_installation_dir(lua_exe):
+    if not lua_exe:
+        raise ErrorExit(
+            "Lua not installed on OS or not in PATH environment variable. You must use"
+            " a virtual environment (see --use-venv) or install it on your OS."
+        )
+
+    output = run([lua_exe, "-e", "print(package.config)"]).strip()
+    _path_sep, template_sep, *_ = output.splitlines()
+
+    cpath = run([lua_exe, "-e", "print(package.cpath)"]).strip()
+    install_template, _sep, _rest = cpath.partition(template_sep)
+    return os.path.dirname(install_template)
 
 
 def get_luarocks_version(luarocks_exe):
@@ -286,6 +306,11 @@ def main():
         LOG.info("Using virtual environment, Lua %s", settings["lua_full_version"])
     else:
         LOG.info("Using OS installation, Lua %s", settings["lua_full_version"])
+
+    if args.install_prefix:
+        settings["CMAKE_INSTALL_PREFIX"] = args.install_prefix
+    else:
+        settings["CMAKE_INSTALL_PREFIX"] = get_installation_dir(settings["lua_exe_path"])
 
     LOG.info("Generating CMake parameters...")
     cmake_params = generate_cmake_parameters(
