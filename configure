@@ -192,6 +192,7 @@ def set_defaults_from_config(args):
 def generate_cmake_parameters(settings, install_version, platform):
     is_luajit = settings["is_luajit"]
     short_version = install_version.rpartition(".")[0]
+    is_debug = settings["build_type"] == "debug"
 
     values = {
         "LUA_FULL_VERSION": install_version,
@@ -203,6 +204,8 @@ def generate_cmake_parameters(settings, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": settings["luarocks_version"],
         "CMAKE_BUILD_TYPE": settings["build_type"].title(),
+        "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
+        "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
         "LUA_EXE": settings["lua_exe_path"],
         "LUAROCKS_EXE": settings["luarocks_path"],
         "LUA_INCLUDE_DIR": settings["lua_headers"] or "",
