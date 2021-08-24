@@ -5,6 +5,8 @@
 *.a
 .git/
 build/
+cmake-build-debug/
+cmake-build-release/
 tests/c/doctest.h
 .downloaded/
 venv/

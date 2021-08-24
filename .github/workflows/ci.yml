@@ -29,7 +29,7 @@ jobs:
         run: |
           python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} __lua${{ matrix.lua-version }}
       - name: Configure build
-        run: python3 ./configure --venv-config settings.json
+        run: python3 ./configure --venv-config settings.json --build-type debug
       - name: Build
         run: |
           cmake -B build -S . -DCMAKE_VERBOSE_MAKEFILE=YES
