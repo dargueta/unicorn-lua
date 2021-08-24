@@ -1,4 +1,5 @@
 local unicorn = require 'unicorn'
+local uc_const = require 'unicorn.unicorn_const'
 local x86 = require 'unicorn.x86_const'
 
 
@@ -60,7 +61,7 @@ _MONTHS = {'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
 
 
 function main()
-  local engine = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+  local engine = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
   local now = os.date('*t')
   local cmos_state = {
     -- Register 13 seems to be the default for some reason
@@ -77,8 +78,8 @@ function main()
     }
   }
 
-  engine:hook_add(unicorn.UC_HOOK_INSN, handle_in, 0, 0, cmos_state, x86.UC_X86_INS_IN)
-  engine:hook_add(unicorn.UC_HOOK_INSN, handle_out, 0, 0, cmos_state, x86.UC_X86_INS_OUT)
+  engine:hook_add(uc_const.UC_HOOK_INSN, handle_in, 0, 0, cmos_state, x86.UC_X86_INS_IN)
+  engine:hook_add(uc_const.UC_HOOK_INSN, handle_out, 0, 0, cmos_state, x86.UC_X86_INS_OUT)
   engine:mem_map(0, 2^20)
 
   -- Load the program image into memory

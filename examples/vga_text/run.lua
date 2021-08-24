@@ -2,7 +2,7 @@
 
 local curses = require 'curses'
 local unicorn = require 'unicorn'
-
+local uc_const = require 'unicorn.unicorn_const'
 
 function make_color_pair(foreground, background)
   return (background * 16) + foreground
@@ -109,11 +109,11 @@ function main()
   -- Clear the screen, setting it to white text on a black background.
   term_win:wbkgdset(' ', make_color_pair(7, 0))
 
-  local engine = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+  local engine = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
   engine:mem_map(0, 2^20)
 
   -- Add a hook for detecting writes to video memory, but only for text mode 3.
-  engine:hook_add(unicorn.UC_HOOK_MEM_WRITE, vga_write_trigger, 0xb8000, 0xbffff, term_win)
+  engine:hook_add(uc_const.UC_HOOK_MEM_WRITE, vga_write_trigger, 0xb8000, 0xbffff, term_win)
 
   local fdesc = io.open('program.x86.bin')
   engine:mem_write(0x7c000, fdesc:read(512))

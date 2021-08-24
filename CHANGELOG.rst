@@ -27,6 +27,7 @@ Bugfixes
   This eliminates a long-standing bug in LuaJIT on Mac OS and an edge case on other
   platforms.
 * ``reg_read_as()`` truncated floats in arrays to integers due to a copy-paste error.
+* All the examples were broken by the ``unicorn_const`` change in 1.0b8.
 
 Other Changes
 ~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
 local unicorn = require 'unicorn'
+local uc_const = require 'unicorn.unicorn_const'
 local x86 = require 'unicorn.x86_const'
 
 
@@ -59,10 +60,10 @@ function handle_int13(engine)
 end
 
 
-local engine = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_16)
+local engine = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_16)
 
 engine:mem_map(0, 2^20)
-engine:hook_add(unicorn.UC_HOOK_INTR, interrupt)
+engine:hook_add(uc_const.UC_HOOK_INTR, interrupt)
 
 -- Read *only* the first sector from the disk image into memory. The code in the
 -- first sector will load the second sector and execute that.

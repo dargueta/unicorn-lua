@@ -110,25 +110,26 @@ the BIOS setting up a system when booting.
 .. code-block:: lua
 
     local unicorn = require 'unicorn'
+    local uc_const = require 'unicorn.unicorn_const'
 
-    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
     -- Map in 1 MiB of RAM for the processor with full read/write/execute
     -- permissions. We could pass permissions as a third argument if we want.
     uc:mem_map(0, 0x100000)
 
     -- Revoke write access to the VGA and BIOS ROM shadow areas.
-    uc:mem_protect(0xC0000, 32 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
-    uc:mem_protect(0xF0000, 64 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
+    uc:mem_protect(0xC0000, 32 * 1024, uc_const.UC_PROT_READ|uc_const.UC_PROT_EXEC)
+    uc:mem_protect(0xF0000, 64 * 1024, uc_const.UC_PROT_READ|uc_const.UC_PROT_EXEC)
 
     -- Create a hook for the VGA driver that's called whenever VGA memory is
     -- written to by client code.
-    uc:hook_add(unicorn.UC_MEM_WRITE, vga_write_callback, 0xA0000, 0xBFFFF)
+    uc:hook_add(uc_const.UC_MEM_WRITE, vga_write_callback, 0xA0000, 0xBFFFF)
 
     -- Install interrupt hooks so the CPU can perform I/O and other operations.
     -- We'll handle all of that in Lua. Only one interrupt hook can be set at a
     -- time.
-    uc:hook_add(unicorn.UC_HOOK_INTR, interrupt_dispatch_hook)
+    uc:hook_add(uc_const.UC_HOOK_INTR, interrupt_dispatch_hook)
 
     -- Load the boot sector of the hard drive into 0x7C000
     local fdesc = io.open('hard-drive.img')
