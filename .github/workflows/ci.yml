@@ -33,13 +33,12 @@ jobs:
       - name: Build
         run: |
           cmake -B build -S . -DCMAKE_VERBOSE_MAKEFILE=YES
-          make
+          sudo make install
       - name: Run tests
         # We get a linker error if we don't mess with the library path. For some
         # reason, /usr/lib64 isn't on the default search path.
         run: |
           export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
-          ctest --output-on-failure --extra-verbose
-        working-directory: build
+          make test
 
   # TODO (dargueta): Test on Windows?
