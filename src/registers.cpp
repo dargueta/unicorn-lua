@@ -28,10 +28,9 @@ uclua_float80 read_float80(const uint8_t *data) {
     if (exponent == 0) {
         if (significand == 0)
             return 0.0;
-        else if (sign)
-            return ldexp(-significand, -16382);
-        else
-            return ldexp(significand, -16382);
+        if (sign)
+            return std::ldexp(-significand, -16382);
+        return std::ldexp(significand, -16382);
     }
     else if (exponent == 0x7fff) {
         // Top two bits of the significand will tell us what kind of number this
@@ -85,12 +84,12 @@ uclua_float80 read_float80(const uint8_t *data) {
         f_part *= -1;
 
     if (significand & 0x8000000000000000ULL)
-        return ldexp(f_part, exponent - 16383);
+        return std::ldexp(f_part, exponent - 16383);
 
     // Unnormal number. Invalid on 80387+; 80287 and earlier use a different
     // exponent bias.
     errno = EINVAL;
-    return ldexp(f_part, exponent - 16382);
+    return std::ldexp(f_part, exponent - 16382);
 }
 
 
@@ -124,7 +123,7 @@ void write_float80(uclua_float80 value, uint8_t *buffer) {
     }
 
     int exponent;
-    uclua_float80 float_significand = frexp(value, &exponent);
+    uclua_float80 float_significand = std::frexp(value, &exponent);
 
     if ((exponent <= -16383) || (exponent >= 16384))
         throw std::domain_error(
@@ -375,27 +374,27 @@ std::array<uclua_float32, 16> Register::as_16xf32() const {
 void Register::push_to_lua(lua_State *L) const {
     int i;
 
-    std::array<int16_t, 32> values_32xi16;
-    std::array<int16_t, 16> values_16xi16;
-    std::array<int16_t, 4> values_4xi16;
-    std::array<int16_t, 8> values_8xi16;
-    std::array<int32_t, 16> values_16xi32;
-    std::array<int32_t, 2> values_2xi32;
-    std::array<int32_t, 4> values_4xi32;
-    std::array<int32_t, 8> values_8xi32;
-    std::array<int64_t, 2> values_2xi64;
-    std::array<int64_t, 4> values_4xi64;
-    std::array<int64_t, 8> values_8xi64;
-    std::array<int8_t, 16> values_16xi8;
-    std::array<int8_t, 32> values_32xi8;
-    std::array<int8_t, 64> values_64xi8;
-    std::array<int8_t, 8> values_8xi8;
-    std::array<uclua_float32, 16> values_16xf32;
-    std::array<uclua_float32, 4> values_4xf32;
-    std::array<uclua_float32, 8> values_8xf32;
-    std::array<uclua_float64, 2> values_2xf64;
-    std::array<uclua_float64, 4> values_4xf64;
-    std::array<uclua_float64, 8> values_8xf64;
+    std::array<int16_t, 32> values_32xi16{};
+    std::array<int16_t, 16> values_16xi16{};
+    std::array<int16_t, 4> values_4xi16{};
+    std::array<int16_t, 8> values_8xi16{};
+    std::array<int32_t, 16> values_16xi32{};
+    std::array<int32_t, 2> values_2xi32{};
+    std::array<int32_t, 4> values_4xi32{};
+    std::array<int32_t, 8> values_8xi32{};
+    std::array<int64_t, 2> values_2xi64{};
+    std::array<int64_t, 4> values_4xi64{};
+    std::array<int64_t, 8> values_8xi64{};
+    std::array<int8_t, 16> values_16xi8{};
+    std::array<int8_t, 32> values_32xi8{};
+    std::array<int8_t, 64> values_64xi8{};
+    std::array<int8_t, 8> values_8xi8{};
+    std::array<uclua_float32, 16> values_16xf32{};
+    std::array<uclua_float32, 4> values_4xf32{};
+    std::array<uclua_float32, 8> values_8xf32{};
+    std::array<uclua_float64, 2> values_2xf64{};
+    std::array<uclua_float64, 4> values_4xf64{};
+    std::array<uclua_float64, 8> values_8xf64{};
 
     switch (kind_) {
         case UL_REG_TYPE_INT8:

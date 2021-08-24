@@ -6,7 +6,6 @@
 #include <cstring>
 
 #include "doctest.h"
-#include "fixtures.h"
 #include "unicornlua/registers.h"
 
 
@@ -98,7 +97,7 @@ TEST_CASE("read_float80(): 3FFF8000000000000001 == 1.0") {
     uclua_float80 result = read_float80(data);
     CHECK_EQ(errno, 0);
 
-    uclua_float80 float_significand = frexp(result, &exponent);
+    uclua_float80 float_significand = std::frexp(result, &exponent);
     CHECK_EQ(exponent, 1);
     CHECK_EQ(float_significand, 0.5);
     CHECK_EQ(result, 1.0);
@@ -112,7 +111,7 @@ TEST_CASE("read_float80(): 3FFE8000000000000001 == 0.5") {
     uclua_float80 result = read_float80(data);
     CHECK_EQ(errno, 0);
 
-    uclua_float80 float_significand = frexp(result, &exponent);
+    uclua_float80 float_significand = std::frexp(result, &exponent);
     CHECK_EQ(exponent, 0);
     CHECK_EQ(float_significand, 0.5);
     CHECK_EQ(result, 0.5);
@@ -126,7 +125,7 @@ TEST_CASE("read_float80(): 3FFE8000000000000100 == 1.0") {
     uclua_float80 result = read_float80(data);
     CHECK_EQ(errno, 0);
 
-    uclua_float80 float_significand = frexp(result, &exponent);
+    uclua_float80 float_significand = std::frexp(result, &exponent);
     CHECK_EQ(exponent, 2);
     CHECK_EQ(float_significand, 0.5);
     CHECK_EQ(result, 2.0);
@@ -197,7 +196,7 @@ TEST_CASE("write_float80(): -INF -> FFFF8000000000000000") {
     const uint8_t expected[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
     uint8_t result[10];
 
-    write_float80(-INFINITY, result);
+    write_float80(-static_cast<uclua_float80>(INFINITY), result);
     CHECK_EQ(memcmp(expected, result, 10), 0);
 }
 
@@ -286,9 +285,9 @@ TEST_CASE("Register::as_float80(): 2.71828182845904524") {
 
 
 TEST_CASE("Register::as_8xi8()") {
-    std::array<int8_t, 8> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 256) - 128;
+    std::array<int8_t, 8> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT8_MAX) - INT8_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT8_ARRAY_8);
     CHECK_EQ(reg.as_8xi8(), expected);
@@ -296,9 +295,9 @@ TEST_CASE("Register::as_8xi8()") {
 
 
 TEST_CASE("Register::as_4xi16()") {
-    std::array<int16_t, 4> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 65536) - 32768;
+    std::array<int16_t, 4> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT16_MAX) - INT16_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT16_ARRAY_4);
     CHECK_EQ(reg.as_4xi16(), expected);
@@ -306,9 +305,9 @@ TEST_CASE("Register::as_4xi16()") {
 
 
 TEST_CASE("Register::as_2xi32()") {
-    std::array<int32_t, 2> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % UINT_MAX) - INT_MAX;
+    std::array<int32_t, 2> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT32_MAX) - INT32_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_2);
     CHECK_EQ(reg.as_2xi32(), expected);
@@ -316,9 +315,9 @@ TEST_CASE("Register::as_2xi32()") {
 
 
 TEST_CASE("Register::as_1xi64()") {
-    std::array<int64_t, 1> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % ULONG_MAX) - LONG_MAX;
+    std::array<int64_t, 1> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT64_MAX) - INT64_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT64_ARRAY_1);
     CHECK_EQ(reg.as_1xi64(), expected);
@@ -326,9 +325,9 @@ TEST_CASE("Register::as_1xi64()") {
 
 
 TEST_CASE("Register::as_8xi16()") {
-    std::array<int16_t, 8> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 65536) - 32768;
+    std::array<int16_t, 8> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT16_MAX) - INT16_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT16_ARRAY_8);
     CHECK_EQ(reg.as_8xi16(), expected);
@@ -336,9 +335,9 @@ TEST_CASE("Register::as_8xi16()") {
 
 
 TEST_CASE("Register::as_4xi32()") {
-    std::array<int32_t, 4> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % UINT_MAX) - INT_MAX;
+    std::array<int32_t, 4> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT32_MAX) - INT32_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_4);
     CHECK_EQ(reg.as_4xi32(), expected);
@@ -346,9 +345,9 @@ TEST_CASE("Register::as_4xi32()") {
 
 
 TEST_CASE("Register::as_2xi64()") {
-    std::array<int64_t, 2> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % ULONG_MAX) - LONG_MAX;
+    std::array<int64_t, 2> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT64_MAX) - INT64_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT64_ARRAY_2);
     CHECK_EQ(reg.as_2xi64(), expected);
@@ -356,9 +355,9 @@ TEST_CASE("Register::as_2xi64()") {
 
 
 TEST_CASE("Register::as_32xi8()") {
-    std::array<int8_t, 32> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 256) - 128;
+    std::array<int8_t, 32> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT8_MAX) - INT8_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT8_ARRAY_32);
     CHECK_EQ(reg.as_32xi8(), expected);
@@ -366,9 +365,9 @@ TEST_CASE("Register::as_32xi8()") {
 
 
 TEST_CASE("Register::as_16xi16()") {
-    std::array<int16_t, 16> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 65536) - 32768;
+    std::array<int16_t, 16> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT16_MAX) - INT16_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT16_ARRAY_16);
     CHECK_EQ(reg.as_16xi16(), expected);
@@ -376,9 +375,9 @@ TEST_CASE("Register::as_16xi16()") {
 
 
 TEST_CASE("Register::as_8xi32()") {
-    std::array<int32_t, 8> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % UINT_MAX) - INT_MAX;
+    std::array<int32_t, 8> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT32_MAX) - INT32_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_8);
     CHECK_EQ(reg.as_8xi32(), expected);
@@ -386,9 +385,9 @@ TEST_CASE("Register::as_8xi32()") {
 
 
 TEST_CASE("Register::as_4xi64()") {
-    std::array<int64_t, 4> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % ULONG_MAX) - LONG_MAX;
+    std::array<int64_t, 4> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT64_MAX) - INT64_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT64_ARRAY_4);
     CHECK_EQ(reg.as_4xi64(), expected);
@@ -410,9 +409,9 @@ TEST_CASE("Register::as_2xf64()") {
 
 
 TEST_CASE("Register::as_4xi64") {
-    std::array<int64_t, 4> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % ULONG_MAX) - LONG_MAX;
+    std::array<int64_t, 4> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT64_MAX) - INT64_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT64_ARRAY_4);
     CHECK_EQ(reg.as_4xi64(), expected);
@@ -420,7 +419,7 @@ TEST_CASE("Register::as_4xi64") {
 
 
 TEST_CASE("Register::as_8xf32") {
-    std::array<uclua_float32, 8> expected;
+    std::array<uclua_float32, 8> expected{};
     Register reg(expected.data(), UL_REG_TYPE_FLOAT32_ARRAY_8);
     CHECK_EQ(reg.as_8xf32(), expected);
 }
@@ -434,9 +433,9 @@ TEST_CASE("Register::as_4xf64") {
 
 
 TEST_CASE("Register::as_64xi8") {
-    std::array<int8_t, 64> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % 256) - 128;
+    std::array<int8_t, 64> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT8_MAX) - INT8_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT8_ARRAY_64);
     CHECK_EQ(reg.as_64xi8(), expected);
@@ -444,9 +443,9 @@ TEST_CASE("Register::as_64xi8") {
 
 
 TEST_CASE("Register::as_16xi32") {
-    std::array<int32_t, 16> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % UINT_MAX) - INT_MAX;
+    std::array<int32_t, 16> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT32_MAX) - INT32_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT32_ARRAY_16);
     CHECK_EQ(reg.as_16xi32(), expected);
@@ -454,9 +453,9 @@ TEST_CASE("Register::as_16xi32") {
 
 
 TEST_CASE("Register::as_8xi64") {
-    std::array<int64_t, 8> expected;
-    for (unsigned i = 0; i < expected.size(); ++i)
-        expected[i] = (rand() % ULONG_MAX) - LONG_MAX;
+    std::array<int64_t, 8> expected{};
+    for (auto &value : expected)
+        value = (rand() % UINT64_MAX) - INT64_MAX;
 
     Register reg(expected.data(), UL_REG_TYPE_INT64_ARRAY_8);
     CHECK_EQ(reg.as_8xi64(), expected);
