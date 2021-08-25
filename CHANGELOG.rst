@@ -14,13 +14,10 @@ New Features
   with Lua 5.4's ``<close>`` local attribute.
 * Added ``REG_TYPE_INT16_ARRAY_32``, a 32-element array of 16-bit integers.
   I'd left it out by mistake.
-* [C++ API] All register buffers are now zeroed out upon initialization.
-* The Makefile now generates the build directory if you're on CMake 3.13+.
-* ``make install`` now builds the library if it hasn't been built already.
-* Added ``--install-prefix`` to the configure script to control where the library
-  is installed. The appropriate Lua installation directory is now automatically
-  determined.
-* ``configure`` defaults to a release build; debug builds are opt-in.
+* **Potentially Breaking:** Signaling NaNs in a CPU are now passed back to Lua
+  as signaling NaNs. Before, all NaNs were converted to quiet NaNs. This brings
+  it in line with other bindings. Unless you do significant amounts of
+  floating-point operations, this won't affect you.
 
 Bugfixes
 ~~~~~~~~
@@ -31,11 +28,22 @@ Bugfixes
   platforms.
 * ``reg_read_as()`` truncated floats in arrays to integers due to a copy-paste error.
 * All the examples were broken by the ``unicorn_const`` change in 1.0b8.
+* Setting floating-point registers now (theoretically) works on a big-endian host
+  machine.
 
 Other Changes
 ~~~~~~~~~~~~~
 
+* [C++ API] All register buffers are now zeroed out upon initialization.
+* [C++ API] read_float80 and write_float80 now operate on ``lua_Number``
+  rather than the platform-dependent 64-, 80-, or 128-bit floats.
 * Switched to Github Actions for CI instead of Travis.
+* The Makefile now generates the build directory if you're on CMake 3.13+.
+* ``make install`` now builds the library if it hasn't been built already.
+* Added ``--install-prefix`` to the configure script to control where the library
+  is installed. The appropriate Lua installation directory is now automatically
+  determined.
+* ``configure`` defaults to a release build; debug builds are opt-in.
 * Removed a lot of C-isms from when this library was written in C.
 
 1.1.1 (2021-05-15)

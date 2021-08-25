@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
 
 #include <unicorn/unicorn.h>
@@ -15,7 +16,7 @@
 #include "unicornlua/utils.h"
 
 
-uclua_float80 read_float80(const uint8_t *data) {
+lua_Number read_float80(const uint8_t *data) {
     uint64_t significand = *reinterpret_cast<const uint64_t *>(data);
     int exponent = *reinterpret_cast<const uint16_t *>(data + 8) & 0x7fff;
     bool sign = (*reinterpret_cast<const uint16_t *>(data + 8) & 0x8000) != 0;
@@ -38,14 +39,10 @@ uclua_float80 read_float80(const uint8_t *data) {
         switch ((significand >> 62) & 3) {
             case 0:
                 if (significand == 0)
-                    return static_cast<uclua_float80>(sign ? -INFINITY : +INFINITY);
+                    return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Significand is non-zero, fall through to next case.
-                // Clang for some reason doesn't like this directive but GCC needs
-                // it, so we skip it if we're on Clang.
-                #ifndef __clang__
-                    __attribute__ ((fallthrough));
-                #endif
+                __attribute__ ((fallthrough));
             case 1:
                 /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
                  * treat this as an invalid operand and will explode. Compromise
@@ -53,16 +50,15 @@ uclua_float80 read_float80(const uint8_t *data) {
                  * exception.
                  */
                 errno = EINVAL;
-                return NAN;
+                return std::numeric_limits<lua_Number>::signaling_NaN();
             case 2:
                 if ((significand & 0x3fffffffffffffffULL) == 0)
-                    return static_cast<uclua_float80>(sign ? -INFINITY : +INFINITY);
+                    return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Else: This is a signaling NaN. We don't want to throw an
                 // exception because Lua is just reading the registers of the
                 // processor, not using them.
-                errno = EDOM;
-                return NAN;
+                return std::numeric_limits<lua_Number>::signaling_NaN();
             case 3:
                 /* If the significand is 0, this is an indefinite value (result
                  * of 0/0, infinity/infinity, etc.). Otherwise, this is a quiet
@@ -79,7 +75,7 @@ uclua_float80 read_float80(const uint8_t *data) {
 
     // If the high bit of the significand is set, this is a normal value. Ignore
     // the high bit of the significand and compensate for the exponent bias.
-    uclua_float80 f_part = (significand & 0x7fffffffffffffffULL);
+    lua_Number f_part = (significand & 0x7fffffffffffffffULL);
     if (sign)
         f_part *= -1;
 
@@ -92,27 +88,27 @@ uclua_float80 read_float80(const uint8_t *data) {
     return std::ldexp(f_part, exponent - 16382);
 }
 
+static const unsigned char kFP80Infinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
 
-void write_float80(uclua_float80 value, uint8_t *buffer) {
+void write_float80(lua_Number value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
     uint16_t sign_bit = std::signbit(value) ? 0x8000 : 0;
 
     switch (f_type) {
         case FP_INFINITE:
-            // TODO (dargueta): This won't work on a big-endian machine
-            *reinterpret_cast<uint64_t *>(buffer) = 0x8000000000000000;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0x7fff | sign_bit;
+            memcpy(buffer, kFP80Infinity, 10);
+            if (sign_bit)
+                buffer[7] |= 0x80;
             return;
         case FP_NAN:
-            *reinterpret_cast<uint64_t *>(buffer) = 0xffffffffffffffff;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0xffff;
+            memset(buffer, 0xff, 10);
             return;
         case FP_ZERO:
-            *reinterpret_cast<uint64_t *>(buffer) = 0;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0;
+            memset(buffer, 0, 10);
             return;
         case FP_SUBNORMAL:
         case FP_NORMAL:
+            // This is a more complicated case and we handle it farther down.
             break;
         default:
             throw std::runtime_error(
