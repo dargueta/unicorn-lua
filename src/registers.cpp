@@ -1,5 +1,6 @@
 #include <array>
 #include <cerrno>
+#include <cfenv>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -14,6 +15,11 @@
 #include "unicornlua/lua.h"
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
+
+
+const uint8_t kFP80PositiveInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
+const uint8_t kFP80NegativeInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
+const uint8_t kFP80SignalingNaN[] = {1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f};
 
 
 lua_Number read_float80(const uint8_t *data) {
@@ -88,7 +94,30 @@ lua_Number read_float80(const uint8_t *data) {
     return std::ldexp(f_part, exponent - 16382);
 }
 
-static const unsigned char kFP80Infinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
+
+static bool is_snan(lua_Number value) {
+    fenv_t env;
+
+    // Disable floating-point exception traps and clear all exception information.
+    // The current state is saved for later.
+    std::feholdexcept(&env);
+    std::feclearexcept(FE_ALL_EXCEPT);
+
+    // Multiply NaN by 1. If `value` is a signaling NaN this should trigger a
+    // floating-point exception.
+    value = value * 1;
+
+    // Get the exception state and see if any exceptions were thrown. If so, then
+    // `value` was a signaling NaN.
+    int fenv_flags = std::fetestexcept(FE_ALL_EXCEPT);
+
+    // Reset the environment to what it was before and check the exception flags
+    // for what we were expecting.
+    std::fesetenv(&env);
+    return (fenv_flags & FE_INVALID) != 0;
+
+}
+
 
 void write_float80(lua_Number value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
@@ -96,12 +125,17 @@ void write_float80(lua_Number value, uint8_t *buffer) {
 
     switch (f_type) {
         case FP_INFINITE:
-            memcpy(buffer, kFP80Infinity, 10);
             if (sign_bit)
-                buffer[7] |= 0x80;
+                memcpy(buffer, kFP80NegativeInfinity, 10);
+            else
+                memcpy(buffer, kFP80PositiveInfinity, 10);
             return;
         case FP_NAN:
-            memset(buffer, 0xff, 10);
+            if (is_snan(value))
+                memcpy(buffer, kFP80SignalingNaN, sizeof(kFP80SignalingNaN));
+            else
+                // All bytes 0xFF is a quiet NaN
+                memset(buffer, 0xff, 10);
             return;
         case FP_ZERO:
             memset(buffer, 0, 10);

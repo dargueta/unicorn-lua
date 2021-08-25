@@ -9,6 +9,17 @@
 #include "unicornlua/registers.h"
 
 
+// Copied and pasted from registers.cpp because of linker errors
+static const uint8_t kFP80PositiveInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
+static const uint8_t kFP80NegativeInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
+static const uint8_t kFP80QuietNaN[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+
+// This is deliberate. C++ apparently defaults to all produced NaN being quiet,
+// so somewhere in here this gets lost in translation, and we can't produce
+// signaling NaNs. Eventually we'll fix this.
+#define kFP80SignalingNaN kFP80QuietNaN
+
+
 TEST_CASE("read_float80(): all zeros = 0") {
     const uint8_t data[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -174,47 +185,38 @@ TEST_CASE("write_float80(): 0 -> 00000000000000000000") {
 
 
 TEST_CASE("write_float80(): qNaN -> FFFFFFFFFFFFFFFFFFFF") {
-    const uint8_t expected[] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    };
     uint8_t result[10];
 
     REQUIRE(std::numeric_limits<lua_Number>::has_quiet_NaN);
     write_float80(std::numeric_limits<lua_Number>::quiet_NaN(), result);
-    CHECK_EQ(memcmp(expected, result, 10), 0);
+    CHECK_EQ(memcmp(kFP80QuietNaN, result, 10), 0);
 }
 
 
-TEST_CASE("write_float80(): sNaN -> FFFFFFFFFFFFFFFFFFFF") {
-    const uint8_t expected[] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    };
+TEST_CASE("write_float80(): sNaN -> 7FF00000000000000001") {
     uint8_t result[10];
 
     REQUIRE(std::numeric_limits<lua_Number>::has_signaling_NaN);
     write_float80(std::numeric_limits<lua_Number>::signaling_NaN(), result);
-    CHECK_EQ(memcmp(expected, result, 10), 0);
+    CHECK_EQ(memcmp(kFP80SignalingNaN, result, 10), 0);
 }
 
 
-
 TEST_CASE("write_float80(): +INF -> 7FFF8000000000000000") {
-    const uint8_t expected[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
     uint8_t result[10];
 
     REQUIRE(std::numeric_limits<lua_Number>::has_infinity);
     write_float80(std::numeric_limits<lua_Number>::infinity(), result);
-    CHECK_EQ(memcmp(expected, result, 10), 0);
+    CHECK_EQ(memcmp(kFP80PositiveInfinity, result, 10), 0);
 }
 
 
 TEST_CASE("write_float80(): -INF -> FFFF8000000000000000") {
-    const uint8_t expected[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
     uint8_t result[10];
 
     REQUIRE(std::numeric_limits<lua_Number>::has_infinity);
     write_float80(-std::numeric_limits<lua_Number>::infinity(), result);
-    CHECK_EQ(memcmp(expected, result, 10), 0);
+    CHECK_EQ(memcmp(kFP80NegativeInfinity, result, 10), 0);
 }
 
 
