@@ -150,10 +150,10 @@ TEST_CASE("read_float80(): 4000C90FDAA2922A8000 == 3.141592654") {
     int exponent;
     const uint8_t data[] = {0, 0x80, 0x2a, 0x92, 0xa2, 0xda, 0x0f, 0xc9, 0, 0x40};
 
-    uclua_float80 result = read_float80(data);
+    lua_Number result = read_float80(data);
     CHECK_EQ(errno, 0);
 
-    uclua_float80 float_significand = frexp(result, &exponent);
+    lua_Number float_significand = frexp(result, &exponent);
     CHECK_EQ(exponent, 2);
     CHECK_EQ(float_significand, 0.7853981635);
     CHECK_EQ(result, 3.141592654);
@@ -164,10 +164,10 @@ TEST_CASE("read_float80(): C000C90FDAA2922A8000 == -3.141592654") {
     int exponent;
     const uint8_t data[] = {0, 0x80, 0x2a, 0x92, 0xa2, 0xda, 0x0f, 0xc9, 0, 0xc0};
 
-    uclua_float80 result = read_float80(data);
+    lua_Number result = read_float80(data);
     CHECK_EQ(errno, 0);
 
-    uclua_float80 float_significand = frexp(result, &exponent);
+    lua_Number float_significand = frexp(result, &exponent);
     CHECK_EQ(exponent, 2);
     CHECK_EQ(float_significand, -0.7853981635);
     CHECK_EQ(result, -3.141592654);
