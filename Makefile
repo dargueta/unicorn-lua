@@ -21,7 +21,11 @@ $(BUILD_DIR):
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)
-	$(MAKE) -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR) unicornlua_library
+
+
+$(TEST_EXE_FILE): $(SHARED_LIB_FILE) $(TEST_SOURCES)
+	$(MAKE) -C $(BUILD_DIR) cpp_test
 
 
 .PHONY: install
@@ -39,7 +43,11 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 
 .PHONY: test
-test: $(BUILD_DIR) $(SHARED_LIB_FILE) $(BUSTED_EXE)
+test: $(BUILT_LIBRARY_DIRECTORY)/.test-sentinel
+
+
+$(BUILT_LIBRARY_DIRECTORY)/.test-sentinel: $(TEST_EXE_FILE) $(BUSTED_EXE)
+	touch $@
 	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 

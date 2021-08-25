@@ -73,7 +73,7 @@ add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests 
 
 file(GENERATE
     OUTPUT "${PROJECT_SOURCE_DIR}/build-target.in"
-    CONTENT "SHARED_LIB_FILE=$<TARGET_FILE:unicornlua_library>\nBUILT_LIBRARY_DIRECTORY=$<TARGET_FILE_DIR:unicornlua_library>\n"
+    CONTENT "SHARED_LIB_FILE=$<TARGET_FILE:unicornlua_library>\nTEST_EXE_FILE=$<TARGET_FILE:cpp_test>\nBUILT_LIBRARY_DIRECTORY=$<TARGET_FILE_DIR:unicornlua_library>\n"
 )
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/makefile-variables.in"
