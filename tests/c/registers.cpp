@@ -7,6 +7,7 @@
 
 #include "doctest.h"
 #include "unicornlua/registers.h"
+#include "unicornlua/platform.h"
 
 
 // Copied and pasted from registers.cpp because of linker errors
@@ -14,10 +15,14 @@ static const uint8_t kFP80PositiveInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff,
 static const uint8_t kFP80NegativeInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
 static const uint8_t kFP80QuietNaN[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
+#if CMAKE_HOST_APPLE
+const uint8_t kFP80SignalingNaN[] = {1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f};
+#else
 // This is deliberate. C++ apparently defaults to all produced NaN being quiet,
 // so somewhere in here this gets lost in translation, and we can't produce
 // signaling NaNs. Eventually we'll fix this.
 #define kFP80SignalingNaN kFP80QuietNaN
+#endif
 
 
 TEST_CASE("read_float80(): all zeros = 0") {

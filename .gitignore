@@ -17,5 +17,12 @@ venv/
 *.in
 configuration.cmake
 .busted
+include/unicornlua/platform.h
+
+# Other garbage
 core*
-.venv*/
+.venv-5.1/
+.venv-5.2/
+.venv-5.3/
+.venv-5.4/
+.venv-luajit/

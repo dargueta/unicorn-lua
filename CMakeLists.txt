@@ -80,6 +80,11 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/Makefile.in"
     @ONLY
 )
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
+    "${PROJECT_SOURCE_DIR}/include/unicornlua/platform.h"
+    @ONLY
+)
 
 
 find_package(Doxygen)
