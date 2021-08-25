@@ -145,8 +145,16 @@ def get_installation_dir(lua_exe):
     _path_sep, template_sep, *_ = output.splitlines()
 
     cpath = run([lua_exe, "-e", "print(package.cpath)"]).strip()
-    install_template, _sep, _rest = cpath.partition(template_sep)
-    return os.path.dirname(install_template)
+    cpath_templates = cpath.split(template_sep)
+
+    for template in cpath_templates:
+        path = os.path.dirname(template)
+        # Don't install into the current working directory
+        if path != ".":
+            return os.path.abspath(path)
+
+    # Nothing good, just return the first path we find.
+    return os.path.abspath(os.path.dirname(cpath_templates[0]))
 
 
 def get_luarocks_version(luarocks_exe):
@@ -224,6 +232,7 @@ def generate_cmake_parameters(settings, install_version, platform):
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": settings["luarocks_version"],
         "CMAKE_BUILD_TYPE": settings["build_type"].upper(),
+        "CMAKE_INSTALL_PREFIX": settings["CMAKE_INSTALL_PREFIX"],
         "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
         "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
         "LUA_EXE": settings["lua_exe_path"],
