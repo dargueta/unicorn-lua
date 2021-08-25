@@ -13,7 +13,7 @@ all: $(BUILD_DIR)
 
 .PHONY: clean
 clean:
-	$(RM) -r $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
+	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
 
 
 $(BUILD_DIR):
@@ -47,7 +47,7 @@ test: $(BUILT_LIBRARY_DIRECTORY)/.test-sentinel
 
 
 $(BUILT_LIBRARY_DIRECTORY)/.test-sentinel: $(TEST_EXE_FILE) $(BUSTED_EXE)
-	touch $@
+	cmake -E touch $@
 	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
