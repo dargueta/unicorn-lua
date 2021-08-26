@@ -18,6 +18,8 @@ New Features
   as signaling NaNs. Before, all NaNs were converted to quiet NaNs. This brings
   it in line with other bindings. Unless you do significant amounts of
   floating-point operations, this won't affect you.
+* Unified installation process for all platforms; ``configure`` now generates all
+  CMake stuff for you.
 
 Bugfixes
 ~~~~~~~~

@@ -179,40 +179,13 @@ Just Installing?
 If you just want to install this library, open a terminal, navigate to the root
 directory of this repository, and run the following:
 
-NIX Systems (MacOS, Cygwin, Linux, etc.)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CMake 1.13+:
-
 .. code-block:: sh
 
     python3 configure
-    make install
-
-CMake 1.12:
-
-.. code-block:: sh
-
-    python3 configure
-    mkdir build
-    cd build
-    cmake ..
-    cd ..
     make install
 
 You may need superuser privileges to install. If installation fails, try
 ``sudo make install``.
-
-Windows
-~~~~~~~
-
-*Support coming soon*
-
-..
-    python3 configure
-    chdir build
-    cmake ..
-    make install
 
 Development
 -----------

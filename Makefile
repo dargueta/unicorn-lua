@@ -13,7 +13,7 @@ all: $(BUILD_DIR)
 
 .PHONY: clean
 clean:
-	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
+	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core* *.in configuration.cmake
 
 
 $(BUILD_DIR):

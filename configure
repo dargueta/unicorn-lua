@@ -292,6 +292,25 @@ def generate_cmake_parameters(settings, install_version, platform):
     return values
 
 
+def get_cmake_version():
+    if shutil.which("cmake") is None:
+        raise ErrorExit("`cmake` not installed")
+
+    raw_capabilities = run(["cmake", "-E", "capabilities"], text=True)
+    capabilities = json.loads(raw_capabilities)
+    return capabilities["version"]["major"], capabilities["version"]["minor"]
+
+
+def run_cmake_generate(build_dir):
+    version = get_cmake_version()
+    shutil.rmtree(build_dir, ignore_errors=True)
+    os.makedirs(build_dir, exist_ok=True)
+    if version < (3, 13):
+        run(["cmake", "..", "-DCMAKE_VERBOSE_MAKEFILE=YES"], cwd=build_dir)
+    else:
+        run(["cmake", "-S", ".", "-B", build_dir, "-DCMAKE_VERBOSE_MAKEFILE=YES"])
+
+
 def main():
     args = parse_args()
     settings = set_defaults_from_config(args)
@@ -328,12 +347,8 @@ def main():
     with open("configuration.cmake", "w") as fd:
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 
-    # Remove all build artifacts from a previous build, since we're probably switching
-    # Lua versions.
-    build_dir = os.path.join(HERE, "build")
-    LOG.info("Cleaning up...")
-    if os.path.exists(build_dir):
-        shutil.rmtree(build_dir)
+    LOG.info("Building CMake files")
+    run_cmake_generate(os.path.join(HERE, "build"))
 
 
 if __name__ == "__main__":
