@@ -2,7 +2,7 @@ local unicorn = require 'unicorn'
 local uc_const = require 'unicorn.unicorn_const'
 local x86 = require 'unicorn.x86_const'
 
-
+--[[
 describe('Context tests', function ()
     it('Basic test of set/restore context', function ()
         -- Set EAX to a value, save a context, change EAX, restore the context,
@@ -28,3 +28,4 @@ describe('Context tests', function ()
         context:free()
     end)
 end)
+]]
