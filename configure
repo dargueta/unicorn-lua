@@ -221,7 +221,7 @@ def generate_cmake_parameters(settings, install_version, platform):
     is_debug = settings["build_type"] == "debug"
     is_luajit = settings["is_luajit"]
     if is_luajit:
-        install_version = "5.1.0"
+        install_version = "5.1.4"
         short_version = "5.1"
     else:
         short_version = install_version.rpartition(".")[0]
