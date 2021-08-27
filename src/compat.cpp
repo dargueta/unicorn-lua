@@ -9,14 +9,15 @@
  * is almost certainly not as fast as the implementation in 5.3.
  */
 LUA_API void lua_seti(lua_State *L, int index, lua_Integer n) {
-    index = lua_absindex(L, index);
+    int table_index = lua_absindex(L, index);
+    int value_index = lua_gettop(L);
 
-    // Because lua_settable expects the value on top, we need to push the key (n) and
-    // then swap the two.
-    lua_pushinteger(L, n);  // Push key, stack is [... V K]
-    lua_pushvalue(L, -2);   // Push value again, stack is [... V K V]
-    lua_remove(L, -3);      // Remove the original value, stack is [... K V]
-    lua_settable(L, index);
+    // Because lua_settable expects the value on top, we push the key (n) and
+    // then another copy of the value, ignoring the original value.
+    lua_pushinteger(L, n);          // Push key, stack is [... V K]
+    lua_pushvalue(L, value_index);  // Push value again, stack is [... V K V]
+    lua_settable(L, table_index);   // Set the table value, stack is [ ... V]
+    lua_pop(L, 1);               // Remove the original value, stack is clean
 }
 
 

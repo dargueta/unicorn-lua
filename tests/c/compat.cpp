@@ -1,4 +1,5 @@
 #include <cstring>
+#include <new>
 
 #include "doctest.h"
 #include "fixtures.h"
@@ -7,6 +8,11 @@
 
 
 TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
+    // This shouldn't be necessary and relies on implementation details of the
+    // function, but LuaJIT crashes without it on OSX.
+    if (lua_checkstack(L, 4) == 0)
+        throw std::bad_alloc();
+
     lua_newtable(L);
     lua_pushliteral(L, "This is a string.");
 
