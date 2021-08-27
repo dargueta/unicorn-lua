@@ -214,7 +214,8 @@ and write all the configuration information needed by ``configure`` into a file
 named ``settings.json``. *It is important that the directory you install Lua into
 doesn't already exist.*
 
-Once this is done,
+If you're running MacOS and encounter a linker error with LuaJIT, check out
+`this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
 
 Using Your OS's Lua
 ^^^^^^^^^^^^^^^^^^^
