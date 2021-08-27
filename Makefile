@@ -1,5 +1,4 @@
 include Makefile.in
-include build-target.in
 
 EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)

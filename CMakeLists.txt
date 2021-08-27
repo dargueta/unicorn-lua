@@ -71,16 +71,18 @@ add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Librar
 add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
 
-file(GENERATE
-    OUTPUT "${PROJECT_SOURCE_DIR}/build-target.in"
-    CONTENT "SHARED_LIB_FILE=$<TARGET_FILE:unicornlua_library>\nTEST_EXE_FILE=$<TARGET_FILE:cpp_test>\nBUILT_LIBRARY_DIRECTORY=$<TARGET_FILE_DIR:unicornlua_library>\n"
-)
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/makefile-variables.in"
-    "${PROJECT_SOURCE_DIR}/Makefile.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
     @ONLY
 )
+file(GENERATE
+     OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
+     INPUT "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
+)
+
 configure_file(
+
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
     "${PROJECT_SOURCE_DIR}/include/unicornlua/platform.h"
     @ONLY
@@ -90,7 +92,7 @@ configure_file(
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Doxyfile.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/templates/Doxyfile.in"
         "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
         @ONLY
     )

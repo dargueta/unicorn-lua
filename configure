@@ -218,16 +218,20 @@ def set_defaults_from_config(args):
 
 
 def generate_cmake_parameters(settings, install_version, platform):
-    is_luajit = settings["is_luajit"]
-    short_version = install_version.rpartition(".")[0]
     is_debug = settings["build_type"] == "debug"
+    is_luajit = settings["is_luajit"]
+    if is_luajit:
+        install_version = "5.1.0"
+        short_version = "5.1"
+    else:
+        short_version = install_version.rpartition(".")[0]
 
     values = {
         "LUA_FULL_VERSION": install_version,
         "LUA_SHORT_VERSION": short_version,
         "IS_LUAJIT": "YES" if is_luajit else "NO",
-        "LUAJIT_FULL_VERSION": SPECIFIC_VERSIONS["luajit"] if is_luajit else "",
-        "LUAJIT_SHORT_VERSION": SUPPORTED_LUA_VERSIONS["luajit"] if is_luajit else "",
+        "LUAJIT_FULL_VERSION": settings["lua_full_version"] if is_luajit else "",
+        "LUAJIT_SHORT_VERSION": settings["lua_full_version"][:-2] if is_luajit else "",
         "USE_VIRTUALENV": "YES" if settings["use_venv"] else "NO",
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": settings["luarocks_version"],
@@ -348,7 +352,7 @@ def main():
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 
     LOG.info("Building CMake files")
-    run_cmake_generate(os.path.join(HERE, "build"))
+    run_cmake_generate(os.path.join(HERE, "cmake-build-" + args.build_type))
 
 
 if __name__ == "__main__":
