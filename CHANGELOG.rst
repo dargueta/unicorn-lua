@@ -43,6 +43,8 @@ Other Changes
 * [C++ API] All register buffers are now zeroed out upon initialization.
 * [C++ API] read_float80 and write_float80 now operate on ``lua_Number``
   rather than the platform-dependent 64-, 80-, or 128-bit floats.
+* [C++ API] Removed definition of ``lua_Unsigned`` for Lua 5.1 since it was both
+  wrong and unused anyway.
 * Switched to Github Actions for CI instead of Travis.
 * The Makefile now generates the build directory if you're on CMake 3.13+.
 * ``make install`` now builds the library if it hasn't been built already.
