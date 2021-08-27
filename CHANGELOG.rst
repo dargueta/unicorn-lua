@@ -32,6 +32,10 @@ Bugfixes
 * All the examples were broken by the ``unicorn_const`` change in 1.0b8.
 * Setting floating-point registers now (theoretically) works on a big-endian host
   machine.
+* Fix bug where the engine pointer/engine object pair wasn't removed from the C
+  registry upon closing. This is because the Engine pointer gets nulled out upon
+  closing, and then after closing we tried removing the pointer. It never matched
+  because it was null.
 
 Other Changes
 ~~~~~~~~~~~~~

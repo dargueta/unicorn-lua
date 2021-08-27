@@ -197,8 +197,8 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 
 int ul_close(lua_State *L) {
     auto engine_object = get_engine_struct(L, 1);
-    if (engine_object->engine)
-        engine_object->close();
+    if (engine_object->engine == nullptr)
+        return 0;
 
     // Garbage collection should remove the engine object from the pointer map table,
     // but we might as well do it here anyway.
@@ -208,6 +208,8 @@ int ul_close(lua_State *L) {
     lua_settable(L, -3);
     lua_pop(L, 1);
 
+    // Free the actual engine object.
+    engine_object->close();
     return 0;
 }
 
