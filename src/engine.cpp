@@ -16,8 +16,10 @@ const char * const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 
 // Close the engine only if it hasn't been closed already.
 static int maybe_close(lua_State *L) {
-    auto engine_object = get_engine_struct(L, 1);
-    if (engine_object->engine)
+    UCLuaEngine *engine_object = get_engine_struct(L, 1);
+    uc_engine *engine_handle = engine_object->get_handle();
+
+    if (engine_handle != nullptr)
         engine_object->close();
     return 0;
 }
@@ -57,20 +59,22 @@ const luaL_Reg kEngineInstanceMethods[] = {
 };
 
 
-UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine) : L(L), engine(engine) {}
+UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine)
+    : L_(L), engine_handle_(engine)
+{}
 
 
 UCLuaEngine::~UCLuaEngine() {
     // Only close the engine if it hasn't already been closed. It's perfectly legitimate
     // for the user to close the engine before it gets garbage-collected, so we don't
     // want to crash on garbage collection if they did so.
-    if (engine != nullptr)
+    if (engine_handle_ != nullptr)
         close();
 }
 
 
 Hook *UCLuaEngine::create_empty_hook() {
-    Hook *hook = new Hook(this->L, this->engine);
+    Hook *hook = new Hook(L_, engine_handle_);
     hooks_.insert(hook);
     return hook;
 }
@@ -85,39 +89,39 @@ void UCLuaEngine::remove_hook(Hook *hook) {
 void UCLuaEngine::start(
     uint64_t start_addr, uint64_t end_addr, uint64_t timeout, size_t n_instructions
 ) {
-    uc_err error = uc_emu_start(engine, start_addr, end_addr, timeout, n_instructions);
+    uc_err error = uc_emu_start(engine_handle_, start_addr, end_addr, timeout, n_instructions);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
 
 
 void UCLuaEngine::stop() {
-    uc_err error = uc_emu_stop(engine);
+    uc_err error = uc_emu_stop(engine_handle_);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
 
 
 void UCLuaEngine::close() {
-    if (engine == nullptr)
+    if (engine_handle_ == nullptr)
         throw LuaBindingError("Attempted to close already-closed engine.");
 
     for (auto hook : hooks_)
         delete hook;
     hooks_.clear();
 
-    uc_err error = uc_close(engine);
+    uc_err error = uc_close(engine_handle_);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 
     // Signal subsequent calls that this engine is already closed.
-    engine = nullptr;
+    engine_handle_ = nullptr;
 }
 
 
 size_t UCLuaEngine::query(uc_query_type query_type) const {
     size_t result;
-    uc_err error = uc_query(engine, query_type, &result);
+    uc_err error = uc_query(engine_handle_, query_type, &result);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
     return result;
@@ -125,31 +129,35 @@ size_t UCLuaEngine::query(uc_query_type query_type) const {
 
 
 uc_err UCLuaEngine::get_errno() const {
-    return uc_errno(engine);
+    return uc_errno(engine_handle_);
 }
 
 
 Context *UCLuaEngine::create_context_in_lua() {
-    auto context = (Context *)lua_newuserdata(L, sizeof(Context));
+    auto context = (Context *)lua_newuserdata(L_, sizeof(Context));
     new (context) Context(*this);
 
-    luaL_setmetatable(L, kContextMetatableName);
+    luaL_setmetatable(L_, kContextMetatableName);
     context->update();
+    contexts_.insert(context);
     return context;
 }
 
 
 void UCLuaEngine::restore_from_context(Context *context) {
-    auto handle = context->get_handle();
-    if (handle == nullptr)
+    auto context_handle = context->get_handle();
+    if (context_handle == nullptr)
         throw LuaBindingError(
             "Attempted to use a context object that has already been freed."
         );
 
-    uc_err error = uc_context_restore(engine, handle);
+    uc_err error = uc_context_restore(engine_handle_, context_handle);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
+
+
+uc_engine *UCLuaEngine::get_handle() const noexcept { return engine_handle_; }
 
 
 void ul_init_engines_lib(lua_State *L) {
@@ -196,14 +204,16 @@ void ul_get_engine_object(lua_State *L, const uc_engine *engine) {
 
 
 int ul_close(lua_State *L) {
-    auto engine_object = get_engine_struct(L, 1);
-    if (engine_object->engine == nullptr)
+    UCLuaEngine *engine_object = get_engine_struct(L, 1);
+    uc_engine *engine_handle = engine_object->get_handle();
+
+    if (engine_handle == nullptr)
         return 0;
 
     // Garbage collection should remove the engine object from the pointer map table,
     // but we might as well do it here anyway.
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
-    lua_pushlightuserdata(L, (void *)engine_object->engine);
+    lua_pushlightuserdata(L, (void *)engine_handle);
     lua_pushnil(L);
     lua_settable(L, -3);
     lua_pop(L, 1);
@@ -215,7 +225,7 @@ int ul_close(lua_State *L) {
 
 
 int ul_query(lua_State *L) {
-    auto engine_object = get_engine_struct(L, 1);
+    const UCLuaEngine *engine_object = get_engine_struct(L, 1);
     auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 2));
 
     size_t result = engine_object->query(query_type);
@@ -225,14 +235,14 @@ int ul_query(lua_State *L) {
 
 
 int ul_errno(lua_State *L) {
-    auto engine = get_engine_struct(L, 1);
+    const UCLuaEngine *engine = get_engine_struct(L, 1);
     lua_pushinteger(L, engine->get_errno());
     return 1;
 }
 
 
 int ul_emu_start(lua_State *L) {
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine *engine = get_engine_struct(L, 1);
     auto start = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto end = static_cast<uint64_t>(luaL_checkinteger(L, 3));
     auto timeout = static_cast<uint64_t>(luaL_optinteger(L, 4, 0));
@@ -244,16 +254,18 @@ int ul_emu_start(lua_State *L) {
 
 
 int ul_emu_stop(lua_State *L) {
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine *engine = get_engine_struct(L, 1);
     engine->stop();
     return 0;
 }
 
 
 uc_engine *ul_toengine(lua_State *L, int index) {
-    auto engine_object = get_engine_struct(L, index);
-    if (engine_object->engine == nullptr)
+    const UCLuaEngine *engine_object = get_engine_struct(L, index);
+    uc_engine *engine_handle = engine_object->get_handle();
+
+    if (engine_handle == nullptr)
         throw LuaBindingError("Attempted to use closed engine.");
 
-    return engine_object->engine;
+    return engine_handle;
 }

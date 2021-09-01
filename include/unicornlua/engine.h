@@ -63,10 +63,11 @@ public:
     size_t query(uc_query_type query_type) const;
     uc_err get_errno() const;
 
-    lua_State *L;
-    uc_engine *engine;
+    uc_engine *get_handle() const noexcept;
 
 private:
+    lua_State *L_;
+    uc_engine *engine_handle_;
     std::set<Hook *> hooks_;
 };
 

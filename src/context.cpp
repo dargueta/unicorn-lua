@@ -41,14 +41,15 @@ uc_context *Context::get_handle() const noexcept { return context_; }
 
 void Context::update() {
     uc_err error;
+    uc_engine *engine = engine_.get_handle();
 
     if (context_ == nullptr) {
-        error = uc_context_alloc(engine_.engine, &context_);
+        error = uc_context_alloc(engine, &context_);
         if (error != UC_ERR_OK)
             throw UnicornLibraryError(error);
     }
 
-    error = uc_context_save(engine_.engine, context_);
+    error = uc_context_save(engine, context_);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }

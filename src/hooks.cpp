@@ -331,16 +331,17 @@ int ul_hook_add(lua_State *L) {
     }
 
     uc_hook hook_handle;
+    uc_engine *engine_handle = engine_object->get_handle();
 
     if (n_args < 6)
         error = uc_hook_add(
-            engine_object->engine, &hook_handle, hook_type, c_callback,
-            (void *)hook_info, start, end
+            engine_handle, &hook_handle, hook_type, c_callback, hook_info, start,
+            end
         );
     else
         error = uc_hook_add(
-            engine_object->engine, &hook_handle, hook_type, c_callback,
-            (void *)hook_info, start, end, extra_argument
+            engine_handle, &hook_handle, hook_type, c_callback, hook_info, start,
+            end, extra_argument
         );
 
     if (error != UC_ERR_OK) {
