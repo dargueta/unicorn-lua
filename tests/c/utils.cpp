@@ -7,6 +7,7 @@
 #include "doctest.h"
 #include "fixtures.h"
 #include "unicornlua/lua.h"
+#include "unicornlua/platform.h"
 #include "unicornlua/utils.h"
 
 
@@ -100,4 +101,91 @@ TEST_CASE_FIXTURE(
     // If we get out here then an exception wasn't thrown.
     FAIL("Exception wasn't thrown.");
 #endif
+}
+
+
+typedef char ItemType[100];
+
+
+TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Allocation works") {
+    WeakLuaAllocator<ItemType> allocator(L);
+    CHECK_EQ(allocator.size(), 0);
+
+    int original_stack_top = lua_gettop(L);
+
+    ItemType *new_item = allocator.allocate();
+    CHECK_NE(new_item, nullptr);
+
+    // Hopefully if this is an invalid pointer doing a memset will crash.
+    memset(new_item, 0, sizeof(ItemType));
+
+    // Ensure that there's one new item on top of the stack. This is the userdata
+    // that we just allocated.
+    CHECK_EQ(original_stack_top + 1, lua_gettop(L));
+
+    // Ensure the userdata pointer we get back is identical to the pointer we
+    // got back from allocate().
+    auto userdata = reinterpret_cast<ItemType *>(lua_touserdata(L, -1));
+    CHECK_EQ(userdata, new_item);
+
+    // Should have one element in the table.
+    CHECK_EQ(allocator.size(), 1);
+    CHECK_MESSAGE(
+        lua_gettop(L) == original_stack_top + 1,
+        "Stack wasn't restored to its original state after size()."
+    );
+}
+
+
+TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Freeing works") {
+    WeakLuaAllocator<ItemType> allocator(L);
+    CHECK_EQ(allocator.size(), 0);
+
+    ItemType *new_item = allocator.allocate();
+    CHECK_NE(new_item, nullptr);
+
+    // Should have one element in the table.
+    CHECK_EQ(allocator.size(), 1);
+
+    allocator.free(new_item);
+    CHECK_EQ(allocator.size(), 0);
+}
+
+
+TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Double free crashes") {
+    WeakLuaAllocator<ItemType> allocator(L);
+    CHECK_EQ(allocator.size(), 0);
+
+    ItemType *new_item = allocator.allocate();
+    CHECK_NE(new_item, nullptr);
+    CHECK_EQ(allocator.size(), 1);
+
+    allocator.free(new_item);
+    CHECK_EQ(allocator.size(), 0);
+
+    CHECK_THROWS_AS(allocator.free(new_item), std::invalid_argument);
+    CHECK_EQ(allocator.size(), 0);
+}
+
+
+TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Weak references work") {
+    WeakLuaAllocator<ItemType> allocator(L);
+    CHECK_EQ(allocator.size(), 0);
+
+    // Allocate a new item. Since all references are weak references, once this
+    // is popped from the stack, it should get cleaned up on the next collection
+    // cycle.
+    ItemType *item = allocator.allocate();
+    CHECK_NE(item, nullptr);
+    CHECK_EQ(allocator.size(), 1);
+
+    // Remove the only strong reference to the thing we just allocated.
+    lua_pop(L, 1);
+
+    // Force a garbage collection cycle, which should remove our item.
+    lua_gc(L, LUA_GCCOLLECT, 0);
+    CHECK_MESSAGE(
+        allocator.size() == 0,
+        "Weak reference didn't work, allocator still has 1 element."
+    );
 }

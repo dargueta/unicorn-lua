@@ -91,6 +91,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     CHECK_NE(context, nullptr);
 
     ul_context_free(L);
+    CHECK(context->is_free());
 
     auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
     CHECK_EQ(userdata, context);

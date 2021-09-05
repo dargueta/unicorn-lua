@@ -62,7 +62,7 @@ const luaL_Reg kEngineInstanceMethods[] = {
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine)
     : L_(L),
       engine_handle_(engine),
-      contexts_{L, true, ul_context_maybe_free}
+      contexts_{L, ul_context_maybe_free}
 {}
 
 
@@ -138,7 +138,7 @@ uc_err UCLuaEngine::get_errno() const {
 
 
 Context *UCLuaEngine::create_context_in_lua() {
-    Context *context = contexts_.allocate(true);
+    Context *context = contexts_.allocate();
     new (context) Context(*this);
 
     // allocate() left a Lua userdata on the stack that we're going to return to

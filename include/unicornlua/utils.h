@@ -7,6 +7,7 @@
 #ifndef INCLUDE_UNICORNLUA_UTILS_H_
 #define INCLUDE_UNICORNLUA_UTILS_H_
 
+#include <new>
 #include <stdexcept>
 
 #include <unicorn/unicorn.h>
@@ -57,52 +58,70 @@ int count_table_elements(lua_State *L, int table_index);
  * @tparam T    The datatype of the item being allocated.
  */
 template <class T>
-class LuaResourceTable {
+class WeakLuaAllocator {
 public:
-    explicit LuaResourceTable(
-        lua_State *L, bool weak_references = false, lua_CFunction destructor = nullptr
+    explicit WeakLuaAllocator(
+        lua_State *L, lua_CFunction destructor = nullptr
     ) : L_(L), destructor_(destructor) {
-        if (weak_references)
-            ul_create_weak_table(L_, "v");
-        else
-            lua_newtable(L_);
+        ul_create_weak_table(L_, "v");
         table_ref_ = luaL_ref(L_, LUA_REGISTRYINDEX);
     }
 
-    ~LuaResourceTable() {
+    ~WeakLuaAllocator() {
         free_all();
         luaL_unref(L_, LUA_REGISTRYINDEX, table_ref_);
     }
 
-    T * allocate(bool leave_object_on_stack) {
+    T *allocate() {
         lua_geti(L_, LUA_REGISTRYINDEX, table_ref_);
         int table_index = lua_gettop(L_);
 
         T *item = reinterpret_cast<T *>(lua_newuserdata(L_, sizeof(T)));
+        if (item == nullptr) {
+            throw std::bad_alloc();
+        }
 
-        // If the user wants the Lua object left on the stack, we need to make a
-        // copy, because luaL_ref removes the original one from the stack.
-        if (leave_object_on_stack)
-            lua_pushvalue(L_, -1);
+        // Because we need to return the userdata at the top of the stack, we
+        // need to make a copy of it and use that as the value to store in the
+        // table.
+        lua_pushvalue(L_, -1);
+        lua_rawsetp(L_, table_index, item);
 
-        luaL_ref(L_, table_index);
-
-        // Remove the table from the stack. We can't use lua_pop() because there
-        // may be a copy of the userdata there that the caller wanted.
+        // Remove the table from the stack. We can't use lua_pop() because the
+        // top of the stack contains the copy of the userdata the caller wanted.
         lua_remove(L_, table_index);
         return item;
     }
 
     void free(T *item) {
-        int value_reference = get_value_reference(item);
-
         lua_geti(L_, LUA_REGISTRYINDEX, table_ref_);
-        if (destructor_ != nullptr) {
-            lua_geti(L_, -1, value_reference);
-            destructor_(L_);
-            lua_pop(L_, 1);
+        int table_index = lua_gettop(L_);
+
+        // Check to see if the pointer exists in our allocation table. If it
+        // doesn't exist, we either already freed it or it never existed here
+        // in the first place.
+        lua_rawgetp(L_, table_index, item);
+        if (lua_isnil(L_, -1)) {
+            // Get rid of nil and our allocation table, then crash.
+            lua_pop(L_, 2);
+            throw std::invalid_argument("Pointer not found in allocator table.");
         }
-        luaL_unref(L_, -1, value_reference);
+
+        // The top of the stack is the userdata, allocation table is underneath
+        // it.
+        if (destructor_ != nullptr)
+            destructor_(L_);
+
+        // Get rid of the userdata value on the stack. It's still present in the
+        // allocation table.
+        lua_pop(L_, 1);
+
+        // Deallocate the userdata by setting its entry in the allocation table
+        // to nil.
+        lua_pushnil(L_);
+        lua_rawsetp(L_, table_index, item);
+
+        // Remove the allocation table from the stack.
         lua_pop(L_, 1);
     }
 
@@ -112,8 +131,7 @@ public:
 
         lua_pushnil(L_);
         while (lua_next(L_, table_index) != 0) {
-            // Lua value TOS, integer key below it. If we were given a dtor,
-            // invoke it on the Lua value.
+            // Lua value TOS, pointer key below it.
             // FIXME (dargueta): Don't check for NULL on every iteration.
             if (destructor_ != nullptr)
                 destructor_(L_);
@@ -121,45 +139,28 @@ public:
             // Remove the value from TOS; the key is now at the top.
             lua_pop(L_, 1);
 
-            // Remove this entry from the table.
-            int element_ref = lua_tointeger(L_, -2);
-            luaL_unref(L_, table_index, element_ref);
+            // Remove this entry from the allocation table by assigning its
+            // value to nil.
+            auto item = reinterpret_cast<const T *>(lua_touserdata(L_, -1));
+            lua_pushnil(L_);
+            lua_rawsetp(L_, table_index, item);
         }
 
-        // Remove the table from the stack.
+        // Remove the allocation table from the stack.
         lua_pop(L_, 1);
+    }
+
+    int size() const noexcept {
+        lua_geti(L_, LUA_REGISTRYINDEX, table_ref_);
+        int count = luaL_len(L_, -1);
+        lua_pop(L_, 1);
+        return count;
     }
 
 private:
     lua_State *L_;
     lua_CFunction destructor_;
     int table_ref_;
-
-    int get_value_reference(const T *item) const {
-        lua_geti(L_, LUA_REGISTRYINDEX, table_ref_);
-        int table_index = lua_gettop(L_);
-
-        lua_pushnil(L_);
-        while (lua_next(L_, table_index) != 0) {
-            // Lua value TOS, integer reference below it.
-            if (lua_touserdata(L_, -1) != item) {
-                lua_pop(L_, 1);
-                continue;
-            }
-
-            int value_reference = lua_tointeger(L_, -2);
-            // Pop the value, key, and table off the stack
-            lua_pop(L_, 3);
-            return value_reference;
-        }
-
-        // Pop the table off the stack to leave it as it was before the function
-        // call.
-        lua_pop(L_, 1);
-        throw std::invalid_argument(
-            "Could not find the specified item in the managed table."
-        );
-    }
 };
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

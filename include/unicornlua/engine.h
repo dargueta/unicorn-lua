@@ -70,7 +70,7 @@ private:
     lua_State *L_;
     uc_engine *engine_handle_;
     std::set<Hook *> hooks_;
-    LuaResourceTable<Context> contexts_;
+    WeakLuaAllocator<Context> contexts_;
 };
 
 

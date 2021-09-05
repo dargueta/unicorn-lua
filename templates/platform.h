@@ -13,5 +13,6 @@
 
 #cmakedefine01 CMAKE_HOST_APPLE
 #cmakedefine01 CMAKE_HOST_UNIX
+#cmakedefine01 IS_LUAJIT
 
 #endif  /* UNICORNLUA_PLATFORM_H */
