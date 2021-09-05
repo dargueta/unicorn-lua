@@ -11,7 +11,7 @@
 TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() sets engine handle to null") {
     uclua_engine->close();
     CHECK_MESSAGE(
-        uclua_engine->engine == nullptr,
+        uclua_engine->get_handle() == nullptr,
         "Engine handle should be null after closing."
     );
 }
@@ -20,7 +20,7 @@ TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() sets engine handle to nul
 TEST_CASE_FIXTURE(EngineFixture, "UCLuaEngine::close() crashes if you call it twice") {
     uclua_engine->close();
     CHECK_MESSAGE(
-        uclua_engine->engine == nullptr,
+        uclua_engine->get_handle() == nullptr,
         "Engine handle should be null after closing."
     );
     CHECK_THROWS_AS(uclua_engine->close(), LuaBindingError);

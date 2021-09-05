@@ -26,8 +26,8 @@ EngineFixture::EngineFixture()
     REQUIRE_MESSAGE(error == UC_ERR_OK, "Failed to create a MIPS engine.");
 
     uclua_engine = new UCLuaEngine(L, engine_handle);
-    REQUIRE(uclua_engine->L != nullptr);
-    REQUIRE(uclua_engine->engine != nullptr);
+    // REQUIRE(uclua_engine->L != nullptr);
+    REQUIRE(uclua_engine->get_handle() != nullptr);
     REQUIRE(lua_gettop(L) == 0);
 }
 

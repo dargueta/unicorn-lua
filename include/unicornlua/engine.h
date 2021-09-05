@@ -13,6 +13,7 @@
 
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
+#include "unicornlua/utils.h"
 
 extern const char * const kEngineMetatableName;
 extern const char * const kEnginePointerMapName;
@@ -69,6 +70,7 @@ private:
     lua_State *L_;
     uc_engine *engine_handle_;
     std::set<Hook *> hooks_;
+    LuaResourceTable<Context> contexts_;
 };
 
 

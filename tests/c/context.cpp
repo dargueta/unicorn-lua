@@ -1,16 +1,12 @@
-#include <unicorn/unicorn.h>
-
 #include "doctest.h"
 #include "fixtures.h"
 #include "unicornlua/context.h"
-#include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
-    CHECK(!context->is_released());
 
     CHECK_MESSAGE(
         lua_gettop(L) == 1, "Expecting a context object on the stack."
@@ -20,7 +16,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     );
 
     CHECK_MESSAGE(
-        lua_touserdata(L, 1) == context,
+        (Context *)lua_touserdata(L, 1) == context,
         "TOS isn't the context object we were expecting."
     );
 
@@ -50,30 +46,53 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
-    REQUIRE(!context->is_released());
 
-    context->release();
-    REQUIRE(context->is_released());
+    // The pointer in the Lua userdata must be identical to the pointer we got
+    // back from the function.
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    REQUIRE(userdata == context);
+
+    ul_context_free(L);
+    CHECK(context->is_free());
 }
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
-    CHECK_NE(context, nullptr);
-    REQUIRE(!context->is_released());
+    CHECK_FALSE(context->is_free());
 
-    context->release();
-    REQUIRE(context->is_released());
-    CHECK_THROWS_AS(context->release(), LuaBindingError);
+    ul_context_free(L);
+    REQUIRE(context->is_free());
+    CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
 }
+
+
+TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent.") {
+    Context *context = uclua_engine->create_context_in_lua();
+    CHECK_NE(context, nullptr);
+
+    // The pointer in the Lua userdata must be identical to the pointer we got
+    // back from the function.
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    REQUIRE(userdata == context);
+
+    ul_context_maybe_free(L);
+    REQUIRE(context->is_free());
+
+    // Nothing should happen
+    ul_context_maybe_free(L);
+    CHECK(context->is_free());
+}
+
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
-    REQUIRE(!context->is_released());
 
-    context->release();
-    REQUIRE(context->is_released());
+    ul_context_free(L);
+
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    CHECK_EQ(userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 }

@@ -60,7 +60,9 @@ const luaL_Reg kEngineInstanceMethods[] = {
 
 
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine)
-    : L_(L), engine_handle_(engine)
+    : L_(L),
+      engine_handle_(engine),
+      contexts_{L, true, ul_context_maybe_free}
 {}
 
 
@@ -110,6 +112,8 @@ void UCLuaEngine::close() {
         delete hook;
     hooks_.clear();
 
+    contexts_.free_all();
+
     uc_err error = uc_close(engine_handle_);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
@@ -134,24 +138,24 @@ uc_err UCLuaEngine::get_errno() const {
 
 
 Context *UCLuaEngine::create_context_in_lua() {
-    auto context = (Context *)lua_newuserdata(L_, sizeof(Context));
+    Context *context = contexts_.allocate(true);
     new (context) Context(*this);
 
+    // allocate() left a Lua userdata on the stack that we're going to return to
+    // the calling function. We need to set the metatable on it first.
     luaL_setmetatable(L_, kContextMetatableName);
     context->update();
-    contexts_.insert(context);
     return context;
 }
 
 
 void UCLuaEngine::restore_from_context(Context *context) {
-    auto context_handle = context->get_handle();
-    if (context_handle == nullptr)
+    if (context->is_free())
         throw LuaBindingError(
             "Attempted to use a context object that has already been freed."
         );
 
-    uc_err error = uc_context_restore(engine_handle_, context_handle);
+    uc_err error = uc_context_restore(engine_handle_, context->get_handle());
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }

@@ -21,20 +21,18 @@ class Context {
     friend class UCLuaEngine;
 
 protected:
-    explicit Context(UCLuaEngine& engine);
-    Context(UCLuaEngine& engine, uc_context *context);
+    explicit Context(UCLuaEngine &engine, uc_context *handle = nullptr);
 
 public:
-    ~Context();
-
+    ~Context() noexcept(false);
     void update();
-    void release();
-    bool is_released() const noexcept;
+    void free();
     uc_context *get_handle() const noexcept;
+    bool is_free() const noexcept;
 
 private:
-    UCLuaEngine& engine_;
-    uc_context *context_;
+    UCLuaEngine &engine_;
+    uc_context *handle_;
 };
 
 
@@ -47,6 +45,12 @@ int ul_context_restore(lua_State *L);
  * `uc_context_free()` on 1.0.2+. In either case, it will behave as expected.
  */
 int ul_context_free(lua_State *L);
+
+/**
+ * Like @ref ul_context_free, except if the context is closed, it does nothing
+ * instead of throwing an exception.
+ */
+int ul_context_maybe_free(lua_State *L);
 
 
 #define get_context_struct(L, index)   \
