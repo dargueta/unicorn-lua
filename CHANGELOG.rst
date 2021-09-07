@@ -47,6 +47,8 @@ Other Changes
   wrong and unused anyway.
 * [C++] The engine handle and Lua state are now private variables for UCLuaEngine.
 * Switched to Github Actions for CI instead of Travis.
+* [C++] Overhauled implementation of contexts to avoid a race condition where
+  the engine was garbage-collected before a context derived from it.
 * The Makefile now generates the build directory if you're on CMake 3.13+.
 * ``make install`` now builds the library if it hasn't been built already.
 * Added ``--install-prefix`` to the configure script to control where the library
