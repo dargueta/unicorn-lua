@@ -360,7 +360,7 @@ int ul_hook_add(lua_State *L) {
 
 
 int ul_hook_del(lua_State *L) {
-    auto hook_info = (Hook *)lua_topointer(L, 2);
+    auto hook_info = (Hook *)lua_touserdata(L, 2);
     auto engine = get_engine_struct(L, 1);
 
     engine->remove_hook(hook_info);
