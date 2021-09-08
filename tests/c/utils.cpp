@@ -103,7 +103,7 @@ TEST_CASE_FIXTURE(
 #endif
 }
 
-
+#if 0
 typedef char ItemType[100];
 
 
@@ -189,3 +189,4 @@ TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Weak references work") {
         "Weak reference didn't work, allocator still has 1 element."
     );
 }
+#endif

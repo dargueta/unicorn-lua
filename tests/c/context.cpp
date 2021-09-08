@@ -16,7 +16,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     );
 
     CHECK_MESSAGE(
-        (Context *)lua_touserdata(L, 1) == context,
+        *(Context **)lua_touserdata(L, 1) == context,
         "TOS isn't the context object we were expecting."
     );
 
@@ -49,8 +49,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
 
     // The pointer in the Lua userdata must be identical to the pointer we got
     // back from the function.
-    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
-    REQUIRE(userdata == context);
+    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
+    REQUIRE(*userdata == context);
 
     ul_context_free(L);
     CHECK(context->is_free());
@@ -73,8 +73,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent
 
     // The pointer in the Lua userdata must be identical to the pointer we got
     // back from the function.
-    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
-    REQUIRE(userdata == context);
+    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
+    REQUIRE(*userdata == context);
 
     ul_context_maybe_free(L);
     REQUIRE(context->is_free());
@@ -93,7 +93,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     ul_context_free(L);
     CHECK(context->is_free());
 
-    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
-    CHECK_EQ(userdata, context);
+    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
+    CHECK_EQ(*userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 }

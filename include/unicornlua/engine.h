@@ -54,6 +54,7 @@ public:
      */
     Context *create_context_in_lua();
     void restore_from_context(Context *context);
+    void remove_context(Context *context);
 
     void start(
         uint64_t start_addr, uint64_t end_addr, uint64_t timeout=0,
@@ -70,7 +71,7 @@ private:
     lua_State *L_;
     uc_engine *engine_handle_;
     std::set<Hook *> hooks_;
-    WeakLuaAllocator<Context> contexts_;
+    std::set<Context *> contexts_;
 };
 
 

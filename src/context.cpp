@@ -52,22 +52,8 @@ void Context::update() {
 }
 
 void Context::free() {
-    uc_err error;
-
-    if (handle_ == nullptr)
-        throw LuaBindingError("Attempted to close already-closed context.");
-
-#if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
-    /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
-    error = uc_context_free(handle_);
-#else
-    /* Unicorn 1.0.1 and lower uses uc_free(). */
-    error = uc_free(handle_);
-#endif
-
+    engine_.remove_context(this);
     handle_ = nullptr;
-    if (error != UC_ERR_OK)
-        throw UnicornLibraryError(error);
 }
 
 
@@ -83,10 +69,11 @@ int ul_context_save(lua_State *L) {
         engine->create_context_in_lua();
     }
     else {
-        Context *context = get_context_struct(L, 2);
-        if (context->is_free())
+        Context **p_context = get_context_struct(L, 2);
+        if (*p_context == nullptr || (*p_context)->is_free())
             throw LuaBindingError("Cannot update a closed context.");
-        context->update();
+
+        (*p_context)->update();
     }
     return 1;
 }
@@ -94,28 +81,34 @@ int ul_context_save(lua_State *L) {
 
 int ul_context_restore(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
-    Context *context = get_context_struct(L, 2);
+    Context **p_context = get_context_struct(L, 2);
 
-    if (context->is_free())
+    if (*p_context == nullptr || (*p_context)->is_free())
         throw LuaBindingError("Cannot restore from a closed context.");
 
-    engine->restore_from_context(context);
+    engine->restore_from_context(*p_context);
     return 0;
 }
 
 
 int ul_context_free(lua_State *L) {
-    Context *context = get_context_struct(L, 1);
-    context->free();
+    Context **p_context = get_context_struct(L, 1);
+    if (*p_context == nullptr || (*p_context)->is_free())
+        throw LuaBindingError("Cannot close a closed context.");
+
+    (*p_context)->free();
+    *p_context = nullptr;
     return 0;
 }
 
 
 int ul_context_maybe_free(lua_State *L) {
-    Context *context = get_context_struct(L, 1);
+    Context **p_context = get_context_struct(L, 1);
 
     // Do nothing if the context has already been freed.
-    if (!context->is_free())
-        return ul_context_free(L);
+    if (*p_context != nullptr && !(*p_context)->is_free())
+        (*p_context)->free();
+
+    *p_context = nullptr;
     return 0;
 }

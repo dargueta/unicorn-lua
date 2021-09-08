@@ -60,9 +60,7 @@ const luaL_Reg kEngineInstanceMethods[] = {
 
 
 UCLuaEngine::UCLuaEngine(lua_State *L, uc_engine *engine)
-    : L_(L),
-      engine_handle_(engine),
-      contexts_{L, ul_context_maybe_free}
+    : L_(L), engine_handle_(engine)
 {}
 
 
@@ -112,7 +110,9 @@ void UCLuaEngine::close() {
         delete hook;
     hooks_.clear();
 
-    contexts_.free_all();
+    for (auto context : contexts_)
+        remove_context(context);
+    contexts_.clear();
 
     uc_err error = uc_close(engine_handle_);
     if (error != UC_ERR_OK)
@@ -138,12 +138,24 @@ uc_err UCLuaEngine::get_errno() const {
 
 
 Context *UCLuaEngine::create_context_in_lua() {
-    Context *context = contexts_.allocate();
-    new (context) Context(*this);
+    Context *context = new Context(*this);
 
-    // allocate() left a Lua userdata on the stack that we're going to return to
-    // the calling function. We need to set the metatable on it first.
+    // The userdata we pass back to Lua is just a pointer to the context we
+    // created on the normal heap. We can't use a light userdata because light
+    // userdata can't have metatables.
+    auto userdata = reinterpret_cast<Context **>(lua_newuserdata(L_, sizeof (Context **)));
+    if (userdata == nullptr)
+        throw std::bad_alloc();
+
+    // Set the context pointer in the userdata.
+    *userdata = context;
+
+    // We now have an initialized a Lua userdata on the stack that we're going
+    // to return to the calling function. We need to set the metatable on it
+    // first.
     luaL_setmetatable(L_, kContextMetatableName);
+
+    // Save the engine's state
     context->update();
     return context;
 }
@@ -156,6 +168,33 @@ void UCLuaEngine::restore_from_context(Context *context) {
         );
 
     uc_err error = uc_context_restore(engine_handle_, context->get_handle());
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+}
+
+
+void UCLuaEngine::remove_context(Context *context) {
+    if (context->is_free())
+        throw LuaBindingError(
+            "Attempted to remove a context object that has already been freed."
+        );
+    if (contexts_.find(context) == contexts_.end())
+        throw LuaBindingError(
+            "Attempted to free a context object from the wrong engine."
+        );
+
+    uc_err error;
+
+#if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
+    /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
+    error = uc_context_free(context->handle_);
+#else
+    /* Unicorn 1.0.1 and lower uses uc_free(). */
+    error = uc_free(context->handle_);
+#endif
+
+    contexts_.erase(context);
+    context->handle_ = nullptr;
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
