@@ -78,6 +78,8 @@ public:
 
         T *item = reinterpret_cast<T *>(lua_newuserdata(L_, sizeof(T)));
         if (item == nullptr) {
+            // Remove the allocation table from the stack and blow up.
+            lua_pop(L_, 1);
             throw std::bad_alloc();
         }
 

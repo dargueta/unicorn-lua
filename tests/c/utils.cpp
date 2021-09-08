@@ -115,6 +115,8 @@ TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Allocation works") {
 
     ItemType *new_item = allocator.allocate();
     CHECK_NE(new_item, nullptr);
+    // Should have one element in the table.
+    CHECK_EQ(allocator.size(), 1);
 
     // Hopefully if this is an invalid pointer doing a memset will crash.
     memset(new_item, 0, sizeof(ItemType));
@@ -128,8 +130,6 @@ TEST_CASE_FIXTURE(LuaFixture, "WeakLuaAllocator: Allocation works") {
     auto userdata = reinterpret_cast<ItemType *>(lua_touserdata(L, -1));
     CHECK_EQ(userdata, new_item);
 
-    // Should have one element in the table.
-    CHECK_EQ(allocator.size(), 1);
     CHECK_MESSAGE(
         lua_gettop(L) == original_stack_top + 1,
         "Stack wasn't restored to its original state after size()."
