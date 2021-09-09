@@ -110,11 +110,10 @@ void UCLuaEngine::close() {
         delete hook;
     hooks_.clear();
 
-    for (auto context : contexts_) {
-        if (context->context_handle != nullptr)
-            free_context(context);
+    while (!contexts_.empty()) {
+        auto context = *contexts_.begin();
+        free_context(context);
     }
-    contexts_.clear();
 
     uc_err error = uc_close(engine_handle_);
     if (error != UC_ERR_OK)

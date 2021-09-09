@@ -54,11 +54,10 @@ int ul_context_free(lua_State *L) {
 
     if (context->engine == nullptr)
         throw LuaBindingError("BUG: Engine was collected before the context.");
-    if (context->context_handle == nullptr)
-        throw LuaBindingError("Cannot close a closed context.");
 
     context->engine->free_context(context);
     context->context_handle = nullptr;
+    context->engine = nullptr;
     return 0;
 }
 
