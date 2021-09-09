@@ -22,44 +22,6 @@ const luaL_Reg kContextInstanceMethods[] = {
 };
 
 
-Context::Context(UCLuaEngine &engine, uc_context *handle)
-    : engine_(engine), handle_(handle)
-{}
-
-
-Context::~Context() noexcept(false) {
-    if (handle_ != nullptr)
-        free();
-}
-
-
-uc_context *Context::get_handle() const noexcept { return handle_; }
-
-
-void Context::update() {
-    uc_err error;
-    uc_engine *engine = engine_.get_handle();
-
-    if (handle_ == nullptr) {
-        error = uc_context_alloc(engine, &handle_);
-        if (error != UC_ERR_OK)
-            throw UnicornLibraryError(error);
-    }
-
-    error = uc_context_save(engine, handle_);
-    if (error != UC_ERR_OK)
-        throw UnicornLibraryError(error);
-}
-
-void Context::free() {
-    engine_.remove_context(this);
-    handle_ = nullptr;
-}
-
-
-bool Context::is_free() const noexcept { return handle_ == nullptr; }
-
-
 int ul_context_save(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
 
@@ -69,11 +31,11 @@ int ul_context_save(lua_State *L) {
         engine->create_context_in_lua();
     }
     else {
-        Context **p_context = get_context_struct(L, 2);
-        if (*p_context == nullptr || (*p_context)->is_free())
+        Context *context = get_context_struct(L, 2);
+        if (context->context_handle == nullptr)
             throw LuaBindingError("Cannot update a closed context.");
 
-        (*p_context)->update();
+        context->engine->update_context(context);
     }
     return 1;
 }
@@ -81,34 +43,31 @@ int ul_context_save(lua_State *L) {
 
 int ul_context_restore(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
-    Context **p_context = get_context_struct(L, 2);
-
-    if (*p_context == nullptr || (*p_context)->is_free())
-        throw LuaBindingError("Cannot restore from a closed context.");
-
-    engine->restore_from_context(*p_context);
+    Context *context = get_context_struct(L, 2);
+    engine->restore_from_context(context);
     return 0;
 }
 
 
 int ul_context_free(lua_State *L) {
-    Context **p_context = get_context_struct(L, 1);
-    if (*p_context == nullptr || (*p_context)->is_free())
+    Context *context = get_context_struct(L, 1);
+
+    if (context->engine == nullptr)
+        throw LuaBindingError("BUG: Engine was collected before the context.");
+    if (context->context_handle == nullptr)
         throw LuaBindingError("Cannot close a closed context.");
 
-    (*p_context)->free();
-    *p_context = nullptr;
+    context->engine->free_context(context);
+    context->context_handle = nullptr;
     return 0;
 }
 
 
 int ul_context_maybe_free(lua_State *L) {
-    Context **p_context = get_context_struct(L, 1);
+    Context *context = get_context_struct(L, 1);
 
     // Do nothing if the context has already been freed.
-    if (*p_context != nullptr && !(*p_context)->is_free())
-        (*p_context)->free();
-
-    *p_context = nullptr;
+    if (context->context_handle != nullptr)
+        ul_context_free(L);
     return 0;
 }

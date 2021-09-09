@@ -21,7 +21,7 @@ extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
 
-class Context;
+struct Context;
 
 
 class UCLuaEngine {
@@ -53,8 +53,9 @@ public:
      * Before, it was necessary to call `update()` on the returned context object.
      */
     Context *create_context_in_lua();
+    void update_context(Context *context) const;
     void restore_from_context(Context *context);
-    void remove_context(Context *context);
+    void free_context(Context *context);
 
     void start(
         uint64_t start_addr, uint64_t end_addr, uint64_t timeout=0,

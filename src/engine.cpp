@@ -110,8 +110,10 @@ void UCLuaEngine::close() {
         delete hook;
     hooks_.clear();
 
-    for (auto context : contexts_)
-        remove_context(context);
+    for (auto context : contexts_) {
+        if (context->context_handle != nullptr)
+            free_context(context);
+    }
     contexts_.clear();
 
     uc_err error = uc_close(engine_handle_);
@@ -138,43 +140,63 @@ uc_err UCLuaEngine::get_errno() const {
 
 
 Context *UCLuaEngine::create_context_in_lua() {
-    Context *context = new Context(*this);
-
     // The userdata we pass back to Lua is just a pointer to the context we
     // created on the normal heap. We can't use a light userdata because light
     // userdata can't have metatables.
-    auto userdata = reinterpret_cast<Context **>(lua_newuserdata(L_, sizeof (Context **)));
-    if (userdata == nullptr)
+    auto context = reinterpret_cast<Context *>(
+        lua_newuserdata(L_, sizeof (Context))
+    );
+    if (context == nullptr)
         throw std::bad_alloc();
-
-    // Set the context pointer in the userdata.
-    *userdata = context;
 
     // We now have an initialized a Lua userdata on the stack that we're going
     // to return to the calling function. We need to set the metatable on it
     // first.
     luaL_setmetatable(L_, kContextMetatableName);
 
+    context->context_handle = nullptr;
+    context->engine = this;
+
     // Save the engine's state
-    context->update();
+    update_context(context);
+    contexts_.insert(context);
     return context;
 }
 
 
 void UCLuaEngine::restore_from_context(Context *context) {
-    if (context->is_free())
+    if (context->context_handle == nullptr)
         throw LuaBindingError(
             "Attempted to use a context object that has already been freed."
         );
+    if (contexts_.find(context) == contexts_.end())
+        throw LuaBindingError(
+            "Tried to restore engine from a context it doesn't own."
+        );
 
-    uc_err error = uc_context_restore(engine_handle_, context->get_handle());
+    uc_err error = uc_context_restore(engine_handle_, context->context_handle);
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }
 
 
-void UCLuaEngine::remove_context(Context *context) {
-    if (context->is_free())
+void UCLuaEngine::update_context(Context *context) const {
+    uc_err error;
+
+    if (context->context_handle == nullptr) {
+        error = uc_context_alloc(engine_handle_, &context->context_handle);
+        if (error != UC_ERR_OK)
+            throw UnicornLibraryError(error);
+    }
+
+    error = uc_context_save(engine_handle_, context->context_handle);
+    if (error != UC_ERR_OK)
+        throw UnicornLibraryError(error);
+}
+
+
+void UCLuaEngine::free_context(Context *context) {
+    if (context->context_handle == nullptr)
         throw LuaBindingError(
             "Attempted to remove a context object that has already been freed."
         );
@@ -187,14 +209,15 @@ void UCLuaEngine::remove_context(Context *context) {
 
 #if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
     /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
-    error = uc_context_free(context->handle_);
+    error = uc_context_free(context->context_handle);
 #else
     /* Unicorn 1.0.1 and lower uses uc_free(). */
-    error = uc_free(context->handle_);
+    error = uc_free(context->context_handle);
 #endif
 
     contexts_.erase(context);
-    context->handle_ = nullptr;
+    context->context_handle = nullptr;
+    context->engine = nullptr;
     if (error != UC_ERR_OK)
         throw UnicornLibraryError(error);
 }

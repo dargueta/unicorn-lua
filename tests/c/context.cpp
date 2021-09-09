@@ -16,7 +16,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
     );
 
     CHECK_MESSAGE(
-        *(Context **)lua_touserdata(L, 1) == context,
+        (Context *)lua_touserdata(L, 1) == context,
         "TOS isn't the context object we were expecting."
     );
 
@@ -49,20 +49,20 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
 
     // The pointer in the Lua userdata must be identical to the pointer we got
     // back from the function.
-    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
-    REQUIRE(*userdata == context);
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    REQUIRE_EQ(userdata, context);
 
     ul_context_free(L);
-    CHECK(context->is_free());
+    CHECK_EQ(context->context_handle, nullptr);
 }
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
-    CHECK_FALSE(context->is_free());
+    CHECK_FALSE(context->context_handle == nullptr);
 
     ul_context_free(L);
-    REQUIRE(context->is_free());
+    REQUIRE_EQ(context->context_handle, nullptr);
     CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
 }
 
@@ -73,17 +73,16 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent
 
     // The pointer in the Lua userdata must be identical to the pointer we got
     // back from the function.
-    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
-    REQUIRE(*userdata == context);
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    REQUIRE_EQ(userdata, context);
 
     ul_context_maybe_free(L);
-    REQUIRE(context->is_free());
+    REQUIRE_EQ(context->context_handle, nullptr);
 
     // Nothing should happen
     ul_context_maybe_free(L);
-    CHECK(context->is_free());
+    CHECK_EQ(context->context_handle, nullptr);
 }
-
 
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed context explodes.") {
@@ -91,9 +90,9 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     CHECK_NE(context, nullptr);
 
     ul_context_free(L);
-    CHECK(context->is_free());
+    CHECK_EQ(context->context_handle, nullptr);
 
-    auto userdata = reinterpret_cast<Context **>(lua_touserdata(L, -1));
-    CHECK_EQ(*userdata, context);
+    auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
+    CHECK_EQ(userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 }
