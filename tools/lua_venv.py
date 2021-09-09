@@ -352,6 +352,7 @@ def main():
 
         configuration_variables = path_info.copy()
         configuration_variables["lua_short_version"] = args.lua_version
+        configuration_variables["virtualenv_dir"] = install_to
         configuration_variables["lua_full_version"] = SPECIFIC_VERSIONS[
             args.lua_version
         ]

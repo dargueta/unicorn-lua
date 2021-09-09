@@ -212,6 +212,7 @@ def set_defaults_from_config(args):
             "lua_short_version": config.get("lua_short_version"),
             "lua_full_version": config.get("lua_full_version"),
             "use_venv": True,
+            "virtualenv_dir": config.get("virtualenv_dir"),
         }
     )
     return result
@@ -245,6 +246,7 @@ def generate_cmake_parameters(settings, install_version, platform):
         # Need plural for compatibility with CMake
         "LUA_LIBRARIES": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
+        "VIRTUALENV_DIR": settings.get("virtualenv_dir") or "",
     }
 
     if not settings["lua_library"] or not settings["lua_headers"]:
