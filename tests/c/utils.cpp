@@ -85,6 +85,10 @@ TEST_CASE_FIXTURE(
     // Returned from the crash handler so we know that the error message matched what
     // we wanted.
     CHECK_EQ(recover_flag, 123);
+
+    // We should only have the error message on the stack (I think...)
+    CHECK_EQ(lua_gettop(L), 1);
+    lua_pop(L, 1);
 #else
     try {
         ul_crash_on_error(L, UC_ERR_OK);
@@ -96,6 +100,10 @@ TEST_CASE_FIXTURE(
             strcmp(lua_tostring(L, -1), uc_strerror(UC_ERR_OK)) == 0,
             "Error message doesn't match what's expected."
         );
+
+        // We should only have the error message on the stack (I think...)
+        CHECK_EQ(lua_gettop(L), 1);
+        lua_pop(L, 1);
         return;
     }
     // If we get out here then an exception wasn't thrown.

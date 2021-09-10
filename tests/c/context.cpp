@@ -40,6 +40,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
         "Context metatable doesn't match the expected one."
     );
 #endif
+    // Clean up the stack
+    lua_pop(L, 3);
 }
 
 
@@ -54,6 +56,9 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
 
     ul_context_free(L);
     CHECK_EQ(context->context_handle, nullptr);
+
+    // Remove the context from the stack.
+    lua_pop(L, 1);
 }
 
 
@@ -64,6 +69,9 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
     ul_context_free(L);
     REQUIRE_EQ(context->context_handle, nullptr);
     CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
+
+    // Remove the context from the stack.
+    lua_pop(L, 1);
 }
 
 
@@ -82,6 +90,9 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent
     // Nothing should happen
     ul_context_maybe_free(L);
     CHECK_EQ(context->context_handle, nullptr);
+
+    // Remove the context from the stack.
+    lua_pop(L, 1);
 }
 
 
@@ -95,4 +106,7 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
     CHECK_EQ(userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
+
+    // Remove the context from the stack.
+    lua_pop(L, 1);
 }

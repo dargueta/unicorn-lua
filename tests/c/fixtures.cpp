@@ -12,6 +12,7 @@ LuaFixture::LuaFixture() {
 
 
 LuaFixture::~LuaFixture() {
+    CHECK_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack after test exited.");
     lua_close(L);
     // Shot in the dark here debugging destructor ordering
     L = nullptr;
