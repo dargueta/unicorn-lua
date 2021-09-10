@@ -12,27 +12,36 @@ New Features
   at the same time. See ``docs/api.rst`` for details.
 * Added ``__close`` metamethod to engines and contexts, so they can now be used
   with Lua 5.4's ``<close>`` local attribute.
-* Added ``REG_TYPE_INT16_ARRAY_32``, a 32-element array of 16-bit integers.
-  I'd left it out by mistake.
-* **Potentially Breaking:** Signaling NaNs in a CPU are now passed back to Lua
-  as signaling NaNs. Before, all NaNs were converted to quiet NaNs. This brings
-  it in line with other bindings. Unless you do significant amounts of
-  floating-point operations, this won't affect you.
 * Unified installation process for all platforms; ``configure`` now generates all
   CMake stuff for you.
+* The appropriate Lua installation directory is now automatically determined.
+  Before, it used to install in the normal system directories which is *not* where
+  Lua looks.
+* Added ``--install-prefix`` to the configure script to override where the library
+  is installed.
 
 Bugfixes
 ~~~~~~~~
 
+* **Potentially Breaking:** Signaling NaNs in a CPU are now passed back to Lua
+  as signaling NaNs. Before, all NaNs were converted to quiet NaNs. This brings
+  it in line with other bindings. Unless you do significant amounts of
+  floating-point operations, this won't affect you.
+* Added ``REG_TYPE_INT16_ARRAY_32``, a 32-element array of 16-bit integers.
+  I'd left it out by mistake.
 * Fixed a crash when if a context or engine object was explicitly freed, if it got
   garbage-collected the object may think it's a double free and throw an exception.
   This eliminates a long-standing bug in LuaJIT on Mac OS and an edge case on other
   platforms.
+* Fixed crash resulting from a race condition, where if Lua schedules an engine
+  to be freed before a dependent context, the context would try to release its
+  resources using an invalid engine. Now the engine cleans up all contexts created
+  from it and signals all remaining Lua context objects to do nothing.
 * ``reg_read_as()`` truncated floats in arrays to integers due to a copy-paste error.
 * All the examples were broken by the ``unicorn_const`` change in 1.0b8.
 * Setting floating-point registers now (theoretically) works on a big-endian host
   machine.
-* Fix bug where the engine pointer/engine object pair wasn't removed from the C
+* Fixed bug where the engine pointer/engine object pair wasn't removed from the C
   registry upon closing. This is because the Engine pointer gets nulled out upon
   closing, and then after closing we tried removing the pointer. It never matched
   because it was null.
@@ -46,14 +55,12 @@ Other Changes
 * [C++] Removed definition of ``lua_Unsigned`` for Lua 5.1 since it was both
   wrong and unused anyway.
 * [C++] The engine handle and Lua state are now private variables for UCLuaEngine.
-* Switched to Github Actions for CI instead of Travis.
 * [C++] Overhauled implementation of contexts to avoid a race condition where
   the engine was garbage-collected before a context derived from it.
+* Switched to Github Actions for CI instead of Travis.
 * The Makefile now generates the build directory if you're on CMake 3.13+.
 * ``make install`` now builds the library if it hasn't been built already.
-* Added ``--install-prefix`` to the configure script to control where the library
-  is installed. The appropriate Lua installation directory is now automatically
-  determined.
+* ``make clean`` now removes the virtualenv directory as well.
 * ``configure`` defaults to a release build; debug builds are opt-in.
 * Removed a lot of C-isms from when this library was written in C.
 
