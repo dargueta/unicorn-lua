@@ -13,6 +13,8 @@ LuaFixture::LuaFixture() {
 
 LuaFixture::~LuaFixture() {
     lua_close(L);
+    // Shot in the dark here debugging destructor ordering
+    L = nullptr;
 }
 
 
@@ -32,5 +34,8 @@ EngineFixture::EngineFixture() : LuaFixture(), uclua_engine(nullptr)
 
 
 AutoclosingEngineFixture::~AutoclosingEngineFixture() {
+    // This REQUIRE shouldn't be necessary but we're getting segfaults in LuaJIT
+    // but only on OSX. I'm at my wits' end trying to figure this out.
+    REQUIRE(L != nullptr);
     delete uclua_engine;
 }
