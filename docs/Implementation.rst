@@ -20,6 +20,18 @@ The table of active hooks for an given engine is stored in the ``UCLuaEngine``
 object. The engine's destructor will delete this table when the engine is closed
 or garbage collected.
 
+Contexts
+--------
+
+Contexts are implemented similar to hooks, except they're structs allocated by
+Lua, not classes allocated on the heap.
+
+They are directly managed by engines because of the required cleanup order. To
+signal a context has been cleaned up, its fields are nulled out by the engine if
+Lua cleans up the engine before it cleans up the context. This way, when the
+context gets garbage collected, it will detect that its resources have already
+been freed and it does nothing.
+
 Bookkeeping Tables
 ------------------
 
