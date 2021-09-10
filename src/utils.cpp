@@ -6,6 +6,7 @@
 
 int ul_crash_on_error(lua_State *L, uc_err error) {
     const char *message = uc_strerror(error);
+    lua_checkstack(L, 1);
     lua_pushstring(L, message);
     return lua_error(L);
 }
