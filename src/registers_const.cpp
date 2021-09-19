@@ -30,6 +30,7 @@ static const struct NamedIntConst kConstants[] {
     {"REG_TYPE_FLOAT32_ARRAY_8", RegisterDataType::UL_REG_TYPE_FLOAT32_ARRAY_8},
     {"REG_TYPE_FLOAT64_ARRAY_4", RegisterDataType::UL_REG_TYPE_FLOAT64_ARRAY_4},
     {"REG_TYPE_INT8_ARRAY_64", RegisterDataType::UL_REG_TYPE_INT8_ARRAY_64},
+    {"REG_TYPE_INT16_ARRAY_32", RegisterDataType::UL_REG_TYPE_INT16_ARRAY_32},
     {"REG_TYPE_INT32_ARRAY_16", RegisterDataType::UL_REG_TYPE_INT32_ARRAY_16},
     {"REG_TYPE_INT64_ARRAY_8", RegisterDataType::UL_REG_TYPE_INT64_ARRAY_8},
     {"REG_TYPE_FLOAT32_ARRAY_16", RegisterDataType::UL_REG_TYPE_FLOAT32_ARRAY_16},

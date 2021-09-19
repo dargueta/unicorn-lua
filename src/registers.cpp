@@ -1,8 +1,10 @@
 #include <array>
 #include <cerrno>
+#include <cfenv>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
 
 #include <unicorn/unicorn.h>
@@ -15,7 +17,12 @@
 #include "unicornlua/utils.h"
 
 
-uclua_float80 read_float80(const uint8_t *data) {
+const uint8_t kFP80PositiveInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f};
+const uint8_t kFP80NegativeInfinity[] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff};
+const uint8_t kFP80SignalingNaN[] = {1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f};
+
+
+lua_Number read_float80(const uint8_t *data) {
     uint64_t significand = *reinterpret_cast<const uint64_t *>(data);
     int exponent = *reinterpret_cast<const uint16_t *>(data + 8) & 0x7fff;
     bool sign = (*reinterpret_cast<const uint16_t *>(data + 8) & 0x8000) != 0;
@@ -28,10 +35,9 @@ uclua_float80 read_float80(const uint8_t *data) {
     if (exponent == 0) {
         if (significand == 0)
             return 0.0;
-        else if (sign)
-            return ldexp(-significand, -16382);
-        else
-            return ldexp(significand, -16382);
+        if (sign)
+            return std::ldexp(-significand, -16382);
+        return std::ldexp(significand, -16382);
     }
     else if (exponent == 0x7fff) {
         // Top two bits of the significand will tell us what kind of number this
@@ -39,14 +45,10 @@ uclua_float80 read_float80(const uint8_t *data) {
         switch ((significand >> 62) & 3) {
             case 0:
                 if (significand == 0)
-                    return sign ? -INFINITY : +INFINITY;
+                    return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Significand is non-zero, fall through to next case.
-                // Clang for some reason doesn't like this directive but GCC needs
-                // it so we skip it if we're on Clang.
-                #ifndef __clang__
-                    __attribute__ ((fallthrough));
-                #endif
+                __attribute__ ((fallthrough));
             case 1:
                 /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
                  * treat this as an invalid operand and will explode. Compromise
@@ -54,16 +56,15 @@ uclua_float80 read_float80(const uint8_t *data) {
                  * exception.
                  */
                 errno = EINVAL;
-                return NAN;
+                return std::numeric_limits<lua_Number>::signaling_NaN();
             case 2:
                 if ((significand & 0x3fffffffffffffffULL) == 0)
-                    return sign ? -INFINITY : +INFINITY;
+                    return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Else: This is a signaling NaN. We don't want to throw an
                 // exception because Lua is just reading the registers of the
                 // processor, not using them.
-                errno = EDOM;
-                return NAN;
+                return std::numeric_limits<lua_Number>::signaling_NaN();
             case 3:
                 /* If the significand is 0, this is an indefinite value (result
                  * of 0/0, infinity/infinity, etc.). Otherwise, this is a quiet
@@ -80,40 +81,68 @@ uclua_float80 read_float80(const uint8_t *data) {
 
     // If the high bit of the significand is set, this is a normal value. Ignore
     // the high bit of the significand and compensate for the exponent bias.
-    uclua_float80 f_part = (significand & 0x7fffffffffffffffULL);
+    lua_Number f_part = (significand & 0x7fffffffffffffffULL);
     if (sign)
         f_part *= -1;
 
     if (significand & 0x8000000000000000ULL)
-        return ldexp(f_part, exponent - 16383);
+        return std::ldexp(f_part, exponent - 16383);
 
     // Unnormal number. Invalid on 80387+; 80287 and earlier use a different
     // exponent bias.
     errno = EINVAL;
-    return ldexp(f_part, exponent - 16382);
+    return std::ldexp(f_part, exponent - 16382);
 }
 
 
-void write_float80(uclua_float80 value, uint8_t *buffer) {
+static bool is_snan(lua_Number value) {
+    fenv_t env;
+
+    // Disable floating-point exception traps and clear all exception information.
+    // The current state is saved for later.
+    std::feholdexcept(&env);
+    std::feclearexcept(FE_ALL_EXCEPT);
+
+    // Multiply NaN by 1. If `value` is a signaling NaN this should trigger a
+    // floating-point exception.
+    value = value * 1;
+
+    // Get the exception state and see if any exceptions were thrown. If so, then
+    // `value` was a signaling NaN.
+    int fenv_flags = std::fetestexcept(FE_ALL_EXCEPT);
+
+    // Reset the environment to what it was before and check the exception flags
+    // for what we were expecting.
+    std::fesetenv(&env);
+    return (fenv_flags & FE_INVALID) != 0;
+
+}
+
+
+void write_float80(lua_Number value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
     uint16_t sign_bit = std::signbit(value) ? 0x8000 : 0;
 
     switch (f_type) {
         case FP_INFINITE:
-            // TODO (dargueta): This won't work on a big-endian machine
-            *reinterpret_cast<uint64_t *>(buffer) = 0x8000000000000000;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0x7fff | sign_bit;
+            if (sign_bit)
+                memcpy(buffer, kFP80NegativeInfinity, 10);
+            else
+                memcpy(buffer, kFP80PositiveInfinity, 10);
             return;
         case FP_NAN:
-            *reinterpret_cast<uint64_t *>(buffer) = 0xffffffffffffffff;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0xffff;
+            if (is_snan(value))
+                memcpy(buffer, kFP80SignalingNaN, sizeof(kFP80SignalingNaN));
+            else
+                // All bytes 0xFF is a quiet NaN
+                memset(buffer, 0xff, 10);
             return;
         case FP_ZERO:
-            *reinterpret_cast<uint64_t *>(buffer) = 0;
-            *reinterpret_cast<uint16_t *>(buffer + 8) = 0;
+            memset(buffer, 0, 10);
             return;
         case FP_SUBNORMAL:
         case FP_NORMAL:
+            // This is a more complicated case and we handle it farther down.
             break;
         default:
             throw std::runtime_error(
@@ -124,7 +153,7 @@ void write_float80(uclua_float80 value, uint8_t *buffer) {
     }
 
     int exponent;
-    uclua_float80 float_significand = frexp(value, &exponent);
+    uclua_float80 float_significand = std::frexp(value, &exponent);
 
     if ((exponent <= -16383) || (exponent >= 16384))
         throw std::domain_error(
@@ -156,10 +185,12 @@ std::array<T, N> Register::array_cast() const {
 }
 
 
-Register::Register() : kind_(UL_REG_TYPE_UNKNOWN) {}
+Register::Register() : kind_(UL_REG_TYPE_UNKNOWN) {
+    memset(data_, 0, sizeof(data_));
+}
 
 
-Register::Register(const void *buffer, RegisterDataType kind) {
+Register::Register(const void *buffer, RegisterDataType kind) : kind_(kind) {
     assign_value(buffer, kind);
 }
 
@@ -373,26 +404,27 @@ std::array<uclua_float32, 16> Register::as_16xf32() const {
 void Register::push_to_lua(lua_State *L) const {
     int i;
 
-    std::array<int16_t, 16> values_16xi16;
-    std::array<int16_t, 4> values_4xi16;
-    std::array<int16_t, 8> values_8xi16;
-    std::array<int32_t, 16> values_16xi32;
-    std::array<int32_t, 2> values_2xi32;
-    std::array<int32_t, 4> values_4xi32;
-    std::array<int32_t, 8> values_8xi32;
-    std::array<int64_t, 2> values_2xi64;
-    std::array<int64_t, 4> values_4xi64;
-    std::array<int64_t, 8> values_8xi64;
-    std::array<int8_t, 16> values_16xi8;
-    std::array<int8_t, 32> values_32xi8;
-    std::array<int8_t, 64> values_64xi8;
-    std::array<int8_t, 8> values_8xi8;
-    std::array<uclua_float32, 16> values_16xf32;
-    std::array<uclua_float32, 4> values_4xf32;
-    std::array<uclua_float32, 8> values_8xf32;
-    std::array<uclua_float64, 2> values_2xf64;
-    std::array<uclua_float64, 4> values_4xf64;
-    std::array<uclua_float64, 8> values_8xf64;
+    std::array<int16_t, 32> values_32xi16{};
+    std::array<int16_t, 16> values_16xi16{};
+    std::array<int16_t, 4> values_4xi16{};
+    std::array<int16_t, 8> values_8xi16{};
+    std::array<int32_t, 16> values_16xi32{};
+    std::array<int32_t, 2> values_2xi32{};
+    std::array<int32_t, 4> values_4xi32{};
+    std::array<int32_t, 8> values_8xi32{};
+    std::array<int64_t, 2> values_2xi64{};
+    std::array<int64_t, 4> values_4xi64{};
+    std::array<int64_t, 8> values_8xi64{};
+    std::array<int8_t, 16> values_16xi8{};
+    std::array<int8_t, 32> values_32xi8{};
+    std::array<int8_t, 64> values_64xi8{};
+    std::array<int8_t, 8> values_8xi8{};
+    std::array<uclua_float32, 16> values_16xf32{};
+    std::array<uclua_float32, 4> values_4xf32{};
+    std::array<uclua_float32, 8> values_8xf32{};
+    std::array<uclua_float64, 2> values_2xf64{};
+    std::array<uclua_float64, 4> values_4xf64{};
+    std::array<uclua_float64, 8> values_8xf64{};
 
     switch (kind_) {
         case UL_REG_TYPE_INT8:
@@ -488,7 +520,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_4xf32 = this->as_4xf32();
             lua_createtable(L, 4, 0);
             for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, values_4xf32[i]);
+                lua_pushnumber(L, values_4xf32[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -496,7 +528,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_2xf64 = this->as_2xf64();
             lua_createtable(L, 2, 0);
             for (i = 0; i < 2; ++i) {
-                lua_pushinteger(L, values_2xf64[i]);
+                lua_pushnumber(L, values_2xf64[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -536,7 +568,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_8xf32 = this->as_8xf32();
             lua_createtable(L, 8, 0);
             for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xf32[i]);
+                lua_pushnumber(L, values_8xf32[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -544,7 +576,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_4xf64 = this->as_4xf64();
             lua_createtable(L, 4, 0);
             for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, values_4xf64[i]);
+                lua_pushnumber(L, values_4xf64[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -576,7 +608,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_16xf32 = this->as_16xf32();
             lua_createtable(L, 16, 0);
             for (i = 0; i < 16; ++i) {
-                lua_pushinteger(L, values_16xf32[i]);
+                lua_pushnumber(L, values_16xf32[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -584,7 +616,15 @@ void Register::push_to_lua(lua_State *L) const {
             values_8xf64 = this->as_8xf64();
             lua_createtable(L, 8, 0);
             for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xf64[i]);
+                lua_pushnumber(L, values_8xf64[i]);
+                lua_seti(L, -2, i + 1);
+            }
+            break;
+        case UL_REG_TYPE_INT16_ARRAY_32:
+            values_32xi16 = this->as_32xi16();
+            lua_createtable(L, 32, 0);
+            for (i = 0; i < 32; ++i) {
+                lua_pushinteger(L, values_32xi16[i]);
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -773,13 +813,13 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
             throw LuaBindingError("Invalid register type ID.");
     }
 
-    return Register(buffer, kind);
+    return {buffer, kind};
 }
 
 
 int ul_reg_write(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    int register_id = luaL_checkinteger(L, 2);
+    int register_id = static_cast<int>(luaL_checkinteger(L, 2));
     register_buffer_type buffer;
 
     memset(buffer, 0, sizeof(buffer));
@@ -794,7 +834,7 @@ int ul_reg_write(lua_State *L) {
 
 int ul_reg_write_as(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    int register_id = luaL_checkinteger(L, 2);
+    int register_id = static_cast<int>(luaL_checkinteger(L, 2));
     Register reg = Register::from_lua(L, 3, 4);
 
     uc_err error = uc_reg_write(engine, register_id, reg.data_);
@@ -809,7 +849,7 @@ int ul_reg_read(lua_State *L) {
     memset(value_buffer, 0, sizeof(value_buffer));
 
     uc_engine *engine = ul_toengine(L, 1);
-    int register_id = luaL_checkinteger(L, 2);
+    int register_id = static_cast<int>(luaL_checkinteger(L, 2));
 
     uc_err error = uc_reg_read(engine, register_id, value_buffer);
     if (error != UC_ERR_OK)
@@ -822,7 +862,7 @@ int ul_reg_read(lua_State *L) {
 
 int ul_reg_read_as(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    int register_id = luaL_checkinteger(L, 2);
+    int register_id = static_cast<int>(luaL_checkinteger(L, 2));
     auto read_as_type = static_cast<RegisterDataType>(luaL_checkinteger(L, 3));
 
     register_buffer_type value_buffer;
@@ -840,20 +880,12 @@ int ul_reg_read_as(lua_State *L) {
 
 
 int ul_reg_write_batch(lua_State *L) {
-    int n_registers;
-
     uc_engine *engine = ul_toengine(L, 1);
 
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
      * corresponding registers. */
-
-    /* Count the number of items in the table so we can allocate the buffers of
-     * the right size. We can't use luaL_len() because that doesn't tell us how
-     * many keys there are in the table, only entries in the array part. */
-    lua_pushnil(L);
-    for (n_registers = 0; lua_next(L, 2) != 0; ++n_registers)
-        lua_pop(L, 1);
+    int n_registers = count_table_elements(L, 2);
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
     std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
@@ -863,8 +895,8 @@ int ul_reg_write_batch(lua_State *L) {
      * array positions. */
     lua_pushnil(L);
     for (int i = 0; lua_next(L, 2) != 0; ++i) {
-        register_ids[i] = luaL_checkinteger(L, -2);
-        values[i] = (lua_Unsigned)luaL_checkinteger(L, -1);
+        register_ids[i] = static_cast<int>(luaL_checkinteger(L, -2));
+        values[i] = static_cast<int_least64_t>(luaL_checkinteger(L, -1));
         p_values[i] = &values[i];
         lua_pop(L, 1);
     }
@@ -878,22 +910,34 @@ int ul_reg_write_batch(lua_State *L) {
 }
 
 
+static void prepare_batch_buffers(
+    int n_registers,
+    std::unique_ptr<register_buffer_type[]>& values,
+    std::unique_ptr<void *[]>& value_pointers
+) {
+    values.reset(new register_buffer_type[n_registers]);
+    value_pointers.reset(new void *[n_registers]);
+
+    for (int i = 0; i < n_registers; ++i)
+        value_pointers[i] = &values[i];
+    memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
+}
+
+
 int ul_reg_read_batch(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int n_registers = lua_gettop(L) - 1;
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<register_buffer_type[]> values(new register_buffer_type[n_registers]);
-    std::unique_ptr<void *[]> p_values(new void *[n_registers]);
+    std::unique_ptr<register_buffer_type[]> values;
+    std::unique_ptr<void *[]> value_pointers;
 
-    for (int i = 0; i < n_registers; ++i) {
+    prepare_batch_buffers(n_registers, values, value_pointers);
+    for (int i = 0; i < n_registers; ++i)
         register_ids[i] = (int)lua_tointeger(L, i + 2);
-        p_values[i] = &values[i];
-    }
 
-    memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
     uc_err error = uc_reg_read_batch(
-        engine, register_ids.get(), p_values.get(), n_registers
+        engine, register_ids.get(), value_pointers.get(), n_registers
     );
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -902,4 +946,51 @@ int ul_reg_read_batch(lua_State *L) {
         lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(values[i]));
 
     return n_registers;
+}
+
+
+int ul_reg_read_batch_as(lua_State *L) {
+    uc_engine *engine = ul_toengine(L, 1);
+    int n_registers = count_table_elements(L, 2);
+
+    std::unique_ptr<int[]> register_ids(new int[n_registers]);
+    std::unique_ptr<int[]> value_types(new int[n_registers]);
+    std::unique_ptr<register_buffer_type[]> values;
+    std::unique_ptr<void *[]> value_pointers;
+
+    prepare_batch_buffers(n_registers, values, value_pointers);
+
+    // Iterate through the second argument -- a table mapping register IDs to
+    // the types we want them back as.
+    lua_pushnil(L);
+    for (int i = 0; lua_next(L, 2) != 0; ++i) {
+        register_ids[i] = (int)luaL_checkinteger(L, -2);
+        value_types[i] = (int)luaL_checkinteger(L, -1);
+        lua_pop(L, 1);
+    }
+
+    uc_err error = uc_reg_read_batch(
+        engine, register_ids.get(), value_pointers.get(), n_registers
+    );
+    if (error != UC_ERR_OK)
+        return ul_crash_on_error(L, error);
+
+    // Create the table we're going to return the register values in. The result
+    // is a key-value mapping where the keys are the register IDs and the values
+    // are the typecasted values read from the registers.
+    lua_createtable(L, 0, n_registers);
+    for (int i = 0; i < n_registers; ++i) {
+        // Key: register ID
+        lua_pushinteger(L, register_ids[i]);
+
+        // Value: Deserialized register
+        auto register_object = Register(
+            value_pointers[i],
+            static_cast<RegisterDataType>(value_types[i])
+        );
+        register_object.push_to_lua(L);
+        lua_settable(L, -3);
+    }
+
+    return 1;
 }

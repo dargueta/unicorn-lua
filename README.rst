@@ -110,25 +110,26 @@ the BIOS setting up a system when booting.
 .. code-block:: lua
 
     local unicorn = require 'unicorn'
+    local uc_const = require 'unicorn.unicorn_const'
 
-    local uc = unicorn.open(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
     -- Map in 1 MiB of RAM for the processor with full read/write/execute
     -- permissions. We could pass permissions as a third argument if we want.
     uc:mem_map(0, 0x100000)
 
     -- Revoke write access to the VGA and BIOS ROM shadow areas.
-    uc:mem_protect(0xC0000, 32 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
-    uc:mem_protect(0xF0000, 64 * 1024, unicorn.UC_PROT_READ|unicorn.UC_PROT_EXEC)
+    uc:mem_protect(0xC0000, 32 * 1024, uc_const.UC_PROT_READ|uc_const.UC_PROT_EXEC)
+    uc:mem_protect(0xF0000, 64 * 1024, uc_const.UC_PROT_READ|uc_const.UC_PROT_EXEC)
 
     -- Create a hook for the VGA driver that's called whenever VGA memory is
     -- written to by client code.
-    uc:hook_add(unicorn.UC_MEM_WRITE, vga_write_callback, 0xA0000, 0xBFFFF)
+    uc:hook_add(uc_const.UC_MEM_WRITE, vga_write_callback, 0xA0000, 0xBFFFF)
 
     -- Install interrupt hooks so the CPU can perform I/O and other operations.
     -- We'll handle all of that in Lua. Only one interrupt hook can be set at a
     -- time.
-    uc:hook_add(unicorn.UC_HOOK_INTR, interrupt_dispatch_hook)
+    uc:hook_add(uc_const.UC_HOOK_INTR, interrupt_dispatch_hook)
 
     -- Load the boot sector of the hard drive into 0x7C000
     local fdesc = io.open('hard-drive.img')
@@ -178,43 +179,13 @@ Just Installing?
 If you just want to install this library, open a terminal, navigate to the root
 directory of this repository, and run the following:
 
-NIX Systems (MacOS, Cygwin, Linux, etc.)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CMake 1.13+:
-
 .. code-block:: sh
 
     python3 configure
-    cmake -S . -B build
-    make -C build
-    make -C build install
-
-CMake 1.12:
-
-.. code-block:: sh
-
-    python3 configure
-    mkdir build
-    cd build
-    cmake ..
-    make
     make install
 
 You may need superuser privileges to install. If installation fails, try
 ``sudo make install``.
-
-Windows
-~~~~~~~
-
-*Support coming soon*
-
-..
-    python3 configure
-    chdir build
-    cmake ..
-    make
-    make install
 
 Development
 -----------
@@ -243,7 +214,8 @@ and write all the configuration information needed by ``configure`` into a file
 named ``settings.json``. *It is important that the directory you install Lua into
 doesn't already exist.*
 
-Once this is done,
+If you're running MacOS and encounter a linker error with LuaJIT, check out
+`this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
 
 Using Your OS's Lua
 ^^^^^^^^^^^^^^^^^^^

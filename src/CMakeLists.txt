@@ -58,13 +58,9 @@ set_target_properties(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Set compiler options ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -frtti")
+    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -fno-rtti")
     target_compile_options(unicornlua_library PRIVATE -Wall -Wextra -Werror -Wpedantic)
-
-    if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        target_compile_options(unicornlua_library PRIVATE -Ofast -fno-rtti)
-    else()
-        target_compile_options(unicornlua_library PRIVATE -O0 -ggdb -frtti)
-    endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     message(FATAL_ERROR "Visual studio not supported yet.")
@@ -83,7 +79,7 @@ if (CMAKE_HOST_APPLE)
 endif()
 
 
-find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
+find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
@@ -97,8 +93,7 @@ endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-install(
-    TARGETS unicornlua_library
-    LIBRARY
-    DESTINATION ${LUA_INSTALL_DIR}
-)
+# Override the default destination. Normally it's ${CMAKE_INSTALL_PREFIX} plus
+# a platform-specific directory like "lib", "include", or "bin". We don't want
+# those, so we have to override the entire destination.
+install(TARGETS unicornlua_library LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}")

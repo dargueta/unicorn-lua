@@ -13,6 +13,7 @@
 
 #include "unicornlua/hooks.h"
 #include "unicornlua/lua.h"
+#include "unicornlua/utils.h"
 
 extern const char * const kEngineMetatableName;
 extern const char * const kEnginePointerMapName;
@@ -20,7 +21,7 @@ extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
 
 
-class Context;
+struct Context;
 
 
 class UCLuaEngine {
@@ -52,7 +53,9 @@ public:
      * Before, it was necessary to call `update()` on the returned context object.
      */
     Context *create_context_in_lua();
+    void update_context(Context *context) const;
     void restore_from_context(Context *context);
+    void free_context(Context *context);
 
     void start(
         uint64_t start_addr, uint64_t end_addr, uint64_t timeout=0,
@@ -63,11 +66,13 @@ public:
     size_t query(uc_query_type query_type) const;
     uc_err get_errno() const;
 
-    lua_State *L;
-    uc_engine *engine;
+    uc_engine *get_handle() const noexcept;
 
 private:
+    lua_State *L_;
+    uc_engine *engine_handle_;
     std::set<Hook *> hooks_;
+    std::set<Context *> contexts_;
 };
 
 

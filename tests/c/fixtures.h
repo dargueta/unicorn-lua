@@ -20,7 +20,6 @@ class EngineFixture : public LuaFixture {
 public:
     EngineFixture();
 
-    uc_engine *engine_handle;
     UCLuaEngine *uclua_engine;
 };
 

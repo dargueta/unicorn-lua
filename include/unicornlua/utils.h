@@ -7,6 +7,9 @@
 #ifndef INCLUDE_UNICORNLUA_UTILS_H_
 #define INCLUDE_UNICORNLUA_UTILS_H_
 
+#include <new>
+#include <stdexcept>
+
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/lua.h"
@@ -39,5 +42,14 @@ struct NamedIntConst {
 };
 
 void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
+
+
+/**
+ * Count the number of items in the table.
+ *
+ * `luaL_len()` only returns the number of entries in the array part of a table,
+ * so this function iterates through the entirety of the table and returns the
+ * result. */
+int count_table_elements(lua_State *L, int table_index);
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

@@ -17,24 +17,9 @@ extern const luaL_Reg kContextMetamethods[];
 extern const luaL_Reg kContextInstanceMethods[];
 
 
-class Context {
-    friend class UCLuaEngine;
-
-protected:
-    explicit Context(UCLuaEngine& engine);
-    Context(UCLuaEngine& engine, uc_context *context);
-
-public:
-    ~Context();
-
-    void update();
-    void release();
-    bool is_released() const noexcept;
-    uc_context *get_handle() const noexcept;
-
-private:
-    UCLuaEngine& engine_;
-    uc_context *context_;
+struct Context {
+    uc_context *context_handle;
+    UCLuaEngine *engine;
 };
 
 
@@ -48,8 +33,14 @@ int ul_context_restore(lua_State *L);
  */
 int ul_context_free(lua_State *L);
 
+/**
+ * Like @ref ul_context_free, except if the context is closed, it does nothing
+ * instead of throwing an exception.
+ */
+int ul_context_maybe_free(lua_State *L);
+
 
 #define get_context_struct(L, index)   \
-    reinterpret_cast<Context *>(luaL_checkudata((L), (index), kContextMetatableName))
+    (reinterpret_cast<Context *>(luaL_checkudata((L), (index), kContextMetatableName)))
 
 #endif  /* INCLUDE_UNICORNLUA_CONTEXT_H_ */

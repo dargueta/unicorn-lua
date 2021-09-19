@@ -90,6 +90,7 @@ enum RegisterDataType {
     UL_REG_TYPE_INT64_ARRAY_8,
     UL_REG_TYPE_FLOAT32_ARRAY_16,
     UL_REG_TYPE_FLOAT64_ARRAY_8,
+    UL_REG_TYPE_INT16_ARRAY_32,
 };
 
 
@@ -359,6 +360,15 @@ int ul_reg_read_as(lua_State *L);
 
 
 /**
+ * Like @ref ul_reg_read_as, but reads multiple registers at once.
+ *
+ * The argument to the Lua function is a table mapping the ID of the register to
+ * read to the format it should be read in.
+ */
+int ul_reg_read_batch_as(lua_State *L);
+
+
+/**
  * Write to a processor register as something other than as a plain integer.
  *
  * You'll need to use this for writing registers that aren't integers, or for
@@ -373,7 +383,7 @@ int ul_reg_write_as(lua_State *L);
  * @warning There's no way to represent a signaling or "indefinite" NaN in C++.
  * Both of these values are returned as std::NAN.
  */
-uclua_float80 read_float80(const uint8_t *data);
+lua_Number read_float80(const uint8_t *data);
 
 
 /**
@@ -386,6 +396,6 @@ uclua_float80 read_float80(const uint8_t *data);
  * @warning No distinction is made between quiet and signaling NaNs. All NaNs are
  *          stored in memory as a quiet NaN.
  */
-void write_float80(uclua_float80 value, uint8_t *buffer);
+void write_float80(lua_Number value, uint8_t *buffer);
 
 #endif  /* INCLUDE_UNICORNLUA_REGISTERS_H_ */

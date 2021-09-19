@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ev
+set -euvx
 
 UNICORN_VERSION=$1
 

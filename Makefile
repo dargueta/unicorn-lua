@@ -7,30 +7,34 @@ MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 .PHONY: all
 all: $(BUILD_DIR)
-	make -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR)
 
 
 .PHONY: clean
 clean:
-	rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) core*
+	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) $(VIRTUALENV_DIR) core* *.in configuration.cmake
 
 
 $(BUILD_DIR):
-	$(error You must create the build directory with CMake. See the README for details.)
+	cmake -S $(REPO_ROOT) -B $(BUILD_DIR) -DCMAKE_VERBOSE_MAKEFILE=YES
 
 
 $(SHARED_LIB_FILE): $(BUILD_DIR)
-	make -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR) unicornlua_library
+
+
+$(TEST_EXE_FILE): $(SHARED_LIB_FILE) $(TEST_SOURCES)
+	$(MAKE) -C $(BUILD_DIR) cpp_test
 
 
 .PHONY: install
 install: $(SHARED_LIB_FILE)
-	make -C $(BUILD_DIR) install
+	$(MAKE) -C $(BUILD_DIR) install
 
 
 .PHONY: docs
 docs:
-	make -C $(BUILD_DIR) docs
+	$(MAKE) -C $(BUILD_DIR) docs
 
 
 .PHONY: examples
@@ -38,8 +42,16 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 
 .PHONY: test
-test: $(BUILD_DIR) $(SHARED_LIB_FILE)
-	make -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
+test: $(BUILT_LIBRARY_DIRECTORY)/.test-sentinel
+
+
+$(BUILT_LIBRARY_DIRECTORY)/.test-sentinel: $(TEST_EXE_FILE) $(BUSTED_EXE)
+	cmake -E touch $@
+	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
+
+
+$(BUSTED_EXE):
+	$(LUAROCKS_EXE) install busted
 
 
 .PHONY: run_example

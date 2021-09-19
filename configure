@@ -114,6 +114,11 @@ def parse_args():
         " script. The variables in here will be used as defaults for arguments not"
         " specified on the command line. Implies --use-venv.",
     )
+    parser.add_argument(
+        "--install-prefix",
+        metavar="PATH",
+        help="The path to install the built library into."
+    )
     return parser.parse_args()
 
 
@@ -127,6 +132,29 @@ def get_lua_version(lua_exe):
     output = run([lua_exe, "-v"], stderr=None)
     _lua, version, *_rest = output.strip().split()
     return version
+
+
+def get_installation_dir(lua_exe):
+    if not lua_exe:
+        raise ErrorExit(
+            "Lua not installed on OS or not in PATH environment variable. You must use"
+            " a virtual environment (see --use-venv) or install it on your OS."
+        )
+
+    output = run([lua_exe, "-e", "print(package.config)"]).strip()
+    _path_sep, template_sep, *_ = output.splitlines()
+
+    cpath = run([lua_exe, "-e", "print(package.cpath)"]).strip()
+    cpath_templates = cpath.split(template_sep)
+
+    for template in cpath_templates:
+        path = os.path.dirname(template)
+        # Don't install into the current working directory
+        if path != ".":
+            return os.path.abspath(path)
+
+    # Nothing good, just return the first path we find.
+    return os.path.abspath(os.path.dirname(cpath_templates[0]))
 
 
 def get_luarocks_version(luarocks_exe):
@@ -184,31 +212,41 @@ def set_defaults_from_config(args):
             "lua_short_version": config.get("lua_short_version"),
             "lua_full_version": config.get("lua_full_version"),
             "use_venv": True,
+            "virtualenv_dir": config.get("virtualenv_dir"),
         }
     )
     return result
 
 
 def generate_cmake_parameters(settings, install_version, platform):
+    is_debug = settings["build_type"] == "debug"
     is_luajit = settings["is_luajit"]
-    short_version = install_version.rpartition(".")[0]
+    if is_luajit:
+        install_version = "5.1.4"
+        short_version = "5.1"
+    else:
+        short_version = install_version.rpartition(".")[0]
 
     values = {
         "LUA_FULL_VERSION": install_version,
         "LUA_SHORT_VERSION": short_version,
         "IS_LUAJIT": "YES" if is_luajit else "NO",
-        "LUAJIT_FULL_VERSION": SPECIFIC_VERSIONS["luajit"] if is_luajit else "",
-        "LUAJIT_SHORT_VERSION": SUPPORTED_LUA_VERSIONS["luajit"] if is_luajit else "",
+        "LUAJIT_FULL_VERSION": settings["lua_full_version"] if is_luajit else "",
+        "LUAJIT_SHORT_VERSION": settings["lua_full_version"][:-2] if is_luajit else "",
         "USE_VIRTUALENV": "YES" if settings["use_venv"] else "NO",
         "DETECTED_LUA_PLATFORM": platform,
         "LUAROCKS_VERSION": settings["luarocks_version"],
-        "BUILD_TYPE": settings["build_type"],
+        "CMAKE_BUILD_TYPE": settings["build_type"].upper(),
+        "CMAKE_INSTALL_PREFIX": settings["CMAKE_INSTALL_PREFIX"],
+        "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
+        "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
         "LUA_EXE": settings["lua_exe_path"],
         "LUAROCKS_EXE": settings["luarocks_path"],
         "LUA_INCLUDE_DIR": settings["lua_headers"] or "",
         # Need plural for compatibility with CMake
         "LUA_LIBRARIES": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
+        "VIRTUALENV_DIR": settings.get("virtualenv_dir") or "",
     }
 
     if not settings["lua_library"] or not settings["lua_headers"]:
@@ -260,6 +298,25 @@ def generate_cmake_parameters(settings, install_version, platform):
     return values
 
 
+def get_cmake_version():
+    if shutil.which("cmake") is None:
+        raise ErrorExit("`cmake` not installed")
+
+    raw_capabilities = run(["cmake", "-E", "capabilities"], text=True)
+    capabilities = json.loads(raw_capabilities)
+    return capabilities["version"]["major"], capabilities["version"]["minor"]
+
+
+def run_cmake_generate(build_dir):
+    version = get_cmake_version()
+    shutil.rmtree(build_dir, ignore_errors=True)
+    os.makedirs(build_dir, exist_ok=True)
+    if version < (3, 13):
+        run(["cmake", "..", "-DCMAKE_VERBOSE_MAKEFILE=YES"], cwd=build_dir)
+    else:
+        run(["cmake", "-S", ".", "-B", build_dir, "-DCMAKE_VERBOSE_MAKEFILE=YES"])
+
+
 def main():
     args = parse_args()
     settings = set_defaults_from_config(args)
@@ -284,6 +341,11 @@ def main():
     else:
         LOG.info("Using OS installation, Lua %s", settings["lua_full_version"])
 
+    if args.install_prefix:
+        settings["CMAKE_INSTALL_PREFIX"] = args.install_prefix
+    else:
+        settings["CMAKE_INSTALL_PREFIX"] = get_installation_dir(settings["lua_exe_path"])
+
     LOG.info("Generating CMake parameters...")
     cmake_params = generate_cmake_parameters(
         settings, settings["lua_full_version"], lua_platform
@@ -291,12 +353,8 @@ def main():
     with open("configuration.cmake", "w") as fd:
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
 
-    # Remove all build artifacts from a previous build, since we're probably switching
-    # Lua versions.
-    build_dir = os.path.join(HERE, "build")
-    LOG.info("Cleaning up...")
-    if os.path.exists(build_dir):
-        shutil.rmtree(build_dir)
+    LOG.info("Building CMake files")
+    run_cmake_generate(os.path.join(HERE, "cmake-build-" + args.build_type))
 
 
 if __name__ == "__main__":

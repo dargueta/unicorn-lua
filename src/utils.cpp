@@ -6,6 +6,7 @@
 
 int ul_crash_on_error(lua_State *L, uc_err error) {
     const char *message = uc_strerror(error);
+    lua_checkstack(L, 1);
     lua_pushstring(L, message);
     return lua_error(L);
 }
@@ -25,4 +26,14 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
         lua_pushinteger(L, constants[i].value);
         lua_setfield(L, -2, constants[i].name);
     }
+}
+
+
+int count_table_elements(lua_State *L, int table_index) {
+    int count = 0;
+
+    lua_pushnil(L);
+    for (count = 0; lua_next(L, table_index) != 0; ++count)
+        lua_pop(L, 1);
+    return count;
 }
