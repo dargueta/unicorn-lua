@@ -12,10 +12,13 @@ LuaFixture::LuaFixture() {
 
 
 LuaFixture::~LuaFixture() {
+    // The test may close the state for us in a couple cases where we deliberately
+    // trigger a panic, since the state is no longer valid.
+    if (L == nullptr)
+        return;
+
     CHECK_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack after test exited.");
     lua_close(L);
-    // Shot in the dark here debugging destructor ordering
-    L = nullptr;
 }
 
 
