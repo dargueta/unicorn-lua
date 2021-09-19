@@ -4,6 +4,11 @@ on: [ push ]
 
 jobs:
   testing:
+    env:
+      # We get a linker error if we don't mess with the library path. For some
+      # reason, /usr/lib64 isn't on the default search path.
+      LD_LIBRARY_PATH: "/usr/lib64:${LD_LIBRARY_PATH}"
+      MACOSX_DEPLOYMENT_TARGET: "10.14"
     runs-on: ${{ matrix.operating-system }}
     strategy:
       fail-fast: false
@@ -11,6 +16,7 @@ jobs:
         operating-system:
           - ubuntu-20.04
           - macos-10.15
+          - windows-2019
         lua-version:
           - "5.1"
           - "5.2"
@@ -30,17 +36,12 @@ jobs:
         # a linker error that happens with LuaJIT:
         # https://github.com/LuaJIT/LuaJIT/issues/449
         run: |
-          export MACOSX_DEPLOYMENT_TARGET=10.14
           python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} __lua${{ matrix.lua-version }}
       - name: Configure build
         run: python3 ./configure --venv-config settings.json --build-type debug
       - name: Install
         run: sudo make install
       - name: Run tests
-        # We get a linker error if we don't mess with the library path. For some
-        # reason, /usr/lib64 isn't on the default search path.
-        run: |
-          export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
-          make test
+        run: make test
 
   # TODO (dargueta): Test on Windows?
