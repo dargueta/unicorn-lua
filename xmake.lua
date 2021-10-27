@@ -1,57 +1,35 @@
 
 add_rules("mode.debug", "mode.release")
+add_requires("lua", {configs = {shared = true}})
 
-local function checklua(option)
-    import("core.project.project")
-
-    local luainc = project.option("LUA_INCDIR")
-    if not luainc:enabled() then
-        local config = os.iorun 'luarocks config variables'
-        if config then
-            config = string.deserialize(config)
-            luainc:enable(config.LUA_INCDIR)
-            project.option("LUA_LIBPATH"):enable(path.join(config.LUA_LIBDIR, config.LUA_LIBDIR_FILE:gsub('%.dll$', ''), nil))
-        end
-    end
+if is_os 'windows' then 
+    add_requires('vcpkg::unicorn')
 end
 
-option 'LUA_INCDIR'
-    set_showmenu(true)
-    set_description 'include directory of lua'
-
-    on_check(checklua)
-
-option 'LUA_LIBPATH'
-    set_showmenu(true)
-    set_description 'lib path of lua'
-
-    on_check(checklua)
-
-option 'UNICORN_DIR'
-    set_showmenu(true)
-    set_description 'unicorn directory'
-
 target 'unicorn54'
-    -- set kind
-    set_kind("shared")
-    -- add files
-    add_files("src/*.cpp")
-    add_options('LUA_INCDIR', 'LUA_LIBPATH', 'UNICORN_DIR')
+    set_kind 'shared'
+
+    add_files 'src/*.cpp'
+    add_includedirs 'include'
+    add_defines 'UNICORN_SHARED'
+
+    add_packages('lua')
 
     on_load(function(target)
-        local unicorn_dir = target:opt('UNICORN_DIR'):value()
+        local unicorn = find_packages("unicorn")[1]
+        assert(unicorn, 'unicorn not found')
+
+        target:add(unicorn)
+        local incdir = unicorn.includedirs[1]
         local archs = {'arm', 'arm64', 'mips', 'm68k', 'sparc', 'x86', 'unicorn'}
+        local buildir = val('buildir')
+        os.mkdir(buildir)
+
         for _, name in ipairs(archs) do
-            local cpp_name = 'build/' .. name .. '_const.cpp'
-            os.execv('python', {'tools/generate_constants.py', path.join(unicorn_dir, 'include', 'unicorn', name .. '.h'), cpp_name})
+            local cpp_name = buildir..'/'..name..'_const.cpp'
+            if not os.exists(cpp_name) then
+                os.execv('python', {'tools/generate_constants.py', path.join(incdir, 'unicorn', name .. '.h'), cpp_name})
+            end
             target:add('files', cpp_name)
         end
-        target:add('includedirs', path.join(unicorn_dir, 'include'))
-        target:add('links', path.join(unicorn_dir, 'unicorn'))
     end)
-
-    add_includedirs 'include'
-    add_includedirs('$(LUA_INCDIR)')
-    add_links('$(LUA_LIBPATH)')
-
-    add_defines 'UNICORN_SHARED'
