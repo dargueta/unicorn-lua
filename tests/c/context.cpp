@@ -48,6 +48,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context") {
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
     Context *context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
+    CHECK_NE(context->context_handle, nullptr);
+    CHECK_NE(context->engine, nullptr);
 
     // The pointer in the Lua userdata must be identical to the pointer we got
     // back from the function.
@@ -64,10 +66,12 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context") {
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes.") {
     Context *context = uclua_engine->create_context_in_lua();
-    CHECK_FALSE(context->context_handle == nullptr);
+    CHECK_NE(context->context_handle, nullptr);
+    CHECK_NE(context->engine, nullptr);
 
     ul_context_free(L);
     REQUIRE_EQ(context->context_handle, nullptr);
+    CHECK_EQ(context->engine, nullptr);
     CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
 
     // Remove the context from the stack.
@@ -86,10 +90,12 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent
 
     ul_context_maybe_free(L);
     REQUIRE_EQ(context->context_handle, nullptr);
+    CHECK_EQ(context->engine, nullptr);
 
     // Nothing should happen
     ul_context_maybe_free(L);
     CHECK_EQ(context->context_handle, nullptr);
+    CHECK_EQ(context->engine, nullptr);
 
     // Remove the context from the stack.
     lua_pop(L, 1);
@@ -101,10 +107,11 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     CHECK_NE(context, nullptr);
 
     ul_context_free(L);
-    CHECK_EQ(context->context_handle, nullptr);
+    REQUIRE_EQ(context->context_handle, nullptr);
+    REQUIRE_EQ(context->engine, nullptr);
 
     auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
-    CHECK_EQ(userdata, context);
+    REQUIRE_EQ(userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 
     // Remove the context from the stack.
