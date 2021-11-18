@@ -285,6 +285,14 @@ def get_luarocks_paths(luarocks_exe):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        const=logging.DEBUG,
+        default=logging.INFO,
+    )
+    parser.add_argument(
         "-o",
         "--config-out",
         help="Write file locations and other information to this file for use by the"
@@ -315,13 +323,15 @@ def parse_args():
 
 
 def main():
-    logging.basicConfig(format="[%(levelname)-8s] %(message)s", level=logging.INFO)
+    args = parse_args()
+
+    logging.basicConfig(format="[%(levelname)-8s] %(message)s", level=args.log_level)
     lua_platform = CONFIG["platform_targets"][sys.platform]
     if not lua_platform:
         LOG.warning("OS platform potentially unsupported: %s", sys.platform)
         lua_platform = "generic"
 
-    args = parse_args()
+    LOG.debug("Platform is %r, using Lua target %r.", sys.platform, lua_platform)
     with tempfile.TemporaryDirectory() as download_dir:
         LOG.info("Downloading Lua %s ...", args.lua_version)
         tarball_path = download_lua(args, download_dir)
@@ -345,13 +355,6 @@ def main():
         path_info = compile_lua(args, lua_platform, tarball_path, extract_dir)
 
         install_to = os.path.abspath(os.path.normpath(args.install_to))
-        if sys.platform == "cygwin":
-            # Cygwin requires the installation path to use forward slashes instead of
-            # backslashes like the rest of Windows. os.path.join() will actually produce
-            # an invalid file path for the installation command.
-            install_to = install_to.replace("\\", "/")
-            LOG.debug("Cygwin detected, changed install path separator: %s", install_to)
-
         LOG.info("Installing to `%s` ...", install_to)
         # Ensure the installation location exists before we try installing there.
         os.makedirs(install_to, exist_ok=True)
