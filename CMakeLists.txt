@@ -49,7 +49,10 @@ if(NOT DEFINED UNICORN_LIBRARY)
 endif()
 
 if(NOT DEFINED UNICORN_HEADERS_PATH)
-    find_path(UNICORN_HEADERS_PATH unicorn/unicorn.h)
+    find_path(
+        UNICORN_HEADERS_PATH unicorn/unicorn.h
+        HINTS C:\\Program Files\\UnicornEngine
+    )
 endif()
 
 if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
@@ -82,7 +85,6 @@ file(GENERATE
 )
 
 configure_file(
-
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
     "${PROJECT_SOURCE_DIR}/include/unicornlua/platform.h"
     @ONLY

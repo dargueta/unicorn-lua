@@ -345,6 +345,13 @@ def main():
         path_info = compile_lua(args, lua_platform, tarball_path, extract_dir)
 
         install_to = os.path.abspath(os.path.normpath(args.install_to))
+        if sys.platform == "cygwin":
+            # Cygwin requires the installation path to use forward slashes instead of
+            # backslashes like the rest of Windows. os.path.join() will actually produce
+            # an invalid file path for the installation command.
+            install_to = install_to.replace("\\", "/")
+            LOG.debug("Cygwin detected, changed install path separator: %s", install_to)
+
         LOG.info("Installing to `%s` ...", install_to)
         # Ensure the installation location exists before we try installing there.
         os.makedirs(install_to, exist_ok=True)
