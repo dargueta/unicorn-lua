@@ -158,13 +158,17 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     }
 
 
-def install_lua(lua_version, install_to, extract_dir):
+def install_lua(lua_version, lua_platform, install_to, extract_dir):
     """Install Lua which has already been compiled.
 
     Arguments:
         lua_version:
             The version of Lua to install, as passed in on the command line. This is not
             the "specific" version.
+        lua_platform:
+            The Lua build target we selected based on the operating system. This is used
+            to determine if we're running on Windows so we can change the installation
+            arguments.
         install_to:
             The path to the directory where Lua is to be installed. May be a relative
             path. See the Lua documentation for the exact directory structure created
@@ -177,6 +181,15 @@ def install_lua(lua_version, install_to, extract_dir):
 
     if lua_version.startswith("luajit"):
         run_args = ["PREFIX=" + install_to]
+    elif lua_platform == "mingw":
+        # mingw handles the paths for us and there's no way to install something to
+        # *not* the standard system directories.
+        LOG.warning(
+            "This system uses MinGW, so we have no control over the installation"
+            " directory. Ignoring %r.",
+            install_to
+        )
+        run_args = []
     else:
         run_args = ["INSTALL_TOP=" + install_to]
 
@@ -358,7 +371,7 @@ def main():
         LOG.info("Installing to `%s` ...", install_to)
         # Ensure the installation location exists before we try installing there.
         os.makedirs(install_to, exist_ok=True)
-        install_lua(args.lua_version, install_to, extract_dir)
+        install_lua(args.lua_version, lua_platform, install_to, extract_dir)
 
         configuration_variables = path_info.copy()
         configuration_variables["lua_short_version"] = args.lua_version
