@@ -35,15 +35,21 @@ LuaFixture::~LuaFixture() {
 EngineFixture::EngineFixture() : LuaFixture(), uclua_engine(nullptr)
 {
     ul_init_engines_lib(L);
-    REQUIRE_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack.");
+    CHECK_MESSAGE(
+        lua_gettop(L) == 0,
+        "Garbage left on the stack after initializing the engine system."
+    );
 
     uc_engine *engine_handle;
     uc_err error = uc_open(UC_ARCH_X86, UC_MODE_32, &engine_handle);
     REQUIRE_MESSAGE(error == UC_ERR_OK, "Failed to create an x86-32 engine.");
 
     uclua_engine = new UCLuaEngine(L, engine_handle);
-    REQUIRE(uclua_engine->get_handle() != nullptr);
-    REQUIRE(lua_gettop(L) == 0);
+    CHECK_NE(uclua_engine->get_handle(), nullptr);
+    CHECK_MESSAGE(
+        lua_gettop(L) == 0,
+        "Garbage on the stack after creating the engine object."
+    );
 }
 
 
@@ -51,5 +57,13 @@ AutoclosingEngineFixture::~AutoclosingEngineFixture() {
     // This REQUIRE shouldn't be necessary but we're getting segfaults in LuaJIT
     // but only on OSX. I'm at my wits' end trying to figure this out.
     REQUIRE(L != nullptr);
+    CHECK_MESSAGE(
+        lua_gettop(L) == 0,
+        "Trash on the stack just BEFORE deleting the engine C++ object"
+    );
     delete uclua_engine;
+    CHECK_MESSAGE(
+        lua_gettop(L) == 0,
+        "Trash on the stack AFTER deleting the engine C++ object."
+    );
 }
