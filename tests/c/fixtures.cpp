@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <unicorn/unicorn.h>
 
 #include "doctest.h"
@@ -18,6 +20,14 @@ LuaFixture::~LuaFixture() {
         return;
 
     CHECK_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack after test exited.");
+    if (lua_gettop(L) > 0) {
+        std::ostringstream buf;
+        for (int i = 1; i <= lua_gettop(L); ++i) {
+            const char *type_name = lua_typename(L, i);
+            buf << "At stack index " << i << ": " << type_name << "\n";
+        }
+        FAIL(buf.str().c_str());
+    }
     lua_close(L);
 }
 
