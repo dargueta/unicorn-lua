@@ -48,7 +48,9 @@ lua_Number read_float80(const uint8_t *data) {
                     return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Significand is non-zero, fall through to next case.
+                #ifndef _MSC_VER
                 __attribute__ ((fallthrough));
+                #endif
             case 1:
                 /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
                  * treat this as an invalid operand and will explode. Compromise
