@@ -71,11 +71,25 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
 
     ul_context_free(L);
     REQUIRE_EQ(context->context_handle, nullptr);
-    CHECK_EQ(context->engine, nullptr);
+    REQUIRE_EQ(context->engine, nullptr);
+
+    // Ensure the context is still at the top of the stack
+    REQUIRE_EQ(lua_gettop(L), 1);
+
+    ul_context_free(L);
+    REQUIRE_EQ(context->context_handle, nullptr);
+
+    // Ensure that the context is still on top of the stack, then try freeing
+    // it again.
+    REQUIRE_EQ(lua_gettop(L), 1);
     CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
 
     // Remove the context from the stack.
+    REQUIRE_EQ(lua_gettop(L), 1);
     lua_pop(L, 1);
+
+    // For some reason this seems to be misbehaving
+    CHECK_MESSAGE(lua_gettop(L) == 0, "(DEBUG) lua_pop() didn't work as expected.");
 }
 
 
