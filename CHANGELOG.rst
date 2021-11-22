@@ -1,6 +1,20 @@
 Changes
 =======
 
+1.2.1 (2021-11-21)
+------------------
+
+This is functionally identical to 1.2.0 but fixes a compilation problem on
+Microsoft Visual C++. Special thanks to `Metaworm <https://github.com/metaworm>`_
+for finding this.
+
+Bugfixes
+~~~~~~~~
+
+Compilation fails in Visual Studio because of an unguarded use of ``__attribute__``,
+which is specific to GCC and GCC-compatible compilers. This release adds a
+preprocessor guard to prevent syntax errors.
+
 1.2.0 (2021-08-11)
 ------------------
 
