@@ -16,13 +16,9 @@ unicorn-lua
 
 Lua bindings for the `Unicorn CPU Emulator`_.
 
-This is still in beta. While the Lua-facing API is relatively stable, some changes
-may be made here and there. The C API is currently subject to change without
-warning.
-
-At the moment I'm only testing this on unmodified Lua 5.1 - 5.4 and LuaJIT 2.0
-on Linux and OSX. I cannot guarantee the library will behave as expected on all
-host platforms, though I will try. (LuaJIT on OSX is particularly finicky.)
+I'm currently testing this on vanilla Lua 5.1 - 5.4, and LuaJIT 2.0 on both Linux
+and OSX. (LuaJIT on OSX is particularly finicky and I would be careful trying to
+use it.)
 
 Known Limitations
 -----------------
@@ -60,10 +56,10 @@ numbers, e.g.
 
 .. code-block:: lua
 
-    uc:reg_write(x86.UC_X86_REG_RAX, 0xffffffffffffffff)
+    uc:reg_write(x86_const.UC_X86_REG_RAX, 0xffffffffffffffff)
 
     -- Returns -1 not 2^64 - 1
-    uc:reg_read(x86.UC_X86_REG_RAX)
+    uc:reg_read(x86_const.UC_X86_REG_RAX)
 
 This doesn't affect how arguments are passed *to* the library, only values returned
 *from* the library.
@@ -96,8 +92,9 @@ General Usage
 
 ``unicorn`` tries to mirror the organization and naming conventions of the
 `Python binding`_ as much as possible. For example, architecture-specific
-constants are defined in submodules like ``unicorn.x86``; a few global functions
-are defined in ``unicorn``, and the rest are instance methods of the engine.
+constants are defined in submodules like ``unicorn.x86_const``; a few global
+functions are defined in ``unicorn``, and the rest are instance methods of the
+engine.
 
 .. _Python binding: http://www.unicorn-engine.org/docs/tutorial.html
 
