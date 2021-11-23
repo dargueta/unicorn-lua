@@ -35,7 +35,7 @@ jobs:
       - name: Install Unicorn
         run: python3 ./tools/ci/install-unicorn.py 1.0.2
       - name: Set up Lua
-        run: python3 ./tools/lua_venv.py -v -l --config-out settings.json ${{ matrix.lua-version }} .venv
+        run: python3 ./tools/lua_venv.py -v -l -o settings.json ${{ matrix.lua-version }} .venv
       - name: Configure build
         run: python3 ./configure --venv-config settings.json --build-type debug
       - name: Install
