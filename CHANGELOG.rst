@@ -12,6 +12,18 @@ Before, the engine handle was checked first and the error message said this was
 a bug in the library -- which was misleading. Now, it checks the *context handle*
 first, and correctly determines if you've double-freed the context.
 
+Other Changes
+~~~~~~~~~~~~~
+
+* Randomized the order of C++ tests on each run.
+* Stricter checks on the stack when testing.
+* If the stack is dirty when a test exits, this now shows the size of the stack
+  and the types of the elements on it.
+* Bumped default version of LuaRocks from 3.7 to 3.8.
+* Fixed dependency specifications in the Makefile which were hella broken.
+* Fixed environment variables in CI to allow use on Windows without modification.
+
+
 1.2.1 (2021-11-21)
 ------------------
 
@@ -25,17 +37,6 @@ Bugfixes
 Compilation fails in Visual Studio because of an unguarded use of ``__attribute__``,
 which is specific to GCC and GCC-compatible compilers. This release adds a
 preprocessor guard to prevent syntax errors.
-
-Other Changes
-~~~~~~~~~~~~~
-
-* Randomized the order of C++ tests on each run.
-* Stricter checks on the stack when testing.
-* If the stack is dirty when a test exits, this now shows the size of the stack
-  and the types of the elements on it.
-* Bumped default version of LuaRocks from 3.7 to 3.8.
-* Fixed dependency specifications in the Makefile which were hella broken.
-* Fixed environment variables in CI to allow use on Windows without modification.
 
 1.2.0 (2021-08-11)
 ------------------
