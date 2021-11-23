@@ -35,4 +35,4 @@ target_link_libraries(
     cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARIES}
 )
 
-add_test(NAME cpp_unit_tests COMMAND cpp_test)
+add_test(NAME cpp_unit_tests COMMAND cpp_test --order-by=rand)
