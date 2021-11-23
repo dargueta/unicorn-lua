@@ -73,10 +73,6 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
     REQUIRE_EQ(context->context_handle, nullptr);
     REQUIRE_EQ(context->engine, nullptr);
 
-    // Ensure the context is still at the top of the stack
-    REQUIRE_EQ(lua_gettop(L), 1);
-    CHECK_EQ(lua_type(L, 1), LUA_TUSERDATA);
-
     // Ensure that the context is still on top of the stack, then try freeing
     // it again.
     REQUIRE_EQ(lua_gettop(L), 1);
@@ -84,7 +80,6 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
     CHECK_THROWS_AS(ul_context_free(L), LuaBindingError);
 
     // Remove the context from the stack.
-    CHECK_EQ(lua_gettop(L), 1);
     lua_pop(L, 1);
 }
 
@@ -117,11 +112,11 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
     CHECK_NE(context, nullptr);
 
     ul_context_free(L);
-    REQUIRE_EQ(context->context_handle, nullptr);
-    REQUIRE_EQ(context->engine, nullptr);
+    CHECK_EQ(context->context_handle, nullptr);
+    CHECK_EQ(context->engine, nullptr);
 
     auto userdata = reinterpret_cast<Context *>(lua_touserdata(L, -1));
-    REQUIRE_EQ(userdata, context);
+    CHECK_EQ(userdata, context);
     CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
 
     // Remove the context from the stack.
