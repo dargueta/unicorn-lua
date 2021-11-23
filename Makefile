@@ -72,14 +72,3 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
-
-################################################################################
-# CI TARGETS ONLY BELOW THIS LINE
-
-.PHONY: ci__install_unicorn
-ci__install_unicorn:
-	git clone --depth 1 https://github.com/unicorn-engine/unicorn.git unicorn-$(UNICORN_VERSION)
-	git -C unicorn-$(UNICORN_VERSION) fetch --all --tags --prune
-	git -C unicorn-$(UNICORN_VERSION) checkout $(UNICORN_VERSION)
-	unicorn-$(UNICORN_VERSION)/make.sh
-	sudo unicorn-$(UNICORN_VERSION)/make.sh install
