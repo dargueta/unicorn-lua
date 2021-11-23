@@ -52,6 +52,8 @@ int ul_context_restore(lua_State *L) {
 int ul_context_free(lua_State *L) {
     Context *context = get_context_struct(L, 1);
 
+    if (context->context_handle == nullptr)
+        throw LuaBindingError("Attempted to free the same context twice.");
     if (context->engine == nullptr)
         throw LuaBindingError("BUG: Engine was collected before the context.");
 

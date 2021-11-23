@@ -4,15 +4,15 @@ on: [ push ]
 
 jobs:
   testing:
+    runs-on: ${{ matrix.operating-system }}
     env:
+      # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
+      # a linker error that happens with LuaJIT:
+      # https://github.com/LuaJIT/LuaJIT/issues/449
+      MACOSX_DEPLOYMENT_TARGET: 10.14
       # We get a linker error if we don't mess with the library path. For some
       # reason, /usr/lib64 isn't on the default search path.
-      LD_LIBRARY_PATH: "/usr/lib64:${LD_LIBRARY_PATH}"
-      # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of a
-      # linker error that happens with LuaJIT:
-      # https://github.com/LuaJIT/LuaJIT/issues/449
-      MACOSX_DEPLOYMENT_TARGET: "10.14"
-    runs-on: ${{ matrix.operating-system }}
+      LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
     strategy:
       fail-fast: false
       matrix:

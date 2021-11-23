@@ -30,7 +30,7 @@
 /**
  * The patch version number of this Lua library (third part, x.x.1).
  */
-#define UNICORNLUA_VERSION_PATCH    1
+#define UNICORNLUA_VERSION_PATCH    2
 
 /**
  * Create a 24-bit number from a release's major, minor, and patch numbers.
