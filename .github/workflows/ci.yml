@@ -5,6 +5,14 @@ on: [ push ]
 jobs:
   testing:
     runs-on: ${{ matrix.operating-system }}
+    env:
+      # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
+      # a linker error that happens with LuaJIT:
+      # https://github.com/LuaJIT/LuaJIT/issues/449
+      MACOSX_DEPLOYMENT_TARGET: 10.14
+      # We get a linker error if we don't mess with the library path. For some
+      # reason, /usr/lib64 isn't on the default search path.
+      LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
     strategy:
       fail-fast: false
       matrix:
@@ -26,21 +34,12 @@ jobs:
       - name: Install Unicorn
         run: ./tools/ci/install-unicorn.sh 1.0.2
       - name: Set up Lua
-        # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
-        # a linker error that happens with LuaJIT:
-        # https://github.com/LuaJIT/LuaJIT/issues/449
-        run: |
-          export MACOSX_DEPLOYMENT_TARGET=10.14
-          python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} __lua${{ matrix.lua-version }}
+        run: python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} .venv
       - name: Configure build
         run: python3 ./configure --venv-config settings.json --build-type debug
       - name: Install
         run: sudo make install
       - name: Run tests
-        # We get a linker error if we don't mess with the library path. For some
-        # reason, /usr/lib64 isn't on the default search path.
-        run: |
-          export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
-          make test
+        run: make test
 
   # TODO (dargueta): Test on Windows?
