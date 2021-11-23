@@ -57,7 +57,7 @@ def download_lua(args, download_dir):
     return output_file
 
 
-def configure_lua(args, extract_dir):
+def configure_lua(args, lua_platform, extract_dir):
     """Customize Lua before building it.
 
     Before building normal Lua we need to change where it looks for installed libraries.
@@ -66,6 +66,7 @@ def configure_lua(args, extract_dir):
 
     Arguments:
         args: The parsed command line arguments.
+        lua_platform: The Lua makefile target we're compiling this for.
         extract_dir:
             The path to the directory where the Lua tarball was extracted.
     """
@@ -87,14 +88,14 @@ def configure_lua(args, extract_dir):
     # We also need to compile the code as position-independent. On Lua 5.1 the MYCFLAGS
     # variable gets overwritten when compiling for some target platforms, so we can't
     # pass "-fpic" that way. We need to modify the Makefile, similar to how we do above.
-    if args.lua_version == "5.1":
+    if args.lua_version == "5.1" and lua_platform != "mingw":
         with open(os.path.join(extract_dir, "src", "Makefile"), "r+") as fd:
             makefile_contents = fd.read()
             makefile_contents = re.sub(
                 r"MYCFLAGS=-D([^ ]+)", r'MYCFLAGS="-fpic -D\1"', makefile_contents
             )
-            makefile_contents = makefile_contents.replace(
-                'MYCFLAGS="', 'MYCFLAGS="-fpic '
+            makefile_contents = re.sub(
+                r'MYCFLAGS="(?!-fpic)', r'MYCFLAGS="-fpic ', makefile_contents
             )
             fd.seek(0)
             fd.truncate(0)
@@ -187,7 +188,7 @@ def install_lua(lua_version, lua_platform, install_to, extract_dir):
         LOG.warning(
             "This system uses MinGW, so we have no control over the installation"
             " directory. Ignoring %r.",
-            install_to
+            install_to,
         )
         run_args = []
     else:
@@ -362,7 +363,7 @@ def main():
         shutil.unpack_archive(tarball_path, download_dir, "gztar")
 
         LOG.info("Configuring compilation options ...")
-        configure_lua(args, extract_dir)
+        configure_lua(args, lua_platform, extract_dir)
 
         LOG.info("Compiling ...")
         path_info = compile_lua(args, lua_platform, tarball_path, extract_dir)

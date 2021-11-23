@@ -117,7 +117,7 @@ def parse_args():
     parser.add_argument(
         "--install-prefix",
         metavar="PATH",
-        help="The path to install the built library into."
+        help="The path to install the built library into.",
     )
     return parser.parse_args()
 
@@ -344,7 +344,9 @@ def main():
     if args.install_prefix:
         settings["CMAKE_INSTALL_PREFIX"] = args.install_prefix
     else:
-        settings["CMAKE_INSTALL_PREFIX"] = get_installation_dir(settings["lua_exe_path"])
+        settings["CMAKE_INSTALL_PREFIX"] = get_installation_dir(
+            settings["lua_exe_path"]
+        )
 
     LOG.info("Generating CMake parameters...")
     cmake_params = generate_cmake_parameters(
