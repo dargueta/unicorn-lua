@@ -3,6 +3,8 @@ include Makefile.in
 EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
+LIBRARY_SOURCES=$(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
+TEST_SOURCES=$(wildcard tests/c/*.cpp) $(wildcard tests/c/*.h) $(wildcard tests/lua/*.lua)
 
 
 .PHONY: all
@@ -12,19 +14,29 @@ all: $(BUILD_DIR)
 
 .PHONY: clean
 clean:
-	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) $(BUILD_DIR) $(VIRTUALENV_DIR) core* *.in configuration.cmake
+	$(MAKE) -C $(BUILD_DIR) clean
+	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) core*
 
+
+.PHONY: pristine
+pristine: clean
+	cmake -E rm -rf $(VIRTUALENV_DIR) *.in configuration.cmake
 
 $(BUILD_DIR):
 	cmake -S $(REPO_ROOT) -B $(BUILD_DIR) -DCMAKE_VERBOSE_MAKEFILE=YES
 
 
-$(SHARED_LIB_FILE): $(BUILD_DIR)
+$(SHARED_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
 $(TEST_EXE_FILE): $(SHARED_LIB_FILE) $(TEST_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) cpp_test
+
+
+.PHONY: test
+test: $(TEST_EXE_FILE) $(TEST_SOURCES) $(BUSTED_EXE)
+	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 .PHONY: install
@@ -39,15 +51,6 @@ docs:
 
 .PHONY: examples
 examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
-
-
-.PHONY: test
-test: $(BUILT_LIBRARY_DIRECTORY)/.test-sentinel
-
-
-$(BUILT_LIBRARY_DIRECTORY)/.test-sentinel: $(TEST_EXE_FILE) $(BUSTED_EXE)
-	cmake -E touch $@
-	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 $(BUSTED_EXE):

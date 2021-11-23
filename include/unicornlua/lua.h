@@ -9,4 +9,4 @@ extern "C" {
 #include <lua.h>
 }
 
-#include "unicornlua/compat.h"
+#include "compat.h"
