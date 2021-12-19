@@ -134,6 +134,40 @@ def get_lua_version(lua_exe):
     return version
 
 
+HEADER_SEARCH_DIRECTORIES = {
+    "/usr/include/@",
+    "/usr/local/include/@",
+    "/opt/include/@",
+    "/opt/@/include",
+    "C:\\@\\include"
+}
+
+
+def infer_lua_header_location(short_version):
+    LOG.info("Inferring location for Lua %s headers.", short_version)
+
+    for search_dir in HEADER_SEARCH_DIRECTORIES:
+        if not os.path.exists(search_dir):
+            continue
+
+        header_file = os.path.join(search_dir, "lua" + short_version, "lua.h")
+        LOG.debug("Looking for %r...", header_file)
+        if os.path.exists(header_file):
+            LOG.debug("Found.")
+            return os.path.dirname(header_file)
+        LOG.debug("Not found.")
+
+    LOG.debug("Couldn't find headers for Lua %s.", short_version)
+    return None
+
+
+LIBRARY_SEARCH_DIRECTORIES = {}
+
+
+def infer_lua_library_location(short_version):
+    pass
+
+
 def get_installation_dir(lua_exe):
     if not lua_exe:
         raise ErrorExit(
@@ -218,6 +252,25 @@ def set_defaults_from_config(args):
     return result
 
 
+def profile_lua(lua_exe):
+    """Get information from the Lua executable.
+
+    Arguments:
+        lua_exe (str):
+            The path to the Lua executable to run.
+
+    Return:
+        A dictionary of information. Look at the source code of profile_lua.lua
+        for the expected keys.
+    """
+    lua_exe = os.path.abspath(lua_exe)
+    stdout = run([lua_exe, os.path.join(HERE, "tools", "profile_lua.lua")])
+    return dict(
+        tuple(line.partition("=")[::2])
+        for line in stdout.splitlines()
+    )
+
+
 def generate_cmake_parameters(settings, install_version, platform):
     is_debug = settings["build_type"] == "debug"
     is_luajit = settings["is_luajit"]
@@ -226,6 +279,9 @@ def generate_cmake_parameters(settings, install_version, platform):
         short_version = "5.1"
     else:
         short_version = install_version.rpartition(".")[0]
+
+    if not settings["lua_library"] or not settings["lua_headers"] or not settings["CMAKE_INSTALL_PREFIX"]:
+        settings["lua_headers"] = infer_lua_header_location(short_version)
 
     values = {
         "LUA_FULL_VERSION": install_version,
