@@ -1,4 +1,4 @@
---[[
+--[=[
 This script generates some Makefile variables relating to this installation of
 Lua. The idea is to run this script using the Lua executable that the library
 will be built for, so we can figure out where to install the library, where the
@@ -6,10 +6,18 @@ headers are at, etc.
 
 This obviously will not work if we're cross-compiling since the executable will
 be on a different machine.
-]]
+________________________________________________________________________________
+Invocation:
+
+    profile_lua.lua output_file [["make" | "cmake" | "json"] [platform-string]]
+]=]
 
 local OUTPUT_FILE = arg[1]
+local OUTPUT_FORMAT = arg[2] or "make"
+local RAW_PLATFORM_STRING = arg[3] or ""
 
+-- Lua 5.2 moved `unpack()` into the `table` library.
+local unpack_table = table.unpack or unpack
 
 -- The platform string passed in by Make is either:
 -- * An empty string (not provided)
@@ -19,7 +27,6 @@ local OUTPUT_FILE = arg[1]
 -- We want the triplet if possible.
 function build_platform_triplet(platform_string)
     local fragments = {}
-    print("# DEBUG: Deducing platform string from: `" .. platform_string .. "`")
     for match_text in string.gmatch(platform_string, "([^-]+)") do
         fragments[#fragments + 1] = match_text
     end
@@ -28,12 +35,11 @@ function build_platform_triplet(platform_string)
         -- Skip over the "company" part
         platform_string = fragments[1] .. "-" .. fragments[3] .. "-" .. fragments[4]
     end
-    print("# DEBUG: Platform triplet is: " .. platform_string)
     return platform_string
 end
 
 
-local PLATFORM_TRIPLET = build_platform_triplet(arg[2] or "")
+local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
 
 function split_string(str, separator)
     if separator == nil then
@@ -68,13 +74,7 @@ local lua_version = _VERSION:gsub("^Lua (%d%.%d)$", "%1")
 local dir_sep, path_sep, file_wildcard, dir_wildcard
 local split_package_config = split_string(package.config, "\n")
 
-if table.unpack then
-    -- Lua 5.2+
-    dir_sep, path_sep, file_wildcard, dir_wildcard = table.unpack(split_package_config)
-else
-    -- Lua 5.1
-    dir_sep, path_sep, file_wildcard, dir_wildcard = unpack(split_package_config)
-end
+dir_sep, path_sep, file_wildcard, dir_wildcard = unpack_table(split_package_config)
 
 
 --- Locate the Lua executable used to run this script.
@@ -256,8 +256,6 @@ function find_headers()
         -- into the placeholder. Note that we enclose the wildcard in [] to
         -- prevent Lua from interpreting it as a regex character.
         path = path:gsub("[" .. dir_wildcard .. "]", lua_exe_dir)
-
-        print("# DEBUG: Checking for header: ", path)
         if file_exists(path) then
             return dirname(path)
         end
@@ -335,7 +333,6 @@ function find_lua_library()
 
     -- Now actually do the searching.
     for _, path_info in ipairs(to_search) do
-        print("# DEBUG: Checking for file: ", path_info.path)
         if file_exists(path_info.path) then
             return path_info
         end
@@ -365,47 +362,79 @@ if lua_library_file_info.stem ~= nil then
     link_flag = "-l" .. lua_library_file_info.stem
 end
 
+local VARIABLES = {
+    { "LUA_LIBDIR", dirname(lua_library_file_info.path or "") },
+    -- The directory where the Lua executable is located.
+    { "LUA_BINDIR", lua_exe_dir },
+    -- The directory where the Lua headers are.
+    { "LUA_INCDIR", find_headers() or "" },
+    -- The filename of the Lua library, not always provided.
+    { "LUALIB", basename(lua_library_file_info.path or "") },
+    -- The Lua executable.
+    { "LUA", lua_exe or "lua" },
+    -- The installation prefix.
+    -- TODO (dargueta): Figure out this installation prefix thing
+    { "INST_PREFIX", "" },
+    -- The directory where executable Lua scripts go.
+    { "INST_BINDIR", lua_exe_dir },
+    -- The directory where Lua C libraries go.
+    { "INST_LIBDIR", c_library_dir },
+    -- The directory where Lua script libraries go.
+    { "INST_LUADIR", lua_library_dir },
+    -- The directory where configuration files go.\n")
+    { "INST_CONFDIR", "" },
+    -- The flag to pass to the linker for linking to Lua\n")
+    { "BUILD_LIBFLAG", link_flag },
+
+    -- Other stuff
+    { "LUA_SHORT_VERSION", lua_version },
+    { "LIBRARY_FILE_EXTENSION", c_library_extension },
+    { "IS_LUAJIT", is_luajit },
+    { "IS_WINDOWS", is_windows },
+}
 
 -- Output the same variables that LuaRocks does, using ?= for assignment so that
 -- we don't override any variables that have already been provided elsewhere,
 -- e.g. from the command line or environment variables.
 io.output(OUTPUT_FILE)
-io.write("# The directory where the Lua static library is installed.\n")
-io.write("LUA_LIBDIR ?= " .. dirname(lua_library_file_info.path or "") .. "\n")
-io.write("# The directory where the Lua executable is located.\n")
-io.write("LUA_BINDIR ?= " .. lua_exe_dir .. "\n")
-io.write("# The directory where the Lua headers are.\n")
-io.write("LUA_INCDIR ?= " .. (find_headers() or "") .. "\n")
-io.write("# The filename of the Lua library, not always provided.\n")
-io.write("LUALIB ?= " .. basename(lua_library_file_info.path or "") .. "\n")
-io.write("# The Lua executable.\n")
-io.write("LUA ?= " .. (lua_exe or "lua") .. "\n")
-io.write("# The installation prefix.\n")
--- TODO (dargueta): Figure out this installation prefix thing
-io.write("INST_PREFIX ?= \n")
-io.write("# The directory where executable Lua scripts go.\n")
-io.write("INST_BINDIR ?= $(LUA_BINDIR)\n")
-io.write("# The directory where Lua C libraries go.\n")
-io.write("INST_LIBDIR ?= " .. c_library_dir .. "\n")
-io.write("# The directory where Lua script libraries go.\n")
-io.write("INST_LUADIR ?= " .. lua_library_dir .. "\n")
-io.write("# The directory where configuration files go.\n")
-io.write("INST_CONFDIR ?= \n")
-io.write("# The flag to pass to the linker for linking to Lua\n")
-io.write("BUILD_LIBFLAG ?= " .. link_flag .. "\n")
 
--- Other stuff
-io.write("LUA_SHORT_VERSION := " .. lua_version .. "\n")
-io.write("LIBRARY_FILE_EXTENSION := " .. c_library_extension .. "\n")
-if is_luajit then
-    io.write("IS_LUAJIT := 1\n")
+if OUTPUT_FORMAT == "make" then
+    for _, variable_pair in ipairs(VARIABLES) do
+        local key, value = unpack_table(variable_pair)
+        if value == true then
+            value = "1"
+        elseif value == false then
+            value = "0"
+        end
+        io.write(key .. " ?= " .. tostring(value) .. "\n")
+    end
+elseif OUTPUT_FORMAT == "cmake" then
+    for _, variable_pair in ipairs(VARIABLES) do
+        local key, value = unpack_table(variable_pair)
+        if value == true then
+            value = "1"
+        elseif value == false then
+            value = "0"
+        end
+        io.write("set(" .. key .. ' "' .. tostring(value) .. '")\n')
+    end
+elseif OUTPUT_FORMAT == "json" then
+    io.write("{\n")
+    for i, variable_pair in ipairs(VARIABLES) do
+        local key, value = unpack_table(variable_pair)
+        if value == true then
+            value = "1"
+        elseif value == false then
+            value = "0"
+        end
+        io.write(string.format("  %q: %q", key, value))
+        if i < #VARIABLES then
+            io.write(",\n")
+        end
+    end
+    io.write("\n}\n")
 else
-    io.write("IS_LUAJIT := 0\n")
-end
-if is_windows then
-    io.write("IS_WINDOWS := 1\n")
-else
-    io.write("IS_WINDOWS := 0\n")
+    error("Unrecognized output file format: " .. OUTPUT_FORMAT)
 end
 
 io.close()
