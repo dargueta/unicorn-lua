@@ -252,23 +252,15 @@ def set_defaults_from_config(args):
     return result
 
 
-def profile_lua(lua_exe):
+def bootstrap_lua_information(lua_exe):
     """Get information from the Lua executable.
 
     Arguments:
         lua_exe (str):
             The path to the Lua executable to run.
-
-    Return:
-        A dictionary of information. Look at the source code of profile_lua.lua
-        for the expected keys.
     """
     lua_exe = os.path.abspath(lua_exe)
-    stdout = run([lua_exe, os.path.join(HERE, "tools", "profile_lua.lua")])
-    return dict(
-        tuple(line.partition("=")[::2])
-        for line in stdout.splitlines()
-    )
+    run(["make", "lua.mk", "LUA_EXE=" + lua_exe])
 
 
 def generate_cmake_parameters(settings, install_version, platform):
@@ -385,6 +377,8 @@ def main():
     if not lua_platform:
         LOG.warning("OS platform potentially unsupported: %r", sys.platform)
         lua_platform = "generic"
+
+    bootstrap_lua_information(settings["lua_exe_path"])
 
     if not settings["lua_full_version"]:
         settings["lua_full_version"] = get_lua_version(settings["lua_exe_path"])

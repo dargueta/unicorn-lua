@@ -19,14 +19,16 @@ local OUTPUT_FILE = arg[1]
 -- We want the triplet if possible.
 function build_platform_triplet(platform_string)
     local fragments = {}
+    print("# DEBUG: Deducing platform string from: `" .. platform_string .. "`")
     for match_text in string.gmatch(platform_string, "([^-]+)") do
         fragments[#fragments + 1] = match_text
     end
 
     if #fragments == 4 then
         -- Skip over the "company" part
-        return fragments[1] .. "-" .. fragments[3] .. "-" .. fragments[4]
+        platform_string = fragments[1] .. "-" .. fragments[3] .. "-" .. fragments[4]
     end
+    print("# DEBUG: Platform triplet is: " .. platform_string)
     return platform_string
 end
 
@@ -151,6 +153,7 @@ local lua_exe_dir = dirname(lua_exe)
 -- executable's directory.
 local POSIX_HEADER_SEARCH_DIRECTORIES = {
     "!/../include/<file>",
+    "!/include/<file>",
     "/usr/include/<file>",
     "/usr/local/include/<file>",
     "/opt/include/<file>",
@@ -357,7 +360,7 @@ local lua_library_dir = find_package_directory(package.path, ".lua")
 local lua_library_file_info = find_lua_library()
 
 local link_flag = ""
-if lua_library_file_info then
+if lua_library_file_info.stem ~= nil then
     -- FIXME (dargueta): This only works for GCC and GCC-compatible compilers
     link_flag = "-l" .. lua_library_file_info.stem
 end

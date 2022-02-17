@@ -1,4 +1,5 @@
-include Makefile.in
+-include Makefile.in
+-include lua.mk
 
 EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
@@ -72,3 +73,11 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
+
+
+lua.mk:
+ifndef LUA_EXE
+	$(error "You must provide the LUA_EXE variable")
+else
+	$(LUA_EXE) tools/profile_lua.lua lua.mk $(MAKE_HOST)
+endif
