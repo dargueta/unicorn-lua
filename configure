@@ -238,9 +238,6 @@ def generate_cmake_parameters(settings, install_version, platform):
     else:
         short_version = install_version.rpartition(".")[0]
 
-    if not settings["lua_library"] or not settings["lua_headers"] or not settings["CMAKE_INSTALL_PREFIX"]:
-        settings["lua_headers"] = infer_lua_header_location(short_version)
-
     values = {
         "LUA_FULL_VERSION": install_version,
         "LUA_SHORT_VERSION": short_version,
@@ -333,11 +330,11 @@ def run_cmake_generate(build_dir):
 
 def main():
     args = parse_args()
-    settings = set_defaults_from_config(args)
-
     logging.basicConfig(
         format="[%(levelname)-5s] %(message)s", level=args.logging_level
     )
+
+    settings = set_defaults_from_config(args)
 
     lua_platform = PLATFORM_ALIASES.get(sys.platform)
     if not lua_platform:
