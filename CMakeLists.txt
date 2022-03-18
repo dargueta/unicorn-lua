@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-project(UnicornLua VERSION 0.1 LANGUAGES CXX)
+project(UnicornLua VERSION 1.3 LANGUAGES CXX)
 
 include("${PROJECT_SOURCE_DIR}/configuration.cmake")
 
@@ -9,16 +9,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#find_package(Python3 REQUIRED)
-
-if(NOT USE_VIRTUALENV)
+if($LUA_EXE STREQUAL "")
     find_package(Lua REQUIRED)
-
-    find_program(
-        LUA_EXE
-        NAMES lua
-        DOC "The Lua interpreter"
-    )
+    find_program(LUA_EXE NAMES lua DOC "The Lua interpreter")
     find_program(
         LUAROCKS_EXE
         NAMES luarocks
@@ -67,9 +60,12 @@ endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
-add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
-add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
-add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
+# Library code
+add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")
+# Tests with C++ code
+add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_ALL)
+# Tests with Lua code
+add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
@@ -82,7 +78,6 @@ file(GENERATE
 )
 
 configure_file(
-
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
     "${PROJECT_SOURCE_DIR}/include/unicornlua/platform.h"
     @ONLY

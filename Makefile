@@ -11,8 +11,12 @@ endif
 EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
-LIBRARY_SOURCES=$(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
-TEST_SOURCES=$(wildcard tests/c/*.cpp) $(wildcard tests/c/*.h) $(wildcard tests/lua/*.lua)
+LIBRARY_SOURCES=$(wildcard $(join src,*.cpp))	\
+				$(wildcard $(join "include",unicornlua,*.h))
+TEST_SOURCES=$(wildcard $(join tests,c,*.cpp))		\
+				$(wildcard $(join tests,c,*.h))		\
+				$(wildcard $(join tests,lua,*.lua))
+INSTALL_TARGET = $(abspath $(join "$(INST_LIBDIR)", unicorn$(LIBRARY_FILE_EXTENSION)))
 
 
 .PHONY: all
@@ -104,3 +108,9 @@ installation_setup: configuration_files configure | $(BUILD_DIR)
 						--lua-headers $(realpath $(LUA_INCDIR))		\
 						--lua-library $(realpath $(LUA_LIBDIR))		\
 						--install-prefix $(realpath $(INST_LIBDIR))
+
+$(INSTALL_TARGET): $(LIBRARY_SOURCES)
+	sudo $(MAKE) -C $(BUILD_DIR) install
+
+.PHONY: install
+install: $(INSTALL_TARGET)
