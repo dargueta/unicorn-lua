@@ -21,7 +21,7 @@ clean:
 
 .PHONY: pristine
 pristine: clean
-	cmake -E rm -rf $(VIRTUALENV_DIR) *.in configuration.cmake
+	cmake -E rm -rf $(VIRTUALENV_DIR) *.in configuration.cmake lua-profile.*
 
 $(BUILD_DIR):
 	cmake -S $(REPO_ROOT) -B $(BUILD_DIR) -DCMAKE_VERBOSE_MAKEFILE=YES
@@ -75,24 +75,28 @@ run_example: examples
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
 
 
-lua-profile.mk: tools/profile_lua.lua
+.PHONY: _var_defined_lua_exe
+_var_defined_lua_exe:
 ifndef LUA_EXE
 	$(error "You must provide the LUA_EXE variable")
 endif
+
+
+lua-profile.mk: _var_defined_lua_exe tools/profile_lua.lua
 	$(LUA_EXE) tools/profile_lua.lua $@ make $(MAKE_HOST)
 
-lua-profile.cmake: tools/profile_lua.lua
-ifndef LUA_EXE
-	$(error "You must provide the LUA_EXE variable")
-endif
+
+lua-profile.cmake: _var_defined_lua_exe tools/profile_lua.lua
 	$(LUA_EXE) tools/profile_lua.lua $@ cmake $(MAKE_HOST)
 
-lua-profile.json: tools/profile_lua.lua
-ifndef LUA_EXE
-	$(error "You must provide the LUA_EXE variable")
-endif
+
+lua-profile.json: _var_defined_lua_exe tools/profile_lua.lua
 	$(LUA_EXE) tools/profile_lua.lua $@ json $(MAKE_HOST)
 
 
 .PHONY: configuration_files
 configuration_files: lua-profile.mk lua-profile.cmake lua-profile.json
+
+
+.PHONY: installation_setup
+installation_setup: configuration_files $(BUILD_DIR)
