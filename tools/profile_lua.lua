@@ -152,19 +152,19 @@ local lua_exe_dir = dirname(lua_exe)
 -- or the path to a subdirectory. `!` is replaced with the path to the Lua
 -- executable's directory.
 local POSIX_HEADER_SEARCH_DIRECTORIES = {
-    "!/../include/<file>",
-    "!/include/<file>",
-    "/usr/include/<file>",
-    "/usr/local/include/<file>",
-    "/opt/include/<file>",
-    "/opt/<file>/include",
+    dir_wildcard .. "/../include/<file>",
+    dir_wildcard .. "/include/<file>",
+    dir_wildcard .. "/usr/include/<file>",
+    dir_wildcard .. "/usr/local/include/<file>",
+    dir_wildcard .. "/opt/include/<file>",
+    dir_wildcard .. "/opt/<file>/include",
 }
 
 -- TODO (dargueta): Add more search directories, e.g. C:\Lua54 or C:\Lua5.4
 local WINDOWS_HEADER_SEARCH_DIRECTORIES = {
-    "!\\<file>",
-    "!\\..\\<file>",
-    "!\\..\\include\\<file>",
+    dir_wildcard .. "\\<file>",
+    dir_wildcard .. "\\..\\<file>",
+    dir_wildcard .. "\\..\\include\\<file>",
 }
 
 local LIB_DIRECTORY_NAMES = {
@@ -172,20 +172,20 @@ local LIB_DIRECTORY_NAMES = {
 }
 
 local POSIX_LIBRARY_SEARCH_DIRECTORIES = {
-    -- "exe_dir" is the directory the Lua executable is in.
+    -- "!" is the directory the Lua executable is in.
     -- "<lib_dirname>" is the library directory name, e.g. "lib" or "lib64"
     -- "<file>" is the name of the file to look for
-    "<exe_dir>/../<lib_dirname>/<file>",
+    dir_wildcard .. "/../<lib_dirname>/<file>",
     "/<lib_dirname>/<file>",
     "/usr/<lib_dirname>/<file>",
     "/usr/local/<lib_dirname>/<file>",
-    "/usr/lib/" .. PLATFORM_TRIPLET .. "/<file>",
+    "/usr/<lib_dirname>/" .. PLATFORM_TRIPLET .. "/<file>",
 }
 
 local WINDOWS_LIBRARY_SEARCH_DIRECTORIES = {
-    "<exe_dir>\\<file>",
-    "<exe_dir>\\..\\<file>",
-    "<exe_dir>\\..\\<lib_dirname>\\<file>",
+    dir_wildcard .. "\\<file>",
+    dir_wildcard .. "\\..\\<file>",
+    dir_wildcard .. "\\..\\<lib_dirname>\\<file>",
 }
 
 --- Attempt to find the directory where Lua's header files are installed.
@@ -320,7 +320,7 @@ function find_lua_library()
                         local filename = prefix .. stem .. ext
                         local path = directory:gsub("<file>", filename)
                         path = path:gsub("<lib_dirname>", lib_dir_name)
-                        path = path:gsub("<exe_dir>", lua_exe_dir)
+                        path = path:gsub("[" .. dir_wildcard .. "]", lua_exe_dir)
                         to_search[#to_search + 1] = {
                             path = path,
                             stem = stem,
