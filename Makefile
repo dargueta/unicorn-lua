@@ -35,13 +35,7 @@ all: | $(BUILD_DIR)
 
 .PHONY: clean
 clean:
-	-$(MAKE) -C $(BUILD_DIR) clean
-	cmake -E rm -rf $(DOXYGEN_OUTPUT_BASE) core*
-
-
-.PHONY: pristine
-pristine: clean
-	cmake -E rm -rf *.in configuration.cmake lua-profile.*
+	git clean -Xf
 
 
 lua-profile.mk: tools/profile_lua.lua
