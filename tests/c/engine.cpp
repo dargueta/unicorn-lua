@@ -3,7 +3,6 @@
 #include "doctest.h"
 #include "fixtures.h"
 #include "unicornlua/context.h"
-#include "unicornlua/engine.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/lua.h"
 
@@ -36,7 +35,7 @@ TEST_CASE_FIXTURE(
     AutoclosingEngineFixture,
     "UCLuaEngine::query() raises exception when given a bad query type"
 ) {
-    CHECK_THROWS_AS(uclua_engine->query(UC_QUERY_MODE), UnicornLibraryError);
+    CHECK_THROWS_AS(uclua_engine->query((uc_query_type)-123), UnicornLibraryError);
 }
 
 

@@ -1,8 +1,30 @@
 Changes
 =======
 
-1.3.0
+2.0.0
 -----
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+Fixing `issue #31`_ (reading MSRs on x86 is silently broken) required two breaking
+changes:
+
+* When reading from or writing to ``UC_X86_REG_MSR``, you're now required to pass
+  an additional argument with the ID of the register you want to read. Failing
+  to do so will trigger an exception.
+* Only ``reg_read()`` and ``reg_write()`` support accessing model-specific
+  registers. The ``reg_*_as()`` and ``reg_*_batch()`` functions now throw
+  exceptions if you try to access a model-specific register. I may add support
+  for this in the future if I can figure out a way to not make it hideous.
+
+I also dropped support for CMake 3.12. You need 3.13 or higher now.
+
+Bugfixes
+~~~~~~~~
+
+Fixed a test that never should've passed (verifies an exception is thrown if an
+engine is given an invalid query).
 
 Other Changes
 ~~~~~~~~~~~~~
@@ -10,7 +32,9 @@ Other Changes
 * Fixed wrong variable names in Makefile
 * Corrected behavior of ``install`` target
 * Fixed wrong version number in CMake configuration, forgot to change it from 0.1.0.
-* Dropped support for CMake 3.12. You need 3.13 or higher now.
+
+.. _issue #31: https://github.com/dargueta/unicorn-lua/issues/31
+
 
 1.2.2 (2021-11-22)
 ------------------

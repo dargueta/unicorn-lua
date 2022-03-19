@@ -174,15 +174,7 @@ Just Installing?
 ----------------
 
 If you just want to install this library, open a terminal, navigate to the root
-directory of this repository, and run the following:
-
-.. code-block:: sh
-
-    python3 configure
-    make install
-
-You may need superuser privileges to install. If installation fails, try
-``sudo make install``.
+directory of this repository, and run ``make install``.
 
 Development
 -----------
