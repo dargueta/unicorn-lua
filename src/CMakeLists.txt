@@ -37,7 +37,7 @@ target_include_directories(
     PRIVATE
     "${PROJECT_SOURCE_DIR}/include"
     ${UNICORN_HEADERS_PATH}
-    ${LUA_INCLUDE_DIR}
+    ${LUA_INCDIR}
 )
 
 if(IS_LUAJIT)
@@ -69,13 +69,7 @@ endif()
 
 # Apparently OSX requires this stuff: https://stackoverflow.com/q/42371892
 if (CMAKE_HOST_APPLE)
-    # Normally we'd use target_link_options() for this but upgrading to CMake 3.13 has
-    # proven to be an utter pain on Travis CI so I'm using the 3.12-compatible workaround
-    # to get this to work.
-    target_link_libraries(unicornlua_library PUBLIC "-undefined dynamic_lookup")
-
-    # For CMake 3.13+
-    # target_link_options(unicornlua_library BEFORE PUBLIC -undefined dynamic_lookup)
+    target_link_options(unicornlua_library BEFORE PUBLIC -undefined dynamic_lookup)
 endif()
 
 

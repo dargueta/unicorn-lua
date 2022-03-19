@@ -1,7 +1,7 @@
 include_directories(
     "${PROJECT_SOURCE_DIR}/include"
     ${UNICORN_HEADERS_PATH}
-    ${LUA_INCLUDE_DIR}
+    ${LUA_INCDIR}
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -25,14 +25,15 @@ if(IS_LUAJIT)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
-    target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
+    target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti -fPIC)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     message(FATAL_ERROR "Visual studio not supported yet.")
 endif()
 
+find_library(LUA_LIBRARY NAMES ${LUALIB} HINTS ${LUA_LIBDIR} NO_DEFAULT_PATH)
 target_link_libraries(
-    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARIES}
+    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUALIB}
 )
 
 add_test(NAME cpp_unit_tests COMMAND cpp_test --order-by=rand)

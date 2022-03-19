@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(UnicornLua VERSION 1.3 LANGUAGES CXX)
 
+include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
 include("${PROJECT_SOURCE_DIR}/configuration.cmake")
 
 option(BUILD_DOCS "Build documentation" ON)
@@ -9,9 +10,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if($LUA_EXE STREQUAL "")
+if($LUA STREQUAL "")
     find_package(Lua REQUIRED)
-    find_program(LUA_EXE NAMES lua DOC "The Lua interpreter")
+    find_program(LUA NAMES lua DOC "The Lua interpreter")
     find_program(
         LUAROCKS_EXE
         NAMES luarocks

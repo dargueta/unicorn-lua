@@ -251,18 +251,17 @@ def generate_cmake_parameters(settings, install_version, platform):
         "CMAKE_INSTALL_PREFIX": settings["CMAKE_INSTALL_PREFIX"],
         "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
         "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
-        "LUA_EXE": settings["lua_exe_path"],
+        "LUA": settings["lua_exe_path"],
         "LUAROCKS_EXE": settings["luarocks_path"],
-        "LUA_INCLUDE_DIR": settings["lua_headers"] or "",
-        # Need plural for compatibility with CMake
-        "LUA_LIBRARIES": settings["lua_library"] or "",
+        "LUA_INCDIR": settings["lua_headers"] or "",
+        "LUA_LIBDIR": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
         "VIRTUALENV_DIR": settings.get("virtualenv_dir") or "",
     }
 
     if not settings["lua_library"] or not settings["lua_headers"]:
         raise ErrorExit(
-            "The LUA_LIBRARIES and/or LUA_INCLUDE_DIR variables are empty. This usually"
+            "The LUA_LIBDIR and/or LUA_INCDIR variables are empty. This usually"
             " happens when Lua isn't installed locally or if your include paths aren't"
             " set. You can either use a virtual environment (see tools/lua_env.py) or,"
             " if you do have Lua already installed, you'll need to provide the include"
@@ -309,25 +308,6 @@ def generate_cmake_parameters(settings, install_version, platform):
     return values
 
 
-def get_cmake_version():
-    if shutil.which("cmake") is None:
-        raise ErrorExit("`cmake` not installed")
-
-    raw_capabilities = run(["cmake", "-E", "capabilities"], text=True)
-    capabilities = json.loads(raw_capabilities)
-    return capabilities["version"]["major"], capabilities["version"]["minor"]
-
-
-def run_cmake_generate(build_dir):
-    version = get_cmake_version()
-    shutil.rmtree(build_dir, ignore_errors=True)
-    os.makedirs(build_dir, exist_ok=True)
-    if version < (3, 13):
-        run(["cmake", "..", "-DCMAKE_VERBOSE_MAKEFILE=YES"], cwd=build_dir)
-    else:
-        run(["cmake", "-S", ".", "-B", build_dir, "-DCMAKE_VERBOSE_MAKEFILE=YES"])
-
-
 def main():
     args = parse_args()
     logging.basicConfig(
@@ -365,9 +345,6 @@ def main():
     )
     with open("configuration.cmake", "w") as fd:
         fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
-
-    LOG.info("Building CMake files")
-    run_cmake_generate(os.path.join(HERE, "cmake-build-" + args.build_type))
 
 
 if __name__ == "__main__":
