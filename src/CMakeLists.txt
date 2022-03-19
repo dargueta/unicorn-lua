@@ -51,7 +51,7 @@ set_target_properties(
     unicornlua_library PROPERTIES
     PREFIX ""
     OUTPUT_NAME "unicorn"
-    SUFFIX "${LUA_CLIB_EXTENSION}"
+    SUFFIX "${LIBRARY_FILE_EXTENSION}"
 )
 
 

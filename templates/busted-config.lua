@@ -1,6 +1,6 @@
 return {
   _all = {
-    cpath = "$<TARGET_FILE_DIR:unicornlua_library>/?@LUA_CLIB_EXTENSION@;;",
+    cpath = "$<TARGET_FILE_DIR:unicornlua_library>/?@LIBRARY_FILE_EXTENSION@;;",
     lua = "@LUA_EXE@",
     verbose = true,
     shuffle = true,

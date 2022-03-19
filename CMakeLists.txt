@@ -10,16 +10,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if($LUA STREQUAL "")
-    find_package(Lua REQUIRED)
-    find_program(LUA NAMES lua DOC "The Lua interpreter")
-    find_program(
-        LUAROCKS_EXE
-        NAMES luarocks
-        DOC "Luarocks installation program"
-    )
-endif()
-
 execute_process(
     COMMAND ${LUAROCKS_EXE} path --lr-path
     OUTPUT_VARIABLE LUAROCKS_LPATH
@@ -50,14 +40,6 @@ if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
     message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
 endif()
 
-# Lua looks for C libraries with the file extension `.dll` on Windows, and `.so` on all
-# other platforms. Since the OSX extension is `.dylib` we can't use CMAKE_SHARED_LIBRARY_SUFFIX
-# so we have to override it ourselves.
-if(CMAKE_HOST_WIN32)
-    set(LUA_CLIB_EXTENSION ".dll")
-else()
-    set(LUA_CLIB_EXTENSION ".so")
-endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
