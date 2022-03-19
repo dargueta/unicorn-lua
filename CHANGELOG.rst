@@ -1,6 +1,17 @@
 Changes
 =======
 
+1.3.0
+-----
+
+Other Changes
+~~~~~~~~~~~~~
+
+* Fixed wrong variable names in Makefile
+* Corrected behavior of ``install`` target
+* Fixed wrong version number in CMake configuration, forgot to change it from 0.1.0.
+* Dropped support for CMake 3.12. You need 3.13 or higher now.
+
 1.2.2 (2021-11-22)
 ------------------
 

@@ -165,7 +165,7 @@ before using.
 
 * For building and running:
 
-  * `cmake`_ 3.12 or higher. Run ``cmake --version`` if you're not sure what version you have.
+  * `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what version you have.
   * `Unicorn CPU Emulator`_ library must be installed or at least built.
 
 * Some examples have additional dependencies; see their READMEs for details.
