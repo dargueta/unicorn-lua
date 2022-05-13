@@ -16,9 +16,9 @@ local OUTPUT_FILE = arg[1]
 local OUTPUT_FORMAT = arg[2] or "make"
 local RAW_PLATFORM_STRING = arg[3] or ""
 
--- Lua 5.2 moved `unpack()` into the `table` library.
-local unpack_table = table.unpack or unpack
 
+--- Given a platform identifier string from Make, return the three-part representation.
+--
 -- The platform string passed in by Make is either:
 -- * An empty string (not provided)
 -- * A three-part canonical platform tuple, e.g. x86_64-linux-gnu
@@ -39,8 +39,8 @@ function build_platform_triplet(platform_string)
 end
 
 
-local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
-
+--- Split a string along occurrences of a separator.
+-- Multiple consecutive separators are treated as one.
 function split_string(str, separator)
     if separator == nil then
         separator = "\n"
@@ -64,17 +64,28 @@ function file_exists(file)
     return false
 end
 
+-- Lua 5.2 moved `unpack()` into the `table` library.
+local unpack_table = table.unpack or _G.unpack
 
 -- LuaJIT provides a few additional built-in libraries, "jit" being one of them.
 -- We can detect if we're on LuaJIT by checking to see if the "jit" package
 -- exists.
-local is_luajit = type(jit) == "table"
+local is_luajit = type(_G.jit) == "table"
 local lua_version = _VERSION:gsub("^Lua (%d%.%d)$", "%1")
 
 local dir_sep, path_sep, file_wildcard, dir_wildcard
 local split_package_config = split_string(package.config, "\n")
 
 dir_sep, path_sep, file_wildcard, dir_wildcard = unpack_table(split_package_config)
+
+-- The Lua docs state that the default directory separator is \ on Windows and /
+-- everywhere else. This is a crude way of detecting the OS, assuming the defaults
+-- weren't overridden when Lua was built.
+local is_windows = dir_sep == "\\"
+
+-- A three-part string indicating the CPU architecture, operating system, and
+-- ABI, with parts separated by a single dash: e.g. "x86_64-linux-gnu".
+local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
 
 
 --- Locate the Lua executable used to run this script.
@@ -114,12 +125,6 @@ function find_lua_executable()
     -- Couldn't find the path to the executable.
     return nil
 end
-
-
--- The Lua docs state that the default directory separator is \ on Windows and /
--- everywhere else. This is a crude way of detecting the OS, assuming the defaults
--- weren't overridden when Lua was built.
-local is_windows = dir_sep == "\\"
 
 
 --- Return everything but the last component of the given path.
