@@ -71,7 +71,7 @@ local unpack_table = table.unpack or _G.unpack
 -- We can detect if we're on LuaJIT by checking to see if the "jit" package
 -- exists.
 local is_luajit = type(_G.jit) == "table"
-local lua_version = _VERSION:gsub("^Lua (%d%.%d)$", "%1")
+local lua_version = _VERSION:gsub("^Lua (%d+%.%d+)$", "%1")
 
 local dir_sep, path_sep, file_wildcard, dir_wildcard
 local split_package_config = split_string(package.config, "\n")
