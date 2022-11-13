@@ -13,9 +13,9 @@ EXAMPLES_ROOT=$(REPO_ROOT)/examples
 X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 LIBRARY_SOURCES=$(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
-TEST_SOURCES=$(wildcard tests/c/*.cpp)		\
-				$(wildcard tests/c/*.h)		\
-				$(wildcard tests/lua/*.lua)
+TEST_SOURCES=$(wildcard tests/c/*.cpp)   \
+             $(wildcard tests/c/*.h)     \
+             $(wildcard tests/lua/*.lua)
 LIBRARY_FILENAME = unicorn$(LIBRARY_FILE_EXTENSION)
 TEST_LIB_FILE = $(abspath $(BUILD_DIR)/lib/$(LIBRARY_FILENAME))
 TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
@@ -62,11 +62,11 @@ __internal_configure:
 #ifeq ($(realpath $(INST_LIBDIR)),)
 #    $(error "Target installation directory `$(INST_LIBDIR)` doesn't exist. Maybe override `INST_LIBDIR`?")
 #endif
-	python3 configure	--lua-exe-path $(realpath $(LUA))			\
-						--lua-headers $(realpath $(LUA_INCDIR))		\
-						--lua-library $(realpath $(LUA_LIBDIR))		\
-						--install-prefix $(realpath $(INST_LIBDIR))	\
-						--build-type $(BUILD_TYPE)
+	python3 configure --lua-exe-path $(realpath $(LUA))           \
+                      --lua-headers $(realpath $(LUA_INCDIR))     \
+                      --lua-library $(realpath $(LUA_LIBDIR))     \
+                      --install-prefix $(realpath $(INST_LIBDIR)) \
+                      --build-type $(BUILD_TYPE)
 
 
 # Run the configuration script and generate the CMake include file. We have to
