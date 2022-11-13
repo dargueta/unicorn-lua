@@ -3,8 +3,6 @@
 
 ifndef LUA
 	LUA = lua
-else
-	LUA := $(realpath $(LUA))
 endif
 
 REPO_ROOT=$(CURDIR)
@@ -62,10 +60,10 @@ __internal_configure:
 #ifeq ($(realpath $(INST_LIBDIR)),)
 #    $(error "Target installation directory `$(INST_LIBDIR)` doesn't exist. Maybe override `INST_LIBDIR`?")
 #endif
-	python3 configure --lua-exe-path $(LUA)                       \
-                      --lua-headers $(realpath $(LUA_INCDIR))     \
-                      --lua-library $(realpath $(LUA_LIBDIR))     \
-                      --install-prefix $(realpath $(INST_LIBDIR)) \
+	python3 configure --lua-exe-path $(LUA)           \
+                      --lua-headers $(LUA_INCDIR)     \
+                      --lua-library $(LUA_LIBDIR)     \
+                      --install-prefix $(INST_LIBDIR) \
                       --build-type $(BUILD_TYPE)
 
 
