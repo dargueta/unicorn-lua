@@ -306,7 +306,9 @@ function find_lua_library()
     if is_luajit then
         potential_file_stems = {"luajit-5.1"}
     else
-        potential_file_stems = {"lua" .. lua_version}
+        -- On some installations we will only have liblua.a with no version number.
+        -- We put this second so it's a last resort.
+        potential_file_stems = {"lua" .. lua_version, "lua"}
     end
 
     local to_search = {}
@@ -317,11 +319,11 @@ function find_lua_library()
         search_templates = POSIX_LIBRARY_SEARCH_DIRECTORIES
     end
 
-    for _, directory in ipairs(search_templates) do
-        for _, lib_dir_name in ipairs(LIB_DIRECTORY_NAMES) do
-            for _, prefix in ipairs(potential_file_prefixes) do
-                for _, ext in ipairs(potential_file_extensions) do
-                    for _, stem in ipairs(potential_file_stems) do
+    for _, stem in ipairs(potential_file_stems) do
+        for _, directory in ipairs(search_templates) do
+            for _, lib_dir_name in ipairs(LIB_DIRECTORY_NAMES) do
+                for _, prefix in ipairs(potential_file_prefixes) do
+                    for _, ext in ipairs(potential_file_extensions) do
                         local filename = prefix .. stem .. ext
                         local path = directory:gsub("<file>", filename)
                         path = path:gsub("<lib_dirname>", lib_dir_name)
