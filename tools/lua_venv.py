@@ -221,7 +221,8 @@ def download_luarocks_windows(download_dir):
         bits = 32
 
     response = request.urlopen(
-        "http://luarocks.github.io/luarocks/releases/luarocks-%s-windows-%d.zip" % (LUAROCKS_VERSION, bits)
+        "http://luarocks.github.io/luarocks/releases/luarocks-%s-windows-%d.zip"
+        % (LUAROCKS_VERSION, bits)
     )
     if response.status != 200:
         raise ErrorExit(
@@ -232,6 +233,12 @@ def download_luarocks_windows(download_dir):
     with open(output_file, "wb") as fd:
         shutil.copyfileobj(response, fd)
     return output_file
+
+
+def download_luarocks(download_dir):
+    if sys.platform == "win32":
+        return download_luarocks_windows(download_dir)
+    return download_luarocks_linux(download_dir)
 
 
 def install_luarocks_linux(lua_path_info, install_to, extract_dir):
@@ -284,7 +291,7 @@ def install_luarocks_windows(lua_path_info, install_to, extract_dir):
             lua_path_info["lua_root"],
             "--with-lua-include=" + lua_path_info["lua_include"],
             "--force-config",
-            ],
+        ],
         cwd=extract_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -304,6 +311,12 @@ def install_luarocks_windows(lua_path_info, install_to, extract_dir):
     if result.returncode != 0:
         LOG.error("Failed to install LuaRocks.")
         raise ErrorExit(result.stdout)
+
+
+def install_luarocks(lua_path_info, install_to, extract_dir):
+    if sys.platform == "win32":
+        return install_luarocks_windows(lua_path_info, install_to, extract_dir)
+    return install_luarocks_linux(lua_path_info, install_to, extract_dir)
 
 
 def get_luarocks_paths(luarocks_exe):
