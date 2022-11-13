@@ -62,7 +62,7 @@ __internal_configure:
 #ifeq ($(realpath $(INST_LIBDIR)),)
 #    $(error "Target installation directory `$(INST_LIBDIR)` doesn't exist. Maybe override `INST_LIBDIR`?")
 #endif
-	python3 configure --lua-exe-path $(realpath $(LUA))           \
+	python3 configure --lua-exe-path $(LUA)                       \
                       --lua-headers $(realpath $(LUA_INCDIR))     \
                       --lua-library $(realpath $(LUA_LIBDIR))     \
                       --install-prefix $(realpath $(INST_LIBDIR)) \
@@ -75,7 +75,7 @@ configuration.cmake: configuration_files
 	$(MAKE) __internal_configure
 
 
-$(INSTALL_TARGET): $(LIBRARY_SOURCES)
+$(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 

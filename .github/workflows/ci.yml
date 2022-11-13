@@ -26,17 +26,17 @@ jobs:
           - "5.4"
           - "luajit2.0"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.10"
       - name: Install Unicorn
         run: ./tools/ci/install-unicorn.sh 1.0.2
       - name: Set up Lua
         run: python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} .venv
-      - name: Configure build
-        run: python3 ./configure --venv-config settings.json --build-type debug
+      # The `install` command will trigger an automatic build configuration. For
+      # our purposes we don't need to run the `configure` script.
       - name: Install
         run: sudo make install
       - name: Run tests

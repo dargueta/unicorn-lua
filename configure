@@ -226,7 +226,7 @@ def bootstrap_lua_information(lua_exe):
             The path to the Lua executable to run.
     """
     lua_exe = os.path.abspath(lua_exe)
-    run(["make", "configuration_files", "LUA_EXE=" + lua_exe])
+    run(["make", "configuration_files", "LUA=" + lua_exe])
 
 
 def generate_cmake_parameters(settings, install_version, platform):

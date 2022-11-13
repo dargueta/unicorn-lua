@@ -67,7 +67,7 @@ configure_file(
 )
 
 
-find_package(Doxygen)
+find_package(Doxygen QUIET MODULE)
 if(DOXYGEN_FOUND)
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/templates/Doxyfile.in"
@@ -83,5 +83,5 @@ if(DOXYGEN_FOUND)
         VERBATIM
     )
 else()
-  message("Doxygen needs to be installed to generate the documentation.")
+  message(VERBOSE "Doxygen needs to be installed to generate the documentation.")
 endif()
