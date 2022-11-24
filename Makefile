@@ -78,7 +78,7 @@ $(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 
 
 .PHONY: install
-install: $(INSTALL_TARGET)
+install: configuration.cmake $(INSTALL_TARGET)
 
 
 $(BUILD_DIR): configuration.cmake

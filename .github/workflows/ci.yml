@@ -24,7 +24,7 @@ jobs:
           - "5.2"
           - "5.3"
           - "5.4"
-          - "luajit2.0"
+          - "luajit"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -33,12 +33,14 @@ jobs:
           python-version: "3.10"
       - name: Install Unicorn
         run: ./tools/ci/install-unicorn.sh 1.0.2
-      - name: Set up Lua
-        run: python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} .venv
-      # The `install` command will trigger an automatic build configuration. For
-      # our purposes we don't need to run the `configure` script.
-      - name: Install
-        run: sudo make install
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v9.1.0
+        with:
+          luaVersion: ${{ matrix.lua-version }}
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+      - name: Install Binding
+        run: make install
       - name: Run tests
         run: make test
 
