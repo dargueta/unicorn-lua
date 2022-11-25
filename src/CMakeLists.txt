@@ -76,14 +76,13 @@ endif()
 find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
-    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
+    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
 
 # For some reason this is required only for LuaJIT on *NIX platforms except OSX.
 if(IS_LUAJIT AND UNIX AND (NOT APPLE))
     target_link_libraries(unicornlua_library LINK_PUBLIC dl)
 endif()
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 

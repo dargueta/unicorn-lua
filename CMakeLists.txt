@@ -4,8 +4,6 @@ project(UnicornLua VERSION 2.0.0 LANGUAGES CXX)
 include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
 include("${PROJECT_SOURCE_DIR}/configuration.cmake")
 
-option(BUILD_DOCS "Build documentation" ON)
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -50,6 +48,8 @@ add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_AL
 # Tests with Lua code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
+find_library(LUA_LIBRARY NAMES ${LUALIB} HINTS ${LUA_LIBDIR} NO_DEFAULT_PATH)
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
     "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
@@ -69,6 +69,8 @@ configure_file(
 
 find_package(Doxygen QUIET MODULE)
 if(DOXYGEN_FOUND)
+    option(BUILD_DOCS "Build documentation" ON)
+
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/templates/Doxyfile.in"
         "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"

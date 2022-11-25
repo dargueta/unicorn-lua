@@ -31,9 +31,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     message(FATAL_ERROR "Visual studio not supported yet.")
 endif()
 
-find_library(LUA_LIBRARY NAMES ${LUALIB} HINTS ${LUA_LIBDIR} NO_DEFAULT_PATH)
 target_link_libraries(
-    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUALIB}
+    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
 
 add_test(NAME cpp_unit_tests COMMAND cpp_test --order-by=rand)
