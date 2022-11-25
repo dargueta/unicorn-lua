@@ -37,6 +37,7 @@ jobs:
         uses: leafo/gh-actions-lua@v9.1.0
         with:
           luaVersion: ${{ matrix.lua-version }}
+          luaCompileFlags: "MYCFLAGS='-fPIC'"
       - name: Install LuaRocks
         uses: leafo/gh-actions-luarocks@v4
       - name: Install Binding
