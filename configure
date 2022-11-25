@@ -5,6 +5,7 @@ import configparser
 import json
 import logging
 import os
+import tempfile
 import textwrap
 import re
 import shutil
@@ -129,8 +130,11 @@ def get_lua_version(lua_exe):
             " a virtual environment (see --use-venv) or install it on your OS."
         )
 
-    output = run([lua_exe, "-v"], stderr=None)
-    _lua, version, *_rest = output.strip().split()
+    with tempfile.TemporaryFile(mode="w+") as stderr_fdesc:
+        stdout = run([lua_exe, "-v"], stderr=stderr_fdesc).strip()
+        stderr_fdesc.seek(0)
+        stderr = stderr_fdesc.read().strip()
+        _lua, version, *_rest = (stdout or stderr).split()
     return version
 
 
