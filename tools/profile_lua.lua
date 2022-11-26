@@ -267,8 +267,8 @@ function find_headers()
     end
 
     -- Can't find it at all.
-    print("# ERROR: Can't find the Lua headers anywhere.")
-    return nil
+    error("# ERROR: Can't find the Lua headers anywhere.")
+    -- return nil
 end
 
 
@@ -346,8 +346,8 @@ function find_lua_library()
     end
 
     -- Can't find it at all.
-    print("# ERROR: Can't find the Lua library anywhere.")
-    return {}
+    error("# ERROR: Can't find the Lua library anywhere.")
+    --return {}
 end
 
 
