@@ -1,9 +1,6 @@
 -include Makefile.in
 -include lua-profile.mk
 
-ifndef LUA
-	LUA = lua
-endif
 
 REPO_ROOT=$(CURDIR)
 BUILD_DIR=$(REPO_ROOT)/build
@@ -21,8 +18,16 @@ INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 PROFILE_LUA_SCRIPT = $(LUA) tools/profile_lua.lua
 
 
+ifndef LUA
+	LUA = lua
+endif
+
 ifndef BUILD_TYPE
 	BUILD_TYPE = release
+endif
+
+ifndef LUAROCKS_EXE
+	LUAROCKS_EXE = luarocks
 endif
 
 
@@ -65,7 +70,8 @@ $(BUILD_DIR): configuration_files
 	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)      \
 		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
 		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
-		-DCMAKE_VERBOSE_MAKEFILE=YES
+		-DCMAKE_VERBOSE_MAKEFILE=YES           \
+		-DLUAROCKS_EXE=$(LUAROCKS_EXE)
 
 
 $(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
