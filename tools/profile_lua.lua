@@ -267,7 +267,11 @@ function find_headers()
     end
 
     -- Can't find it at all.
-    error("# ERROR: Can't find the Lua headers anywhere.")
+    local search_path = ""
+    for _, path in ipairs(to_search) do
+        search_path = search_path .. "\n* " .. path
+    end
+    error("Can't find the Lua headers; searched in\n" .. search_path)
     -- return nil
 end
 
@@ -346,8 +350,11 @@ function find_lua_library()
     end
 
     -- Can't find it at all.
-    error("# ERROR: Can't find the Lua library anywhere.")
-    --return {}
+    local search_path = ""
+    for _, path_info in ipairs(to_search) do
+        search_path = search_path .. "\n* " .. path_info.path
+    end
+    error("Can't find the Lua library; searched in\n" .. search_path)
 end
 
 
