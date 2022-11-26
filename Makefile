@@ -53,36 +53,19 @@ lua-profile.json: tools/profile_lua.lua
 configuration_files: lua-profile.mk lua-profile.cmake lua-profile.json
 
 
-# Run the configuration script to generate the file CMake needs for building the
-# library.
-.PHONY: __internal_configure
-__internal_configure:
-#ifeq ($(realpath $(INST_LIBDIR)),)
-#    $(error "Target installation directory `$(INST_LIBDIR)` doesn't exist. Maybe override `INST_LIBDIR`?")
-#endif
-	python3 configure --lua-exe-path $(LUA)           \
-                      --lua-headers $(LUA_INCDIR)     \
-                      --lua-library $(LUA_LIBDIR)     \
-                      --install-prefix $(INST_LIBDIR) \
-                      --build-type $(BUILD_TYPE)
-
-
-# Run the configuration script and generate the CMake include file. We have to
-# run a separate Make process to invoke it because we need to reload lua-profile.mk.
-configuration.cmake: configuration_files
-	$(MAKE) __internal_configure
+.PHONY: install
+install: configuration_files $(INSTALL_TARGET)
 
 
 $(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-.PHONY: install
-install: configuration.cmake $(INSTALL_TARGET)
-
-
-$(BUILD_DIR): configuration.cmake
-	cmake -S $(REPO_ROOT) -B $(BUILD_DIR) -DCMAKE_VERBOSE_MAKEFILE=YES
+$(BUILD_DIR): configuration_files
+	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)      \
+		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
+		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
+		-DCMAKE_VERBOSE_MAKEFILE=YES
 
 
 $(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)

@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(UnicornLua VERSION 2.0.0 LANGUAGES CXX)
 
 include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
-include("${PROJECT_SOURCE_DIR}/configuration.cmake")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
