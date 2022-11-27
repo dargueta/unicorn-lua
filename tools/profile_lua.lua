@@ -159,10 +159,10 @@ local lua_exe_dir = dirname(lua_exe)
 local POSIX_HEADER_SEARCH_DIRECTORIES = {
     dir_wildcard .. "/../include/<file>",
     dir_wildcard .. "/include/<file>",
-    dir_wildcard .. "/usr/include/<file>",
-    dir_wildcard .. "/usr/local/include/<file>",
-    dir_wildcard .. "/opt/include/<file>",
-    dir_wildcard .. "/opt/<file>/include",
+    "/usr/include/<file>",
+    "/usr/local/include/<file>",
+    "/opt/include/<file>",
+    "/opt/<file>/include",
 }
 
 -- TODO (dargueta): Add more search directories, e.g. C:\Lua54 or C:\Lua5.4
@@ -242,7 +242,7 @@ function find_headers()
         to_search[#to_search + 1] = expected_header
 
         if is_luajit then
-            -- Same notes here as earlier
+            -- Same notes here as earlier about the LuaJIT path difference
             expected_header = directory:gsub(
                 "<file>", "luajit-2.0" .. dir_sep .. "lauxlib.h"
             )
