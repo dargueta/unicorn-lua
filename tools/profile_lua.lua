@@ -100,6 +100,7 @@ function find_lua_executable()
     -- If executable_name exists then it's likely a file path. Whether that path
     -- is absolute or relative is unimportant for this script's purposes.
     if file_exists(executable_name) then
+        print("Lua executable: " .. executable_name)
         return executable_name
     end
 
@@ -118,11 +119,13 @@ function find_lua_executable()
     for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
         local this_path = directory .. dir_sep .. executable_name
         if file_exists(this_path) then
+            print("Lua executable: " .. this_path)
             return this_path
         end
     end
 
     -- Couldn't find the path to the executable.
+    print("WARNING: Couldn't infer location of lua executable.")
     return nil
 end
 
@@ -151,6 +154,14 @@ end
 
 local lua_exe = find_lua_executable() or ""
 local lua_exe_dir = dirname(lua_exe)
+
+
+-- Substitute the path to the directory containing the Lua executable
+-- into the placeholder. Note that we enclose the wildcard in [] to
+-- prevent Lua from interpreting it as a regex character.
+function fill_wildcard(s)
+    return s:gsub("[" .. dir_wildcard .. "]", lua_exe_dir)
+end
 
 --- Fallback directories to search through on *NIX systems for Lua's header files.
 -- The `<file>` will be replaced with either the name of an expected header file
@@ -193,12 +204,6 @@ local WINDOWS_LIBRARY_SEARCH_DIRECTORIES = {
     dir_wildcard .. "\\..\\<lib_dirname>\\<file>",
 }
 
--- Substitute the path to the directory containing the Lua executable
--- into the placeholder. Note that we enclose the wildcard in [] to
--- prevent Lua from interpreting it as a regex character.
-function fill_wildcard(s)
-    return s:gsub("[" .. dir_wildcard .. "]", lua_exe_dir)
-end
 
 --- Attempt to find the directory where Lua's header files are installed.
 -- @return The directory where the Lua headers are located, or nil if it can't
@@ -265,6 +270,7 @@ function find_headers()
     -- Now actually do the searching.
     for _, path in ipairs(to_search) do
         if file_exists(path) then
+            print("Header directory: " .. dirname(path))
             return dirname(path)
         end
     end
@@ -272,9 +278,9 @@ function find_headers()
     -- Can't find it at all.
     local search_path = ""
     for _, path in ipairs(to_search) do
-        search_path = search_path .. "\n* " .. path
+        search_path = search_path .. "\n* " .. dirname(path)
     end
-    error("Can't find the Lua headers; searched in\n" .. search_path)
+    error("Can't find the Lua headers; searched in" .. search_path)
     -- return nil
 end
 
@@ -287,7 +293,9 @@ function find_package_directory(path_list_string, extension)
         if path ~= "." .. dir_sep .. file_wildcard .. extension then
             -- Found our installation path. Strip off the wildcard and extension
             -- to get the directory.
-            return dirname(fill_wildcard(path))
+            path = fill_wildcard(path)
+            print("Package directory: " .. path)
+            return path
         end
     end
     return nil
@@ -337,6 +345,7 @@ function find_lua_library()
     -- Now actually do the searching.
     for _, path_info in ipairs(to_search) do
         if file_exists(path_info.path) then
+            print("Lua library: " .. path_info.path)
             return path_info
         end
     end
@@ -346,7 +355,7 @@ function find_lua_library()
     for _, path_info in ipairs(to_search) do
         search_path = search_path .. "\n* " .. path_info.path
     end
-    error("Can't find the Lua library; searched in\n" .. search_path)
+    error("Can't find the Lua library; searched in" .. search_path)
 end
 
 
