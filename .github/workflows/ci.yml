@@ -9,7 +9,7 @@ jobs:
       # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
       # a linker error that happens with LuaJIT:
       # https://github.com/LuaJIT/LuaJIT/issues/449
-      MACOSX_DEPLOYMENT_TARGET: 10.14
+      MACOSX_DEPLOYMENT_TARGET: 11
       # We get a linker error if we don't mess with the library path. For some
       # reason, /usr/lib64 isn't on the default search path.
       LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
@@ -17,14 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         operating-system:
-          - ubuntu-20.04
-          - macos-10.15
+          - ubuntu-22.04
+          - macos-11
         lua-version:
           - "5.1"
           - "5.2"
           - "5.3"
           - "5.4"
-          - "luajit-2.0"
+          - "luajit-2.0.5"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
