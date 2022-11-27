@@ -17,18 +17,9 @@ TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 PROFILE_LUA_SCRIPT = $(LUA) tools/profile_lua.lua
 
-
-ifndef LUA
-	LUA = lua
-endif
-
-ifndef BUILD_TYPE
-	BUILD_TYPE = release
-endif
-
-ifndef LUAROCKS_EXE
-	LUAROCKS_EXE = luarocks
-endif
+LUA ?= $(or $(shell which lua), lua)
+LUAROCKS_EXE ?= $(or $(shell which luarocks), luarocks)
+BUILD_TYPE ?= release
 
 
 .PHONY: all
