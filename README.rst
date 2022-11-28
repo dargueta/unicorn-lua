@@ -161,13 +161,11 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* Configuration: Python 3.3 or higher
-
-* For building and running:
-
-  * `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what version you have.
-  * `Unicorn CPU Emulator`_ library must be installed or at least built.
-
+* `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what
+  version you have.
+* The `Unicorn CPU Emulator`_ library must be installed in your system's standard
+  library location. (As of version 2.0 you can't have it installed anywhere you
+  like.)
 * Some examples have additional dependencies; see their READMEs for details.
 
 Just Installing?

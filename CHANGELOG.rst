@@ -4,6 +4,21 @@ Changes
 2.0.0
 -----
 
+New Features
+~~~~~~~~~~~~
+
+Python is no longer needed for configuration. I wrote a Lua script that infers
+the location of the header files, libraries, etc. If you need a virtual environment
+you now have to pass ``LUA`` and ``LUAROCKS`` paths on the command line:
+
+.. code-block::
+
+    make configuration_files LUA=.venv/bin/lua LUAROCKS=.venv/bin/luarocks
+    make
+
+If you want to use your system's installation of Lua, you don't need to pass
+anything in and can just run ``make`` to build the library.
+
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 
@@ -23,15 +38,18 @@ I also dropped support for CMake 3.12. You need 3.13 or higher now.
 Bugfixes
 ~~~~~~~~
 
-Fixed a test that never should've passed (verifies an exception is thrown if an
-engine is given an invalid query).
+* Fixed a test that never should've passed (verifies an exception is thrown if
+  an engine is given an invalid query).
+* Fixed wrong variable names in Makefile
+* Corrected behavior of ``install`` target
+* Fixed wrong version number in CMake configuration, forgot to change it from
+  0.1.0.
 
 Other Changes
 ~~~~~~~~~~~~~
 
-* Fixed wrong variable names in Makefile
-* Corrected behavior of ``install`` target
-* Fixed wrong version number in CMake configuration, forgot to change it from 0.1.0.
+Lua is now statically linked so it doesn't need to be recompiled as a relocatable
+library.
 
 .. _issue #31: https://github.com/dargueta/unicorn-lua/issues/31
 
