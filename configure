@@ -256,7 +256,7 @@ def generate_cmake_parameters(settings, install_version, platform):
         "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
         "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
         "LUA": settings["lua_exe_path"],
-        "LUAROCKS_EXE": settings["luarocks_path"],
+        "LUAROCKS": settings["luarocks_path"],
         "LUA_INCDIR": settings["lua_headers"] or "",
         "LUA_LIBDIR": settings["lua_library"] or "",
         "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",

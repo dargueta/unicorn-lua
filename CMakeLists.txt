@@ -8,18 +8,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 execute_process(
-    COMMAND ${LUAROCKS_EXE} path --lr-path
+    COMMAND ${LUAROCKS} path --lr-path
     OUTPUT_VARIABLE LUAROCKS_LPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 execute_process(
-    COMMAND ${LUAROCKS_EXE} path --lr-cpath
+    COMMAND ${LUAROCKS} path --lr-cpath
     OUTPUT_VARIABLE LUAROCKS_CPATH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 
-get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS_EXE}" DIRECTORY)
+get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS}" DIRECTORY)
 set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

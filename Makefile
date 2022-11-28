@@ -18,7 +18,7 @@ INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 PROFILE_LUA_SCRIPT = $(LUA) tools/profile_lua.lua
 
 LUA ?= $(or $(shell which lua), lua)
-LUAROCKS_EXE ?= $(or $(shell which luarocks), luarocks)
+LUAROCKS ?= $(or $(shell which luarocks), luarocks)
 BUILD_TYPE ?= release
 
 
@@ -62,8 +62,7 @@ $(BUILD_DIR): configuration_files
 		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
 		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
 		-DCMAKE_VERBOSE_MAKEFILE=YES           \
-		-DLUAROCKS_EXE=$(LUAROCKS_EXE)
-
+		-DLUAROCKS=$(LUAROCKS)
 
 $(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
@@ -88,7 +87,7 @@ examples: $(X86_BINARY_IMAGES) $(SHARED_LIB_FILE)
 
 
 $(BUSTED_EXE):
-	$(LUAROCKS_EXE) install busted
+	$(LUAROCKS) install busted
 
 
 .PHONY: run_example
