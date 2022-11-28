@@ -48,8 +48,6 @@ add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_AL
 # Tests with Lua code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
-find_library(LUA_LIBRARY NAMES ${LUALIB} HINTS ${LUA_LIBDIR} NO_DEFAULT_PATH)
-
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
     "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
