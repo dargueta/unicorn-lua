@@ -88,6 +88,40 @@ local is_windows = dir_sep == "\\"
 local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
 
 
+--- Convert the given relative path to an absolute one using `PATH`.
+function to_absolute_path(relative_path)
+    local path_delimiter
+    local current_directory
+
+    if is_windows then
+        path_delimiter = ";"
+        current_directory = os.getenv("CD")
+    else
+        path_delimiter = ":"
+        current_directory = io.popen("pwd"):read("*l")
+    end
+
+    -- Seach the current directory first.
+    local directory = current_directory .. dir_sep .. relative_path
+    if file_exists(directory) then
+        return directory
+    end
+
+    -- Item not found, try searching in directories in the PATH environment
+    -- variable.
+    local path = os.getenv("PATH")
+    for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
+        local this_path = directory .. dir_sep .. relative_path
+        if file_exists(this_path) then
+            return this_path
+        end
+    end
+
+    -- Didn't find anything.
+    return nil
+end
+
+
 --- Locate the Lua executable used to run this script.
 function find_lua_executable()
     local i = 0
@@ -95,38 +129,13 @@ function find_lua_executable()
     -- Find the lowest negative index in the arguments. This will give us the
     -- name of the interpreter at index i.
     while arg[i - 1] do i = i - 1 end
-    local executable_name = arg[i]
 
-    -- If executable_name exists then it's likely a file path. Whether that path
-    -- is absolute or relative is unimportant for this script's purposes.
-    if file_exists(executable_name) then
-        print("Lua executable: " .. executable_name)
-        return executable_name
+    local executable = to_absolute_path(arg[i])
+    if executable == nil then
+        -- Couldn't find the path to the executable.
+        print("WARNING: Couldn't infer location of lua executable.")
     end
-
-    -- If `lua` was invoked directly, that means it must be in a directory in
-    -- the PATH environment variable. We'll iterate through each directory in
-    -- there until we find one. (Thankfully, it's called PATH on *NIX systems as
-    -- well as Windows.)
-    local path_delimiter
-    if is_windows then
-        path_delimiter = ";"
-    else
-        path_delimiter = ":"
-    end
-
-    local path = os.getenv("PATH")
-    for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
-        local this_path = directory .. dir_sep .. executable_name
-        if file_exists(this_path) then
-            print("Lua executable: " .. this_path)
-            return this_path
-        end
-    end
-
-    -- Couldn't find the path to the executable.
-    print("WARNING: Couldn't infer location of lua executable.")
-    return nil
+    return executable
 end
 
 
@@ -399,7 +408,7 @@ local VARIABLES = {
     -- The directory where configuration files go.\n")
     { "INST_CONFDIR", "" },
     -- The flag to pass to the linker for linking to Lua\n")
-    { "BUILD_LIBFLAG", link_flag },
+    -- { "BUILD_LIBFLAG", link_flag },
 
     -- Other stuff
     { "LUA_SHORT_VERSION", lua_version },
