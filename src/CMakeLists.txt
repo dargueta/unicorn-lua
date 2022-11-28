@@ -76,8 +76,12 @@ endif()
 find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
 find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
 target_link_libraries(
-    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
+    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
 )
+
+# Lua needs to be statically linked so we add it as a source, not a library to
+# link to.
+target_sources(unicornlua_library PUBLIC ${LUA_LIBRARY})
 
 # For some reason this is required only for LuaJIT on *NIX platforms except OSX.
 if(IS_LUAJIT AND UNIX AND (NOT APPLE))

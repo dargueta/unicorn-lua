@@ -37,6 +37,7 @@ if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
     message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
 endif()
 
+set(LUA_LIBRARY "${LUA_LIBDIR}/${LUALIB}")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
