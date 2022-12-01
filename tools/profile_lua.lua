@@ -133,7 +133,12 @@ function find_lua_executable()
     local executable = to_absolute_path(arg[i])
     if executable == nil then
         -- Couldn't find the path to the executable.
-        print("WARNING: Couldn't infer location of lua executable.")
+        print(
+            "WARNING: Couldn't infer location of lua executable from argv: `"
+            .. arg[i] .. "`"
+        )
+    else
+        print("Lua executable from CLI: " .. arg[i] .. " -> " .. executable)
     end
     return executable
 end
@@ -164,6 +169,12 @@ end
 local lua_exe = find_lua_executable() or ""
 local lua_exe_dir = dirname(lua_exe)
 
+if lua_exe_dir == "" then
+    error(
+        "Couldn't infer directory containing Lua executable: `" .. lua_exe
+        .. "`. This is needed for determining the rest of the system paths."
+    )
+end
 
 -- Substitute the path to the directory containing the Lua executable
 -- into the placeholder. Note that we enclose the wildcard in [] to
