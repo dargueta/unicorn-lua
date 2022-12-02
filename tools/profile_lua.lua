@@ -61,6 +61,7 @@ function file_exists(file)
         io.close(handle)
         return true
     end
+    print(string.format("[DEBUG] File not found: %q", file))
     return false
 end
 
@@ -101,23 +102,27 @@ function to_absolute_path(relative_path)
         current_directory = io.popen("pwd"):read("*l")
     end
 
+    print("[DEBUG] Current directory: " .. current_directory)
     -- Seach the current directory first.
-    local directory = current_directory .. dir_sep .. relative_path
-    if file_exists(directory) then
-        return directory
+    local full_path = current_directory .. dir_sep .. relative_path
+    if file_exists(full_path) then
+        print(string.format("[DEBUG] abspath(%q) -> %q", relative_path, full_path))
+        return full_path
     end
 
     -- Item not found, try searching in directories in the PATH environment
     -- variable.
     local path = os.getenv("PATH")
     for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
-        local this_path = directory .. dir_sep .. relative_path
-        if file_exists(this_path) then
-            return this_path
+        local full_path = directory .. dir_sep .. relative_path
+        if file_exists(full_path) then
+            print(string.format("[DEBUG] abspath(%q) -> %q", relative_path, full_path))
+            return full_path
         end
     end
 
     -- Didn't find anything.
+    print(string.format("WARNING: Could not resolve %q to a path.", relative_path))
     return nil
 end
 
@@ -131,15 +136,17 @@ function find_lua_executable()
     while arg[i - 1] do i = i - 1 end
 
     local executable = to_absolute_path(arg[i])
+    local debug_msg
     if executable == nil then
-        -- Couldn't find the path to the executable.
-        print(
-            "WARNING: Couldn't infer location of lua executable from argv: `"
-            .. arg[i] .. "`"
+        debug_msg = string.format(
+            "WARNING: Can't determine absolute path to Lua from arg[%d]: %q",
+            i,
+            arg[i]
         )
     else
-        print("Lua executable from CLI: " .. arg[i] .. " -> " .. executable)
+        debug_msg = string.format("Lua executable: %q (from %q)", executable, arg[i])
     end
+    print(debug_msg)
     return executable
 end
 
