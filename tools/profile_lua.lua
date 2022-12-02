@@ -89,8 +89,28 @@ local is_windows = dir_sep == "\\"
 local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
 
 
---- Convert the given relative path to an absolute one using `PATH`.
-function to_absolute_path(relative_path)
+--- Determine if the given path is absolute or not.
+function is_abspath(path)
+    if is_windows then
+        return path:match("^%w:\\.*$") or path:match("^\\\\%w+\\$")
+    end
+    return path:match("^/.*$")
+end
+
+
+--- Locate the Lua executable used to run this script.
+function find_lua_executable()
+    local i = 0
+
+    -- Find the lowest negative index in the arguments. This will give us the
+    -- name of the interpreter at index i.
+    while arg[i - 1] do i = i - 1 end
+    local lua = arg[i]
+
+    if is_abspath(lua) then
+        return lua
+    end
+
     local path_delimiter
     local current_directory
 
@@ -104,9 +124,9 @@ function to_absolute_path(relative_path)
 
     print("[DEBUG] Current directory: " .. current_directory)
     -- Seach the current directory first.
-    local full_path = current_directory .. dir_sep .. relative_path
+    local full_path = current_directory .. dir_sep .. lua
     if file_exists(full_path) then
-        print(string.format("[DEBUG] abspath(%q) -> %q", relative_path, full_path))
+        print(string.format("[DEBUG] abspath(%q) -> %q", lua, full_path))
         return full_path
     end
 
@@ -114,40 +134,21 @@ function to_absolute_path(relative_path)
     -- variable.
     local path = os.getenv("PATH")
     for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
-        local full_path = directory .. dir_sep .. relative_path
+        local full_path = directory .. dir_sep .. lua
         if file_exists(full_path) then
-            print(string.format("[DEBUG] abspath(%q) -> %q", relative_path, full_path))
+            print(string.format("[DEBUG] abspath(%q) -> %q", lua, full_path))
             return full_path
         end
     end
 
-    -- Didn't find anything.
-    print(string.format("WARNING: Could not resolve %q to a path.", relative_path))
-    return nil
-end
-
-
---- Locate the Lua executable used to run this script.
-function find_lua_executable()
-    local i = 0
-
-    -- Find the lowest negative index in the arguments. This will give us the
-    -- name of the interpreter at index i.
-    while arg[i - 1] do i = i - 1 end
-
-    local executable = to_absolute_path(arg[i])
-    local debug_msg
-    if executable == nil then
-        debug_msg = string.format(
+    print(
+        string.format(
             "WARNING: Can't determine absolute path to Lua from arg[%d]: %q",
             i,
-            arg[i]
+            lua
         )
-    else
-        debug_msg = string.format("Lua executable: %q (from %q)", executable, arg[i])
-    end
-    print(debug_msg)
-    return executable
+    )
+    return nil
 end
 
 
