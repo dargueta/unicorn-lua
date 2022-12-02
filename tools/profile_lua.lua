@@ -321,7 +321,7 @@ function find_package_directory(path_list_string, extension)
         if path ~= "." .. dir_sep .. file_wildcard .. extension then
             -- Found our installation path. Strip off the wildcard and extension
             -- to get the directory.
-            path = fill_wildcard(path)
+            path = dirname(fill_wildcard(path))
             print("Package directory: " .. path)
             return path
         end
