@@ -61,7 +61,6 @@ function file_exists(file)
         io.close(handle)
         return true
     end
-    print(string.format("[DEBUG] File not found: %q", file))
     return false
 end
 
@@ -108,6 +107,7 @@ function find_lua_executable()
     local lua = arg[i]
 
     if is_abspath(lua) then
+        print("Lua executable: " .. lua)
         return lua
     end
 
@@ -126,7 +126,7 @@ function find_lua_executable()
     -- Seach the current directory first.
     local full_path = current_directory .. dir_sep .. lua
     if file_exists(full_path) then
-        print(string.format("[DEBUG] abspath(%q) -> %q", lua, full_path))
+        print("Lua executable: " .. full_path)
         return full_path
     end
 
@@ -136,7 +136,7 @@ function find_lua_executable()
     for directory in path:gmatch("([^" .. path_delimiter .. "]+)") do
         local full_path = directory .. dir_sep .. lua
         if file_exists(full_path) then
-            print(string.format("[DEBUG] abspath(%q) -> %q", lua, full_path))
+            print("Lua executable: " .. full_path)
             return full_path
         end
     end
