@@ -86,22 +86,6 @@ def configure_lua(args, extract_dir):
         fd.truncate(0)
         fd.write(luaconf_contents)
 
-    # We also need to compile the code as position-independent. On Lua 5.1 the MYCFLAGS
-    # variable gets overwritten when compiling for some target platforms, so we can't
-    # pass "-fpic" that way. We need to modify the Makefile, similar to how we do above.
-    if args.lua_version == "5.1":
-        with open(os.path.join(extract_dir, "src", "Makefile"), "r+") as fd:
-            makefile_contents = fd.read()
-            makefile_contents = re.sub(
-                r"MYCFLAGS=-D([^ ]+)", r'MYCFLAGS="-fpic -D\1"', makefile_contents
-            )
-            makefile_contents = makefile_contents.replace(
-                'MYCFLAGS="', 'MYCFLAGS="-fpic '
-            )
-            fd.seek(0)
-            fd.truncate(0)
-            fd.write(makefile_contents)
-
 
 def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     """Compile Lua.
@@ -124,9 +108,9 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     install_to = os.path.abspath(os.path.normpath(args.install_to))
 
     if args.lua_version.startswith("luajit"):
-        run_args = ["amalg", "PREFIX=" + install_to, 'CFLAGS="-fPIC"']
+        run_args = ["amalg", "PREFIX=" + install_to]
     else:
-        run_args = ['MYCFLAGS="-fpic"', lua_platform, "local"]
+        run_args = [lua_platform, "local"]
 
     result = subprocess.run(
         ["make", "-C", extract_dir] + run_args,
