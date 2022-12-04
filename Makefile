@@ -1,12 +1,11 @@
 -include Makefile.in
--include lua-profile.mk
+include lua-profile.mk
 
 
 REPO_ROOT ?= $(CURDIR)
 BUILD_DIR ?= $(REPO_ROOT)/build
 EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
 BUILD_TYPE ?= release
-LUA ?= $(or $(shell which lua), lua)
 
 LUAROCKS_CPATH = $(shell $(LUAROCKS) path --lr-cpath)
 LUAROCKS_LPATH = $(shell $(LUAROCKS) path --lr-path)
@@ -21,7 +20,6 @@ LIBRARY_FILENAME = unicorn$(LIBRARY_FILE_EXTENSION)
 TEST_LIB_FILE = $(abspath $(BUILD_DIR)/lib/$(LIBRARY_FILENAME))
 TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
-PROFILE_LUA_SCRIPT = $(LUA) tools/profile_lua.lua
 
 
 .PHONY: all
@@ -34,19 +32,6 @@ clean:
 	git clean -Xf
 
 
-lua-profile.mk: tools/profile_lua.lua
-	$(PROFILE_LUA_SCRIPT) -f make -p "$(MAKE_HOST)" -r "$(abspath $(LUAROCKS))" $@
-
-
-lua-profile.cmake: tools/profile_lua.lua
-	$(PROFILE_LUA_SCRIPT) -f cmake -p "$(MAKE_HOST)" -r "$(abspath $(LUAROCKS))" $@
-
-
-# This is a convenience target that groups all the profile files together.
-.PHONY: config
-config: lua-profile.mk lua-profile.cmake
-
-
 .PHONY: install
 install: config $(INSTALL_TARGET)
 
@@ -56,7 +41,7 @@ $(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 
 
 $(BUILD_DIR): lua-profile.cmake
-	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)      \
+	cmake -S . -B $@                           \
 		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
 		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
 		-DCMAKE_VERBOSE_MAKEFILE=YES           \

@@ -10,17 +10,18 @@ ________________________________________________________________________________
 Invocation:
 
     profile_lua.lua [-f "make" | "cmake"] [-p platform-string] [-r luarocks-path]
-                    output_file
+                    [-l lua_exe ] output_file
 ]=]
 
 local getopt = require "tools.getopt"
 
-local OPTIONS, POSARGS = getopt.getopt("f:o:p:r:", arg)
+local OPTIONS, POSARGS = getopt.getopt("f:o:p:r:l:", arg)
 
 local OUTPUT_FILE = OPTIONS["-o"] or POSARGS[1]
 local OUTPUT_FORMAT = OPTIONS["-f"] or "make"
 local RAW_PLATFORM_STRING = OPTIONS["-p"] or ""
 local LUAROCKS_PATH = OPTIONS["-r"]
+local LUA_EXE = OPTIONS["-l"]
 
 
 --- Given a platform identifier string from Make, return the three-part representation.
@@ -179,7 +180,7 @@ function basename(path)
 end
 
 
-local lua_exe = find_lua_executable() or ""
+local lua_exe = LUA_EXE or find_lua_executable() or ""
 local lua_exe_dir = dirname(lua_exe)
 
 if lua_exe_dir == "" then

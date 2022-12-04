@@ -1,0 +1,18 @@
+#!/bin/sh
+
+LUA=$(which lua)
+LUAROCKS=$(which luarocks)
+
+while getopts "l:r:" C
+do
+    case "$C" in
+        l ) LUA=$(realpath "$OPTARG") ;;
+        r ) LUAROCKS=$(realpath "$OPTARG") ;;
+        * )
+          echo "Unrecognized argument '$C'"
+          exit 1
+          ;;
+    esac
+done
+
+make -f profile.mk -B LUA="${LUA}" LUAROCKS="${LUAROCKS}"
