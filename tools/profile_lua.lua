@@ -12,9 +12,14 @@ Invocation:
     profile_lua.lua output_file [["make" | "cmake" | "json"] [platform-string]]
 ]=]
 
-local OUTPUT_FILE = arg[1]
-local OUTPUT_FORMAT = arg[2] or "make"
-local RAW_PLATFORM_STRING = arg[3] or ""
+local getopt = require "tools.getopt"
+
+local OPTIONS, POSARGS = getopt.getopt("f:o:p:r:", arg)
+
+local OUTPUT_FILE = OPTIONS["-o"] or POSARGS[1]
+local OUTPUT_FORMAT = OPTIONS["-f"] or "make"
+local RAW_PLATFORM_STRING = OPTIONS["-p"] or ""
+local LUAROCKS_PATH = OPTIONS["-r"]
 
 
 --- Given a platform identifier string from Make, return the three-part representation.
@@ -122,7 +127,6 @@ function find_lua_executable()
         current_directory = io.popen("pwd"):read("*l")
     end
 
-    print("[DEBUG] Current directory: " .. current_directory)
     -- Seach the current directory first.
     local full_path = current_directory .. dir_sep .. lua
     if file_exists(full_path) then
@@ -434,6 +438,7 @@ local VARIABLES = {
     { "LIBRARY_FILE_EXTENSION", c_library_extension },
     { "IS_LUAJIT", is_luajit },
     { "IS_WINDOWS", is_windows },
+    { "LUAROCKS", LUAROCKS_PATH or ""},
 }
 
 -- Output the same variables that LuaRocks does, using ?= for assignment so that
