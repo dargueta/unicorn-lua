@@ -7,17 +7,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-execute_process(
-    COMMAND ${LUAROCKS} path --lr-path
-    OUTPUT_VARIABLE LUAROCKS_LPATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-execute_process(
-    COMMAND ${LUAROCKS} path --lr-cpath
-    OUTPUT_VARIABLE LUAROCKS_CPATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 
 get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS}" DIRECTORY)
 set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
@@ -83,5 +72,5 @@ if(DOXYGEN_FOUND)
         VERBATIM
     )
 else()
-  message(VERBOSE "Doxygen needs to be installed to generate the documentation.")
+    message(VERBOSE "Doxygen needs to be installed to generate the documentation.")
 endif()
