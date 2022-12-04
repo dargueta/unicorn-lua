@@ -9,7 +9,8 @@ be on a different machine.
 ________________________________________________________________________________
 Invocation:
 
-    profile_lua.lua output_file [["make" | "cmake" | "json"] [platform-string]]
+    profile_lua.lua [-f "make" | "cmake"] [-p platform-string] [-r luarocks-path]
+                    output_file
 ]=]
 
 local getopt = require "tools.getopt"

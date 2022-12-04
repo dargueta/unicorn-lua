@@ -2,24 +2,26 @@
 -include lua-profile.mk
 
 
-REPO_ROOT=$(CURDIR)
-BUILD_DIR=$(REPO_ROOT)/build
-EXAMPLES_ROOT=$(REPO_ROOT)/examples
-X86_BINARY_IMAGES=$(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
-MIPS_BINARY_IMAGES=$(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
-LIBRARY_SOURCES=$(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
-TEST_SOURCES=$(wildcard tests/c/*.cpp)   \
-             $(wildcard tests/c/*.h)     \
-             $(wildcard tests/lua/*.lua)
+REPO_ROOT ?= $(CURDIR)
+BUILD_DIR ?= $(REPO_ROOT)/build
+EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
+BUILD_TYPE ?= release
+LUA ?= $(or $(shell which lua), lua)
+
+LUAROCKS_CPATH = $(shell $(LUAROCKS) path --lr-cpath)
+LUAROCKS_LPATH = $(shell $(LUAROCKS) path --lr-path)
+
+X86_BINARY_IMAGES = $(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
+MIPS_BINARY_IMAGES = $(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
+LIBRARY_SOURCES = $(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
+TEST_SOURCES = $(wildcard tests/c/*.cpp)   \
+               $(wildcard tests/c/*.h)     \
+               $(wildcard tests/lua/*.lua)
 LIBRARY_FILENAME = unicorn$(LIBRARY_FILE_EXTENSION)
 TEST_LIB_FILE = $(abspath $(BUILD_DIR)/lib/$(LIBRARY_FILENAME))
 TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 PROFILE_LUA_SCRIPT = $(LUA) tools/profile_lua.lua
-
-LUA ?= $(or $(shell which lua), lua)
-LUAROCKS ?= $(or $(shell which luarocks), luarocks)
-BUILD_TYPE ?= release
 
 
 .PHONY: all
@@ -33,31 +35,27 @@ clean:
 
 
 lua-profile.mk: tools/profile_lua.lua
-	$(PROFILE_LUA_SCRIPT) $@ make $(MAKE_HOST)
+	$(PROFILE_LUA_SCRIPT) -f make -p "$(MAKE_HOST)" -r "$(abspath $(LUAROCKS))" $@
 
 
 lua-profile.cmake: tools/profile_lua.lua
-	$(PROFILE_LUA_SCRIPT) $@ cmake $(MAKE_HOST)
-
-
-lua-profile.json: tools/profile_lua.lua
-	$(PROFILE_LUA_SCRIPT) $@ json $(MAKE_HOST)
+	$(PROFILE_LUA_SCRIPT) -f cmake -p "$(MAKE_HOST)" -r "$(abspath $(LUAROCKS))" $@
 
 
 # This is a convenience target that groups all the profile files together.
-.PHONY: configuration_files
-configuration_files: lua-profile.mk lua-profile.cmake lua-profile.json
+.PHONY: config
+config: lua-profile.mk lua-profile.cmake
 
 
 .PHONY: install
-install: configuration_files $(INSTALL_TARGET)
+install: config $(INSTALL_TARGET)
 
 
 $(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-$(BUILD_DIR): configuration_files
+$(BUILD_DIR): lua-profile.cmake
 	cmake -S $(REPO_ROOT) -B $(BUILD_DIR)      \
 		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
 		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
