@@ -3,9 +3,30 @@
 LUA=$(which lua)
 LUAROCKS=$(which luarocks)
 
-while getopts "l:r:" C
+USAGE="
+Usage:
+$0 [-h] [-l PATH] [-r PATH]
+
+-h
+    Show this help message.
+
+-l PATH
+    The path to the Lua executable to build the library for.
+    Default: $LUA
+
+-r PATH
+    The path to the LuaRocks executable to use for installing rocks needed for
+    testing. Only needed for CI and local development.
+    Default: $LUAROCKS
+"
+
+while getopts "hl:r:" C
 do
     case "$C" in
+        h )
+          echo "$USAGE"
+          exit 0
+          ;;
         l ) LUA=$(realpath "$OPTARG") ;;
         r ) LUAROCKS=$(realpath "$OPTARG") ;;
         * )
