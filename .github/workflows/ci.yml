@@ -40,7 +40,9 @@ jobs:
       - name: Install LuaRocks
         uses: leafo/gh-actions-luarocks@v4
       - name: Install Binding
-        run: make install
+        run: |
+          ./configure
+          make install
       - name: Run tests
         run: make test
 

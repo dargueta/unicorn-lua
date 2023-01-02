@@ -1,11 +1,20 @@
 -include Makefile.in
 include lua-profile.mk
 
+ifndef UNICORN_INCDIR
+	UNICORN_INCDIR := /usr/include/unicorn
+endif
+
+
+ARCHITECTURES := arm arm64 m68k mips ppc riscv s390x sparc tricore x86
+EXPECTED_HEADERS := $(addprefix $(UNICORN_INCDIR)/,$(addsuffix .h,$(ARCHITECTURES)))
+GENERATED_SOURCES := $(addprefix src/const/,$(addsuffix _const.cpp,$(ARCHITECTURES)))
+
 
 REPO_ROOT ?= $(CURDIR)
-BUILD_DIR ?= $(REPO_ROOT)/build
-EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
 BUILD_TYPE ?= release
+BUILD_DIR ?= $(REPO_ROOT)/cmake-build-$(BUILD_TYPE)
+EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
 
 LUAROCKS_CPATH = $(shell $(LUAROCKS) path --lr-cpath)
 LUAROCKS_LPATH = $(shell $(LUAROCKS) path --lr-path)
@@ -33,21 +42,14 @@ clean:
 
 
 .PHONY: install
-install: config $(INSTALL_TARGET)
+install: $(INSTALL_TARGET)
 
 
-$(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
+$(INSTALL_TARGET): $(LIBRARY_SOURCES)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-$(BUILD_DIR): lua-profile.cmake
-	cmake -S . -B $@                           \
-		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
-		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
-		-DCMAKE_VERBOSE_MAKEFILE=YES           \
-		-DLUAROCKS=$(LUAROCKS)
-
-$(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
+$(TEST_LIB_FILE): $(LIBRARY_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
@@ -88,3 +90,17 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
+
+src/const:
+	mkdir $@
+
+src/const/%_const.cpp: $(UNICORN_INCDIR)/%.h | src/const
+	python3 tools/generate_constants.py $^ $@
+
+
+$(BUILD_DIR):
+	cmake -S . -B $@                           \
+		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
+		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
+		-DCMAKE_VERBOSE_MAKEFILE=YES           \
+		-DLUAROCKS=$(LUAROCKS)
