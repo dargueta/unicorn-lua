@@ -17,8 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         operating-system:
-          - ubuntu-22.04
-          - macos-11
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
         lua-version:
           - "5.1"
           - "5.2"
@@ -26,7 +27,10 @@ jobs:
           - "5.4"
           - "luajit-2.0.5"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Windows Prep
+        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ matrix.os == 'windows-latest' }}
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -38,45 +42,12 @@ jobs:
         with:
           luaVersion: ${{ matrix.lua-version }}
       - name: Install LuaRocks
-        uses: leafo/gh-actions-luarocks@v4
-      - name: Install Binding
-        run: |
-          ./configure -d
-          make install
-      - name: Run tests
-        run: make test
-
-  testing-windows:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        lua-version:
-          - "5.1"
-          - "5.2"
-          - "5.3"
-          - "5.4"
-          - "luajit-2.0.5"
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install Unicorn
-        run: python3 ./tools/ci/install-unicorn.py 1.0.2
-      - uses: ilammy/msvc-dev-cmd@v1
-      - name: Install Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: ${{ matrix.lua-version }}
-      - name: Install LuaRocks
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
-        uses: hishamhm/gh-actions-luarocks
+        uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
       - name: Install Binding
         run: |
-          sh ./configure -d
+          sh configure -d
           make install
       - name: Run tests
         run: make test
