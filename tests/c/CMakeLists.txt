@@ -1,7 +1,7 @@
 include_directories(
     "${PROJECT_SOURCE_DIR}/include"
     ${UNICORN_HEADERS_PATH}
-    ${LUA_INCLUDE_DIR}
+    ${LUA_INCDIR}
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -32,7 +32,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 target_link_libraries(
-    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARIES}
+    cpp_test LINK_PUBLIC unicornlua_library ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY} ${LUA_LIBRARY}
 )
 
 add_test(NAME cpp_unit_tests COMMAND cpp_test --order-by=rand)

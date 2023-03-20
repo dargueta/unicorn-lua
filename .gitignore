@@ -10,6 +10,7 @@ cmake-build-release/
 tests/c/doctest.h
 .downloaded/
 venv/
+.venv/
 .idea/
 .vscode/
 
@@ -18,6 +19,8 @@ venv/
 configuration.cmake
 .busted
 include/unicornlua/platform.h
+.xmake/
+lua-profile.*
 
 # Other garbage
 core*

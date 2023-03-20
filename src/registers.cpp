@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <unicorn/unicorn.h>
+#include <unicorn/x86.h>
 
 #include "unicornlua/compat.h"
 #include "unicornlua/engine.h"
@@ -853,6 +854,21 @@ int ul_reg_read(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = static_cast<int>(luaL_checkinteger(L, 2));
 
+    // When reading an MSR on an x86 processor, Unicorn requires the buffer to
+    // contain the ID of the register to read.
+    if (register_id == UC_X86_REG_MSR) {
+        if (lua_gettop(L) < 3) {
+            throw LuaBindingError(
+                "Reading an x86 model-specific register (MSR) requires"
+                " an additional argument identifying the register to read. You"
+                " can find a list of these in the \"Intel 64 and IA-32 Software"
+                " Developer's Manual\", available as PDFs from their website."
+            );
+        }
+        int msr_id = static_cast<int>(luaL_checkinteger(L, 3));
+        *reinterpret_cast<int *>(value_buffer) = msr_id;
+    }
+
     uc_err error = uc_reg_read(engine, register_id, value_buffer);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -866,6 +882,13 @@ int ul_reg_read_as(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
     int register_id = static_cast<int>(luaL_checkinteger(L, 2));
     auto read_as_type = static_cast<RegisterDataType>(luaL_checkinteger(L, 3));
+
+    if (register_id == UC_X86_REG_MSR) {
+        throw LuaBindingError(
+            "reg_read_as() doesn't support reading x86 model-specific"
+            " registers."
+        );
+    }
 
     register_buffer_type value_buffer;
     memset(value_buffer, 0, sizeof(value_buffer));
