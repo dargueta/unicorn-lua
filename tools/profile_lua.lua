@@ -215,10 +215,14 @@ local WINDOWS_HEADER_SEARCH_DIRECTORIES = {
     dir_wildcard .. "\\<file>",
     dir_wildcard .. "\\..\\<file>",
     dir_wildcard .. "\\..\\include\\<file>",
+    -- If Lua is installed as \XYZ\bin\lua we need to go up two levels to get to
+    -- the directory that contains both the executable and the headers.
+    dir_wildcard .. "\\..\\..\\include\\<file>",
 }
 
 local LIB_DIRECTORY_NAMES = {
-    "lib", "lib64", "lib32", "libx32",
+    -- `bin` is only used on Windows
+    "lib", "lib64", "lib32", "libx32", "bin",
 }
 
 local POSIX_LIBRARY_SEARCH_DIRECTORIES = {
@@ -236,6 +240,10 @@ local WINDOWS_LIBRARY_SEARCH_DIRECTORIES = {
     dir_wildcard .. "\\<file>",
     dir_wildcard .. "\\..\\<file>",
     dir_wildcard .. "\\..\\<lib_dirname>\\<file>",
+    -- If Lua is installed as \XYZ\bin\lua we need to go up two levels to get to
+    -- the directory that contains both the executable and the headers.
+    dir_wildcard .. "\\..\\..\\<file>",
+    dir_wildcard .. "\\..\\..\\<lib_dirname>\\<file>",
 }
 
 
