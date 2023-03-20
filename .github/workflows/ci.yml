@@ -19,7 +19,38 @@ jobs:
         operating-system:
           - ubuntu-22.04
           - macos-11
-          - windows-2019
+        lua-version:
+          - "5.1"
+          - "5.2"
+          - "5.3"
+          - "5.4"
+          - "luajit-2.0.5"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Unicorn
+        run: ./tools/ci/install-unicorn.sh 1.0.2
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v9.1.0
+        with:
+          luaVersion: ${{ matrix.lua-version }}
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+      - name: Install Binding
+        run: |
+          ./configure -d
+          make install
+      - name: Run tests
+        run: make test
+
+  testing-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
         lua-version:
           - "5.1"
           - "5.2"
@@ -42,7 +73,7 @@ jobs:
         uses: leafo/gh-actions-luarocks@v4
       - name: Install Binding
         run: |
-          ./configure -d
+          sh ./configure -d
           make install
       - name: Run tests
         run: make test
