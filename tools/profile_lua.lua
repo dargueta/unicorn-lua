@@ -61,9 +61,9 @@ function split_string(str, separator)
 end
 
 
---- Return a boolean indicating if the given path can be opened.
+--- Return a boolean indicating if the given path can be opened as a file.
 function file_exists(file)
-    local handle = io.open(file)
+    local handle = io.open(file, "rb")
     if handle ~= nil then
         io.close(handle)
         return true
