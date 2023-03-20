@@ -41,7 +41,7 @@ jobs:
         uses: leafo/gh-actions-luarocks@v4
       - name: Install Binding
         run: |
-          ./configure
+          ./configure -d
           make install
       - name: Run tests
         run: make test
