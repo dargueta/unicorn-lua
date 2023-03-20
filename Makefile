@@ -39,13 +39,14 @@ all: | $(BUILD_DIR)
 .PHONY: clean
 clean:
 	git clean -Xf
+	$(RM) -r $(BUILD_DIR)
 
 
 .PHONY: install
 install: $(INSTALL_TARGET)
 
 
-$(INSTALL_TARGET): $(LIBRARY_SOURCES)
+$(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
@@ -96,6 +97,10 @@ src/const:
 
 src/const/%_const.cpp: $(UNICORN_INCDIR)/%.h | src/const
 	python3 tools/generate_constants.py $^ $@
+
+
+.PHONY: build-dir
+build-dir: $(BUILD_DIR)
 
 
 $(BUILD_DIR):

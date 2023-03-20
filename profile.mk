@@ -28,7 +28,7 @@ all: lua-profile.mk lua-profile.cmake
 
 lua-profile.mk: tools/profile_lua.lua
 	$(PROFILE) -f make $@
-
+	echo "\nBUILD_TYPE=$(BUILD_TYPE)" >> $@
 
 lua-profile.cmake: tools/profile_lua.lua
 	$(PROFILE) -f cmake $@
