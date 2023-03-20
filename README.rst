@@ -11,7 +11,7 @@ unicorn-lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey
    :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
@@ -172,8 +172,7 @@ before using.
 * `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what
   version you have.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
-  library location. (As of version 2.0 you can't have it installed anywhere you
-  like.)
+  library location. Currently only Unicorn 1.x is supported.
 * Some examples have additional dependencies; see their READMEs for details.
 
 Just Installing?
