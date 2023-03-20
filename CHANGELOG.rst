@@ -1,23 +1,40 @@
 Changes
 =======
 
-2.0.0
------
+2.0.0 (2023-03-20)
+------------------
+
+Required License Change
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to an oversight on my part, this never should've been licensed under the New
+BSD license, because:
+
+1. QEMU is licensed under GPL v2.
+2. Unicorn is based on QEMU and thus is also (mostly) GPL v2.
+3. `GPL is viral even when dynamically linking <https://www.gnu.org/licenses/gpl-faq.en.html#GPLStaticVsDynamic>`_.
+
+Thus, this library *must* be licensed under GPL v2. As much as I would like to
+keep the original BSD-3 license, this is a legal requirement and there's nothing
+I can do about it so long as Unicorn uses GPL.
 
 New Features
 ~~~~~~~~~~~~
 
 Python is no longer needed for configuration. I wrote a Lua script that infers
 the location of the header files, libraries, etc. If you need a virtual environment
-you now have to pass ``LUA`` and ``LUAROCKS`` paths on the command line:
+you now have to pass the path to the Lua executable on the command line. You can
+also pass in the path to LuaRocks as well, like so:
 
 .. code-block::
 
-    make configuration_files LUA=.venv/bin/lua LUAROCKS=.venv/bin/luarocks
+    ./configure -l .venv/bin/lua -r .venv/bin/luarocks
     make
 
 If you want to use your system's installation of Lua, you don't need to pass
-anything in and can just run ``make`` to build the library.
+anything in and can just run ``./configure && make`` to build the library.
+
+To build the library in debug mode, pass ``-d`` to the configure script.
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
@@ -41,7 +58,8 @@ Bugfixes
 * Fixed a test that never should've passed (verifies an exception is thrown if
   an engine is given an invalid query).
 * Fixed wrong variable names in Makefile
-* Corrected behavior of ``install`` target
+* Corrected behavior of ``install`` target -- it was putting the library in the
+  wrong place.
 * Fixed wrong version number in CMake configuration, forgot to change it from
   0.1.0.
 

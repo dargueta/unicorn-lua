@@ -20,6 +20,14 @@ I'm currently testing this on vanilla Lua 5.1 - 5.4, and LuaJIT 2.0 on both Linu
 and OSX. (LuaJIT on OSX is particularly finicky and I would be careful trying to
 use it.)
 
+License Change
+--------------
+
+As of version 2.0 the license has changed to GPL v2. This is due to the viral
+nature of the GPL license family: since QEMU uses GPL, this must also be GPL
+even though it only dynamically links to Unicorn. I apologize for the mistake I
+made when I created this.
+
 Known Limitations
 -----------------
 
@@ -279,7 +287,7 @@ text, see ``LICENSE.txt``.
 
 .. [1] Typically 2\ :sup:`63` - 1 on 64-bit machines and 2\ :sup:`31` - 1 on
        32-bit machines.
-.. [2] *Programming in Lua*, 4th Edition. Forgot the page.
+.. [2] *Programming in Lua*, 4th Edition, page 233.
 
 .. _cmake: https://cmake.org
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
