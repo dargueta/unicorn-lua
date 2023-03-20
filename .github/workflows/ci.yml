@@ -34,7 +34,7 @@ jobs:
       - name: Install Unicorn
         run: ./tools/ci/install-unicorn.sh 1.0.2
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v9.1.0
+        uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.lua-version }}
       - name: Install LuaRocks
@@ -65,12 +65,15 @@ jobs:
           python-version: "3.10"
       - name: Install Unicorn
         run: python3 ./tools/ci/install-unicorn.py 1.0.2
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v9.1.0
+        uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.lua-version }}
       - name: Install LuaRocks
-        uses: leafo/gh-actions-luarocks@v4
+        # Note: This is a fork of the original by leafo. Switch back to that once
+        # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
+        uses: hishamhm/gh-actions-luarocks
       - name: Install Binding
         run: |
           sh ./configure -d
