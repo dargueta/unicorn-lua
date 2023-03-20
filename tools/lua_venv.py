@@ -10,6 +10,8 @@ import os
 import re
 import shutil
 import subprocess
+import zipfile
+
 import sys
 import tempfile
 from urllib import request
@@ -84,22 +86,6 @@ def configure_lua(args, extract_dir):
         fd.truncate(0)
         fd.write(luaconf_contents)
 
-    # We also need to compile the code as position-independent. On Lua 5.1 the MYCFLAGS
-    # variable gets overwritten when compiling for some target platforms, so we can't
-    # pass "-fpic" that way. We need to modify the Makefile, similar to how we do above.
-    if args.lua_version == "5.1":
-        with open(os.path.join(extract_dir, "src", "Makefile"), "r+") as fd:
-            makefile_contents = fd.read()
-            makefile_contents = re.sub(
-                r"MYCFLAGS=-D([^ ]+)", r'MYCFLAGS="-fpic -D\1"', makefile_contents
-            )
-            makefile_contents = makefile_contents.replace(
-                'MYCFLAGS="', 'MYCFLAGS="-fpic '
-            )
-            fd.seek(0)
-            fd.truncate(0)
-            fd.write(makefile_contents)
-
 
 def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     """Compile Lua.
@@ -122,9 +108,9 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     install_to = os.path.abspath(os.path.normpath(args.install_to))
 
     if args.lua_version.startswith("luajit"):
-        run_args = ["amalg", "PREFIX=" + install_to, 'CFLAGS="-fPIC"']
+        run_args = ["amalg", "PREFIX=" + install_to]
     else:
-        run_args = ['MYCFLAGS="-fpic"', lua_platform, "local"]
+        run_args = [lua_platform, "local"]
 
     result = subprocess.run(
         ["make", "-C", extract_dir] + run_args,
@@ -146,6 +132,7 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
             ),
             "lua_lib": os.path.join(install_to, "lib", "libluajit-5.1.a"),
             "is_luajit": True,
+            "lua_short_version": "5.1",
         }
 
     # else: Regular Lua
@@ -155,6 +142,7 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
         "lua_include": os.path.join(install_to, "include"),
         "lua_lib": os.path.join(install_to, "lib", "liblua.a"),
         "is_luajit": False,
+        "lua_short_version": args.lua_version.rpartition(".")[0],
     }
 
 
@@ -195,7 +183,7 @@ def install_lua(lua_version, install_to, extract_dir):
 # LuaRocks stuff
 
 
-def download_luarocks(download_dir):
+def download_luarocks_linux(download_dir):
     response = request.urlopen(
         "https://luarocks.org/releases/luarocks-%s.tar.gz" % LUAROCKS_VERSION
     )
@@ -210,7 +198,34 @@ def download_luarocks(download_dir):
     return output_file
 
 
-def install_luarocks(lua_path_info, install_to, extract_dir):
+def download_luarocks_windows(download_dir):
+    if sys.maxsize > 2**32:
+        bits = 64
+    else:
+        bits = 32
+
+    response = request.urlopen(
+        "http://luarocks.github.io/luarocks/releases/luarocks-%s-windows-%d.zip"
+        % (LUAROCKS_VERSION, bits)
+    )
+    if response.status != 200:
+        raise ErrorExit(
+            "LuaRocks download failed: HTTP %d: %s" % (response.status, response.reason)
+        )
+
+    output_file = os.path.join(download_dir, "luarocks.zip")
+    with open(output_file, "wb") as fd:
+        shutil.copyfileobj(response, fd)
+    return output_file
+
+
+def download_luarocks(download_dir):
+    if sys.platform == "win32":
+        return download_luarocks_windows(download_dir)
+    return download_luarocks_linux(download_dir)
+
+
+def install_luarocks_linux(lua_path_info, install_to, extract_dir):
     LOG.info("Configuring LuaRocks")
     result = subprocess.run(
         [
@@ -239,6 +254,53 @@ def install_luarocks(lua_path_info, install_to, extract_dir):
     if result.returncode != 0:
         LOG.error("Failed to install LuaRocks.")
         raise ErrorExit(result.stdout)
+
+
+def install_luarocks_windows(lua_path_info, install_to, extract_dir):
+    LOG.info("Configuring LuaRocks")
+    zip_file_path = os.path.join(extract_dir, "luarocks.zip")
+    luarocks_path = os.path.join(install_to, "luarocks.exe")
+    with zipfile.ZipFile(zip_file_path, "r") as archive:
+        with archive.open("luarocks.exe", "rb") as source_fd:
+            with open(luarocks_path, "wb") as out_fd:
+                shutil.copyfileobj(source_fd, out_fd, 2**24)
+
+    result = subprocess.run(
+        [
+            luarocks_path,
+            "config",
+            "--lua-version",
+            lua_path_info["lua_short_version"],
+            "lua_dir",
+            lua_path_info["lua_root"],
+            "--with-lua-include=" + lua_path_info["lua_include"],
+            "--force-config",
+        ],
+        cwd=extract_dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    if result.returncode != 0:
+        LOG.error("Failed to configure LuaRocks.")
+        raise ErrorExit(result.stdout)
+
+    LOG.info("Bootstrapping LuaRocks installation")
+    result = subprocess.run(
+        ["make", "-C", extract_dir, "bootstrap"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    if result.returncode != 0:
+        LOG.error("Failed to install LuaRocks.")
+        raise ErrorExit(result.stdout)
+
+
+def install_luarocks(lua_path_info, install_to, extract_dir):
+    if sys.platform == "win32":
+        return install_luarocks_windows(lua_path_info, install_to, extract_dir)
+    return install_luarocks_linux(lua_path_info, install_to, extract_dir)
 
 
 def get_luarocks_paths(luarocks_exe):

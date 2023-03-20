@@ -1,7 +1,7 @@
 return {
   _all = {
-    cpath = "$<TARGET_FILE_DIR:unicornlua_library>/?@LUA_CLIB_EXTENSION@;;",
-    lua = "@LUA_EXE@",
+    cpath = "$<TARGET_FILE_DIR:unicornlua_library>/?@LIBRARY_FILE_EXTENSION@;;",
+    lua = "@LUA@",
     verbose = true,
     shuffle = true,
     directory = "@CMAKE_CURRENT_SOURCE_DIR@",

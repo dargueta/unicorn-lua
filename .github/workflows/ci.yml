@@ -9,7 +9,7 @@ jobs:
       # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
       # a linker error that happens with LuaJIT:
       # https://github.com/LuaJIT/LuaJIT/issues/449
-      MACOSX_DEPLOYMENT_TARGET: 10.14
+      MACOSX_DEPLOYMENT_TARGET: 11
       # We get a linker error if we don't mess with the library path. For some
       # reason, /usr/lib64 isn't on the default search path.
       LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
@@ -17,28 +17,32 @@ jobs:
       fail-fast: false
       matrix:
         operating-system:
-          - ubuntu-20.04
-          - macos-10.15
+          - ubuntu-22.04
+          - macos-11
         lua-version:
           - "5.1"
           - "5.2"
           - "5.3"
           - "5.4"
-          - "luajit2.0"
+          - "luajit-2.0.5"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.10"
       - name: Install Unicorn
         run: ./tools/ci/install-unicorn.sh 1.0.2
-      - name: Set up Lua
-        run: python3 ./tools/lua_venv.py -l -o settings.json ${{ matrix.lua-version }} .venv
-      - name: Configure build
-        run: python3 ./configure --venv-config settings.json --build-type debug
-      - name: Install
-        run: sudo make install
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v9.1.0
+        with:
+          luaVersion: ${{ matrix.lua-version }}
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+      - name: Install Binding
+        run: |
+          ./configure -d
+          make install
       - name: Run tests
         run: make test
 

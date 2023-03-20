@@ -1,374 +1,45 @@
-#!/usr/bin/env python3
-
-import argparse
-import configparser
-import json
-import logging
-import os
-import textwrap
-import re
-import shutil
-import subprocess
-import sys
-
-
-LOG = logging.getLogger(__name__)
-HERE = os.path.abspath(os.path.dirname(__file__))
-
-CONFIG = configparser.ConfigParser(interpolation=None)
-CONFIG.read(os.path.join(HERE, "tools", "lua_settings.ini"))
-
-
-SUPPORTED_LUA_VERSIONS = CONFIG["supported_versions"]
-SPECIFIC_VERSIONS = CONFIG["specific_versions"]
-PLATFORM_ALIASES = CONFIG["platform_targets"]
-DEFAULT_LUAROCKS_VERSION = CONFIG["luarocks"]["default_version"]
-DEFAULT_LUA_VERSION = CONFIG["lua"]["default_version"]
-
-
-# Detect if we're in a CI environment. This works for Travis, CircleCI, and AppVeyor.
-# (AppVeyor uses both "True" and "true" hence this .lower() fiddling.)
-IN_CI_ENVIRONMENT = os.getenv("CI", "").lower() == "true"
-
-
-class ErrorExit(Exception):
-    pass
-
-
-def run(*args, text=True, **kwargs):
-    kwargs.setdefault("stderr", subprocess.PIPE)
-    LOG.debug("Executing script: %r", args[0])
-    try:
-        rval = subprocess.check_output(*args, **kwargs)
-    except subprocess.CalledProcessError as exc:
-        LOG.error("Called process `%s` failed.", " ".join(args[0]))
-        print(exc.stderr.decode("utf-8"))
-        raise
-
-    if text:
-        return rval.decode("utf-8")
-    return rval
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    # Use different defaults if we're running in a CI environment like Travis or
-    # CircleCI.
-    if IN_CI_ENVIRONMENT:
-        LOG.info("CI enviornent detected, altering script defaults.")
-        default_log_level = logging.DEBUG
-    else:
-        default_log_level = logging.INFO
-
-    parser.add_argument(
-        "--verbose",
-        action="store_const",
-        const=logging.DEBUG,
-        default=default_log_level,
-        dest="logging_level",
-        help="Enable debug logging. Only useful for debugging this script.",
-    )
-    parser.add_argument(
-        "--build-type",
-        metavar="TYPE",
-        help="The type of settings to use when building. Can be `debug` or `release`.",
-        choices=["debug", "release"],
-        default="debug",
-    )
-    parser.add_argument(
-        "--uc-headers",
-        metavar="PATH",
-        help="The path to the directory holding the Unicorn header files.",
-    )
-    parser.add_argument(
-        "--uc-lib", metavar="PATH", help="The path to the Unicorn shared library file."
-    )
-    parser.add_argument("--use-venv", action="store_true", default=False)
-    parser.add_argument(
-        "--lua-exe-path",
-        metavar="PATH",
-        help="The path to the Lua executable to use for testing. Defaults to the"
-        " system's Lua installation.",
-    )
-    parser.add_argument(
-        "--luarocks-path",
-        metavar="PATH",
-        help="The path to the LuaRocks executable to install libraries with. Defaults"
-        " to the system's LuaRocks executable.",
-    )
-    parser.add_argument(
-        "--lua-headers",
-        metavar="PATH",
-        help="The path to the Lua headers files.",
-    )
-    parser.add_argument(
-        "--lua-library",
-        metavar="PATH",
-        help="The path to the Lua library to use for linking.",
-    )
-    parser.add_argument(
-        "--venv-config",
-        metavar="PATH",
-        help="The path to a JSON file containing the output of the tools/lua_venv.py"
-        " script. The variables in here will be used as defaults for arguments not"
-        " specified on the command line. Implies --use-venv.",
-    )
-    parser.add_argument(
-        "--install-prefix",
-        metavar="PATH",
-        help="The path to install the built library into."
-    )
-    return parser.parse_args()
-
-
-def get_lua_version(lua_exe):
-    if not lua_exe:
-        raise ErrorExit(
-            "Lua not installed on OS or not in PATH environment variable. You must use"
-            " a virtual environment (see --use-venv) or install it on your OS."
-        )
-
-    output = run([lua_exe, "-v"], stderr=None)
-    _lua, version, *_rest = output.strip().split()
-    return version
-
-
-def get_installation_dir(lua_exe):
-    if not lua_exe:
-        raise ErrorExit(
-            "Lua not installed on OS or not in PATH environment variable. You must use"
-            " a virtual environment (see --use-venv) or install it on your OS."
-        )
-
-    output = run([lua_exe, "-e", "print(package.config)"]).strip()
-    _path_sep, template_sep, *_ = output.splitlines()
-
-    cpath = run([lua_exe, "-e", "print(package.cpath)"]).strip()
-    cpath_templates = cpath.split(template_sep)
-
-    for template in cpath_templates:
-        path = os.path.dirname(template)
-        # Don't install into the current working directory
-        if path != ".":
-            return os.path.abspath(path)
-
-    # Nothing good, just return the first path we find.
-    return os.path.abspath(os.path.dirname(cpath_templates[0]))
-
-
-def get_luarocks_version(luarocks_exe):
-    output = run([luarocks_exe, "--version"], stderr=None)
-    _abs_path, version, *_rest = output.strip().split()
-    return version
-
-
-def get_lua_header_version(header_dir):
-    file_path = os.path.join(header_dir, "lua.h")
-    if not os.path.exists(file_path):
-        raise ErrorExit(
-            "Directory doesn't exist or header file `lua.h` is missing: " + header_dir
-        )
-
-    LOG.debug("Determining Lua version from header file at %s", file_path)
-    with open(file_path, "r") as fd:
-        contents = fd.read()
-
-    match = re.search(r"LUA_VERSION_NUM\s+(\d+)", contents)
-    if not match:
-        raise ErrorExit("Couldn't determine version of Lua header at: " + file_path)
-
-    integer_version = int(match[1])
-    major_version = integer_version // 100
-    minor_version = integer_version % 100
-
-    LOG.debug("Lua header defines version as %d.%d.", major_version, minor_version)
-    return "%d.%d" % (major_version, minor_version)
-
-
-def set_defaults_from_config(args):
-    result = vars(args)
-    if not args.venv_config:
-        result["use_venv"] = False
-        result["is_luajit"] = False
-        result["luarocks_version"] = None
-        result["lua_short_version"] = None
-        result["lua_full_version"] = None
-        result["lua_exe_path"] = result["lua_exe_path"] or shutil.which("lua")
-        result["luarocks_path"] = result["luarocks_path"] or shutil.which("luarocks")
-        return result
-
-    with open(args.venv_config, "r") as fd:
-        config = json.load(fd)
-
-    result.update(
-        {
-            "lua_exe_path": args.lua_exe_path or config.get("lua_exe"),
-            "lua_headers": args.lua_headers or config.get("lua_include"),
-            "lua_library": args.lua_library or config.get("lua_lib"),
-            "luarocks_path": args.luarocks_path or config.get("luarocks_exe"),
-            "luarocks_version": config.get("luarocks_version"),
-            "is_luajit": config.get("is_luajit") or False,
-            "lua_short_version": config.get("lua_short_version"),
-            "lua_full_version": config.get("lua_full_version"),
-            "use_venv": True,
-            "virtualenv_dir": config.get("virtualenv_dir"),
-        }
-    )
-    return result
-
-
-def generate_cmake_parameters(settings, install_version, platform):
-    is_debug = settings["build_type"] == "debug"
-    is_luajit = settings["is_luajit"]
-    if is_luajit:
-        install_version = "5.1.4"
-        short_version = "5.1"
-    else:
-        short_version = install_version.rpartition(".")[0]
-
-    values = {
-        "LUA_FULL_VERSION": install_version,
-        "LUA_SHORT_VERSION": short_version,
-        "IS_LUAJIT": "YES" if is_luajit else "NO",
-        "LUAJIT_FULL_VERSION": settings["lua_full_version"] if is_luajit else "",
-        "LUAJIT_SHORT_VERSION": settings["lua_full_version"][:-2] if is_luajit else "",
-        "USE_VIRTUALENV": "YES" if settings["use_venv"] else "NO",
-        "DETECTED_LUA_PLATFORM": platform,
-        "LUAROCKS_VERSION": settings["luarocks_version"],
-        "CMAKE_BUILD_TYPE": settings["build_type"].upper(),
-        "CMAKE_INSTALL_PREFIX": settings["CMAKE_INSTALL_PREFIX"],
-        "IS_RELEASE_BUILD": "NO" if is_debug else "YES",
-        "IS_DEBUG_BUILD": "YES" if is_debug else "NO",
-        "LUA_EXE": settings["lua_exe_path"],
-        "LUAROCKS_EXE": settings["luarocks_path"],
-        "LUA_INCLUDE_DIR": settings["lua_headers"] or "",
-        # Need plural for compatibility with CMake
-        "LUA_LIBRARIES": settings["lua_library"] or "",
-        "IN_CI_ENVIRONMENT": "YES" if IN_CI_ENVIRONMENT else "NO",
-        "VIRTUALENV_DIR": settings.get("virtualenv_dir") or "",
-    }
-
-    if not settings["lua_library"] or not settings["lua_headers"]:
-        raise ErrorExit(
-            "The LUA_LIBRARIES and/or LUA_INCLUDE_DIR variables are empty. This usually"
-            " happens when Lua isn't installed locally or if your include paths aren't"
-            " set. You can either use a virtual environment (see tools/lua_env.py) or,"
-            " if you do have Lua already installed, you'll need to provide the include"
-            " and library paths to this script via the --lua-headers and --lua-library"
-            " options. If you're on a *NIX system, Lua headers are usually in"
-            " `/usr/include/lua<version>/` and the library is at"
-            " `/usr/lib/<architecture>/liblua<version>{.a, .so}`."
-        )
-
-    header_version = get_lua_header_version(settings["lua_headers"])
-
-    if settings["use_venv"]:
-        version_source = "Virtual environment"
-    else:
-        version_source = "OS"
-
-    # For LuaJIT, `short_version` is the version of LuaJIT, *not* Lua! Thus we have to
-    # special-case the version number check.
-    if is_luajit and header_version != "5.1":
-        raise ErrorExit(
-            "Mismatch between %s's LuaJIT and header version. LuaJIT implements 5.1,"
-            " but the header says %s. Either this is the wrong header, or this version"
-            " of LuaJIT implements an unexpected version of Lua. Header path: %s"
-            % (version_source, header_version, settings["lua_headers"])
-        )
-    elif not is_luajit and (header_version != short_version):
-        raise ErrorExit(
-            "Mismatch between Lua executable and header version. %s Lua version: %s;"
-            " header says %s. The path to the headers is likely wrong: %s"
-            % (version_source, short_version, header_version, settings["lua_headers"])
-        )
-
-    if settings["uc_lib"]:
-        values["UNICORN_LIBRARY"] = settings["uc_lib"]
-    if settings["uc_headers"]:
-        # Since we include using <unicorn/unicorn.h> we actually need the path to the
-        # directory *above* the unicorn headers. If the user gave us a path to the
-        # Unicorn directory, take its parent.
-        if os.path.basename(settings["uc_headers"]) == "unicorn":
-            values["UNICORN_HEADERS_PATH"] = os.path.dirname(settings["uc_headers"])
-        else:
-            values["UNICORN_HEADERS_PATH"] = settings["uc_headers"]
-
-    return values
-
-
-def get_cmake_version():
-    if shutil.which("cmake") is None:
-        raise ErrorExit("`cmake` not installed")
-
-    raw_capabilities = run(["cmake", "-E", "capabilities"], text=True)
-    capabilities = json.loads(raw_capabilities)
-    return capabilities["version"]["major"], capabilities["version"]["minor"]
-
-
-def run_cmake_generate(build_dir):
-    version = get_cmake_version()
-    shutil.rmtree(build_dir, ignore_errors=True)
-    os.makedirs(build_dir, exist_ok=True)
-    if version < (3, 13):
-        run(["cmake", "..", "-DCMAKE_VERBOSE_MAKEFILE=YES"], cwd=build_dir)
-    else:
-        run(["cmake", "-S", ".", "-B", build_dir, "-DCMAKE_VERBOSE_MAKEFILE=YES"])
-
-
-def main():
-    args = parse_args()
-    settings = set_defaults_from_config(args)
-
-    logging.basicConfig(
-        format="[%(levelname)-5s] %(message)s", level=args.logging_level
-    )
-
-    lua_platform = PLATFORM_ALIASES.get(sys.platform)
-    if not lua_platform:
-        LOG.warning("OS platform potentially unsupported: %r", sys.platform)
-        lua_platform = "generic"
-
-    if not settings["lua_full_version"]:
-        settings["lua_full_version"] = get_lua_version(settings["lua_exe_path"])
-
-    if settings["luarocks_path"] and not settings["luarocks_version"]:
-        settings["luarocks_version"] = get_luarocks_version(settings["luarocks_path"])
-
-    if settings["use_venv"]:
-        LOG.info("Using virtual environment, Lua %s", settings["lua_full_version"])
-    else:
-        LOG.info("Using OS installation, Lua %s", settings["lua_full_version"])
-
-    if args.install_prefix:
-        settings["CMAKE_INSTALL_PREFIX"] = args.install_prefix
-    else:
-        settings["CMAKE_INSTALL_PREFIX"] = get_installation_dir(settings["lua_exe_path"])
-
-    LOG.info("Generating CMake parameters...")
-    cmake_params = generate_cmake_parameters(
-        settings, settings["lua_full_version"], lua_platform
-    )
-    with open("configuration.cmake", "w") as fd:
-        fd.write("\n".join('set(%s "%s")' % kv for kv in cmake_params.items()))
-
-    LOG.info("Building CMake files")
-    run_cmake_generate(os.path.join(HERE, "cmake-build-" + args.build_type))
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        LOG.error("Killed.")
-        sys.exit(2)
-    except ErrorExit as exc:
-        if str(exc):
-            print()
-            multiline_message = textwrap.wrap(str(exc), width=80)
-            for line in multiline_message:
-                LOG.error(line)
-        sys.exit(1)
-    else:
-        sys.exit(0)
+#!/bin/sh
+
+LUA=$(which lua)
+LUAROCKS=$(which luarocks)
+
+USAGE="
+Usage:
+$0 [-h] [-l PATH] [-r PATH]
+
+-h
+    Show this help message.
+
+-d
+    Build the library in debug mode. If not passed, defaults to release mode.
+
+-l PATH
+    The path to the Lua executable to build the library for.
+    Default: $LUA
+
+-r PATH
+    The path to the LuaRocks executable to use for installing rocks needed for
+    testing. Only needed for CI and local development.
+    Default: ${LUAROCKS:-(not installed)}
+"
+
+build_type=release
+
+while getopts "dhl:r:" C
+do
+    case "$C" in
+        h )
+          echo "$USAGE"
+          exit 0
+          ;;
+        d ) build_type=debug ;;
+        l ) LUA=$(realpath "$OPTARG") ;;
+        r ) LUAROCKS=$(realpath "$OPTARG") ;;
+        * )
+          echo "Unrecognized argument '$C'"
+          exit 1
+          ;;
+    esac
+done
+
+make -f profile.mk -B LUA="${LUA}" LUAROCKS="${LUAROCKS}" BUILD_TYPE=${build_type}

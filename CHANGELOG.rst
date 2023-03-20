@@ -1,6 +1,77 @@
 Changes
 =======
 
+2.0.0 (2023-03-20)
+------------------
+
+Required License Change
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to an oversight on my part, this never should've been licensed under the New
+BSD license, because:
+
+1. QEMU is licensed under GPL v2.
+2. Unicorn is based on QEMU and thus is also (mostly) GPL v2.
+3. `GPL is viral even when dynamically linking <https://www.gnu.org/licenses/gpl-faq.en.html#GPLStaticVsDynamic>`_.
+
+Thus, this library *must* be licensed under GPL v2. As much as I would like to
+keep the original BSD-3 license, this is a legal requirement and there's nothing
+I can do about it so long as Unicorn uses GPL.
+
+New Features
+~~~~~~~~~~~~
+
+Python is no longer needed for configuration. I wrote a Lua script that infers
+the location of the header files, libraries, etc. If you need a virtual environment
+you now have to pass the path to the Lua executable on the command line. You can
+also pass in the path to LuaRocks as well, like so:
+
+.. code-block::
+
+    ./configure -l .venv/bin/lua -r .venv/bin/luarocks
+    make
+
+If you want to use your system's installation of Lua, you don't need to pass
+anything in and can just run ``./configure && make`` to build the library.
+
+To build the library in debug mode, pass ``-d`` to the configure script.
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+Fixing `issue #31`_ (reading MSRs on x86 is silently broken) required two breaking
+changes:
+
+* When reading from or writing to ``UC_X86_REG_MSR``, you're now required to pass
+  an additional argument with the ID of the register you want to read. Failing
+  to do so will trigger an exception.
+* Only ``reg_read()`` and ``reg_write()`` support accessing model-specific
+  registers. The ``reg_*_as()`` and ``reg_*_batch()`` functions now throw
+  exceptions if you try to access a model-specific register. I may add support
+  for this in the future if I can figure out a way to not make it hideous.
+
+I also dropped support for CMake 3.12. You need 3.13 or higher now.
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a test that never should've passed (verifies an exception is thrown if
+  an engine is given an invalid query).
+* Fixed wrong variable names in Makefile
+* Corrected behavior of ``install`` target -- it was putting the library in the
+  wrong place.
+* Fixed wrong version number in CMake configuration, forgot to change it from
+  0.1.0.
+
+Other Changes
+~~~~~~~~~~~~~
+
+Lua is now statically linked so it doesn't need to be recompiled as a relocatable
+library.
+
+.. _issue #31: https://github.com/dargueta/unicorn-lua/issues/31
+
+
 1.2.2 (2021-11-22)
 ------------------
 

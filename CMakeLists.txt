@@ -1,44 +1,14 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-project(UnicornLua VERSION 0.1 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+project(UnicornLua VERSION 2.0.0 LANGUAGES CXX)
 
-include("${PROJECT_SOURCE_DIR}/configuration.cmake")
-
-option(BUILD_DOCS "Build documentation" ON)
+include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#find_package(Python3 REQUIRED)
 
-if(NOT USE_VIRTUALENV)
-    find_package(Lua REQUIRED)
-
-    find_program(
-        LUA_EXE
-        NAMES lua
-        DOC "The Lua interpreter"
-    )
-    find_program(
-        LUAROCKS_EXE
-        NAMES luarocks
-        DOC "Luarocks installation program"
-    )
-endif()
-
-execute_process(
-    COMMAND ${LUAROCKS_EXE} path --lr-path
-    OUTPUT_VARIABLE LUAROCKS_LPATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-execute_process(
-    COMMAND ${LUAROCKS_EXE} path --lr-cpath
-    OUTPUT_VARIABLE LUAROCKS_CPATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-
-get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS_EXE}" DIRECTORY)
+get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS}" DIRECTORY)
 set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -56,20 +26,16 @@ if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
     message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
 endif()
 
-# Lua looks for C libraries with the file extension `.dll` on Windows, and `.so` on all
-# other platforms. Since the OSX extension is `.dylib` we can't use CMAKE_SHARED_LIBRARY_SUFFIX
-# so we have to override it ourselves.
-if(CMAKE_HOST_WIN32)
-    set(LUA_CLIB_EXTENSION ".dll")
-else()
-    set(LUA_CLIB_EXTENSION ".so")
-endif()
+set(LUA_LIBRARY "${LUA_LIBDIR}/${LUALIB}")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
-add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")               # Library code
-add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c")       # Tests with C++ code
-add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua")   # Tests with Lua code
+# Library code
+add_subdirectory("src" "${CMAKE_CURRENT_BINARY_DIR}/lib")
+# Tests with C++ code
+add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_ALL)
+# Tests with Lua code
+add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
@@ -82,15 +48,16 @@ file(GENERATE
 )
 
 configure_file(
-
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
     "${PROJECT_SOURCE_DIR}/include/unicornlua/platform.h"
     @ONLY
 )
 
 
-find_package(Doxygen)
+find_package(Doxygen QUIET MODULE)
 if(DOXYGEN_FOUND)
+    option(BUILD_DOCS "Build documentation" ON)
+
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/templates/Doxyfile.in"
         "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
@@ -105,5 +72,5 @@ if(DOXYGEN_FOUND)
         VERBATIM
     )
 else()
-  message("Doxygen needs to be installed to generate the documentation.")
+    message(VERBOSE "Doxygen needs to be installed to generate the documentation.")
 endif()
