@@ -25,4 +25,4 @@ install_unicorn__unix: $(UNICORN_DIRECTORY)
 
 .PHONY: install_unicorn__windows
 install_unicorn__windows:
-	python3 install-unicorn.py $(UNICORN_VERSION)
+	python3 install-unicorn-windows.py $(UNICORN_VERSION)
