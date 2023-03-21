@@ -77,11 +77,21 @@ if (CMAKE_HOST_APPLE)
 endif()
 
 
-find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
-find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    # find_library() only searches for static libraries on Windows. We want to
+    # link with the dynamic library, so we need to search for the file in a
+    # different way.
+    find_file(UNICORN_LIBRARY NAMES unicorn.dll HINTS "C:\\Windows\\System32")
+    set(PTHREADS_LIBRARY "")
+else()
+    find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32)
+    find_library(PTHREADS_LIBRARY NAMES pthread libpthread)   # Needed by Unicorn
+endif()
+
 target_link_libraries(
     unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
 )
+
 
 # Lua needs to be statically linked so we add it as a source, not a library to
 # link to.

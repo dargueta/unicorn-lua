@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-project(UnicornLua VERSION 2.0.0 LANGUAGES CXX)
+project(UnicornLua VERSION 2.1.0 LANGUAGES CXX)
 
 include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
 
@@ -14,10 +14,6 @@ set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # These might be set by the user.
-if(NOT DEFINED UNICORN_LIBRARY)
-    find_library(UNICORN_LIBRARY NAMES unicorn libunicorn)
-endif()
-
 if(NOT DEFINED UNICORN_HEADERS_PATH)
     find_path(
         UNICORN_HEADERS_PATH unicorn/unicorn.h
