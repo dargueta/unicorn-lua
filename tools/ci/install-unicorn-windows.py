@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 ARCHIVE_DIRECTORY = "unicorn-{version}-win{bits}"
 WINDOWS_URL_TEMPLATE = "https://github.com/unicorn-engine/unicorn/releases/download/{version}/unicorn-{version}-win{bits}.zip"
+HEADERS_DIR = "C:\\Program Files\\UnicornEngine"
 
 
 def get_windows_system_install_dir():
@@ -90,11 +91,10 @@ def main():
 
         logging.info("(DEBUG) TMPDIR tree at %s: %s", data_dir, os.listdir(data_dir))
 
-        full_dll_path = os.path.join(
-            data_dir,
-            ARCHIVE_DIRECTORY.format(version=unicorn_version, bits=bits),
-            "unicorn.dll",
+        unpacked_directory = os.path.join(
+            data_dir, ARCHIVE_DIRECTORY.format(version=unicorn_version, bits=bits)
         )
+        full_dll_path = os.path.join(unpacked_directory, "unicorn.dll")
 
         # Put the DLL where Windows can find it
         dll_dir = get_windows_system_install_dir()
@@ -102,6 +102,13 @@ def main():
             "Moving DLL to Windows directory: %s -> %s", full_dll_path, dll_dir
         )
         shutil.move(full_dll_path, dll_dir)
+
+        # Move the headers over as well
+        target_headers_dir = HEADERS_DIR.format(version=unicorn_version, bits=bits)
+        os.makedirs(target_headers_dir, exist_ok=True)
+        source_headers_dir = os.path.join(unpacked_directory, "include")
+        logging.info("Moving headers: %s -> %s", source_headers_dir, target_headers_dir)
+        shutil.move(source_headers_dir, target_headers_dir)
 
 
 if __name__ == "__main__":
