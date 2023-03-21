@@ -63,7 +63,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     target_compile_options(unicornlua_library PRIVATE -Wall -Wextra -Werror -Wpedantic)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
-    message(FATAL_ERROR "Visual studio not supported yet.")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")
+    set(CMAKE_CXX_FLAGS_RELEASE "/Ot /GR-")
+    target_compile_options(unicornlua_library PRIVATE /Wall /WX)
+else()
+    message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 
