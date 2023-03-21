@@ -352,9 +352,15 @@ function find_lua_library()
     if is_luajit then
         potential_file_stems = {"luajit-5.1"}
     else
-        -- On some installations we will only have liblua.a with no version number.
-        -- We put this second so it's a last resort.
-        potential_file_stems = {"lua" .. lua_version, "lua"}
+        potential_file_stems = {
+            -- "lua5.3"
+            "lua" .. lua_version,
+            -- "lua53"
+            "lua" .. lua_version:gsub("[.]", ""),
+            -- On some installations we will only have liblua.a with no version.
+            -- We put this second so it's a last resort.
+            "lua",
+        }
     end
 
     local to_search = {}
