@@ -90,6 +90,10 @@ dir_sep, path_sep, file_wildcard, dir_wildcard = unpack_table(split_package_conf
 -- weren't overridden when Lua was built.
 local is_windows = dir_sep == "\\"
 
+-- Force the directory separator to be a forward slash, even on Windows. The OS
+-- will handle it, and we won't have to escape the backslashes in our output.
+dir_sep = "/"
+
 -- A three-part string indicating the CPU architecture, operating system, and
 -- ABI, with parts separated by a single dash: e.g. "x86_64-linux-gnu".
 local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
@@ -210,14 +214,14 @@ local POSIX_HEADER_SEARCH_DIRECTORIES = {
     "/opt/<file>/include",
 }
 
--- TODO (dargueta): Add more search directories, e.g. C:\Lua54 or C:\Lua5.4
+
 local WINDOWS_HEADER_SEARCH_DIRECTORIES = {
-    dir_wildcard .. "\\<file>",
-    dir_wildcard .. "\\..\\<file>",
-    dir_wildcard .. "\\..\\include\\<file>",
+    dir_wildcard .. "/<file>",
+    dir_wildcard .. "/../<file>",
+    dir_wildcard .. "/../include/<file>",
     -- If Lua is installed as \XYZ\bin\lua we need to go up two levels to get to
     -- the directory that contains both the executable and the headers.
-    dir_wildcard .. "\\..\\..\\include\\<file>",
+    dir_wildcard .. "/../../include/<file>",
 }
 
 local LIB_DIRECTORY_NAMES = {
