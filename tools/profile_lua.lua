@@ -350,7 +350,7 @@ function find_lua_library()
     local potential_file_stems
 
     if is_luajit then
-        potential_file_stems = {"luajit-5.1"}
+        potential_file_stems = {"luajit-5.1", "luajit-51", "luajit51", "luajit"}
     else
         potential_file_stems = {
             -- "lua5.3"
