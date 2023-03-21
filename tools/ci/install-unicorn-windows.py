@@ -15,6 +15,7 @@ WINDOWS_URL_TEMPLATE = "https://github.com/unicorn-engine/unicorn/releases/downl
 
 
 def get_windows_system_install_dir():
+    # type: () -> str
     """Get the directory where we should install the Unicorn DLL.
 
     See: https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemdirectorya
@@ -27,6 +28,7 @@ def get_windows_system_install_dir():
 
 
 def get_app_data_dir():
+    # type: () -> str
     """Get the directory where we're going to put the header files.
 
     For the sake of simplicity we'll create a directory called "UnicornEngine" in the
@@ -44,11 +46,12 @@ def get_app_data_dir():
 
 
 def main():
+    # type: () -> None
     if len(sys.argv) != 2:
         logging.error("Expected one argument, the exact version of Unicorn to install.")
         sys.exit(1)
 
-    if sys.maxsize > 2 ** 32:
+    if sys.maxsize > 2**32:
         bits = 64
     else:
         bits = 32
@@ -71,7 +74,7 @@ def main():
         logging.info("Copying archive to temporary directory: %s", tmp_dir)
         archive_file_path = os.path.join(tmp_dir, "__archive.zip")
         with open(archive_file_path, "wb") as fd:
-            shutil.copyfileobj(response, fd, 2 ** 20)
+            shutil.copyfileobj(response, fd, 2**20)
 
         # Unpack the zip archive into a vaguely reasonable directory. This contains the
         # DLL and header files.
@@ -87,17 +90,18 @@ def main():
 
         logging.info("(DEBUG) TMPDIR tree at %s: %s", data_dir, os.listdir(data_dir))
 
+        full_dll_path = os.path.join(
+            data_dir,
+            ARCHIVE_DIRECTORY.format(version=unicorn_version, bits=bits),
+            "unicorn.dll",
+        )
+
         # Put the DLL where Windows can find it
         dll_dir = get_windows_system_install_dir()
-        logging.info("Moving DLL to Windows directory: %s", dll_dir)
-        shutil.move(
-            os.path.join(
-                data_dir,
-                ARCHIVE_DIRECTORY.format(version=unicorn_version, bits=bits),
-                "unicorn.dll",
-            ),
-            dll_dir,
+        logging.info(
+            "Moving DLL to Windows directory: %s -> %s", full_dll_path, dll_dir
         )
+        shutil.move(full_dll_path, dll_dir)
 
 
 if __name__ == "__main__":
