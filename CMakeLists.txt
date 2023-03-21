@@ -21,7 +21,7 @@ endif()
 if(NOT DEFINED UNICORN_HEADERS_PATH)
     find_path(
         UNICORN_HEADERS_PATH unicorn/unicorn.h
-        HINTS C:/Program Files/UnicornEngine
+        HINTS "C:/Program Files/UnicornEngine"
         PATH_SUFFIXES include
     )
 endif()
