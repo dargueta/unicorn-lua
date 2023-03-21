@@ -39,12 +39,12 @@ add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FRO
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
     @ONLY
 )
 file(GENERATE
-     OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
-     INPUT "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
+     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
+     INPUT "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
 )
 
 configure_file(
