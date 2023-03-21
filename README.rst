@@ -173,6 +173,9 @@ before using.
   version you have.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
   library location. Currently only Unicorn 1.x is supported.
+* You must also have the Unicorn headers installed. Windows users, CMake will
+  look in its standard places plus ``C:\Program Files\UnicornEngine``; if you
+  don't have them there, you'll need to override the settings.
 * Some examples have additional dependencies; see their READMEs for details.
 
 Just Installing?
@@ -194,19 +197,20 @@ multiple versions of Lua.
 With a Virtual Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To create a separate execution environment, you can use
-the ``lua_venv.py`` script.
+To create a separate execution environment, you can use the ``lua_venv.py``
+script.
 
 .. code-block:: sh
 
-    python3 tools/lua_venv.py --config-out settings.json  \
-                              5.3                         \
-                              ~/my-virtualenvs/5.3/
+    python3 tools/lua_venv.py --luarocks  5.3  ~/my-virtualenvs/5.3/
 
-This will download Lua 5.3, install it in a directory named ``~/my-virtualenvs/5.3``,
-and write all the configuration information needed by ``configure`` into a file
-named ``settings.json``. *It is important that the directory you install Lua into
-doesn't already exist.*
+This will download Lua 5.3 and install it in a directory named ``~/my-virtualenvs/5.3``.
+To configure the library, you will then run:
+
+.. code-block:: sh
+
+    ./configure -l ~/my-virtualenvs/5.3/bin/lua  \
+                -r ~/my-virtualenvs/5.3/luarocks/bin/luarocks
 
 If you're running MacOS and encounter a linker error with LuaJIT, check out
 `this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
@@ -218,17 +222,7 @@ It will probably suffice to run the configure script by itself:
 
 .. code-block:: sh
 
-    python3 configure
-
-You may encounter problems with GCC claiming Lua's headers are missing, or it can't
-find the Lua library. In this case you'll need to find them yourself, and pass
-them to the configure script. For example:
-
-.. code-block:: sh
-
-    make clean
-    python3 configure --lua-headers /usr/include/lua        \
-                      --lua-library /lib/lua/5.3/liblua.a
+    ./configure
 
 
 Setting Up the Build Environment
