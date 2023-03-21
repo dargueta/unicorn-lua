@@ -90,10 +90,6 @@ dir_sep, path_sep, file_wildcard, dir_wildcard = unpack_table(split_package_conf
 -- weren't overridden when Lua was built.
 local is_windows = dir_sep == "\\"
 
--- Force the directory separator to be a forward slash, even on Windows. The OS
--- will handle it, and we won't have to escape the backslashes in our output.
-dir_sep = "/"
-
 -- A three-part string indicating the CPU architecture, operating system, and
 -- ABI, with parts separated by a single dash: e.g. "x86_64-linux-gnu".
 local PLATFORM_TRIPLET = build_platform_triplet(RAW_PLATFORM_STRING)
@@ -216,12 +212,12 @@ local POSIX_HEADER_SEARCH_DIRECTORIES = {
 
 
 local WINDOWS_HEADER_SEARCH_DIRECTORIES = {
-    dir_wildcard .. "/<file>",
-    dir_wildcard .. "/../<file>",
-    dir_wildcard .. "/../include/<file>",
+    dir_wildcard .. "\\<file>",
+    dir_wildcard .. "\\..\\<file>",
+    dir_wildcard .. "\\..\\include\\<file>",
     -- If Lua is installed as \XYZ\bin\lua we need to go up two levels to get to
     -- the directory that contains both the executable and the headers.
-    dir_wildcard .. "/../../include/<file>",
+    dir_wildcard .. "\\..\\..\\include\\<file>",
 }
 
 local LIB_DIRECTORY_NAMES = {
@@ -429,25 +425,32 @@ if lua_library_file_info.stem ~= nil then
     link_flag = "-l" .. lua_library_file_info.stem
 end
 
+function escape_path(path)
+    if is_windows then
+        return path:gsub("\\", "\\\\")
+    end
+    return path
+end
+
 local VARIABLES = {
-    { "LUA_LIBDIR", dirname(lua_library_file_info.path or "") },
+    { "LUA_LIBDIR", escape_path(dirname(lua_library_file_info.path or "")) },
     -- The directory where the Lua executable is located.
-    { "LUA_BINDIR", lua_exe_dir },
+    { "LUA_BINDIR", escape_path(lua_exe_dir) },
     -- The directory where the Lua headers are.
-    { "LUA_INCDIR", find_headers() or "" },
+    { "LUA_INCDIR", escape_path(find_headers() or "") },
     -- The filename of the Lua library, not always provided.
-    { "LUALIB", basename(lua_library_file_info.path or "") },
+    { "LUALIB", escape_path(basename(lua_library_file_info.path or "")) },
     -- The Lua executable.
-    { "LUA", lua_exe or "lua" },
+    { "LUA", escape_path(lua_exe) or "lua" },
     -- The installation prefix.
     -- TODO (dargueta): Figure out this installation prefix thing
     { "INST_PREFIX", "" },
     -- The directory where executable Lua scripts go.
-    { "INST_BINDIR", lua_exe_dir },
+    { "INST_BINDIR", escape_path(lua_exe_dir) },
     -- The directory where Lua C libraries go.
-    { "INST_LIBDIR", c_library_dir },
+    { "INST_LIBDIR", escape_path(c_library_dir) },
     -- The directory where Lua script libraries go.
-    { "INST_LUADIR", lua_library_dir },
+    { "INST_LUADIR", escape_path(lua_library_dir) },
     -- The directory where configuration files go.\n")
     { "INST_CONFDIR", "" },
     -- The flag to pass to the linker for linking to Lua\n")
@@ -458,7 +461,7 @@ local VARIABLES = {
     { "LIBRARY_FILE_EXTENSION", c_library_extension },
     { "IS_LUAJIT", is_luajit },
     { "IS_WINDOWS", is_windows },
-    { "LUAROCKS", LUAROCKS_PATH or ""},
+    { "LUAROCKS", escape_path(LUAROCKS_PATH or "")},
 }
 
 -- Output the same variables that LuaRocks does, using ?= for assignment so that
