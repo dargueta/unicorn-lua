@@ -21,13 +21,13 @@ endif()
 if(NOT DEFINED UNICORN_HEADERS_PATH)
     find_path(
         UNICORN_HEADERS_PATH unicorn/unicorn.h
-        HINTS C:\\Program Files\\UnicornEngine
+        HINTS C:/Program Files/UnicornEngine
         PATH_SUFFIXES include
     )
 endif()
 
 if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
-    message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in a non-standard location.")
+    message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in an unexpected location.")
 endif()
 
 set(LUA_LIBRARY "${LUA_LIBDIR}/${LUALIB}")
