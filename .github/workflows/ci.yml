@@ -47,7 +47,11 @@ jobs:
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
       - name: Environment
         run: cmake --version
-      - name: Install Binding
+      - name: Install Binding (*NIX)
         run: sh configure -d && sudo make install
+        if: ${{ !contains(matrix.operating-system, 'windows') }}
+      - name: Install Binding (Windows)
+        run: cmake --install cmake-build-debug
+        if: ${{ contains(matrix.operating-system, 'windows') }}
       - name: Run tests
         run: make test
