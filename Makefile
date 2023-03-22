@@ -1,22 +1,23 @@
 -include Makefile.in
 include lua-profile.mk
 
-EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
+EXAMPLES_ROOT ?= ./examples
+
+SHARED_LIB_FILE = $(BUILD_DIR)/lib/unicorn$(LIBRARY_FILE_EXTENSION)
+X86_BINARY_IMAGES = $(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
+MIPS_BINARY_IMAGES = $(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
 
 LUAROCKS_CPATH = $(shell $(LUAROCKS) path --lr-cpath)
 LUAROCKS_LPATH = $(shell $(LUAROCKS) path --lr-path)
 
-X86_BINARY_IMAGES = $(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
-MIPS_BINARY_IMAGES = $(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
-LIBRARY_SOURCES = $(LIBRARY_CPP_SOURCES) $(wildcard include/unicornlua/*.h)
-TEST_SOURCES = $(TEST_CPP_SOURCES)  $(wildcard tests/c/*.h)  $(wildcard tests/lua/*.lua)
-INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 
 LUA_CPATH := $(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;
 LUA_PATH := $(LUAROCKS_LPATH);;
 export LUA_CPATH
 export LUA_PATH
 
+
+X86_ASM := $(or $(shell which nasm),$(shell which yasm))
 
 .PHONY: all
 all:
@@ -30,26 +31,19 @@ clean:
 
 
 .PHONY: install
-install: $(INSTALL_TARGET)
+install: $(SHARED_LIB_FILE)
+	sudo $(MAKE) -B -C $(BUILD_DIR) install
 
 
-$(INSTALL_TARGET): $(LIBRARY_SOURCES)
-	sudo $(MAKE) -C $(BUILD_DIR) install
-
-
-$(SHARED_LIB_FILE): $(LIBRARY_SOURCES)
+$(SHARED_LIB_FILE):
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
-$(TEST_EXE_FILE): $(SHARED_LIB_FILE) $(TEST_SOURCES)
-	$(MAKE) -C $(BUILD_DIR) cpp_test
-
-
-# Since Makefile.in doesn't exist the first time this file is created,
 .PHONY: test
-test: $(TEST_EXE_FILE) $(TEST_SOURCES) $(BUSTED_EXE)
+test: $(BUSTED_EXE)
+	$(MAKE) -C $(BUILD_DIR) cpp_test
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(UNICORN_LIBRARY_DIR) \
-		$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
+		$(MAKE) -B -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 .PHONY: docs
