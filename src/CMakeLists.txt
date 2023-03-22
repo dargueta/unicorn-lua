@@ -1,6 +1,15 @@
-if (NOT DEFINED HEADER_SLUGS)
-    set(HEADER_SLUGS arm;arm64;mips;m68k;sparc;x86;unicorn)
-endif()
+# Build a list of the installed header files and strip the stems out so that we
+# can generate the corresponding *_const.cpp files from them. This way, we don't
+# make assumptions about which architectures the user has built and we don't need
+# to change the code when Unicorn adds new architectures.
+file(GLOB INSTALLED_ARCH_HEADERS "${UNICORN_HEADERS_PATH}/unicorn/*.h")
+foreach(path IN ITEMS ${INSTALLED_ARCH_HEADERS})
+    cmake_path(GET path STEM LAST_ONLY CURRENT_SLUG)
+    # platform.h is not of interest to us.
+    if(NOT CURRENT_SLUG STREQUAL "platform")
+        list(APPEND HEADER_SLUGS "${CURRENT_SLUG}")
+    endif()
+endforeach()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
