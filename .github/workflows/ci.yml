@@ -48,6 +48,6 @@ jobs:
       - name: Environment
         run: cmake --version
       - name: Install Binding
-        run: sh configure -d && make install
+        run: sh configure -d && sudo make install
       - name: Run tests
         run: make test
