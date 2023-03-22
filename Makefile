@@ -8,18 +8,9 @@ LUAROCKS_LPATH = $(shell $(LUAROCKS) path --lr-path)
 
 X86_BINARY_IMAGES = $(X86_ASM_SOURCE_FILES:%.asm=%.x86.bin)
 MIPS_BINARY_IMAGES = $(MIPS_ASM_SOURCE_FILES:%.s=%.mips32.bin)
-LIBRARY_SOURCES = $(wildcard src/*.cpp) $(wildcard include/unicornlua/*.h)
-TEST_SOURCES = $(wildcard tests/c/*.cpp)   \
-               $(wildcard tests/c/*.h)     \
-               $(wildcard tests/lua/*.lua)
-LIBRARY_FILENAME = unicorn$(LIBRARY_FILE_EXTENSION)
-TEST_LIB_FILE = $(abspath $(BUILD_DIR)/lib/$(LIBRARY_FILENAME))
-TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
+LIBRARY_SOURCES = $(LIBRARY_CPP_SOURCES) $(wildcard include/unicornlua/*.h)
+TEST_SOURCES = $(TEST_CPP_SOURCES)  $(wildcard tests/c/*.h)  $(wildcard tests/lua/*.lua)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
-
-
-LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(UNICORN_LIBRARY_DIR)
-export LD_LIBRARY_PATH
 
 LUA_CPATH := $(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;
 LUA_PATH := $(LUAROCKS_LPATH);;
@@ -46,18 +37,19 @@ $(INSTALL_TARGET): $(LIBRARY_SOURCES)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-$(TEST_LIB_FILE): $(LIBRARY_SOURCES)
+$(SHARED_LIB_FILE): $(LIBRARY_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
-$(TEST_EXE_FILE): $(TEST_LIB_FILE) $(TEST_SOURCES)
+$(TEST_EXE_FILE): $(SHARED_LIB_FILE) $(TEST_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) cpp_test
 
 
 # Since Makefile.in doesn't exist the first time this file is created,
 .PHONY: test
 test: $(TEST_EXE_FILE) $(TEST_SOURCES) $(BUSTED_EXE)
-	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(UNICORN_LIBRARY_DIR) \
+		$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
 
 
 .PHONY: docs
@@ -75,7 +67,8 @@ $(BUSTED_EXE):
 
 .PHONY: run_example
 run_example: examples
-	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && $(LUA) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(UNICORN_LIBRARY_DIR) ; \
+		cd $(EXAMPLES_ROOT)/$(EXAMPLE) && $(LUA) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 %.x86.bin : %.asm
@@ -85,3 +78,6 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
+
+
+%_const.cpp:

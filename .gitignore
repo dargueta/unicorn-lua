@@ -3,13 +3,12 @@
 *.dll
 *.dylib
 *.a
+*.lib
 .git/
 build/
 cmake-build-debug/
 cmake-build-release/
 tests/c/doctest.h
-venv/
-.venv/
 .idea/
 .vscode/
 
@@ -22,6 +21,8 @@ lua-profile.*
 
 # Other garbage
 core*
+venv/
+.venv/
 .venv-5.1/
 .venv-5.2/
 .venv-5.3/

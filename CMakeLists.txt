@@ -56,8 +56,9 @@ configure_file(
     @ONLY
 )
 file(GENERATE
-     OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
-     INPUT "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
+    OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
+    INPUT "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
+    TARGET unicornlua_library
 )
 
 configure_file(
