@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(UnicornLua VERSION 2.1.0 LANGUAGES CXX)
 
 include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
@@ -28,6 +28,19 @@ endif()
 
 set(LUA_LIBRARY "${LUA_LIBDIR}/${LUALIB}")
 
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    # find_library() only searches for static libraries on Windows. We want to
+    # link with the dynamic library, so we need to search for the file in a
+    # different way.
+    find_file(UNICORN_LIBRARY NAMES unicorn.dll HINTS "C:\\Windows\\System32" REQUIRED)
+    set(PTHREADS_LIBRARY "")
+else()
+    find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32 REQUIRED)
+    find_library(PTHREADS_LIBRARY NAMES pthread libpthread REQUIRED)   # Needed by Unicorn
+endif()
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
 # Library code
@@ -43,7 +56,7 @@ configure_file(
     @ONLY
 )
 file(GENERATE
-     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Makefile.in"
+     OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
      INPUT "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
 )
 

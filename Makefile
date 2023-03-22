@@ -1,16 +1,6 @@
 -include Makefile.in
 include lua-profile.mk
 
-ifndef UNICORN_INCDIR
-	UNICORN_INCDIR := /usr/include/unicorn
-endif
-
-
-ARCHITECTURES := arm arm64 m68k mips ppc riscv s390x sparc tricore x86
-EXPECTED_HEADERS := $(addprefix $(UNICORN_INCDIR)/,$(addsuffix .h,$(ARCHITECTURES)))
-GENERATED_SOURCES := $(addprefix src/const/,$(addsuffix _const.cpp,$(ARCHITECTURES)))
-
-
 REPO_ROOT ?= $(CURDIR)
 BUILD_TYPE ?= release
 BUILD_DIR ?= $(REPO_ROOT)/cmake-build-$(BUILD_TYPE)
@@ -29,6 +19,17 @@ LIBRARY_FILENAME = unicorn$(LIBRARY_FILE_EXTENSION)
 TEST_LIB_FILE = $(abspath $(BUILD_DIR)/lib/$(LIBRARY_FILENAME))
 TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
+
+
+ifneq ($(OS),Windows_NT)
+    OLD_LD_LIBRARY_PATH := $(LD_LIBRARY_PATH)
+	export LD_LIBRARY_PATH=$(OLD_LD_LIBRARY_PATH):$(UNICORN_LIBRARY_DIR)
+endif
+
+ifdef INST_LIBDIR
+	export LUA_CPATH=$(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;
+	export LUA_PATH=$(LUAROCKS_LPATH);;
+endif
 
 
 .PHONY: all
@@ -50,11 +51,11 @@ $(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-$(TEST_LIB_FILE): $(LIBRARY_SOURCES)
+$(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
-$(TEST_EXE_FILE): $(TEST_LIB_FILE) $(TEST_SOURCES)
+$(TEST_EXE_FILE): $(TEST_LIB_FILE) $(TEST_SOURCES) | $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) cpp_test
 
 
@@ -79,8 +80,6 @@ $(BUSTED_EXE):
 .PHONY: run_example
 run_example: examples
 	cd $(EXAMPLES_ROOT)/$(EXAMPLE) &&                   \
-	LUA_CPATH="$(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;"  \
-	LUA_PATH="$(LUAROCKS_LPATH);;"    \
 	$(LUA) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
@@ -91,12 +90,6 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
-
-src/const:
-	mkdir $@
-
-src/const/%_const.cpp: $(UNICORN_INCDIR)/%.h | src/const
-	python3 tools/generate_constants.py $^ $@
 
 
 .PHONY: build-dir
