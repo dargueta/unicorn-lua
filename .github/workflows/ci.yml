@@ -45,6 +45,8 @@ jobs:
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
+      - name: Environment
+        run: cmake --version
       - name: Install Binding
         run: sh configure -d && make install
       - name: Run tests

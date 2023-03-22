@@ -1,6 +1,8 @@
 return {
   _all = {
-    cpath = "$<TARGET_FILE_DIR:unicornlua_library>/?@LIBRARY_FILE_EXTENSION@;;",
+    -- CMake on Windows cannot tolerate generator expressions so we can't use
+    -- the usual $<TARGET_FILE...> here and must generate the path manually.
+    cpath = "$(BUILD_DIR)/lib/?@LIBRARY_FILE_EXTENSION@;;",
     lua = "@LUA@",
     verbose = true,
     shuffle = true,

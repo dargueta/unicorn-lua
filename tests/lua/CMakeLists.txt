@@ -6,12 +6,8 @@ endif()
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/templates/busted-config.lua"
-    "${CMAKE_CURRENT_BINARY_DIR}/busted-config-temp.lua"
+    "${CMAKE_CURRENT_BINARY_DIR}/busted-config.lua"
     @ONLY
-)
-file(GENERATE
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/busted-config.lua"
-    INPUT "${CMAKE_CURRENT_BINARY_DIR}/busted-config-temp.lua"
 )
 
 configure_file(
