@@ -15,7 +15,7 @@ $0 [-h] [-l PATH] [-r PATH]
 
 -l PATH
     The path to the Lua executable to build the library for.
-    Default: $LUA
+    Default: ${LUA:-(not installed}
 
 -r PATH
     The path to the LuaRocks executable to use for installing rocks needed for
@@ -43,3 +43,7 @@ do
 done
 
 make -f profile.mk -B LUA="${LUA}" LUAROCKS="${LUAROCKS}" BUILD_TYPE=${build_type}
+
+build_dir=`pwd`/cmake-build-$build_type
+
+cmake -C lua-profile.cmake -S . -B "$build_dir"

@@ -21,19 +21,17 @@ TEST_EXE_FILE = $(abspath $(BUILD_DIR)/tests_c/cpp_test)
 INSTALL_TARGET = $(abspath $(INST_LIBDIR)/$(LIBRARY_FILENAME))
 
 
-ifneq ($(OS),Windows_NT)
-    OLD_LD_LIBRARY_PATH := $(LD_LIBRARY_PATH)
-	export LD_LIBRARY_PATH=$(OLD_LD_LIBRARY_PATH):$(UNICORN_LIBRARY_DIR)
-endif
+LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(UNICORN_LIBRARY_DIR)
+export LD_LIBRARY_PATH
 
-ifdef INST_LIBDIR
-	export LUA_CPATH=$(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;
-	export LUA_PATH=$(LUAROCKS_LPATH);;
-endif
+LUA_CPATH := $(INST_LIBDIR)/?$(LIBRARY_FILE_EXTENSION);$(LUAROCKS_CPATH);;
+LUA_PATH := $(LUAROCKS_LPATH);;
+export LUA_CPATH
+export LUA_PATH
 
 
 .PHONY: all
-all: | $(BUILD_DIR)
+all:
 	$(MAKE) -C $(BUILD_DIR)
 
 
@@ -47,18 +45,19 @@ clean:
 install: $(INSTALL_TARGET)
 
 
-$(INSTALL_TARGET): $(LIBRARY_SOURCES) | $(BUILD_DIR)
+$(INSTALL_TARGET): $(LIBRARY_SOURCES)
 	sudo $(MAKE) -C $(BUILD_DIR) install
 
 
-$(TEST_LIB_FILE): $(LIBRARY_SOURCES) | $(BUILD_DIR)
+$(TEST_LIB_FILE): $(LIBRARY_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) unicornlua_library
 
 
-$(TEST_EXE_FILE): $(TEST_LIB_FILE) $(TEST_SOURCES) | $(BUILD_DIR)
+$(TEST_EXE_FILE): $(TEST_LIB_FILE) $(TEST_SOURCES)
 	$(MAKE) -C $(BUILD_DIR) cpp_test
 
 
+# Since Makefile.in doesn't exist the first time this file is created,
 .PHONY: test
 test: $(TEST_EXE_FILE) $(TEST_SOURCES) $(BUSTED_EXE)
 	$(MAKE) -C $(BUILD_DIR) test "ARGS=--output-on-failure -VV"
@@ -79,8 +78,7 @@ $(BUSTED_EXE):
 
 .PHONY: run_example
 run_example: examples
-	cd $(EXAMPLES_ROOT)/$(EXAMPLE) &&                   \
-	$(LUA) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
+	cd $(EXAMPLES_ROOT)/$(EXAMPLE) && $(LUA) $(EXAMPLES_ROOT)/$(EXAMPLE)/run.lua
 
 
 %.x86.bin : %.asm
@@ -90,15 +88,3 @@ run_example: examples
 %.mips32.bin : %.s
 	mips-linux-gnu-as -o $@.o -mips32 -EB $<
 	mips-linux-gnu-ld -o $@ --oformat=binary -e main -sN $@.o
-
-
-.PHONY: build-dir
-build-dir: $(BUILD_DIR)
-
-
-$(BUILD_DIR):
-	cmake -S . -B $@                           \
-		-DCMAKE_INSTALL_PREFIX=$(INST_LIBDIR)  \
-		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)       \
-		-DCMAKE_VERBOSE_MAKEFILE=YES           \
-		-DLUAROCKS=$(LUAROCKS)
