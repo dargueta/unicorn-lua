@@ -1,9 +1,6 @@
 -include Makefile.in
 include lua-profile.mk
 
-REPO_ROOT ?= $(CURDIR)
-BUILD_TYPE ?= release
-BUILD_DIR ?= $(REPO_ROOT)/cmake-build-$(BUILD_TYPE)
 EXAMPLES_ROOT ?= $(REPO_ROOT)/examples
 
 LUAROCKS_CPATH = $(shell $(LUAROCKS) path --lr-cpath)
