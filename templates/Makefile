@@ -1,5 +1,7 @@
--include Makefile.in
 include lua-profile.mk
+
+BUSTED_EXE := @BUSTED_EXE@
+UNICORN_LIBRARY_DIR := $(dir @UNICORN_LIBRARY@)
 
 EXAMPLES_ROOT ?= ./examples
 

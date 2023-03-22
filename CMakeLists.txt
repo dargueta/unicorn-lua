@@ -51,14 +51,9 @@ add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_AL
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
     @ONLY
-)
-file(GENERATE
-    OUTPUT "${PROJECT_SOURCE_DIR}/Makefile.in"
-    INPUT "${CMAKE_CURRENT_BINARY_DIR}/intermediate-makefile.in"
-    TARGET unicornlua_library
 )
 
 configure_file(
