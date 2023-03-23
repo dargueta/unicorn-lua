@@ -32,7 +32,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # in MSVC:
     # https://stackoverflow.com/questions/1394132/macro-and-member-function-conflict
     # https://github.com/microsoft/cppwinrt/issues/479
-    target_compile_options(cpp_test PRIVATE /Wall /WX /D NOMINMAX /external:anglebrackets /external:W0)
+    target_compile_options(cpp_test PRIVATE /Wall /WX /wd4820 /D NOMINMAX /external:anglebrackets /external:W0)
 else()
     message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
