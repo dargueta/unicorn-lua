@@ -25,6 +25,14 @@ const luaL_Reg kContextInstanceMethods[] = {
 int ul_context_save(lua_State *L) {
     auto engine = get_engine_struct(L, 1);
 
+#ifdef _MSC_VER
+// Disable Visual Studio's Spectre slowness warning. It's cautioning us that the
+// compiler will insert Spectre mitigation code here, and may run slower than
+// expected. I haven't figured out *why* it thinks there's a vuln here, but I
+// don't really care if it's slowed down.
+#pragma warning(push)
+#pragma warning(disable:5045)
+#endif
     if (lua_gettop(L) < 2) {
         // Caller didn't provide a context, create a new one and push it to the stack
         // so we can return it to the caller.
@@ -37,6 +45,9 @@ int ul_context_save(lua_State *L) {
 
         context->engine->update_context(context);
     }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
     return 1;
 }
 
