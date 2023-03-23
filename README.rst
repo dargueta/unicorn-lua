@@ -169,6 +169,9 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
+* A C++ compiler supporting the C11 standard or later. Supported compilers include:
+  * GCC 4.1+ and GCC-compatible compilers like Clang
+  * Visual Studio 2017, version 15.6 or later
 * `cmake`_ 3.18 or higher. Run ``cmake --version`` if you're not sure what
   version you have.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
