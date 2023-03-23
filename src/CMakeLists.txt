@@ -74,7 +74,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")
     set(CMAKE_CXX_FLAGS_RELEASE "/Ot /GR-")
-    target_compile_options(unicornlua_library PRIVATE /W4 /wd4505 /wd4996 /WX)
+
+    # We need to predefine the NOMINMAX macro to get around a naming collision
+    # in MSVC:
+    # https://stackoverflow.com/questions/1394132/macro-and-member-function-conflict
+    # https://github.com/microsoft/cppwinrt/issues/479
+    target_compile_options(unicornlua_library PRIVATE /W4 /wd4505 /wd4996 /WX /D NOMINMAX)
 else()
     message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
