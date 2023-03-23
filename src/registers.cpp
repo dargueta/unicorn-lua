@@ -37,7 +37,7 @@ lua_Number read_float80(const uint8_t *data) {
         if (significand == 0)
             return 0.0;
         if (sign)
-            return std::ldexp(-significand, -16382);
+            return std::ldexp(-static_cast<double>(significand), -16382);
         return std::ldexp(significand, -16382);
     }
     else if (exponent == 0x7fff) {
@@ -84,7 +84,7 @@ lua_Number read_float80(const uint8_t *data) {
 
     // If the high bit of the significand is set, this is a normal value. Ignore
     // the high bit of the significand and compensate for the exponent bias.
-    lua_Number f_part = (significand & 0x7fffffffffffffffULL);
+    auto f_part = static_cast<lua_Number>(significand & 0x7fffffffffffffffULL);
     if (sign)
         f_part *= -1;
 
@@ -167,7 +167,9 @@ void write_float80(lua_Number value, uint8_t *buffer) {
     // The high bit of the significand is always set for normal numbers, and clear for
     // denormal numbers. This means the significand is 63 bits, not 64, hence why we
     // multiply here by 2^62 and not 2^63.
-    uint64_t int_significand = float_significand * (1ULL << 63);
+    auto int_significand = static_cast<uint64_t>(
+        static_cast<int64_t>(float_significand) * (1ULL << 62)
+    );
     if (f_type == FP_NORMAL) {
         int_significand |= 1ULL << 63;
         exponent += 16383;
