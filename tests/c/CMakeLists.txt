@@ -25,7 +25,7 @@ if(IS_LUAJIT)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
-    target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
+    target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -pedantic-errors -frtti)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     # We need to predefine the NOMINMAX macro to get around a naming collision

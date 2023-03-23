@@ -69,7 +69,7 @@ set_target_properties(
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -frtti")
     set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -fno-rtti")
-    target_compile_options(unicornlua_library PRIVATE -Wall -Wextra -Werror -Wpedantic)
+    target_compile_options(unicornlua_library PRIVATE -Wall -Wextra -Werror -Wpedantic -pedantic-errors)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")
