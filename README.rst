@@ -169,7 +169,7 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what
+* `cmake`_ 3.18 or higher. Run ``cmake --version`` if you're not sure what
   version you have.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
   library location. Currently only Unicorn 1.x is supported.
@@ -182,7 +182,21 @@ Just Installing?
 ----------------
 
 If you just want to install this library, open a terminal, navigate to the root
-directory of this repository, and run ``make install``.
+directory of this repository, and run
+
+*NIX systems, MacOS, Cygwin:
+
+.. code-block:: sh
+
+    ./configure && sudo make install
+
+Windows:
+
+.. code-block:: sh
+
+    sh configure
+    cmake --install cmake-build-release
+
 
 Development
 -----------
@@ -272,8 +286,9 @@ in general) works. You can run an example with
 License
 -------
 
-I'm releasing this under the terms of the `New BSD License`_. For the full legal
-text, see ``LICENSE.txt``.
+See NOTICE.txt and LICENSE.txt for details. I'm legally required to release this
+under GPL 2+ due to QEMU's license, so please don't ask me to change this to MIT
+or 3-clause BSD. Sorry.
 
 
 **Footnotes**
