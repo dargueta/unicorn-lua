@@ -28,7 +28,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     target_compile_options(cpp_test PRIVATE -Wall -Wextra -Werror -Wpedantic -frtti)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
-    target_compile_options(cpp_test PRIVATE /Wall /WX)
+    target_compile_options(cpp_test PRIVATE /W4 /WX)
 else()
     message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
