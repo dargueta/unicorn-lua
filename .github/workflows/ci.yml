@@ -52,7 +52,9 @@ jobs:
         run: sh configure -d && sudo make install
         if: ${{ !contains(matrix.operating-system, 'windows') }}
       - name: Install Binding (Windows)
-        run: cmake --install cmake-build-debug
+        run: |
+            sh configure -d 
+            make install
         if: ${{ contains(matrix.operating-system, 'windows') }}
       - name: Run tests
         run: make test
