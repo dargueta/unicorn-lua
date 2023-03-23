@@ -7,6 +7,7 @@
 #include "unicornlua/lua.h"
 #include "unicornlua/memory.h"
 #include "unicornlua/registers.h"
+#include "unicornlua/unicornlua.h"
 #include "unicornlua/utils.h"
 
 

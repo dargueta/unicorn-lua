@@ -126,7 +126,7 @@ static bool is_snan(lua_Number value) {
 
 void write_float80(lua_Number value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
-    uint16_t sign_bit = std::signbit(value) ? 0x8000 : 0;
+    uint16_t sign_bit = std::signbit(value) ? 0x8000U : 0U;
 
     switch (f_type) {
         case FP_INFINITE:
