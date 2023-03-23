@@ -6,6 +6,8 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <numeric>
+#include <sstream>
 
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
@@ -640,6 +642,77 @@ void Register::push_to_lua(lua_State *L) const {
 }
 
 
+/**
+ * Cast @a value to type @a T, or throw an exception if it exceeds the range of
+ * representable values.
+ *
+ * @tparam T The type to cast @a value to.
+ * @param value The value to convert.
+ *
+ * @return @a value cast to type @a T.
+ */
+template <typename T>
+T try_cast(lua_Integer value) {
+    auto ext_value = static_cast<intmax_t>(value);
+
+    constexpr intmax_t min = std::numeric_limits<T>::min();
+    constexpr intmax_t max = std::numeric_limits<T>::max();
+    if ((ext_value >= min) && (ext_value <= max))
+        return static_cast<T>(value);
+
+    // If we get here then `value` isn't representable as a T.
+    auto buf = std::ostringstream();
+    buf << "Numeric value out of range: " << value << " is not within ["
+        << min << ", " << max << "].";
+
+    throw std::domain_error(buf.str());
+}
+
+
+/**
+ * Read a Lua integer from the stack and write it to @a buffer as a type @a T.
+ *
+ * @tparam T
+ * @param L
+ * @param value_index
+ * @param buffer
+ */
+template<typename T>
+void write_lua_integer(lua_State *L, int value_index, void *buffer) {
+    lua_Integer lua_int = lua_tointeger(L, value_index);
+    T native_value = try_cast<T>(lua_int);
+    *reinterpret_cast<T *>(buffer) = native_value;
+}
+
+
+/**
+ * Write a sequence of Lua integers from a table into a buffer.
+ *
+ * All values in the table must be representable as a @a T. If any value exceeds
+ * the type's minimum or maximum values, the function throws an exception.
+ *
+ * @tparam T
+ * @param L
+ * @param table_index
+ * @param n_elements
+ * @param buffer
+ */
+template<typename T>
+void write_lua_integer_array(
+    lua_State *L, int table_index, int n_elements, void *buffer
+) {
+    for (int i = 0; i < n_elements; ++i) {
+        lua_geti(L, table_index, i + 1);
+        write_lua_integer<T>(
+            L,
+            -1,
+            reinterpret_cast<T *>(buffer) + i
+        );
+        lua_pop(L, 1);
+    }
+}
+
+
 Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
     int i;
     register_buffer_type buffer;
@@ -647,79 +720,49 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
 
     switch (kind) {
         case UL_REG_TYPE_INT8:
-            *(int8_t *)buffer = lua_tointeger(L, value_index);
+            write_lua_integer<int8_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_INT16:
-            *(int16_t *)buffer = lua_tointeger(L, value_index);
+            write_lua_integer<int16_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_INT32:
-            *(int32_t *)buffer = lua_tointeger(L, value_index);
+            write_lua_integer<int32_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_FLOAT32:
             *(uclua_float32 *)buffer = lua_tonumber(L, value_index);
             break;
         case UL_REG_TYPE_INT64:
-            *(int64_t *)buffer = lua_tointeger(L, value_index);
+            write_lua_integer<int64_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_FLOAT64:
             *(uclua_float64 *)buffer = lua_tonumber(L, value_index);
             break;
         case UL_REG_TYPE_INT8_ARRAY_8:
-            for (i = 0; i < 8; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int8_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int8_t>(L, value_index, 8, buffer);
             break;
         case UL_REG_TYPE_INT16_ARRAY_4:
-            for (i = 0; i < 4; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int16_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int16_t>(L, value_index, 4, buffer);
             break;
         case UL_REG_TYPE_INT32_ARRAY_2:
-            for (i = 0; i < 2; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int32_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int32_t>(L, value_index, 2, buffer);
             break;
         case UL_REG_TYPE_INT64_ARRAY_1:
-            lua_geti(L, value_index, 1);
-            *(int64_t *)buffer = lua_tointeger(L, -1);
-            lua_pop(L, 1);
+            write_lua_integer_array<int64_t>(L, value_index, 1, buffer);
             break;
         case UL_REG_TYPE_FLOAT80:
             write_float80(lua_tonumber(L, value_index), buffer);
             break;
         case UL_REG_TYPE_INT8_ARRAY_16:
-            for (i = 0; i < 16; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int8_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int8_t>(L, value_index, 16, buffer);
             break;
         case UL_REG_TYPE_INT16_ARRAY_8:
-            for (i = 0; i < 8; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int16_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int16_t>(L, value_index, 8, buffer);
             break;
         case UL_REG_TYPE_INT32_ARRAY_4:
-            for (i = 0; i < 4; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int32_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int32_t>(L, value_index, 4, buffer);
             break;
         case UL_REG_TYPE_INT64_ARRAY_2:
-            for (i = 0; i < 2; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int64_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int64_t>(L, value_index, 2, buffer);
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_4:
             for (i = 0; i < 4; ++i) {
@@ -736,32 +779,16 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
             }
             break;
         case UL_REG_TYPE_INT8_ARRAY_32:
-            for (i = 0; i < 32; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int8_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int8_t>(L, value_index, 32, buffer);
             break;
         case UL_REG_TYPE_INT16_ARRAY_16:
-            for (i = 0; i < 16; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int16_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int16_t>(L, value_index, 16, buffer);
             break;
         case UL_REG_TYPE_INT32_ARRAY_8:
-            for (i = 0; i < 8; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int32_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int32_t>(L, value_index, 8, buffer);
             break;
         case UL_REG_TYPE_INT64_ARRAY_4:
-            for (i = 0; i < 4; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int64_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int64_t>(L, value_index, 4, buffer);
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_8:
             for (i = 0; i < 8; ++i) {
@@ -778,25 +805,13 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
             }
             break;
         case UL_REG_TYPE_INT8_ARRAY_64:
-            for (i = 0; i < 64; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int8_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int8_t>(L, value_index, 64, buffer);
             break;
         case UL_REG_TYPE_INT32_ARRAY_16:
-            for (i = 0; i < 16; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int32_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int32_t>(L, value_index, 16, buffer);
             break;
         case UL_REG_TYPE_INT64_ARRAY_8:
-            for (i = 0; i < 8; ++i) {
-                lua_geti(L, value_index, i + 1);
-                ((int64_t *)buffer)[i] = lua_tointeger(L, -1);
-                lua_pop(L, 1);
-            }
+            write_lua_integer_array<int64_t>(L, value_index, 8, buffer);
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_16:
             for (i = 0; i < 16; ++i) {
