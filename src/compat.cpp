@@ -36,6 +36,16 @@ LUA_API int lua_geti(lua_State *L, int index, lua_Integer i) {
 /* Compatibility stuff for Lua < 5.2 */
 #if LUA_VERSION_NUM < 502
 
+#ifdef _MSC_VER
+    // This complains about potentially-throwing functions being passed to a
+    // function declared with `extern "C"`. I'm loath to modify copied and pasted
+    // code I don't understand, so we're going to ignore this instead of fixing
+    // it.
+    #pragma warning(push)
+    #pragma warning(disable:5039)
+#endif
+
+
 /* This is an exact copy of the 5.3 implementation. */
 LUALIB_API void luaL_setmetatable(lua_State *L, const char *tname) {
     luaL_getmetatable(L, tname);
@@ -90,5 +100,10 @@ LUA_API void lua_rawsetp(lua_State *L, int index, const void *p) {
     lua_rawset(L, index);   // Set table, stack is [ ... V ]
     lua_pop(L, 1);          // Remove extra value, stack is back to how it was.
 }
+
+
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
 
 #endif
