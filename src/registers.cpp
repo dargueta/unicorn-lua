@@ -126,7 +126,7 @@ static bool is_snan(lua_Number value) {
 
 void write_float80(lua_Number value, uint8_t *buffer) {
     int f_type = std::fpclassify(value);
-    uint16_t sign_bit = std::signbit(value) ? 0x8000U : 0U;
+    int sign_bit = std::signbit(value) ? 0x8000 : 0;
 
     switch (f_type) {
         case FP_INFINITE:
@@ -180,17 +180,8 @@ void write_float80(lua_Number value, uint8_t *buffer) {
         exponent = 0;
 
     *reinterpret_cast<uint64_t *>(buffer) = int_significand;
-
-#ifdef _MSC_VER
-// I don't know why MSVC is screaming at me about signed/unsigned mixing
-#pragma warning(push)
-#pragma warning(disable:4365)
-#endif
     *reinterpret_cast<uint16_t *>(buffer + 8U) =
-        static_cast<uint16_t>(exponent) | sign_bit;
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+        static_cast<uint16_t>(exponent | sign_bit);
 }
 
 
