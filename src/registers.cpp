@@ -247,6 +247,7 @@ size_t Register::size_for_register_kind(RegisterDataType kind) {
         case UL_REG_TYPE_FLOAT64_ARRAY_4:
             return 32;
         case UL_REG_TYPE_INT8_ARRAY_64:
+        case UL_REG_TYPE_INT16_ARRAY_32:
         case UL_REG_TYPE_INT32_ARRAY_16:
         case UL_REG_TYPE_INT64_ARRAY_8:
         case UL_REG_TYPE_FLOAT32_ARRAY_16:
@@ -456,7 +457,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_8xi8 = this->as_8xi8();
             lua_createtable(L, 8, 0);
             for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xi8[i]);
+                lua_pushinteger(L, static_cast<lua_Integer>(values_8xi8[i]));
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -464,7 +465,7 @@ void Register::push_to_lua(lua_State *L) const {
             values_4xi16 = this->as_4xi16();
             lua_createtable(L, 4, 0);
             for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, values_4xi16[i]);
+                lua_pushinteger(L, static_cast<lua_Integer>(values_4xi16[i]));
                 lua_seti(L, -2, i + 1);
             }
             break;
@@ -478,6 +479,7 @@ void Register::push_to_lua(lua_State *L) const {
             break;
         case UL_REG_TYPE_INT64_ARRAY_1:
             lua_createtable(L, 1, 0);
+            // FIXME (dargueta): This invokes undefined behavior for 32-bit Lua
             lua_pushinteger(L, this->as_int64());
             lua_seti(L, -2, 1);
             break;
