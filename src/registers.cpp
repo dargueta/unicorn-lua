@@ -184,6 +184,18 @@ void write_float80(lua_Number value, uint8_t *buffer) {
 }
 
 
+template <class T, size_t N>
+void integer_array_to_table(lua_State *L, const std::array<T, N>& arr) {
+    static_assert(N > 0 && N <= 128, "Array length must be in [1, 128]");
+    lua_createtable(L, N, 0);
+
+    for (size_t i = 0; i < N; ++i) {
+        lua_pushinteger(L, arr[i]);
+        lua_seti(L, -2, static_cast<int>(i) + 1);
+    }
+}
+
+
 template <class T, int N>
 std::array<T, N> Register::array_cast() const {
     std::array<T, N> value{};
@@ -412,21 +424,6 @@ std::array<uclua_float32, 16> Register::as_16xf32() const {
 void Register::push_to_lua(lua_State *L) const {
     int i;
 
-    std::array<int16_t, 32> values_32xi16{};
-    std::array<int16_t, 16> values_16xi16{};
-    std::array<int16_t, 4> values_4xi16{};
-    std::array<int16_t, 8> values_8xi16{};
-    std::array<int32_t, 16> values_16xi32{};
-    std::array<int32_t, 2> values_2xi32{};
-    std::array<int32_t, 4> values_4xi32{};
-    std::array<int32_t, 8> values_8xi32{};
-    std::array<int64_t, 2> values_2xi64{};
-    std::array<int64_t, 4> values_4xi64{};
-    std::array<int64_t, 8> values_8xi64{};
-    std::array<int8_t, 16> values_16xi8{};
-    std::array<int8_t, 32> values_32xi8{};
-    std::array<int8_t, 64> values_64xi8{};
-    std::array<int8_t, 8> values_8xi8{};
     std::array<uclua_float32, 16> values_16xf32{};
     std::array<uclua_float32, 4> values_4xf32{};
     std::array<uclua_float32, 8> values_8xf32{};
@@ -454,28 +451,13 @@ void Register::push_to_lua(lua_State *L) const {
             lua_pushnumber(L, this->as_float64());
             break;
         case UL_REG_TYPE_INT8_ARRAY_8:
-            values_8xi8 = this->as_8xi8();
-            lua_createtable(L, 8, 0);
-            for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, static_cast<lua_Integer>(values_8xi8[i]));
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_8xi8());
             break;
         case UL_REG_TYPE_INT16_ARRAY_4:
-            values_4xi16 = this->as_4xi16();
-            lua_createtable(L, 4, 0);
-            for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, static_cast<lua_Integer>(values_4xi16[i]));
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_4xi16());
             break;
         case UL_REG_TYPE_INT32_ARRAY_2:
-            values_2xi32 = this->as_2xi32();
-            lua_createtable(L, 2, 0);
-            for (i = 0; i < 2; ++i) {
-                lua_pushinteger(L, values_2xi32[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_2xi32());
             break;
         case UL_REG_TYPE_INT64_ARRAY_1:
             lua_createtable(L, 1, 0);
@@ -494,36 +476,16 @@ void Register::push_to_lua(lua_State *L) const {
             break;
             */
         case UL_REG_TYPE_INT8_ARRAY_16:
-            values_16xi8 = this->as_16xi8();
-            lua_createtable(L, 16, 0);
-            for (i = 0; i < 16; ++i) {
-                lua_pushinteger(L, values_16xi8[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_16xi8());
             break;
         case UL_REG_TYPE_INT16_ARRAY_8:
-            values_8xi16 = this->as_8xi16();
-            lua_createtable(L, 8, 0);
-            for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xi16[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_8xi16());
             break;
         case UL_REG_TYPE_INT32_ARRAY_4:
-            values_4xi32 = this->as_4xi32();
-            lua_createtable(L, 4, 0);
-            for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, values_4xi32[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_4xi32());
             break;
         case UL_REG_TYPE_INT64_ARRAY_2:
-            values_2xi64 = this->as_2xi64();
-            lua_createtable(L, 2, 0);
-            for (i = 0; i < 2; ++i) {
-                lua_pushinteger(L, values_2xi64[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_2xi64());
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_4:
             values_4xf32 = this->as_4xf32();
@@ -542,36 +504,16 @@ void Register::push_to_lua(lua_State *L) const {
             }
             break;
         case UL_REG_TYPE_INT8_ARRAY_32:
-            values_32xi8 = this->as_32xi8();
-            lua_createtable(L, 32, 0);
-            for (i = 0; i < 32; ++i) {
-                lua_pushinteger(L, values_32xi8[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_32xi8());
             break;
         case UL_REG_TYPE_INT16_ARRAY_16:
-            values_16xi16 = this->as_16xi16();
-            lua_createtable(L, 16, 0);
-            for (i = 0; i < 16; ++i) {
-                lua_pushinteger(L, values_16xi16[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_16xi16());
             break;
         case UL_REG_TYPE_INT32_ARRAY_8:
-            values_8xi32 = this->as_8xi32();
-            lua_createtable(L, 8, 0);
-            for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xi32[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_8xi32());
             break;
         case UL_REG_TYPE_INT64_ARRAY_4:
-            values_4xi64 = this->as_4xi64();
-            lua_createtable(L, 4, 0);
-            for (i = 0; i < 4; ++i) {
-                lua_pushinteger(L, values_4xi64[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_4xi64());
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_8:
             values_8xf32 = this->as_8xf32();
@@ -590,28 +532,13 @@ void Register::push_to_lua(lua_State *L) const {
             }
             break;
         case UL_REG_TYPE_INT8_ARRAY_64:
-            values_64xi8 = this->as_64xi8();
-            lua_createtable(L, 64, 0);
-            for (i = 0; i < 64; ++i) {
-                lua_pushinteger(L, values_64xi8[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_64xi8());
             break;
         case UL_REG_TYPE_INT32_ARRAY_16:
-            values_16xi32 = this->as_16xi32();
-            lua_createtable(L, 16, 0);
-            for (i = 0; i < 16; ++i) {
-                lua_pushinteger(L, values_16xi32[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_16xi32());
             break;
         case UL_REG_TYPE_INT64_ARRAY_8:
-            values_8xi64 = this->as_8xi64();
-            lua_createtable(L, 8, 0);
-            for (i = 0; i < 8; ++i) {
-                lua_pushinteger(L, values_8xi64[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_8xi64());
             break;
         case UL_REG_TYPE_FLOAT32_ARRAY_16:
             values_16xf32 = this->as_16xf32();
@@ -630,12 +557,7 @@ void Register::push_to_lua(lua_State *L) const {
             }
             break;
         case UL_REG_TYPE_INT16_ARRAY_32:
-            values_32xi16 = this->as_32xi16();
-            lua_createtable(L, 32, 0);
-            for (i = 0; i < 32; ++i) {
-                lua_pushinteger(L, values_32xi16[i]);
-                lua_seti(L, -2, i + 1);
-            }
+            integer_array_to_table(L, this->as_32xi16());
             break;
         case UL_REG_TYPE_UNKNOWN:
         default:
