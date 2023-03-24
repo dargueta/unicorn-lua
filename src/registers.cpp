@@ -626,13 +626,15 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
             write_lua_integer<int32_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_FLOAT32:
-            *(uclua_float32 *)buffer = lua_tonumber(L, value_index);
+            *reinterpret_cast<uclua_float32 *>(buffer) =
+                static_cast<uclua_float32>(lua_tonumber(L, value_index));
             break;
         case UL_REG_TYPE_INT64:
             write_lua_integer<int64_t>(L, value_index, buffer);
             break;
         case UL_REG_TYPE_FLOAT64:
-            *(uclua_float64 *)buffer = lua_tonumber(L, value_index);
+            *reinterpret_cast<uclua_float64 *>(buffer) =
+                static_cast<uclua_float64>(lua_tonumber(L, value_index));
             break;
         case UL_REG_TYPE_INT8_ARRAY_8:
             write_lua_integer_array<int8_t>(L, value_index, 8, buffer);
@@ -690,14 +692,16 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
         case UL_REG_TYPE_FLOAT32_ARRAY_8:
             for (i = 0; i < 8; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float32 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float32 *>(buffer)[i] =
+                    static_cast<uclua_float32>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
         case UL_REG_TYPE_FLOAT64_ARRAY_4:
             for (i = 0; i < 4; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float64 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float64 *>(buffer)[i] =
+                    static_cast<uclua_float64>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
@@ -716,14 +720,16 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
         case UL_REG_TYPE_FLOAT32_ARRAY_16:
             for (i = 0; i < 16; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float32 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float32 *>(buffer)[i] =
+                    static_cast<uclua_float32>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
         case UL_REG_TYPE_FLOAT64_ARRAY_8:
             for (i = 0; i < 8; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float64 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float64 *>(buffer)[i] =
+                    static_cast<uclua_float64>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
@@ -743,7 +749,8 @@ int ul_reg_write(lua_State *L) {
     register_buffer_type buffer;
 
     memset(buffer, 0, sizeof(buffer));
-    *reinterpret_cast<int_least64_t *>(buffer) = static_cast<int_least64_t>(luaL_checkinteger(L, 3));
+    *reinterpret_cast<int_least64_t *>(buffer) =
+        static_cast<int_least64_t>(luaL_checkinteger(L, 3));
 
     uc_err error = uc_reg_write(engine, register_id, buffer);
     if (error != UC_ERR_OK)
