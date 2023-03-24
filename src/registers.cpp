@@ -180,7 +180,17 @@ void write_float80(lua_Number value, uint8_t *buffer) {
         exponent = 0;
 
     *reinterpret_cast<uint64_t *>(buffer) = int_significand;
-    *reinterpret_cast<uint16_t *>(buffer + 8) = static_cast<uint16_t>(exponent) | sign_bit;
+
+#ifdef _MSC_VER
+// I don't know why MSVC is screaming at me about signed/unsigned mixing
+#pragma warning(push)
+#pragma warning(disable:4365)
+#endif
+    *reinterpret_cast<uint16_t *>(buffer + 8U) =
+        static_cast<uint16_t>(exponent) | sign_bit;
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 }
 
 
@@ -666,14 +676,16 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
         case UL_REG_TYPE_FLOAT32_ARRAY_4:
             for (i = 0; i < 4; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float32 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float32 *>(buffer)[i] =
+                    static_cast<uclua_float32>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
         case UL_REG_TYPE_FLOAT64_ARRAY_2:
             for (i = 0; i < 2; ++i) {
                 lua_geti(L, value_index, i + 1);
-                ((uclua_float64 *)buffer)[i] = lua_tonumber(L, -1);
+                reinterpret_cast<uclua_float64 *>(buffer)[i] =
+                    static_cast<uclua_float64>(lua_tonumber(L, -1));
                 lua_pop(L, 1);
             }
             break;
@@ -834,7 +846,7 @@ int ul_reg_write_batch(lua_State *L) {
     /* Second argument will be a table with key-value pairs, the keys being the
      * registers to write to and the values being the values to write to the
      * corresponding registers. */
-    int n_registers = count_table_elements(L, 2);
+    size_t n_registers = count_table_elements(L, 2);
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
     std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
@@ -843,7 +855,7 @@ int ul_reg_write_batch(lua_State *L) {
     /* Iterate through the register/value pairs and put them in the corresponding
      * array positions. */
     lua_pushnil(L);
-    for (int i = 0; lua_next(L, 2) != 0; ++i) {
+    for (size_t i = 0; lua_next(L, 2) != 0; ++i) {
         register_ids[i] = static_cast<int>(luaL_checkinteger(L, -2));
         values[i] = static_cast<int_least64_t>(luaL_checkinteger(L, -1));
         p_values[i] = &values[i];
@@ -851,7 +863,10 @@ int ul_reg_write_batch(lua_State *L) {
     }
 
     uc_err error = uc_reg_write_batch(
-        engine, register_ids.get(), p_values.get(), n_registers
+        engine,
+        register_ids.get(),
+        p_values.get(),
+        static_cast<int>(n_registers)
     );
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -860,14 +875,14 @@ int ul_reg_write_batch(lua_State *L) {
 
 
 static void prepare_batch_buffers(
-    int n_registers,
+    size_t n_registers,
     std::unique_ptr<register_buffer_type[]>& values,
     std::unique_ptr<void *[]>& value_pointers
 ) {
     values.reset(new register_buffer_type[n_registers]);
     value_pointers.reset(new void *[n_registers]);
 
-    for (int i = 0; i < n_registers; ++i)
+    for (size_t i = 0; i < n_registers; ++i)
         value_pointers[i] = &values[i];
     memset(values.get(), 0, n_registers * sizeof(register_buffer_type));
 }
@@ -875,32 +890,38 @@ static void prepare_batch_buffers(
 
 int ul_reg_read_batch(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    int n_registers = lua_gettop(L) - 1;
+    auto n_registers = static_cast<size_t>(lua_gettop(L)) - 1;
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
     std::unique_ptr<register_buffer_type[]> values;
     std::unique_ptr<void *[]> value_pointers;
 
     prepare_batch_buffers(n_registers, values, value_pointers);
-    for (int i = 0; i < n_registers; ++i)
-        register_ids[i] = (int)lua_tointeger(L, i + 2);
+    for (size_t i = 0; i < n_registers; ++i)
+        register_ids[i] = static_cast<int>(lua_tointeger(L, static_cast<int>(i) + 2));
 
     uc_err error = uc_reg_read_batch(
-        engine, register_ids.get(), value_pointers.get(), n_registers
+        engine,
+        register_ids.get(),
+        value_pointers.get(),
+        static_cast<int>(n_registers)
     );
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
-    for (int i = 0; i < n_registers; ++i)
-        lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(values[i]));
-
-    return n_registers;
+    for (size_t i = 0; i < n_registers; ++i) {
+        lua_pushinteger(
+            L,
+            *reinterpret_cast<lua_Integer *>(values[i])
+        );
+    }
+    return static_cast<int>(n_registers);
 }
 
 
 int ul_reg_read_batch_as(lua_State *L) {
     uc_engine *engine = ul_toengine(L, 1);
-    int n_registers = count_table_elements(L, 2);
+    size_t n_registers = count_table_elements(L, 2);
 
     std::unique_ptr<int[]> register_ids(new int[n_registers]);
     std::unique_ptr<int[]> value_types(new int[n_registers]);
@@ -912,14 +933,17 @@ int ul_reg_read_batch_as(lua_State *L) {
     // Iterate through the second argument -- a table mapping register IDs to
     // the types we want them back as.
     lua_pushnil(L);
-    for (int i = 0; lua_next(L, 2) != 0; ++i) {
+    for (size_t i = 0; lua_next(L, 2) != 0; ++i) {
         register_ids[i] = (int)luaL_checkinteger(L, -2);
         value_types[i] = (int)luaL_checkinteger(L, -1);
         lua_pop(L, 1);
     }
 
     uc_err error = uc_reg_read_batch(
-        engine, register_ids.get(), value_pointers.get(), n_registers
+        engine,
+        register_ids.get(),
+        value_pointers.get(),
+        static_cast<int>(n_registers)
     );
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -927,8 +951,8 @@ int ul_reg_read_batch_as(lua_State *L) {
     // Create the table we're going to return the register values in. The result
     // is a key-value mapping where the keys are the register IDs and the values
     // are the typecasted values read from the registers.
-    lua_createtable(L, 0, n_registers);
-    for (int i = 0; i < n_registers; ++i) {
+    lua_createtable(L, 0, static_cast<int>(n_registers));
+    for (size_t i = 0; i < n_registers; ++i) {
         // Key: register ID
         lua_pushinteger(L, register_ids[i]);
 

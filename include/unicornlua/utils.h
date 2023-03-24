@@ -50,6 +50,6 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
  * `luaL_len()` only returns the number of entries in the array part of a table,
  * so this function iterates through the entirety of the table and returns the
  * result. */
-int count_table_elements(lua_State *L, int table_index);
+size_t count_table_elements(lua_State *L, int table_index);
 
 #endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */

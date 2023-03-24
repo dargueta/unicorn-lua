@@ -29,8 +29,8 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants) {
 }
 
 
-int count_table_elements(lua_State *L, int table_index) {
-    int count = 0;
+size_t count_table_elements(lua_State *L, int table_index) {
+    size_t count = 0;
 
     lua_pushnil(L);
     for (count = 0; lua_next(L, table_index) != 0; ++count)
