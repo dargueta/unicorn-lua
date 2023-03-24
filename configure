@@ -46,4 +46,4 @@ make -f profile.mk -B LUA="${LUA}" LUAROCKS="${LUAROCKS}" BUILD_TYPE=${build_typ
 
 build_dir=`pwd`/cmake-build-$build_type
 
-cmake -C lua-profile.cmake -S . -B "$build_dir"
+cmake -C lua-profile.cmake -S . -B "$build_dir" -D CMAKE_VERBOSE_MAKEFILE=YES

@@ -70,6 +70,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -frtti")
     set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -fno-rtti")
     target_compile_options(unicornlua_library PRIVATE -Wall -Wextra -Werror -Wpedantic -pedantic-errors)
+
+    # Lua isn't compiled as relocatable by default. On *NIX systems, that means
+    # it needs to be statically linked so we add it as a source.
+    target_sources(unicornlua_library PUBLIC ${LUA_LIBRARY})
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")
@@ -80,10 +84,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # https://stackoverflow.com/questions/1394132/macro-and-member-function-conflict
     # https://github.com/microsoft/cppwinrt/issues/479
     target_compile_options(unicornlua_library PRIVATE /Wall /WX /wd4820 /wd5045 /D NOMINMAX /external:anglebrackets /external:W0)
+
+    target_link_libraries(unicornlua_library PUBLIC "${LUA_LIBRARY}")
 else()
     message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
-
 
 # Apparently OSX requires this stuff: https://stackoverflow.com/q/42371892
 if (CMAKE_HOST_APPLE)
@@ -92,17 +97,12 @@ endif()
 
 
 target_link_libraries(
-    unicornlua_library LINK_PUBLIC ${UNICORN_LIBRARY} ${PTHREADS_LIBRARY}
+    unicornlua_library PUBLIC "${UNICORN_LIBRARY}" "${PTHREADS_LIBRARY}"
 )
-
-
-# Lua needs to be statically linked so we add it as a source, not a library to
-# link to.
-target_sources(unicornlua_library PUBLIC ${LUA_LIBRARY})
 
 # For some reason this is required only for LuaJIT on *NIX platforms except OSX.
 if(IS_LUAJIT AND UNIX AND (NOT APPLE))
-    target_link_libraries(unicornlua_library LINK_PUBLIC dl)
+    target_link_libraries(unicornlua_library PUBLIC dl)
 endif()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
