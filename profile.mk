@@ -33,3 +33,4 @@ lua-profile.cmake: tools/profile_lua.lua
 	$(PROFILE) -f cmake $@
 	echo 'set(CMAKE_INSTALL_PREFIX $${INST_LIBDIR})' >> $@
 	echo 'set(CMAKE_BUILD_TYPE $(BUILD_TYPE))' >> $@
+	echo 'set(CMAKE_INSTALL_CONFIG_NAME ${BUILD_TYPE})' >> $@
