@@ -94,14 +94,15 @@ def main():
         unpacked_directory = os.path.join(
             data_dir, ARCHIVE_DIRECTORY.format(version=unicorn_version, bits=bits)
         )
-        full_dll_path = os.path.join(unpacked_directory, "unicorn.dll")
 
-        # Put the DLL where Windows can find it
-        dll_dir = get_windows_system_install_dir()
-        logging.info(
-            "Moving DLL to Windows directory: %s -> %s", full_dll_path, dll_dir
-        )
-        shutil.move(full_dll_path, dll_dir)
+        # Put the libraries where Windows can find them
+        for filename in ("unicorn.dll", "unicorn.lib"):
+            lib_path = os.path.join(unpacked_directory, filename)
+            target_dir = get_windows_system_install_dir()
+            logging.info(
+                "Moving library to Windows directory: %s -> %s", lib_path, target_dir
+            )
+            shutil.move(lib_path, target_dir)
 
         # Move the headers over as well
         target_headers_dir = HEADERS_DIR.format(version=unicorn_version, bits=bits)
