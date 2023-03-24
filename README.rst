@@ -34,6 +34,14 @@ Known Limitations
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
 
+32-bit Lua Behavior
+~~~~~~~~~~~~~~~~~~~
+
+Behavior for 32-bit Lua (i.e. compiled with ``LUA_32BITS`` set to a nonzero value)
+won't handle 64-bit integers properly. Exactly what happens is technically
+undefined until C++20, but most likely you would silently lose the upper 32 bits.
+It's for this reason I strongly discourage using such builds.
+
 64-bit Integers
 ~~~~~~~~~~~~~~~
 
@@ -180,6 +188,8 @@ before using.
   look in its standard places plus ``C:\Program Files\UnicornEngine``; if you
   don't have them there, you'll need to override the settings.
 * Some examples have additional dependencies; see their READMEs for details.
+* Lua 5.1 or higher, as well as the static library and headers. Lua 5.3 and above
+  must *not* have been compiled with the ``LUA_32BITS`` option set.
 
 Just Installing?
 ----------------

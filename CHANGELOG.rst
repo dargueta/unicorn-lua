@@ -1,6 +1,33 @@
 Changes
 =======
 
+2.1.0 (unreleased)
+------------------
+
+New Features
+~~~~~~~~~~~~
+
+* Support for Visual Studio is finally here! You need MSVC 2017, version 15.6 or later.
+* Now (theoretically) works on platforms where ``CHAR_BIT`` is not 8.
+* Automatic detection of installed headers allows adding or removal of architectures
+  without changing any code.
+
+Bugfixes
+~~~~~~~~
+
+* Trying to use an array of 32 16-bit integers would sometimes crash because of
+  an accidental omission of its handler.
+* Fixed buffer overflow when reading 64-bit registers on 32-bit Lua.
+* Fixed outdated documentation.
+
+Other Changes
+~~~~~~~~~~~~~
+
+Writing a value that is too large to fit into a register will now throw an
+exception instead of triggering compiler-specific behavior. Before, trying to
+write 256 to an 8-bit register could set it to 0 instead, or might do something
+else depending on the compiler.
+
 2.0.0 (2023-03-20)
 ------------------
 
