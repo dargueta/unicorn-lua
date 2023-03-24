@@ -180,7 +180,7 @@ void write_float80(lua_Number value, uint8_t *buffer) {
         exponent = 0;
 
     *reinterpret_cast<uint64_t *>(buffer) = int_significand;
-    *reinterpret_cast<uint16_t *>(buffer + 8) = ((uint16_t)exponent) | sign_bit;
+    *reinterpret_cast<uint16_t *>(buffer + 8) = static_cast<uint16_t>(exponent) | sign_bit;
 }
 
 
@@ -808,6 +808,9 @@ Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
             break;
         case UL_REG_TYPE_INT8_ARRAY_64:
             write_lua_integer_array<int8_t>(L, value_index, 64, buffer);
+            break;
+        case UL_REG_TYPE_INT16_ARRAY_32:
+            write_lua_integer_array<int16_t>(L, value_index, 32, buffer);
             break;
         case UL_REG_TYPE_INT32_ARRAY_16:
             write_lua_integer_array<int32_t>(L, value_index, 16, buffer);
