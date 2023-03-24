@@ -425,32 +425,32 @@ if lua_library_file_info.stem ~= nil then
     link_flag = "-l" .. lua_library_file_info.stem
 end
 
-function escape_path(path)
+function normalize_path(path)
     if is_windows then
-        return path:gsub("\\", "\\\\")
+        return path:gsub("\\", "/")
     end
     return path
 end
 
 local VARIABLES = {
-    { "LUA_LIBDIR", escape_path(dirname(lua_library_file_info.path or "")) },
+    { "LUA_LIBDIR", normalize_path(dirname(lua_library_file_info.path or "")) },
     -- The directory where the Lua executable is located.
-    { "LUA_BINDIR", escape_path(lua_exe_dir) },
+    { "LUA_BINDIR", normalize_path(lua_exe_dir) },
     -- The directory where the Lua headers are.
-    { "LUA_INCDIR", escape_path(find_headers() or "") },
+    { "LUA_INCDIR", normalize_path(find_headers() or "") },
     -- The filename of the Lua library, not always provided.
-    { "LUALIB", escape_path(basename(lua_library_file_info.path or "")) },
+    { "LUALIB", normalize_path(basename(lua_library_file_info.path or "")) },
     -- The Lua executable.
-    { "LUA", escape_path(lua_exe) or "lua" },
+    { "LUA", normalize_path(lua_exe) or "lua" },
     -- The installation prefix.
     -- TODO (dargueta): Figure out this installation prefix thing
     { "INST_PREFIX", "" },
     -- The directory where executable Lua scripts go.
-    { "INST_BINDIR", escape_path(lua_exe_dir) },
+    { "INST_BINDIR", normalize_path(lua_exe_dir) },
     -- The directory where Lua C libraries go.
-    { "INST_LIBDIR", escape_path(c_library_dir) },
+    { "INST_LIBDIR", normalize_path(c_library_dir) },
     -- The directory where Lua script libraries go.
-    { "INST_LUADIR", escape_path(lua_library_dir) },
+    { "INST_LUADIR", normalize_path(lua_library_dir) },
     -- The directory where configuration files go.\n")
     { "INST_CONFDIR", "" },
     -- The flag to pass to the linker for linking to Lua\n")
@@ -461,7 +461,7 @@ local VARIABLES = {
     { "LIBRARY_FILE_EXTENSION", c_library_extension },
     { "IS_LUAJIT", is_luajit },
     { "IS_WINDOWS", is_windows },
-    { "LUAROCKS", escape_path(LUAROCKS_PATH or "")},
+    { "LUAROCKS", normalize_path(LUAROCKS_PATH or "")},
 }
 
 -- Output the same variables that LuaRocks does, using ?= for assignment so that
