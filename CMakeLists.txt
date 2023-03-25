@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(UnicornLua VERSION 2.1.0 LANGUAGES CXX)
 
-include("${PROJECT_SOURCE_DIR}/lua-profile.cmake")
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -11,32 +9,36 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS}" DIRECTORY)
 set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-# These might be set by the user.
-if(NOT DEFINED UNICORN_HEADERS_PATH)
-    find_path(
-        UNICORN_HEADERS_PATH unicorn/unicorn.h
-        HINTS "C:/Program Files/UnicornEngine"
-        PATH_SUFFIXES include
-    )
+if(IS_LUAJIT)
+    add_compile_definitions(IS_LUAJIT=1)
 endif()
 
-if (UNICORN_HEADERS_PATH STREQUAL "UNICORN_HEADERS_PATH-NOTFOUND")
-    message(FATAL_ERROR "Unicorn doesn't appear to be installed, or the headers are in an unexpected location.")
-endif()
 
-set(LUA_LIBRARY "${LUA_LIBDIR}/${LUALIB}")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
+    add_compile_options(-Wall -Wextra -Werror -Wpedantic -pedantic-errors)
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -frtti")
+    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -fno-rtti")
+elseif(MSVC)
+    # Visual studio options
+    add_compile_options(/Wall /WX /wd4820 /wd5045 /external:anglebrackets /external:W0)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")
+    set(CMAKE_CXX_FLAGS_RELEASE "/Ot /GR-")
 
-
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-    find_library(UNICORN_LIBRARY NAMES unicorn REQUIRED)
-    set(PTHREADS_LIBRARY "")
+    # We need to predefine the NOMINMAX macro to get around a naming collision
+    # in MSVC:
+    # https://stackoverflow.com/questions/1394132/macro-and-member-function-conflict
+    # https://github.com/microsoft/cppwinrt/issues/479
+    add_compile_definitions(NOMINMAX)
 else()
-    find_library(UNICORN_LIBRARY NAMES unicorn libunicorn HINTS /usr/lib64 /usr/lib32 REQUIRED)
-    find_library(PTHREADS_LIBRARY NAMES pthread libpthread REQUIRED)   # Needed by Unicorn
+    message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
+
+include_directories("${UNICORN_INCDIR}" "${LUA_INCDIR}")
+link_directories("${UNICORN_LIBDIR}" "${LUA_LIBDIR}")
+link_libraries(unicorn)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 enable_testing()
@@ -47,11 +49,6 @@ add_subdirectory("tests/c" "${CMAKE_CURRENT_BINARY_DIR}/tests_c" EXCLUDE_FROM_AL
 # Tests with Lua code
 add_subdirectory("tests/lua" "${CMAKE_CURRENT_BINARY_DIR}/tests_lua" EXCLUDE_FROM_ALL)
 
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/templates/Makefile"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
-    @ONLY
-)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/templates/platform.h"
