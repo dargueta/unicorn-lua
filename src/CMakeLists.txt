@@ -21,7 +21,7 @@ file(GLOB LIBRARY_CPP_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 # file paths.
 list(
     TRANSFORM HEADER_SLUGS
-    PREPEND "${CMAKE_CURRENT_BINARY_DIR}/"
+    PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/constants/"
     OUTPUT_VARIABLE _const_files
 )
 list(TRANSFORM _const_files APPEND "_const.cpp")
@@ -29,9 +29,11 @@ list(TRANSFORM _const_files APPEND "_const.cpp")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/constants")
+
 # Create commands for autogenerating all the constants files.
 foreach(_slug IN ITEMS ${HEADER_SLUGS})
-    set(_file "${CMAKE_CURRENT_BINARY_DIR}/${_slug}_const.cpp")
+    set(_file "${CMAKE_CURRENT_SOURCE_DIR}/constants/${_slug}_const.cpp")
     add_custom_command(
         OUTPUT "${_file}"
         COMMAND "python3" "${PROJECT_SOURCE_DIR}/tools/generate_constants.py" "${UNICORN_HEADERS_PATH}/unicorn/${_slug}.h" "${_file}"
@@ -73,7 +75,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|AppleClang|Clang")
 
     # Lua isn't compiled as relocatable by default. On *NIX systems, that means
     # it needs to be statically linked so we add it as a source.
-    target_sources(unicornlua_library PUBLIC ${LUA_LIBRARY})
+    target_sources(unicornlua_library PUBLIC "${LUA_LIBRARY}")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Visual studio options
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /Z7 /GR")

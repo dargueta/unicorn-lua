@@ -18,6 +18,7 @@ Makefile
 include/unicornlua/platform.h
 .xmake/
 lua-profile.*
+src/constants
 
 # Other garbage
 core*
