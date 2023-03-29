@@ -36,8 +36,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Install Unicorn
-        run: make -C tools/ci install_unicorn UNICORN_VERSION=1.0.2
       - name: Install Lua
         uses: leafo/gh-actions-lua@v10
         with:
@@ -46,8 +44,10 @@ jobs:
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
+      - name: Install Unicorn
+        run: make -C tools/ci install_unicorn UNICORN_VERSION=1.0.2
       - name: Environment
-        run: cmake --system-information
+        run: luarocks config
       - name: Install Binding
         run: luarocks build
       - name: Run tests
