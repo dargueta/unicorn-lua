@@ -7,7 +7,6 @@
 #include "doctest.h"
 #include "fixtures.h"
 #include "unicornlua/lua.h"
-#include "unicornlua/platform.h"
 #include "unicornlua/utils.h"
 
 
