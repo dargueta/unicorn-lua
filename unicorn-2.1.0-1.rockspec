@@ -37,15 +37,14 @@ external_dependencies.platforms.macos = external_dependencies.platforms.linux
 
 test_dependencies = {
     "busted",
-   -- "lcurses",
 }
 
 test = {
    type = "command",
    command = "make",
-   flags = { "-B", "-C", "build.luarocks", "cpp_test", "test", 'ARGS=--output-on-failure -VV' }
+   flags = {"test"},
 }
-
+--[[
 build = {
    type = "cmake",
    variables = {
@@ -53,25 +52,49 @@ build = {
       CMAKE_CXX_FLAGS_INIT = "$(CFLAGS)",
       CMAKE_INSTALL_PREFIX = "$(PREFIX)",
       CMAKE_VERBOSE_MAKEFILE = "YES",
-      IS_LUAJIT = "0",  -- TODO (dargueta): Fix this
+      LUA = "$(LUA)",
+      LUA_BINDIR = "$(LUA_BINDIR)",
       LUA_INCDIR = "$(LUA_INCDIR)",
-      LUA_LIBDIR = "$(LUA_LIBDIR)",
       UNICORN_INCDIR = "$(UNICORN_INCDIR)",
       UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
+      LIB_EXTENSION = "$(LIB_EXTENSION)",
+      CMAKE_INCLUDE_PATH = "$(UNICORN_INCDIR);$(LUA_INCDIR)",
    },
    platforms = {
       linux = {
          variables = {
-            LIBRARY_FILE_EXTENSION = ".so",
             CMAKE_LIBRARY_PATH = "$(UNICORN_LIBDIR);$(PTHREAD_LIBDIR);$(LUA_LIBDIR)",
          },
       },
       windows = {
          variables = {
-            LIBRARY_FILE_EXTENSION = ".dll",
             CMAKE_LIBRARY_PATH = "$(UNICORN_LIBDIR);$(LUA_LIBDIR)",
          }
       },
    },
+}]]
+build = {
+    type = "make",
+    build_variables = {
+       CXXFLAGS = "$(CFLAGS)",
+       LIBFLAG = "$(LIBFLAG)",
+       LUA_BINDIR = "$(LUA_BINDIR)",
+       LUA_DIR = "$(LUA_DIR)",
+       LUA_INCDIR="$(LUA_INCDIR)",
+       -- FIXME (dargueta): This is a hack around LUA_LIBDIR being undefined
+       -- Either there's a bug in LuaRocks or the documentation is out of date.
+       LUA_LIBDIR = "$(LUA_DIR)/lib",
+       LIB_EXTENSION = "$(LIB_EXTENSION)",
+       UNICORN_INCDIR = "$(UNICORN_INCDIR)",
+       UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
+       PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
+    },
+    install_variables = {
+       INST_PREFIX = "$(PREFIX)",
+       INST_BINDIR = "$(BINDIR)",
+       INST_LIBDIR = "$(LIBDIR)",
+       INST_LUADIR = "$(LUADIR)",
+       INST_CONFDIR = "$(CONFDIR)",
+       LIB_EXTENSION = "$(LIB_EXTENSION)",
+    },
 }
-build.platforms.macos = build.platforms.linux

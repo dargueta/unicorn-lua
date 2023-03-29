@@ -5,25 +5,17 @@ include_directories(
 
 file(GLOB TESTS_CPP_SOURCES "${PROJECT_SOURCE_DIR}/tests/c/*.cpp")
 
-# Pull the doctest.h file we need for unit testing
-file(
-    DOWNLOAD
-    https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
-    "${CMAKE_CURRENT_BINARY_DIR}/doctest.h"
-)
+set(STATIC_LUA_LIBRARY "${LUA_LIBDIR}/${LUA_LIBDIR_FILE}")
+
 
 # FIXME (dargueta): Add Lua library as a source
-add_executable(
-    cpp_test
-    ${TESTS_CPP_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
-)
+add_executable(cpp_test ${TESTS_CPP_SOURCES})
 
 if(WIN32)
-    target_link_libraries(cpp_test LINK_PUBLIC unicornlua_library)
+    target_link_libraries(cpp_test LINK_PUBLIC unicornlua_library "${STATIC_LUA_LIBRARY}")
 elseif(UNIX)
     target_link_libraries(
-        cpp_test LINK_PUBLIC unicornlua_library ${PTHREADS_LIBRARY}
+        cpp_test LINK_PUBLIC unicornlua_library "${PTHREADS_LIBRARY}" "${STATIC_LUA_LIBRARY}"
     )
 endif()
 

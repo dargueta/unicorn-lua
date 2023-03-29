@@ -9,7 +9,6 @@ build/
 build.luarocks/
 cmake-build-debug/
 cmake-build-release/
-tests/c/doctest.h
 .idea/
 .vscode/
 

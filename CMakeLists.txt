@@ -5,11 +5,27 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-get_filename_component(LUAROCKS_BIN_DIR "${LUAROCKS}" DIRECTORY)
-set(BUSTED_EXE "${LUAROCKS_BIN_DIR}/busted")
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+include("cmake-defaults.cmake")
+
+message("CFLAGS: ${CFLAGS}")
+message("CXXFLAGS: ${CXXFLAGS}")
+message("LIB_EXTENSION: ${LIB_EXTENSION}")
+message("LUA: ${LUA}")
+message("LUA_BINDIR: ${LUA_BINDIR}")
+message("LUA_INCDIR: ${LUA_INCDIR}")
+message("LUA_LIBDIR: ${LUA_LIBDIR}")
+message("LUA_LIBDIR_FILE: ${LUA_LIBDIR_FILE}")
+message("PTHREAD_LIBDIR: ${PTHREAD_LIBDIR}")
+message("UNICORN_INCDIR: ${UNICORN_INCDIR}")
+message("UNICORN_LIBDIR: ${UNICORN_LIBDIR}")
+
+# Determine which version of Lua we're running.
+execute_process(
+    COMMAND $(LUA) -e "v = _VERSION:gsub('^Lua (%d+%.%d+)$', '%1') print(v)"
+    OUTPUT_VARIABLE LUA_VERSION
+)
 
 if(IS_LUAJIT)
     add_compile_definitions(IS_LUAJIT=1)
@@ -35,9 +51,8 @@ else()
     message(FATAL_ERROR "Unrecognized compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-
-include_directories("${UNICORN_INCDIR}" "${LUA_INCDIR}")
-link_directories("${UNICORN_LIBDIR}" "${LUA_LIBDIR}")
+# Everything we build needs to link with Unicorn. Different targets have different
+# additional dependencies.
 link_libraries(unicorn)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define targets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

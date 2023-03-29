@@ -1,4 +1,4 @@
-if ("${LUA_FULL_VERSION}" VERSION_LESS "5.3")
+if ("${LUA_VERSION}" VERSION_LESS "5.3")
     set(BUSTED_CLI_ARGS --exclude-tags="int64only")
 else()
     set(BUSTED_CLI_ARGS "")

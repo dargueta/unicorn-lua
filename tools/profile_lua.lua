@@ -458,7 +458,7 @@ local VARIABLES = {
 
     -- Other stuff
     { "LUA_SHORT_VERSION", lua_version },
-    { "LIBRARY_FILE_EXTENSION", c_library_extension },
+    { "LIB_EXTENSION", c_library_extension },
     { "IS_LUAJIT", is_luajit },
     { "IS_WINDOWS", is_windows },
     { "LUAROCKS", normalize_path(LUAROCKS_PATH or "")},

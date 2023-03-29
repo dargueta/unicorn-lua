@@ -48,13 +48,7 @@ jobs:
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
       - name: Environment
         run: cmake --system-information
-      - name: Install Binding (*NIX)
-        run: sh configure -d && sudo make install
-        if: ${{ !contains(matrix.operating-system, 'windows') }}
-      - name: Install Binding (Windows)
-        run: |
-            sh configure -d 
-            make install
-        if: ${{ contains(matrix.operating-system, 'windows') }}
+      - name: Install Binding
+        run: luarocks build
       - name: Run tests
-        run: make test
+        run: luarocks test
