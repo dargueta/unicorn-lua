@@ -42,7 +42,7 @@ test_dependencies = {
 test = {
    type = "command",
    command = "make",
-   flags = {"test", "LIB_EXTENSION=$(LIB_EXTENSION)"},
+   flags = {"test", "LIB_EXTENSION=$(LIB_EXTENSION)", "LUA_INCDIR=$(LUA_INCDIR)"},
 }
 --[[
 build = {

@@ -1,17 +1,20 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-BUILD_DIR := $(CURDIR)/build
 OS = $(or $(shell uname -s),Windows_NT)
+
+UNICORN_LIBDIR ?= /usr/lib64
+PTHREAD_LIBDIR ?= /usr/lib
+LUA_LIBDIR ?= /usr/local/lib
 LUAROCKS ?= luarocks
 
+BUILD_DIR := $(CURDIR)/build
 OTHER_CXXFLAGS := -std=c++11
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 INCLUDE_PATH_FLAGS := -Iinclude -I$(LUA_INCDIR) -I$(UNICORN_INCDIR)
 LIB_PATH_FLAGS := -L$(LUA_LIBDIR) -L$(UNICORN_LIBDIR) -L$(PTHREAD_LIBDIR) -L$(BUILD_DIR)
 
 CXX_CMD = $(CXX) $(OTHER_CXXFLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
-LD_CMD = $(CXX) $(LIB_PATH_FLAGS) $(LDFLAGS)
-
+LINK_CMD = $(CXX) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 ARCHITECTURE_HEADERS = $(wildcard $(UNICORN_INCDIR)/unicorn/*.h)
 ARCHITECTURE_SLUGS = $(filter-out platform,$(basename $(notdir $(ARCHITECTURE_HEADERS))))
@@ -30,6 +33,9 @@ TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
 LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
 
+SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
+		export LD_LIBRARY_PATH="$(UNICORN_LIBDIR):$(PTHREAD_LIBDIR):$(LUA_LIBDIR):$(LD_LIBRARY_PATH)"
+
 
 .PHONY: build
 build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
@@ -42,8 +48,8 @@ install: $(LIB_BUILD_TARGET)
 
 .PHONY: test
 test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
-	$$(eval "$$($(LUAROCKS) path)") && $(TEST_EXECUTABLE)
-	$$(eval "$$($(LUAROCKS) path)") && busted --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" tests/lua
+	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
+	$(SET_SEARCH_PATHS); busted --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
 
 
 .PHONY: clean
@@ -54,11 +60,11 @@ clean:
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
-	$(LD_CMD) $(LIBFLAG) -o $@ $^ -lunicorn -lpthread
+	$(LINK_CMD) $(LIBFLAG) -o $@ $^ -lunicorn -lpthread
 
 
 $(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADERS)
-	$(LD_CMD) -o $@ $^ -lunicorn -lpthread -lm -llua
+	$(LINK_CMD) -o $@ $^ -lunicorn -lpthread -lm -llua
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
