@@ -1,9 +1,14 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-LIB_EXTENSION ?= dll
-UNICORN_INCDIR ?= C:\Windows\System32\include
+!IFNDEF LIB_EXTENSION
+	LIB_EXTENSION=dll
+!ENDIF
 
-include common-variables.mk
+!IFNDEF UNICORN_INCDIR
+	UNICORN_INCDIR=C:\Windows\System32\include
+!ENDIF
+
+!INCLUDE <common-variables.mk>
 
 LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
 LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
@@ -22,7 +27,7 @@ SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)"
 
 default: build
 
-include common-recipes.mk
+!INCLUDE <common-recipes.mk>
 
 
 .PHONY: install
