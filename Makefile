@@ -1,7 +1,5 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-OS = $(or $(shell uname -s),Windows_NT)
-
 UNICORN_LIBDIR ?= /usr/lib64
 PTHREAD_LIBDIR ?= /usr/lib
 LUA_LIBDIR ?= /usr/local/lib
