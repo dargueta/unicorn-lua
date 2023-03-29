@@ -12,7 +12,10 @@ logging.basicConfig(level=logging.INFO)
 
 ARCHIVE_DIRECTORY = "unicorn-{version}-win{bits}"
 WINDOWS_URL_TEMPLATE = "https://github.com/unicorn-engine/unicorn/releases/download/{version}/unicorn-{version}-win{bits}.zip"
-HEADERS_DIR = "C:\\Program Files\\UnicornEngine"
+
+# This is where LuaRocks expects the headers to be. The other possible location is
+# C:\external but for some reason that doesn't seem to work on the CI machines.
+HEADERS_DIR = "C:\\Windows\\System32"
 
 
 def get_windows_system_install_dir():
