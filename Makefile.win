@@ -1,17 +1,17 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
 !IFNDEF LIB_EXTENSION
-	LIB_EXTENSION=dll
+LIB_EXTENSION=dll
 !ENDIF
 
 !IFNDEF UNICORN_INCDIR
-	UNICORN_INCDIR=C:\Windows\System32\include
+UNICORN_INCDIR=C:\Windows\System32\include
 !ENDIF
 
 BUILD_DIR=.\build
 
 !IFNDEF LUAROCKS
-	LUAROCKS=luarocks
+LUAROCKS=luarocks
 !ENDIF
 
 ARCHITECTURE_HEADERS=$(wildcard $(UNICORN_INCDIR)\unicorn\*.h)
@@ -32,15 +32,15 @@ TEST_EXECUTABLE=$(BUILD_DIR)\cpp_test
 LIB_BUILD_TARGET=$(BUILD_DIR)\unicorn.$(LIB_EXTENSION)
 
 !IFNDEF LUA_LIBDIR
-	LUA_LIBDIR=$(shell $(LUAROCKS) config variables.LUA_LIBDIR)
+LUA_LIBDIR=$(shell $(LUAROCKS) config variables.LUA_LIBDIR)
 !ENDIF
 
 !IFNDEF LUA_INCDIR
-	LUA_INCDIR=$(shell $(LUAROCKS) config variables.LUA_INCDIR)
+LUA_INCDIR=$(shell $(LUAROCKS) config variables.LUA_INCDIR)
 !ENDIF
 
 !IFNDEF UNICORN_LIBDIR
-	UNICORN_LIBDIR=C:\Windows\System32
+UNICORN_LIBDIR=C:\Windows\System32
 !ENDIF
 
 OTHER_CXXFLAGS=/std:c11

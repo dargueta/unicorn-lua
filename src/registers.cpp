@@ -90,6 +90,7 @@ lua_Number read_float80(const uint8_t *data) {
     if (sign)
         f_part *= -1;
 
+    // If the high bit is set this is a "normal" number.
     if (significand & 0x8000000000000000ULL)
         return std::ldexp(f_part, exponent - 16383);
 
