@@ -8,7 +8,7 @@
 	UNICORN_INCDIR=C:\Windows\System32\include
 !ENDIF
 
-BUILD_DIR=$(CURDIR)/build
+BUILD_DIR=.\build
 
 !IFNDEF LUAROCKS
 	LUAROCKS=luarocks
