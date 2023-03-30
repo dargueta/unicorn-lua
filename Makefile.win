@@ -8,7 +8,28 @@
 	UNICORN_INCDIR=C:\Windows\System32\include
 !ENDIF
 
-!INCLUDE <common-variables.mk>
+BUILD_DIR=$(CURDIR)/build
+
+!IFNDEF LUAROCKS
+	LUAROCKS=luarocks
+!ENDIF
+
+ARCHITECTURE_HEADERS=$(wildcard $(UNICORN_INCDIR)\unicorn\*.h)
+ARCHITECTURE_SLUGS=$(filter-out platform,$(basename $(notdir $(ARCHITECTURE_HEADERS))))
+
+CONSTS_DIR=src\constants
+CONSTANT_FILES=$(foreach s,$(ARCHITECTURE_SLUGS),$(CONSTS_DIR)\$(s)_const.cpp)
+
+LIB_CPP_SOURCES=$(wildcard src\*.cpp) $(CONSTANT_FILES)
+LIB_OBJECT_FILES=$(LIB_CPP_SOURCES:.cpp=.obj) $(CONSTANT_FILES:.cpp=.obj)
+
+TEST_CPP_SOURCES=$(wildcard tests\c\*.cpp)
+TEST_LUA_SOURCES=$(wildcard tests\lua\*.lua)
+TEST_HEADERS=$(wildcard tests\c\*.h)
+TEST_CPP_OBJECT_FILES=$(TEST_CPP_SOURCES:.cpp=.obj)
+TEST_EXECUTABLE=$(BUILD_DIR)\cpp_test
+
+LIB_BUILD_TARGET=$(BUILD_DIR)\unicorn.$(LIB_EXTENSION)
 
 LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
 LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
@@ -25,9 +46,8 @@ LINK_CMD = $(LINK) $(LIB_PATH_FLAGS)
 SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)"
 
 
-default: build
-
-!INCLUDE <common-recipes.mk>
+.PHONY: build
+build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
 
 
 .PHONY: install
@@ -35,10 +55,17 @@ install: $(LIB_BUILD_TARGET)
 	install $^ $(INST_LIBDIR)
 
 
+.PHONY: clean
+clean:
+	$(RM) $(LIB_OBJECT_FILES) $(CONSTANT_FILES) $(LIB_BUILD_TARGET)
+	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES)
+	$(RM) -r $(BUILD_DIR) $(CONSTS_DIR)
+
+
 .PHONY: test
 test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
-	$(SET_SEARCH_PATHS); busted --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
+	$(SET_SEARCH_PATHS); busted --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests\lua
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
@@ -49,14 +76,25 @@ $(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADER
 	$(LINK_CMD) /OUT:$@ $^ /DEFAULTLIB:unicorn
 
 
+$(CONSTS_DIR)\%_const.cpp: $(UNICORN_INCDIR)\unicorn\%.h | $(CONSTS_DIR)
+	python3 tools\generate_constants.py $< $@
+
+
 # We're deliberately omitting CXXFLAGS as provided by LuaRocks because it includes
 # "-fPIC" and we don't want that for the test binary.
-tests/c/%.obj: tests/c/%.cpp
+tests\c\%.obj: tests\c\%.cpp
 	$(CXX_CMD) /DEFAULTLIB:$(LUALIB) /c /OUT:$@ $^
 
 
-src/%.obj: src/%.cpp
+src\%.obj: src\%.cpp
 	$(CXX_CMD) $(CXXFLAGS) /c /OUT:$@ $^
 
 
-include common-recipes.mk
+$(CONSTS_DIR):
+	$(MKDIR) $@
+
+
+# Provided for completeness; we should never need this as LuaRocks creates it
+# for us.
+$(BUILD_DIR):
+	$(MKDIR) $@

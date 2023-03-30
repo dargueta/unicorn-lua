@@ -3,7 +3,27 @@
 LIB_EXTENSION ?= so
 UNICORN_INCDIR ?= /usr/include
 
-include common-variables.mk
+
+BUILD_DIR := $(CURDIR)/build
+LUAROCKS ?= luarocks
+
+ARCHITECTURE_HEADERS = $(wildcard $(UNICORN_INCDIR)/unicorn/*.h)
+ARCHITECTURE_SLUGS = $(filter-out platform,$(basename $(notdir $(ARCHITECTURE_HEADERS))))
+
+CONSTS_DIR = src/constants
+CONSTANT_FILES = $(foreach s,$(ARCHITECTURE_SLUGS),$(CONSTS_DIR)/$(s)_const.cpp)
+
+LIB_CPP_SOURCES = $(wildcard src/*.cpp) $(CONSTANT_FILES)
+LIB_OBJECT_FILES = $(LIB_CPP_SOURCES:.cpp=.o) $(CONSTANT_FILES:.cpp=.o)
+
+TEST_CPP_SOURCES = $(wildcard tests/c/*.cpp)
+TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
+TEST_HEADERS = $(wildcard tests/c/*.h)
+TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.o)
+TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
+
+LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
+
 
 LUA_LIBDIR ?= /usr/local/lib
 PTHREAD_LIBDIR ?= /usr/lib
@@ -21,14 +41,20 @@ SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
 		export LD_LIBRARY_PATH="$(UNICORN_LIBDIR):$(PTHREAD_LIBDIR):$(LUA_LIBDIR):$$LD_LIBRARY_PATH"
 
 
-default: build
-
-include common-recipes.mk
+.PHONY: build
+build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
 
 
 .PHONY: install
 install: $(LIB_BUILD_TARGET)
 	install $^ $(INST_LIBDIR)
+
+
+.PHONY: clean
+clean:
+	$(RM) $(LIB_OBJECT_FILES) $(CONSTANT_FILES) $(LIB_BUILD_TARGET)
+	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES)
+	$(RM) -r $(BUILD_DIR) $(CONSTS_DIR)
 
 
 .PHONY: test
@@ -57,3 +83,13 @@ tests/c/%.o: tests/c/%.cpp
 
 src/%.o: src/%.cpp
 	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
+
+
+$(CONSTS_DIR):
+	mkdir -p $@
+
+
+# Provided for completeness; we should never need this as LuaRocks creates it
+# for us.
+$(BUILD_DIR):
+	mkdir -p $@

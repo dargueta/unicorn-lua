@@ -88,6 +88,7 @@ build = {
        UNICORN_INCDIR = "$(UNICORN_INCDIR)",
        UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
        PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
+       MKDIR = "$(MKDIR)"
     },
     install_variables = {
        INST_PREFIX = "$(PREFIX)",
