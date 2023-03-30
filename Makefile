@@ -86,10 +86,10 @@ src/%.o: src/%.cpp
 
 
 $(CONSTS_DIR):
-	mkdir -p $@
+	$(MKDIR) $@
 
 
 # Provided for completeness; we should never need this as LuaRocks creates it
 # for us.
 $(BUILD_DIR):
-	mkdir -p $@
+	$(MKDIR) $@
