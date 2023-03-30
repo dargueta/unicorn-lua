@@ -1,11 +1,20 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-LIB_EXTENSION ?= so
-UNICORN_INCDIR ?= /usr/include
+# DEFAULTS -------------------------------------------------------------------->
+# Not all commands pass all the variables we need. These provide defaults in the
+# event that we need one of them.
 
+LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
+LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
+LUA_LIBDIR_FILE ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR_FILE)
+UNICORN_INCDIR ?= /usr/include
+UNICORN_LIBDIR ?= /usr/lib64
+# This is wrong
+PTHREAD_LIBDIR ?= /usr/lib
+
+# <-----------------------------------------------------------------------------
 
 BUILD_DIR := $(CURDIR)/build
-LUAROCKS ?= luarocks
 
 ARCHITECTURE_HEADERS = $(wildcard $(UNICORN_INCDIR)/unicorn/*.h)
 ARCHITECTURE_SLUGS = $(filter-out platform,$(basename $(notdir $(ARCHITECTURE_HEADERS))))
@@ -14,20 +23,16 @@ CONSTS_DIR = src/constants
 CONSTANT_FILES = $(foreach s,$(ARCHITECTURE_SLUGS),$(CONSTS_DIR)/$(s)_const.cpp)
 
 LIB_CPP_SOURCES = $(wildcard src/*.cpp) $(CONSTANT_FILES)
-LIB_OBJECT_FILES = $(LIB_CPP_SOURCES:.cpp=.o) $(CONSTANT_FILES:.cpp=.o)
+LIB_OBJECT_FILES = $(LIB_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION)) \
+                   $(CONSTANT_FILES:.cpp=.$(OBJ_EXTENSION))
 
 TEST_CPP_SOURCES = $(wildcard tests/c/*.cpp)
 TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
 TEST_HEADERS = $(wildcard tests/c/*.h)
-TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.o)
+TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
 LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
-
-
-LUA_LIBDIR ?= /usr/local/lib
-PTHREAD_LIBDIR ?= /usr/lib
-UNICORN_LIBDIR ?= /usr/lib64
 
 OTHER_CXXFLAGS := -std=c++11
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic -pedantic-errors
@@ -42,7 +47,7 @@ SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
 
 
 .PHONY: build
-build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
+build: $(LIB_BUILD_TARGET)
 
 
 .PHONY: install
@@ -60,7 +65,7 @@ clean:
 .PHONY: test
 test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
-	$(SET_SEARCH_PATHS); busted --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
+	$(SET_SEARCH_PATHS); $(BUSTED) --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
@@ -68,7 +73,7 @@ $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
 
 
 $(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADERS)
-	$(LINK_CMD) -o $@ $^ -lunicorn -lpthread -lm -llua
+	$(LINK_CMD) -o $@ $^ -lunicorn -lpthread -lm -l:$(LUA_LIBDIR_FILE)
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
@@ -77,11 +82,11 @@ $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
 
 # We're deliberately omitting CXXFLAGS as provided by LuaRocks because it includes
 # "-fPIC" and we don't want that for the test binary.
-tests/c/%.o: tests/c/%.cpp
+tests/c/%.$(OBJ_EXTENSION): tests/c/%.cpp
 	$(CXX_CMD) -c -o $@ $^
 
 
-src/%.o: src/%.cpp
+src/%.$(OBJ_EXTENSION): src/%.cpp
 	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
 
 
