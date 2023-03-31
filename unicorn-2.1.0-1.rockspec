@@ -50,7 +50,7 @@ test = {
         "LUA=$(LUA)",
         "LUA_DIR=$(LUA_DIR)",
         "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
-        "LIB_EXTENSION=$(LIB_EXTENSION)",
+        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
         "SCRIPTS_DIR=$(SCRIPTS_DIR)",
         "MKDIR=$(MKDIR)",
         -- The following are needed but not provided by LuaRocks

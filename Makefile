@@ -6,11 +6,13 @@
 
 LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
 LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
-LUA_LIBDIR_FILE ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR_FILE)
-UNICORN_INCDIR ?= /usr/include
-UNICORN_LIBDIR ?= /usr/lib64
-# This is wrong
-PTHREAD_LIBDIR ?= /usr/lib
+LUA_LIBDIR_FILE ?= $(or $(shell $(LUAROCKS) config variables.LUALIB),$(shell $(LUAROCKS) config variables.LUA_LIBDIR_FILE))
+UNICORN_INCDIR ?=
+PTHREAD_LIBDIR ?=
+
+ifeq ($(UNICORN_LIBDIR),)
+	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
+endif
 
 # <-----------------------------------------------------------------------------
 
@@ -34,16 +36,20 @@ TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
 LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
 
+LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR)
+HEADER_DIRECTORIES := $(UNICORN_INCDIR) $(LUA_INCDIR) $(CURDIR)/include
+
+USER_CXX_FLAGS ?=
 OTHER_CXXFLAGS := -std=c++11
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic -pedantic-errors
-INCLUDE_PATH_FLAGS := -I$(CURDIR)/include -I$(LUA_INCDIR) -I$(UNICORN_INCDIR)
-LIB_PATH_FLAGS := -L$(LUA_LIBDIR) -L$(UNICORN_LIBDIR) -L$(PTHREAD_LIBDIR) -L$(BUILD_DIR)
+INCLUDE_PATH_FLAGS := $(addprefix -I,$(HEADER_DIRECTORIES))
+LIB_PATH_FLAGS := $(addprefix -L,$(LIBRARY_DIRECTORIES))
 
 CXX_CMD = $(CXX) $(OTHER_CXXFLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(CXX) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
-		export LD_LIBRARY_PATH="$(UNICORN_LIBDIR):$(PTHREAD_LIBDIR):$(LUA_LIBDIR):$$LD_LIBRARY_PATH"
+		export LD_LIBRARY_PATH="$(addsuffix :,$(LIBRARY_DIRECTORIES))$$LD_LIBRARY_PATH"
 
 
 .PHONY: build
