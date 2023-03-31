@@ -6,7 +6,6 @@
 
 LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
 LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
-LUA_LIBDIR_FILE ?= $(or $(shell $(LUAROCKS) config variables.LUALIB),$(shell $(LUAROCKS) config variables.LUA_LIBDIR_FILE))
 UNICORN_INCDIR ?=
 PTHREAD_LIBDIR ?=
 
