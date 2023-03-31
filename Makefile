@@ -44,9 +44,11 @@ OTHER_CXXFLAGS := -std=c++11
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 INCLUDE_PATH_FLAGS := $(addprefix -I,$(HEADER_DIRECTORIES))
 LIB_PATH_FLAGS := $(addprefix -L,$(LIBRARY_DIRECTORIES))
+REQUIRED_LIBS := unicorn pthread stdc++
+REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 
-CXX_CMD = $(CXX) $(OTHER_CXXFLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
-LINK_CMD = $(CXX) $(LIB_PATH_FLAGS) $(LDFLAGS)
+CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
+LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
 		export LD_LIBRARY_PATH="$(addsuffix :,$(LIBRARY_DIRECTORIES))$$LD_LIBRARY_PATH"
@@ -75,11 +77,11 @@ test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
-	$(LINK_CMD) $(LIBFLAG) -o $@ $^ -lunicorn -lpthread
+	$(LINK_CMD) $(LIBFLAG) -o $@ $^ $(REQUIRED_LIBS_FLAGS)
 
 
 $(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADERS)
-	$(LINK_CMD) -o $@ $^ -lunicorn -lpthread -lm -l:$(LUA_LIBDIR_FILE)
+	$(LINK_CMD) -o $@ $^ $(REQUIRED_LIBS_FLAGS) -lm -llua
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
