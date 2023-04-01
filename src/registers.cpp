@@ -169,11 +169,15 @@ void write_float80(lua_Number value, uint8_t *buffer) {
 
     // The high bit of the significand is always set for normal numbers, and clear for
     // denormal numbers. This means the significand is 63 bits, not 64, hence why we
-    // multiply here by 2^62 and not 2^63.
+    // shift here by 2^62 and not 2^63.
+    //
+    // Remember, float_significand is in the half-open range [0.5, 1). Multiplying by
+    // 2^63 will give us an integer X such that (X / 2^63)^exponent = value
     auto int_significand = static_cast<uint64_t>(
-        static_cast<int64_t>(float_significand) * (1ULL << 62)
+        float_significand * static_cast<uclua_float80>(1ULL << 62)
     );
     if (f_type == FP_NORMAL) {
+        // Normal number, set the high bit.
         int_significand |= 1ULL << 63;
         exponent += 16383;
     }
