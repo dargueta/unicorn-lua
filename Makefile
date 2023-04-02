@@ -13,6 +13,15 @@ ifeq ($(UNICORN_LIBDIR),)
 	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 endif
 
+# Disable 64-bit integer tests for Lua <5.3
+LUA_VERSION = $(shell $(LUAROCKS) config lua_version)
+ifeq ($(LUA_VERSION),5.1)
+    BUSTED_FLAGS := --exclude-tags="int64only"
+else ifeq ($(LUA_VERSION),5.2)
+    BUSTED_FLAGS := --exclude-tags="int64only"
+else
+    BUSTED_FLAGS :=
+endif
 # <-----------------------------------------------------------------------------
 
 BUILD_DIR := $(CURDIR)/build
@@ -72,7 +81,7 @@ clean:
 .PHONY: test
 test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
-	$(SET_SEARCH_PATHS); $(BUSTED) --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
+	$(SET_SEARCH_PATHS); $(BUSTED) $(BUSTED_FLAGS) --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
