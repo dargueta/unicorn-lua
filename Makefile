@@ -4,11 +4,13 @@
 # Not all commands pass all the variables we need. These provide defaults in the
 # event that we need one of them.
 
-LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
-LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
+LUA_INCDIR ?= $(LUA_DIR)/include
+LUA_LIBDIR ?= $(LUA_DIR)/lib
 UNICORN_INCDIR ?=
 PTHREAD_LIBDIR ?=
 
+# If `UNICORN_LIBDIR` isn't provided, use /usr/lib64 if it exists. This is only
+# necessary for Unicorn 1.x on Linux systems.
 ifeq ($(UNICORN_LIBDIR),)
 	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 endif
@@ -55,6 +57,10 @@ LIB_PATH_FLAGS := $(addprefix -L,$(LIBRARY_DIRECTORIES))
 REQUIRED_LIBS := unicorn pthread stdc++
 REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 
+# LUALIB isn't always provided, so we fall back to `lua`. This should work most
+# of the time, though we may run into trouble with LuaJIT.
+LINK_TO_LUA_FLAG := -l$(or $(LUALIB),lua)
+
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
@@ -89,7 +95,7 @@ $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
 
 
 $(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADERS)
-	$(LINK_CMD) -o $@ $^ $(REQUIRED_LIBS_FLAGS) -lm -llua
+	$(LINK_CMD) -o $@ $^ $(REQUIRED_LIBS_FLAGS) $(LINK_TO_LUA_FLAG) -lm
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
