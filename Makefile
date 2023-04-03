@@ -59,8 +59,9 @@ LIB_PATH_FLAGS := $(addprefix -L,$(LIBRARY_DIRECTORIES))
 REQUIRED_LIBS := unicorn pthread stdc++
 REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 
-# LUALIB isn't always provided, so we fall back to `lua`. This should work most
-# of the time, though we may run into trouble with LuaJIT.
+# LUALIB isn't always provided. This breaks building our tests on LuaJIT, which
+# uses a filename other than liblua.a for its library. Thus, -llua won't work on
+# LuaJIT or Windows.
 LINK_TO_LUA_FLAG := $(if $(LUALIB), -l:$(LUALIB), -llua)
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
