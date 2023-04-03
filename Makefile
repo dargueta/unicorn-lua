@@ -4,8 +4,10 @@
 # Not all commands pass all the variables we need. These provide defaults in the
 # event that we need one of them.
 
+LIB_EXTENSION ?= so
 LUA_INCDIR ?= $(LUA_DIR)/include
 LUA_LIBDIR ?= $(LUA_DIR)/lib
+OBJ_EXTENSION ?= o
 UNICORN_INCDIR ?=
 PTHREAD_LIBDIR ?=
 
@@ -85,9 +87,15 @@ clean:
 
 
 .PHONY: test
-test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
+test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
-	$(SET_SEARCH_PATHS); $(BUSTED) $(BUSTED_FLAGS) --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" -p lua tests/lua
+	$(SET_SEARCH_PATHS); \
+		$(BUSTED) $(BUSTED_FLAGS)                           \
+		          --cpath="$(BUILD_DIR)/?.$(LIB_EXTENSION)" \
+		          --lua=$(LUA)                              \
+		          --shuffle                                 \
+		          -p lua                                    \
+		          tests/lua
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
