@@ -69,7 +69,7 @@ SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
 
 
 .PHONY: build
-build: $(LIB_BUILD_TARGET)
+build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
 
 
 .PHONY: install
