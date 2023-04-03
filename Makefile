@@ -59,7 +59,7 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 
 # LUALIB isn't always provided, so we fall back to `lua`. This should work most
 # of the time, though we may run into trouble with LuaJIT.
-LINK_TO_LUA_FLAG := -l$(or $(LUALIB),lua)
+LINK_TO_LUA_FLAG := $(if $(LUALIB), -l:$(LUALIB), -llua)
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
