@@ -93,7 +93,7 @@ clean:
 
 
 .PHONY: test
-test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
+test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
 	$(SET_SEARCH_PATHS); \
 		$(BUSTED) $(BUSTED_FLAGS)                           \
@@ -112,8 +112,8 @@ $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
 	$(LINK_CMD) $(LIBFLAG) -o $@ $^ $(REQUIRED_LIBS_FLAGS)
 
 
-$(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(DOCTEST_HEADER)  $(TEST_HEADERS)
-	$(LINK_CMD) -o $@ $^ $(REQUIRED_LIBS_FLAGS) $(LINK_TO_LUA_FLAG) -lm
+$(TEST_EXECUTABLE): $(DOCTEST_HEADER) $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) $(TEST_HEADERS)
+	$(LINK_CMD) -o $@ $(filter-out %.h,$^) $(REQUIRED_LIBS_FLAGS) $(LINK_TO_LUA_FLAG) -lm
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
@@ -130,11 +130,5 @@ src/%.$(OBJ_EXTENSION): src/%.cpp
 	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
 
 
-$(CONSTS_DIR):
-	$(MKDIR) $@
-
-
-# Provided for completeness; we should never need this as LuaRocks creates it
-# for us.
-$(BUILD_DIR):
+$(CONSTS_DIR) $(BUILD_DIR):
 	$(MKDIR) $@
