@@ -63,7 +63,7 @@ lua_Number read_float80(const uint8_t *data) {
                 errno = EINVAL;
                 return std::numeric_limits<lua_Number>::signaling_NaN();
             case 2:
-                if ((significand & 0x3fffffffffffffffULL) == 0)
+                if ((significand & UINT64_C(0x3fffffffffffffff)) == 0)
                     return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
                 // Else: This is a signaling NaN. We don't want to throw an
@@ -86,12 +86,12 @@ lua_Number read_float80(const uint8_t *data) {
 
     // If the high bit of the significand is set, this is a normal value. Ignore
     // the high bit of the significand and compensate for the exponent bias.
-    auto f_part = static_cast<lua_Number>(significand & 0x7fffffffffffffffULL);
+    auto f_part = static_cast<lua_Number>(significand & UINT64_C(0x7fffffffffffffff));
     if (sign)
         f_part *= -1;
 
     // If the high bit is set this is a "normal" number.
-    if (significand & 0x8000000000000000ULL)
+    if (significand & UINT64_C(0x8000000000000000))
         return std::ldexp(f_part, exponent - 16383);
 
     // Unnormal number. Invalid on 80387+; 80287 and earlier use a different
@@ -174,18 +174,18 @@ void write_float80(lua_Number value, uint8_t *buffer) {
     // Remember, float_significand is in the half-open range [0.5, 1). Multiplying by
     // 2^63 will give us an integer X such that (X / 2^63)^exponent = value
     auto int_significand = static_cast<uint64_t>(
-        float_significand * static_cast<uclua_float80>(1ULL << 62)
+        float_significand * static_cast<uclua_float80>(UINT64_C(1) << 62)
     );
     if (f_type == FP_NORMAL) {
         // Normal number, set the high bit.
-        int_significand |= 1ULL << 63;
+        int_significand |= UINT64_C(1) << 63;
         exponent += 16383;
     }
     else
         exponent = 0;
 
     *reinterpret_cast<uint64_t *>(buffer) = int_significand;
-    *reinterpret_cast<uint16_t *>(buffer + 8U) =
+    *reinterpret_cast<uint16_t *>(buffer + UINT16_C(8)) =
         static_cast<uint16_t>(exponent | sign_bit);
 }
 
