@@ -8,8 +8,9 @@ source = {
 }
 
 description = {
+    summary = "Lua bindings for the Unicorn CPU emulator.",
     homepage = "https://github.com/dargueta/unicorn-lua",
-    license = "GNU GPL v2"
+    license = "GPL-2"
 }
 
 dependencies = {
@@ -17,7 +18,7 @@ dependencies = {
 }
 
 supported_platforms = {
-    "linux", "macos", "windows"
+    "linux", "macos",
 }
 
 external_dependencies = {
@@ -46,20 +47,19 @@ test = {
         "test",
         "BUSTED=$(SCRIPTS_DIR)/busted",
         "CC=$(CC)",
+        "CURL=$(CURL)",
         "CXXFLAGS=$(CFLAGS)",
         "LD=$(LD)",
         "LIB_EXTENSION=$(LIB_EXTENSION)",
         "LUA=$(LUA)",
-        "LUALIB=$(LUALIB)",
+        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
         "LUA_DIR=$(LUA_DIR)",
         "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
-        "SCRIPTS_DIR=$(SCRIPTS_DIR)",
         "MKDIR=$(MKDIR)",
         -- The following are needed but not provided by LuaRocks
         -- "LUA_INCDIR=$(LUA_INCDIR)",
         -- "LUA_LIBDIR=$(LUA_LIBDIR)",
-        -- "LUA_LIBDIR_FILE=$(LUA_LIBDIR_FILE)",
         -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
         -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
         -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
@@ -67,6 +67,10 @@ test = {
 }
 build = {
     type = "make",
+    variables = {
+        LIB_EXTENSION = "$(LIB_EXTENSION)",
+        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
+    },
     build_variables = {
         CC = "$(CC)",
         CXXFLAGS = "$(CFLAGS)",
@@ -75,10 +79,6 @@ build = {
         LUALIB = "$(LUALIB)",
         LUA_DIR = "$(LUA_DIR)",
         LUA_INCDIR="$(LUA_INCDIR)",
-        LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
-        LIB_EXTENSION = "$(LIB_EXTENSION)",
-        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
-        SCRIPTS_DIR = "$(SCRIPTS_DIR)",
         UNICORN_INCDIR = "$(UNICORN_INCDIR)",
         UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
         PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
@@ -86,9 +86,5 @@ build = {
     },
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
-        LIB_EXTENSION = "$(LIB_EXTENSION)",
-        LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
-        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
-        SCRIPTS_DIR = "$(SCRIPTS_DIR)",
     },
 }

@@ -70,6 +70,9 @@ LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
 		export LD_LIBRARY_PATH="$(addsuffix :,$(LIBRARY_DIRECTORIES))$$LD_LIBRARY_PATH"
 
+DOCTEST_TAG := v2.4.11
+DOCTEST_HEADER := tests/c/doctest.h
+
 
 .PHONY: build
 build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
@@ -88,7 +91,7 @@ clean:
 
 
 .PHONY: test
-test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
+test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES) $(DOCTEST_HEADER)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
 	$(SET_SEARCH_PATHS); \
 		$(BUSTED) $(BUSTED_FLAGS)                           \
@@ -97,6 +100,10 @@ test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 		          --shuffle                                 \
 		          -p lua                                    \
 		          tests/lua
+
+
+$(DOCTEST_HEADER):
+	$(CURL) -o $@ https://github.com/doctest/doctest/releases/download/$(DOCTEST_TAG)/doctest.h
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
