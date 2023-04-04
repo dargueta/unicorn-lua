@@ -284,7 +284,7 @@ size_t Register::size_for_register_kind(RegisterDataType kind) {
         case UL_REG_TYPE_FLOAT64_ARRAY_8:
             return 64;
         case UL_REG_TYPE_UNKNOWN:
-            throw LuaBindingError("Can't determine size of register type \"UNKNOWN\",");
+            throw LuaBindingError("Can't determine size of register type \"UNKNOWN\"");
         default:
             throw std::invalid_argument("Invalid register type.");
     }
