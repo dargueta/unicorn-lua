@@ -69,6 +69,8 @@ build = {
     type = "make",
     variables = {
         LIB_EXTENSION = "$(LIB_EXTENSION)",
+        LUA = "$(LUA)",
+        LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
     },
     build_variables = {

@@ -4,10 +4,12 @@
 # Not all commands pass all the variables we need. These provide defaults in the
 # event that we need one of them.
 
-LIB_EXTENSION ?= so
-LUA_INCDIR ?= $(LUA_DIR)/include
-LUA_LIBDIR ?= $(LUA_DIR)/lib
-OBJ_EXTENSION ?= o
+LIB_EXTENSION ?= $(shell $(LUAROCKS) config variables.LIB_EXTENSION)
+LUA ?= $(shell $(LUAROCKS) config variables.LUA)
+LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
+LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
+LUALIB ?= $(shell $(LUAROCKS) config variables.LUALIB)
+OBJ_EXTENSION ?= $(shell $(LUAROCKS) config variables.OBJ_EXTENSION)
 UNICORN_INCDIR ?=
 PTHREAD_LIBDIR ?=
 
@@ -18,7 +20,7 @@ ifeq ($(UNICORN_LIBDIR),)
 endif
 
 # Disable 64-bit integer tests for Lua <5.3
-LUA_VERSION = $(shell $(LUAROCKS) config lua_version)
+LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 ifeq ($(LUA_VERSION),5.1)
     BUSTED_FLAGS := --exclude-tags="int64only"
 else ifeq ($(LUA_VERSION),5.2)
@@ -75,7 +77,7 @@ DOCTEST_HEADER := tests/c/doctest.h
 
 
 .PHONY: build
-build: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
+build: $(LIB_BUILD_TARGET)
 
 
 .PHONY: install
@@ -86,12 +88,12 @@ install: $(LIB_BUILD_TARGET)
 .PHONY: clean
 clean:
 	$(RM) $(LIB_OBJECT_FILES) $(CONSTANT_FILES) $(LIB_BUILD_TARGET)
-	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES)
+	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES) $(DOCTEST_HEADER)
 	$(RM) -r $(BUILD_DIR) $(CONSTS_DIR)
 
 
 .PHONY: test
-test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES) $(DOCTEST_HEADER)
+test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 	$(SET_SEARCH_PATHS); $(TEST_EXECUTABLE)
 	$(SET_SEARCH_PATHS); \
 		$(BUSTED) $(BUSTED_FLAGS)                           \
@@ -103,14 +105,14 @@ test: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES) $(DOCTEST_HEADE
 
 
 $(DOCTEST_HEADER):
-	$(CURL) -o $@ https://github.com/doctest/doctest/releases/download/$(DOCTEST_TAG)/doctest.h
+	$(CURL) -sSo $@ https://raw.githubusercontent.com/doctest/doctest/$(DOCTEST_TAG)/doctest/doctest.h
 
 
 $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
 	$(LINK_CMD) $(LIBFLAG) -o $@ $^ $(REQUIRED_LIBS_FLAGS)
 
 
-$(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(TEST_HEADERS)
+$(TEST_EXECUTABLE): $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) | $(DOCTEST_HEADER)  $(TEST_HEADERS)
 	$(LINK_CMD) -o $@ $^ $(REQUIRED_LIBS_FLAGS) $(LINK_TO_LUA_FLAG) -lm
 
 
