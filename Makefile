@@ -55,7 +55,7 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 # LUALIB isn't always provided. This breaks building our tests on LuaJIT, which
 # uses a filename other than liblua.a for its library. Thus, -llua won't work on
 # LuaJIT (any platform) or Windows (any Lua version).
-LINK_TO_LUA_FLAG := $(if $(LUALIB), -l:$(LUALIB), -llua)
+LINK_TO_LUA_FLAG := $(if $(LUALIB), -l:$(LUALIB), -l:$(shell $(LUAROCKS) config variables.LUALIB))
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
