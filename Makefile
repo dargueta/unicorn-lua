@@ -1,23 +1,14 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
 # DEFAULTS -------------------------------------------------------------------->
-# Not all commands pass all the variables we need. These provide defaults in the
-# event that we need one of them.
-
-LIB_EXTENSION ?= $(shell $(LUAROCKS) config variables.LIB_EXTENSION)
-LUA ?= $(shell $(LUAROCKS) config variables.LUA)
-LUA_INCDIR ?= $(shell $(LUAROCKS) config variables.LUA_INCDIR)
-LUA_LIBDIR ?= $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
-LUALIB ?= $(shell $(LUAROCKS) config variables.LUALIB)
-OBJ_EXTENSION ?= $(shell $(LUAROCKS) config variables.OBJ_EXTENSION)
-UNICORN_INCDIR ?=
-PTHREAD_LIBDIR ?=
 
 # If `UNICORN_LIBDIR` isn't provided, use /usr/lib64 if it exists. This is only
 # necessary for Unicorn 1.x on Linux systems.
 ifeq ($(UNICORN_LIBDIR),)
 	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 endif
+
+# <-----------------------------------------------------------------------------
 
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
@@ -28,7 +19,7 @@ else ifeq ($(LUA_VERSION),5.2)
 else
     BUSTED_FLAGS :=
 endif
-# <-----------------------------------------------------------------------------
+
 
 BUILD_DIR := $(CURDIR)/build
 
@@ -76,8 +67,8 @@ DOCTEST_TAG := v2.4.11
 DOCTEST_HEADER := tests/c/doctest.h
 
 
-.PHONY: build
-build: $(LIB_BUILD_TARGET)
+.PHONY: all
+all: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
 
 
 .PHONY: install
