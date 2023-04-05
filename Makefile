@@ -61,11 +61,17 @@ LINK_TO_LUA_FLAG := $(if $(LUALIB),-l:$(LUALIB),-l$(DEFAULT_LUA_LIB_NAME))
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
+# Throwaway variables to let us use spaces as an argument:
+# https://www.gnu.org/software/make/manual/make.html#Syntax-of-Functions
+_empty :=
+_space := $(_empty) $(_empty)
+
 # DYLD_FALLBACK_LIBRARY_PATH is for MacOS, LD_LIBRARY_PATH is for all other *NIX
 # systems.
+LIBRARY_COLON_PATHS := $(subst $(_space),:,$(LIBRARY_DIRECTORIES))
 SET_SEARCH_PATHS = eval "$$($(LUAROCKS) path)" ; \
-		export LD_LIBRARY_PATH="$(addsuffix :,$(LIBRARY_DIRECTORIES))$$LD_LIBRARY_PATH" ; \
-		export DYLD_FALLBACK_LIBRARY_PATH="$(addsuffix :,$(LIBRARY_DIRECTORIES))$$DYLD_FALLBACK_LIBRARY_PATH"
+		export LD_LIBRARY_PATH="$(LIBRARY_COLON_PATHS):$$LD_LIBRARY_PATH" ; \
+		export DYLD_FALLBACK_LIBRARY_PATH="$(LIBRARY_COLON_PATHS):$$DYLD_FALLBACK_LIBRARY_PATH"
 
 DOCTEST_TAG := v2.4.11
 DOCTEST_HEADER := tests/c/doctest.h
