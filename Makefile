@@ -1,14 +1,8 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-# DEFAULTS -------------------------------------------------------------------->
-
 # If `UNICORN_LIBDIR` isn't provided, use /usr/lib64 if it exists. This is only
 # necessary for Unicorn 1.x on Linux systems.
-ifeq ($(UNICORN_LIBDIR),)
-	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
-endif
-
-# <-----------------------------------------------------------------------------
+UNICORN_V1_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
@@ -41,7 +35,7 @@ TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
 LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
 
-LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(LUA_DIR)/lib
+LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(LUA_DIR)/lib
 HEADER_DIRECTORIES := $(UNICORN_INCDIR) $(LUA_INCDIR) $(LUA_DIR)/include $(CURDIR)/include
 
 USER_CXX_FLAGS ?=
@@ -78,6 +72,7 @@ install: $(LIB_BUILD_TARGET)
 
 .PHONY: clean
 clean:
+	git clean -Xfd
 	$(RM) $(LIB_OBJECT_FILES) $(CONSTANT_FILES) $(LIB_BUILD_TARGET)
 	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES) $(DOCTEST_HEADER)
 	$(RM) -r $(BUILD_DIR) $(CONSTS_DIR)
