@@ -4,6 +4,8 @@
 # necessary for Unicorn 1.x on Linux systems.
 UNICORN_V1_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 
+IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
+
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 ifeq ($(LUA_VERSION),5.1)
@@ -49,7 +51,13 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 # LUALIB isn't always provided. This breaks building our tests on LuaJIT, which
 # uses a filename other than liblua.a for its library. Thus, -llua won't work on
 # LuaJIT (any platform) or Windows (any Lua version).
-LINK_TO_LUA_FLAG := $(if $(LUALIB),-l:$(LUALIB),-llua)
+ifeq ($(IS_LUAJIT),1)
+    DEFAULT_LUA_LIB_NAME := luajit-5.1
+else
+    DEFAULT_LUA_LIB_NAME := lua
+endif
+
+LINK_TO_LUA_FLAG := $(if $(LUALIB),-l:$(LUALIB),-l$(DEFAULT_LUA_LIB_NAME))
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
