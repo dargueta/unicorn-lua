@@ -8,10 +8,6 @@ ifeq ($(UNICORN_LIBDIR),)
 	UNICORN_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 endif
 
-ifeq ($(LUA_LIBDIR),)
-    LUA_LIBDIR := $(shell $(LUAROCKS) config variables.LUA_LIBDIR)
-endif
-
 # <-----------------------------------------------------------------------------
 
 # Disable 64-bit integer tests for Lua <5.3
@@ -45,7 +41,7 @@ TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
 LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
 
-LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR)
+LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(LUA_DIR)/lib
 HEADER_DIRECTORIES := $(UNICORN_INCDIR) $(LUA_INCDIR) $(CURDIR)/include
 
 USER_CXX_FLAGS ?=
@@ -59,7 +55,7 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 # LUALIB isn't always provided. This breaks building our tests on LuaJIT, which
 # uses a filename other than liblua.a for its library. Thus, -llua won't work on
 # LuaJIT (any platform) or Windows (any Lua version).
-LINK_TO_LUA_FLAG := $(if $(LUALIB), -l$(LUALIB),-llua)
+LINK_TO_LUA_FLAG := -l:$(or $(LUALIB),$(LUA_LIBDIR_FILE),liblua.a)
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
