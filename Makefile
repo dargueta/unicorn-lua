@@ -4,7 +4,6 @@
 # necessary for Unicorn 1.x on Linux systems.
 UNICORN_V1_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
 
-IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
 
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
@@ -17,6 +16,18 @@ else
 endif
 
 
+IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
+ifeq ($(IS_LUAJIT),1)
+    DEFAULT_LUA_LIB_NAME := luajit-5.1
+    # FIXME (dargueta): This will break on LuaJIT 2.1
+    FALLBACK_LUA_INCDIR := $(LUA_DIR)/include/luajit-2.0
+else
+    DEFAULT_LUA_LIB_NAME := lua
+    FALLBACK_LUA_INCDIR := $(LUA_DIR)/include
+endif
+
+FALLBACK_LUA_LIBDIR := $(LUA_DIR)/lib
+
 BUILD_DIR := $(CURDIR)/build
 
 ARCHITECTURE_HEADERS = $(wildcard $(UNICORN_INCDIR)/unicorn/*.h)
@@ -25,20 +36,19 @@ ARCHITECTURE_SLUGS = $(filter-out platform,$(basename $(notdir $(ARCHITECTURE_HE
 CONSTS_DIR = src/constants
 CONSTANT_FILES = $(foreach s,$(ARCHITECTURE_SLUGS),$(CONSTS_DIR)/$(s)_const.cpp)
 
+LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
 LIB_CPP_SOURCES = $(wildcard src/*.cpp) $(CONSTANT_FILES)
 LIB_OBJECT_FILES = $(LIB_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION)) \
                    $(CONSTANT_FILES:.cpp=.$(OBJ_EXTENSION))
 
+TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 TEST_CPP_SOURCES = $(wildcard tests/c/*.cpp)
 TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
 TEST_HEADERS = $(wildcard tests/c/*.h)
 TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
-TEST_EXECUTABLE := $(BUILD_DIR)/cpp_test
 
-LIB_BUILD_TARGET := $(BUILD_DIR)/unicorn.$(LIB_EXTENSION)
-
-LIBRARY_DIRECTORIES := $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(LUA_DIR)/lib
-HEADER_DIRECTORIES := $(UNICORN_INCDIR) $(LUA_INCDIR) $(LUA_DIR)/include $(CURDIR)/include
+LIBRARY_DIRECTORIES := $(strip $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR))
+HEADER_DIRECTORIES := $(strip $(UNICORN_INCDIR) $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(CURDIR)/include)
 
 USER_CXX_FLAGS ?=
 OTHER_CXXFLAGS := -std=c++11
@@ -51,12 +61,6 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 # LUALIB isn't always provided. This breaks building our tests on LuaJIT, which
 # uses a filename other than liblua.a for its library. Thus, -llua won't work on
 # LuaJIT (any platform) or Windows (any Lua version).
-ifeq ($(IS_LUAJIT),1)
-    DEFAULT_LUA_LIB_NAME := luajit-5.1
-else
-    DEFAULT_LUA_LIB_NAME := lua
-endif
-
 LINK_TO_LUA_FLAG := $(if $(LUALIB),-l:$(LUALIB),-l$(DEFAULT_LUA_LIB_NAME))
 
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
