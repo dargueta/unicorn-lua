@@ -47,10 +47,8 @@ TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
 TEST_HEADERS = $(wildcard tests/c/*.h)
 TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 
-# Very important -- do not put spaces around the assignment operator. It leaves
-# spaces at the beginning of the variable, which screws up the value for LD_LIBRARY_PATH.
-LIBRARY_DIRECTORIES:=$(strip $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR) $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR))
-HEADER_DIRECTORIES:=$(strip $(UNICORN_INCDIR) $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(CURDIR)/include)
+LIBRARY_DIRECTORIES := $(strip $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR) $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR))
+HEADER_DIRECTORIES := $(strip $(CURDIR)/include $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(UNICORN_INCDIR))
 
 USER_CXX_FLAGS ?=
 OTHER_CXXFLAGS := -std=c++11
