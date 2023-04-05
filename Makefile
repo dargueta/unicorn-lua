@@ -1,10 +1,5 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
-# If `UNICORN_LIBDIR` isn't provided, use /usr/lib64 if it exists. This is only
-# necessary for Unicorn 1.x on Linux systems.
-UNICORN_V1_LIBDIR := $(if $(shell stat /usr/lib64),/usr/lib64,)
-
-
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 ifeq ($(LUA_VERSION),5.1)
@@ -47,7 +42,7 @@ TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
 TEST_HEADERS = $(wildcard tests/c/*.h)
 TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 
-LIBRARY_DIRECTORIES := $(strip $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR) $(UNICORN_LIBDIR) $(UNICORN_V1_LIBDIR) $(PTHREAD_LIBDIR))
+LIBRARY_DIRECTORIES := $(strip $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR) $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) /usr/lib64 /usr/local/lib)
 HEADER_DIRECTORIES := $(strip $(CURDIR)/include $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(UNICORN_INCDIR))
 
 USER_CXX_FLAGS ?=
