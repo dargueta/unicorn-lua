@@ -26,7 +26,7 @@ License Change
 As of version 2.0 the license has changed to GPL v2. This is due to the viral
 nature of the GPL license family: since QEMU uses GPL, this must also be GPL
 even though it only dynamically links to Unicorn. I apologize for the mistake I
-made when I created this.
+made when I created this with the BSD-3 license.
 
 Known Limitations
 -----------------
@@ -177,19 +177,14 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* A C++ compiler supporting the C11 standard or later. Supported compilers include:
-  * GCC 4.1+ and GCC-compatible compilers like Clang
-  * Visual Studio 2017, version 15.6 or later
-* `cmake`_ 3.18 or higher. Run ``cmake --version`` if you're not sure what
-  version you have.
-* The `Unicorn CPU Emulator`_ library must be installed in your system's standard
-  library location. Currently only Unicorn 1.x is supported.
-* You must also have the Unicorn headers installed. Windows users, CMake will
-  look in its standard places plus ``C:\Program Files\UnicornEngine``; if you
-  don't have them there, you'll need to override the settings.
-* Some examples have additional dependencies; see their READMEs for details.
 * Lua 5.1 or higher, as well as the static library and headers. Lua 5.3 and above
   must *not* have been compiled with the ``LUA_32BITS`` option set.
+* A C++ compiler supporting the C++11 standard or later. Supported compilers include
+  GCC 4.1+ and GCC-compatible compilers like Clang.
+* The `Unicorn CPU Emulator`_ library must be installed in your system's standard
+  library location. Currently only Unicorn 1.x is supported.
+* You must also have the Unicorn headers installed.
+* Some examples have additional dependencies; see their READMEs for details.
 
 Just Installing?
 ----------------
@@ -197,18 +192,9 @@ Just Installing?
 If you just want to install this library, open a terminal, navigate to the root
 directory of this repository, and run
 
-*NIX systems, MacOS, Cygwin:
-
 .. code-block:: sh
 
-    ./configure && sudo make install
-
-Windows:
-
-.. code-block:: sh
-
-    sh configure
-    cmake --install cmake-build-release
+    luarocks build
 
 
 Development
