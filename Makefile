@@ -61,7 +61,7 @@ LIBRARY_DIRECTORIES := $(strip $(LUA_LIBDIR) $(FALLBACK_LUA_LIBDIR) $(UNICORN_LI
 HEADER_DIRECTORIES := $(strip $(CURDIR)/include $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(UNICORN_INCDIR))
 
 USER_CXX_FLAGS ?=
-OTHER_CXXFLAGS := -std=c++11
+OTHER_CXXFLAGS := -std=c++11 -DIS_LUAJIT=$(IS_LUAJIT)
 WARN_FLAGS := -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 INCLUDE_PATH_FLAGS := $(addprefix -I,$(HEADER_DIRECTORIES))
 LIB_PATH_FLAGS := $(addprefix -L,$(LIBRARY_DIRECTORIES))
@@ -139,11 +139,11 @@ $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
 # We're deliberately omitting CXXFLAGS as provided by LuaRocks because it includes
 # "-fPIC" and we don't want that for the test binary.
 tests/c/%.$(OBJ_EXTENSION): tests/c/%.cpp
-	$(CXX_CMD) -DIS_LUAJIT=$(IS_LUAJIT) -c -o $@ $^
+	$(CXX_CMD) -c -o $@ $^
 
 
 src/%.$(OBJ_EXTENSION): src/%.cpp
-	$(CXX_CMD) $(CXXFLAGS) -DIS_LUAJIT=$(IS_LUAJIT) -c -o $@ $^
+	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
 
 
 $(CONSTS_DIR) $(BUILD_DIR):

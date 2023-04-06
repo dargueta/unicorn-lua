@@ -5,15 +5,6 @@ on: [ push ]
 jobs:
   testing:
     runs-on: ${{ matrix.operating-system }}
-    env:
-      # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
-      # a linker error that happens with LuaJIT:
-      # https://github.com/LuaJIT/LuaJIT/issues/449
-      MACOSX_DEPLOYMENT_TARGET: "11"
-      # We get a linker error if we don't mess with the library path. For some
-      # reason, /usr/lib64 isn't on the default search path.
-      LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
-      CTEST_FULL_OUTPUT: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +31,8 @@ jobs:
         uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.lua-version }}
+          # We need LUAJIT_ENABLE_GC64 on MacOS: https://github.com/moonjit/moonjit/issues/121
+          luaCompileFlags: XCFLAGS="-DLUAJIT_ENABLE_GC64=1"
       - name: Install LuaRocks
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
