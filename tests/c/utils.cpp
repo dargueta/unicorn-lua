@@ -106,6 +106,7 @@ TEST_CASE_FIXTURE(
         // stuff beneath it.
         lua_pop(L, lua_gettop(L));
         CHECK_MESSAGE((lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
+        return;
     }
     // If we get out here then an exception wasn't thrown.
     FAIL("Exception wasn't thrown.");

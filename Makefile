@@ -139,11 +139,11 @@ $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
 # We're deliberately omitting CXXFLAGS as provided by LuaRocks because it includes
 # "-fPIC" and we don't want that for the test binary.
 tests/c/%.$(OBJ_EXTENSION): tests/c/%.cpp
-	$(CXX_CMD) -c -o $@ $^
+	$(CXX_CMD) -DIS_LUAJIT=$(IS_LUAJIT) -c -o $@ $^
 
 
 src/%.$(OBJ_EXTENSION): src/%.cpp
-	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
+	$(CXX_CMD) $(CXXFLAGS) -DIS_LUAJIT=$(IS_LUAJIT) -c -o $@ $^
 
 
 $(CONSTS_DIR) $(BUILD_DIR):

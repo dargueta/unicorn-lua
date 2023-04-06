@@ -51,10 +51,12 @@ extern "C" {
 
 
 // http://lua-users.org/lists/lua-l/2011-11/msg01149.html
-#ifdef LUA_JDIR
-    #define IS_LUAJIT 1
-#else
-    #define IS_LUAJIT 0
+#ifndef IS_LUAJIT
+    #ifdef LUA_JDIR
+        #define IS_LUAJIT 1
+    #else
+        #define IS_LUAJIT 0
+    #endif
 #endif
 
 #endif  /* INCLUDE_UNICORNLUA_COMPAT_H_ */
