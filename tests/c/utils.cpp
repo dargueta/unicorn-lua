@@ -88,6 +88,7 @@ TEST_CASE_FIXTURE(
     // Depending on the Lua version, there may be other stuff on the stack aside
     // from our error message.
     lua_pop(L, lua_gettop(L));
+    CHECK_MESSAGE((lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
 #else
     try {
         ul_crash_on_error(L, UC_ERR_OK);
@@ -104,6 +105,7 @@ TEST_CASE_FIXTURE(
         // at the top of the stack but the interpreter is allowed to put other
         // stuff beneath it.
         lua_pop(L, lua_gettop(L));
+        CHECK_MESSAGE((lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
     }
     // If we get out here then an exception wasn't thrown.
     FAIL("Exception wasn't thrown.");
