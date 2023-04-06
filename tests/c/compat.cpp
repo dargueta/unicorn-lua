@@ -32,6 +32,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     CHECK_EQ(strcmp(result, "This is a string."), 0);
 
     // Remove the string and table
+    REQUIRE_GE(lua_gettop(L), 2);
     lua_pop(L, 2);
 }
 #endif

@@ -1,5 +1,20 @@
 # WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
 
+################################################################################
+# DEFAULTS
+# These are only used when this Makefile is run manually. You should only be
+# doing that for `make clean`. Use `luarocks` for everything else.
+
+CURL ?= curl
+LIB_EXTENSION ?= so
+LUA ?= lua
+LUA_DIR ?= /usr/local
+LUAROCKS ?= luarocks
+OBJ_EXTENSION ?= o
+UNICORN_INCDIR ?= /usr/include
+
+################################################################################
+
 # Disable 64-bit integer tests for Lua <5.3
 LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 ifeq ($(LUA_VERSION),5.1)
@@ -88,7 +103,6 @@ install: $(LIB_BUILD_TARGET)
 
 .PHONY: clean
 clean:
-	git clean -Xfd
 	$(RM) $(LIB_OBJECT_FILES) $(CONSTANT_FILES) $(LIB_BUILD_TARGET)
 	$(RM) $(TEST_EXECUTABLE) $(TEST_CPP_OBJECT_FILES) $(DOCTEST_HEADER)
 	$(RM) -r $(BUILD_DIR) $(CONSTS_DIR)
