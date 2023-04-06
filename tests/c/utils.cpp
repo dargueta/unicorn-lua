@@ -86,10 +86,8 @@ TEST_CASE_FIXTURE(
     CHECK_EQ(recover_flag, 123);
 
     // Depending on the Lua version, there may be other stuff on the stack aside
-    // from our error message. The test will fail if the stack isn't empty, so
-    // we get around that by nuking the state entirely.
-    lua_close(L);
-    L = nullptr;
+    // from our error message.
+    lua_pop(L, lua_gettop(L));
 #else
     try {
         ul_crash_on_error(L, UC_ERR_OK);
@@ -104,10 +102,8 @@ TEST_CASE_FIXTURE(
 
         // Clear out the stack or the test will fail. The error message will be
         // at the top of the stack but the interpreter is allowed to put other
-        // stuff beneath it. Blow away the state to circumvent this.
-        lua_close(L);
-        L = nullptr;
-        return;
+        // stuff beneath it.
+        lua_pop(L, lua_gettop(L));
     }
     // If we get out here then an exception wasn't thrown.
     FAIL("Exception wasn't thrown.");
