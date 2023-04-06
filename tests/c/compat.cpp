@@ -9,7 +9,6 @@
 // On LuaJIT + OSX, for some bizarre reason this test always either segfaults or
 // (more rarely) corrupt the heap. It works just fine in all the other tests
 // and never crashes at runtime, at least that I can cause.
-#if !(IS_LUAJIT && (defined(__APPLE__) || defined(__MACH__)))
 TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     lua_newtable(L);
     lua_pushliteral(L, "This is a string.");
@@ -19,7 +18,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     lua_seti(L, 1, 5);
 
     CHECK_EQ(lua_gettop(L), 1);     // Only the table should be on the stack.
-    CHECK_EQ(lua_type(L, 1), LUA_TTABLE);    // Verify it's a table
+    REQUIRE_EQ(lua_type(L, 1), LUA_TTABLE);    // Verify it's a table
 
     // Retrieve whatever it is at index 5
     lua_pushinteger(L, 5);
@@ -35,7 +34,6 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     REQUIRE_GE(lua_gettop(L), 2);
     lua_pop(L, 2);
 }
-#endif
 
 TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_geti() basic") {
     lua_newtable(L);
