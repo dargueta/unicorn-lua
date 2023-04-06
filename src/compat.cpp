@@ -15,9 +15,8 @@ LUA_API void lua_seti(lua_State *L, int index, lua_Integer n) {
     // Because lua_settable expects the value on top, we push the key (n) and
     // then another copy of the value, ignoring the original value.
     lua_pushinteger(L, n);          // Push key, stack is [... V K]
-    lua_pushvalue(L, value_index);  // Push value again, stack is [... V K V]
-    lua_settable(L, table_index);   // Set the table value, stack is [ ... V]
-    lua_pop(L, 1);               // Remove the original value, stack is clean
+    lua_insert(L, value_index);     // Move key under value [... K V]
+    lua_settable(L, table_index);   // Set the table value, stack is clean
 }
 
 
