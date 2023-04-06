@@ -40,6 +40,10 @@ test_dependencies = {
     "busted",
 }
 
+build_dependencies = {
+    "penlight >=1.13.0,<2.0"
+}
+
 test = {
     type = "command",
     command = "make",

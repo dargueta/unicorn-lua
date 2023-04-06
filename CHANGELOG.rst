@@ -4,10 +4,11 @@ Changes
 2.1.0 (unreleased)
 ------------------
 
+The build system has moved from CMake to LuaRocks.
+
 New Features
 ~~~~~~~~~~~~
 
-* Support for Visual Studio is finally here! You need MSVC 2017, version 15.6 or later.
 * Now (theoretically) works on platforms where ``CHAR_BIT`` is not 8.
 * Automatic detection of installed headers allows adding or removal of architectures
   without changing any code.
