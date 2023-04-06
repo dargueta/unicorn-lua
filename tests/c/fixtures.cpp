@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <sstream>
 
 #include <unicorn/unicorn.h>
@@ -9,7 +10,10 @@
 
 
 LuaFixture::LuaFixture() {
+    errno = 0;
     L = luaL_newstate();
+    REQUIRE_EQ(errno, 0);
+    REQUIRE_NE(L, nullptr);
 }
 
 
