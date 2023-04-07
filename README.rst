@@ -11,7 +11,7 @@ unicorn-lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
    :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
@@ -206,9 +206,6 @@ Using a virtual environment for Lua is strongly recommended. You'll want to avoi
 using your OS's real Lua, and using virtual environments allows you to test with
 multiple versions of Lua.
 
-With a Virtual Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 To create a separate execution environment, you can use the ``lua_venv.py``
 script.
 
@@ -217,12 +214,7 @@ script.
     python3 tools/lua_venv.py --luarocks  5.3  ~/my-virtualenvs/5.3/
 
 This will download Lua 5.3 and install it in a directory named ``~/my-virtualenvs/5.3``.
-To configure the library, you will then run:
-
-.. code-block:: sh
-
-    ./configure -l ~/my-virtualenvs/5.3/bin/lua  \
-                -r ~/my-virtualenvs/5.3/luarocks/bin/luarocks
+Use ``~/my-virtualenvs/5.3/luarocks/bin/luarocks`` as your LuaRocks executable.
 
 If you're running MacOS and encounter a linker error with LuaJIT, check out
 `this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
@@ -230,56 +222,23 @@ If you're running MacOS and encounter a linker error with LuaJIT, check out
 Using Your OS's Lua
 ^^^^^^^^^^^^^^^^^^^
 
-It will probably suffice to run the configure script by itself:
-
-.. code-block:: sh
-
-    ./configure
-
-
-Setting Up the Build Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-After running the ``configure`` script there'll be a new empty directory in the
-repo called ``build``. Change over to this directory and run ``cmake ..``. It'll
-create the build system for you, including creating the Lua virtual environment
-if you requested it.
+Use your global installation of LuaRocks for operations.
 
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
-Here are a few commands you may find useful during development. This isn't a
-script, just a list.
-
 .. code-block:: sh
 
-    make            # Build the project, including libraries and examples
-    make clean      # Delete all build artifacts
-    make docs       # Build the documentation pages
-    make examples   # Build but do not run examples (that must be done manually)
-    make test       # Run all unit tests
+    # Build and install the library into your tree
+    luarocks build
 
-Build artifacts will appear in the ``build`` directory:
-
-* ``build/lib`` contains the built Lua library for Unicorn; ``unicorn.dll`` if
-  you're running Windows, ``unicorn.so`` otherwise.
-* ``build/docs`` contains the HTML documentation
-
-Everything else in there isn't of much interest unless you're directly modifying
-the CMake configuration.
+    # Build and run the tests
+    luarocks test
 
 Examples
 ~~~~~~~~
 
-There are some example programs you can use to see how this library (and Unicorn
-in general) works. You can run an example with
-
-.. code-block:: sh
-
-    make run_example EXAMPLE=name
-
-``name`` is the name of the directory the example is in, e.g. ``disk_io`` or
-``cmos_time``.
+See the ``examples`` directory for examples of how you can use this library.
 
 License
 -------
@@ -295,8 +254,4 @@ or 3-clause BSD. Sorry.
        32-bit machines.
 .. [2] *Programming in Lua*, 4th Edition, page 233.
 
-.. _cmake: https://cmake.org
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
-.. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
-.. _pyenv: https://github.com/pyenv/pyenv
-.. _pipenv: https://docs.pipenv.org/en/latest
