@@ -7,9 +7,6 @@
 #include "unicornlua/lua.h"
 
 
-// On LuaJIT + OSX, for some bizarre reason this test always either segfaults or
-// (more rarely) corrupt the heap. It works just fine in all the other tests
-// and never crashes at runtime, at least that I can cause.
 TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic") {
     lua_newtable(L);
     lua_pushliteral(L, "This is a string.");

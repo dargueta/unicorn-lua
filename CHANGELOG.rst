@@ -1,21 +1,20 @@
 Changes
 =======
 
-2.1.0 (unreleased)
+2.0.1 (unreleased)
 ------------------
 
-The build system has moved from CMake to LuaRocks.
-
-New Features
-~~~~~~~~~~~~
-
-* Now (theoretically) works on platforms where ``CHAR_BIT`` is not 8.
-* Automatic detection of installed headers allows adding or removal of architectures
-  without changing any code.
+The build system has moved from CMake to LuaRocks in preparation for publishing
+this there. It won't go up until I've removed the Python dependency.
 
 Bugfixes
 ~~~~~~~~
 
+* Now (theoretically) works on platforms where ``CHAR_BIT`` is not 8.
+* Automatic detection of installed headers allows adding or removal of architectures
+  without changing any code.
+* Linking to LuaJIT on MacOS now works properly; turns out it was a linking issue.
+  CI now passes on all platforms.
 * Trying to use an array of 32 16-bit integers would sometimes crash because of
   an accidental omission of its handler.
 * Fixed buffer overflow when reading 64-bit registers on 32-bit Lua.

@@ -17,8 +17,7 @@ unicorn-lua
 Lua bindings for the `Unicorn CPU Emulator`_.
 
 I'm currently testing this on vanilla Lua 5.1 - 5.4, and LuaJIT 2.0 on both Linux
-and OSX. (LuaJIT on OSX is particularly finicky and I would be careful trying to
-use it.)
+and OSX.
 
 License Change
 --------------
