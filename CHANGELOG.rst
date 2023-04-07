@@ -1,6 +1,33 @@
 Changes
 =======
 
+2.0.1 (2023-04-06)
+------------------
+
+The build system has moved from CMake to LuaRocks in preparation for publishing
+this there. It won't go up until I've removed the Python dependency.
+
+Bugfixes
+~~~~~~~~
+
+* Now (theoretically) works on platforms where ``CHAR_BIT`` is not 8.
+* Automatic detection of installed headers allows adding or removal of architectures
+  without changing any code.
+* Linking to LuaJIT on MacOS now works properly; turns out it was a linking issue.
+  CI now passes on all platforms.
+* Trying to use an array of 32 16-bit integers would sometimes crash because of
+  an accidental omission of its handler.
+* Fixed buffer overflow when reading 64-bit registers on 32-bit Lua.
+* Fixed outdated documentation.
+
+Other Changes
+~~~~~~~~~~~~~
+
+Writing a value that is too large to fit into a register will now throw an
+exception instead of triggering compiler-specific behavior. Before, trying to
+write 256 to an 8-bit register could set it to 0 instead, or might do something
+else depending on the compiler.
+
 2.0.0 (2023-03-20)
 ------------------
 

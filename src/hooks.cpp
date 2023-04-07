@@ -216,16 +216,21 @@ static bool invalid_mem_access_hook(
     hook->push_user_data();
     lua_call(L, 6, 1);
 
-    if (lua_type(L, -1) != LUA_TBOOLEAN)
-        return luaL_error(
+    if (lua_type(L, -1) != LUA_TBOOLEAN) {
+        luaL_error(
             L,
             "Error: Handler for invalid memory accesses must return a boolean, got a %s"
-            " instead.", lua_typename(L, -1)
+            " instead.",
+            lua_typename(L, -1)
         );
-
-    bool return_value = lua_toboolean(L, -1);
+        // Technically this is unreachable because luaL_error calls longjmp().
+        // The header doesn't declare this, however, so we have no way of
+        // indicating this to the compiler unless we're on C++20 or higher.
+        return false;
+    }
+    int return_value = lua_toboolean(L, -1);
     lua_pop(L, 1);
-    return return_value;
+    return return_value != 0;
 }
 
 

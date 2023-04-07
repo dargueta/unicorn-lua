@@ -49,4 +49,14 @@ extern "C" {
     #define luaL_newlib(L, l)       (luaL_newlibtable((L),(l)), luaL_setfuncs((L),(l),0))
 #endif
 
+
+// http://lua-users.org/lists/lua-l/2011-11/msg01149.html
+#ifndef IS_LUAJIT
+    #ifdef LUA_JDIR
+        #define IS_LUAJIT 1
+    #else
+        #define IS_LUAJIT 0
+    #endif
+#endif
+
 #endif  /* INCLUDE_UNICORNLUA_COMPAT_H_ */

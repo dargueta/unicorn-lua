@@ -59,7 +59,7 @@ def download_lua(args, download_dir):
     return output_file
 
 
-def configure_lua(args, extract_dir):
+def configure_lua(args, lua_platform, extract_dir):
     """Customize Lua before building it.
 
     Before building normal Lua we need to change where it looks for installed libraries.
@@ -68,6 +68,7 @@ def configure_lua(args, extract_dir):
 
     Arguments:
         args: The parsed command line arguments.
+        lua_platform: The Lua makefile target we're compiling this for.
         extract_dir:
             The path to the directory where the Lua tarball was extracted.
     """
@@ -146,13 +147,17 @@ def compile_lua(args, lua_platform, _tarball_path, extract_dir):
     }
 
 
-def install_lua(lua_version, install_to, extract_dir):
+def install_lua(lua_version, lua_platform, install_to, extract_dir):
     """Install Lua which has already been compiled.
 
     Arguments:
         lua_version:
             The version of Lua to install, as passed in on the command line. This is not
             the "specific" version.
+        lua_platform:
+            The Lua build target we selected based on the operating system. This is used
+            to determine if we're running on Windows so we can change the installation
+            arguments.
         install_to:
             The path to the directory where Lua is to be installed. May be a relative
             path. See the Lua documentation for the exact directory structure created
@@ -165,6 +170,15 @@ def install_lua(lua_version, install_to, extract_dir):
 
     if lua_version.startswith("luajit"):
         run_args = ["PREFIX=" + install_to]
+    elif lua_platform == "mingw":
+        # mingw handles the paths for us and there's no way to install something to
+        # *not* the standard system directories.
+        LOG.warning(
+            "This system uses MinGW, so we have no control over the installation"
+            " directory. Ignoring %r.",
+            install_to,
+        )
+        run_args = []
     else:
         run_args = ["INSTALL_TOP=" + install_to]
 
@@ -347,6 +361,14 @@ def get_luarocks_paths(luarocks_exe):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        const=logging.DEBUG,
+        default=logging.INFO,
+    )
+    parser.add_argument(
         "-o",
         "--config-out",
         help="Write file locations and other information to this file for use by the"
@@ -377,13 +399,15 @@ def parse_args():
 
 
 def main():
-    logging.basicConfig(format="[%(levelname)-8s] %(message)s", level=logging.INFO)
+    args = parse_args()
+
+    logging.basicConfig(format="[%(levelname)-8s] %(message)s", level=args.log_level)
     lua_platform = CONFIG["platform_targets"][sys.platform]
     if not lua_platform:
         LOG.warning("OS platform potentially unsupported: %s", sys.platform)
         lua_platform = "generic"
 
-    args = parse_args()
+    LOG.debug("Platform is %r, using Lua target %r.", sys.platform, lua_platform)
     with tempfile.TemporaryDirectory() as download_dir:
         LOG.info("Downloading Lua %s ...", args.lua_version)
         tarball_path = download_lua(args, download_dir)
@@ -401,7 +425,7 @@ def main():
         shutil.unpack_archive(tarball_path, download_dir, "gztar")
 
         LOG.info("Configuring compilation options ...")
-        configure_lua(args, extract_dir)
+        configure_lua(args, lua_platform, extract_dir)
 
         LOG.info("Compiling ...")
         path_info = compile_lua(args, lua_platform, tarball_path, extract_dir)
@@ -410,7 +434,7 @@ def main():
         LOG.info("Installing to `%s` ...", install_to)
         # Ensure the installation location exists before we try installing there.
         os.makedirs(install_to, exist_ok=True)
-        install_lua(args.lua_version, install_to, extract_dir)
+        install_lua(args.lua_version, lua_platform, install_to, extract_dir)
 
         configuration_variables = path_info.copy()
         configuration_variables["lua_short_version"] = args.lua_version

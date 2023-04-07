@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <sstream>
 
 #include <unicorn/unicorn.h>
@@ -9,7 +10,10 @@
 
 
 LuaFixture::LuaFixture() {
+    errno = 0;
     L = luaL_newstate();
+    REQUIRE_EQ(errno, 0);
+    REQUIRE_NE(L, nullptr);
 }
 
 
@@ -19,14 +23,14 @@ LuaFixture::~LuaFixture() {
     if (L == nullptr)
         return;
 
-    CHECK_MESSAGE(lua_gettop(L) == 0, "Garbage left on the stack after test exited.");
     if (lua_gettop(L) > 0) {
         std::ostringstream buf;
+        buf << "Garbage left on the stack after test exited:\n";
         for (int i = 1; i <= lua_gettop(L); ++i) {
             const char *type_name = lua_typename(L, i);
             buf << "At stack index " << i << ": " << type_name << "\n";
         }
-        FAIL(buf.str().c_str());
+        FAIL(buf.str());
     }
     lua_close(L);
 }

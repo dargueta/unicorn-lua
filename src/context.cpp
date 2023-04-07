@@ -1,8 +1,8 @@
 #include <unicorn/unicorn.h>
 
+#include "unicornlua/context.h"
 #include "unicornlua/errors.h"
 #include "unicornlua/engine.h"
-#include "unicornlua/context.h"
 #include "unicornlua/utils.h"
 
 
