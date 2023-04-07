@@ -73,6 +73,14 @@ REQUIRED_LIBS_FLAGS := $(addprefix -l,$(REQUIRED_LIBS))
 # LuaJIT (any platform) or Windows (any Lua version).
 LINK_TO_LUA_FLAG := $(if $(LUALIB),-l:$(LUALIB),-l$(DEFAULT_LUA_LIB_NAME))
 
+# https://github.com/PowerDNS/pdns/issues/4295
+OS ?= $(shell uname -s)
+ifeq ($(OS),Darwin)
+    ifeq ($(IS_LUAJIT),1)
+        LINK_TO_LUA_FLAG += -pagezero_size 10000 -image_base 100000000
+    endif
+endif
+
 CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
