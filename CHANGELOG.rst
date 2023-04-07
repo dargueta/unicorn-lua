@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.0.1 (unreleased)
+2.0.1 (2023-04-06)
 ------------------
 
 The build system has moved from CMake to LuaRocks in preparation for publishing
