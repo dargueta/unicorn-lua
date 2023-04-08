@@ -141,7 +141,7 @@ $(TEST_EXECUTABLE): $(DOCTEST_HEADER) $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILE
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
-	python3 tools/generate_constants.py $< $@
+	$(SET_SEARCH_PATHS); $(LUA) tools/generate_constants.lua $< $@
 
 
 # We're deliberately omitting CXXFLAGS as provided by LuaRocks because it includes
