@@ -65,6 +65,11 @@ test = {
         -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
     },
 }
+
+build_dependencies = {
+    "penlight >=1.8.1, <2.0",
+}
+
 build = {
     type = "make",
     variables = {
