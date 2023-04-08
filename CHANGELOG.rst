@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1.0 (unreleased)
+2.1.0 (2023-04-08)
 ------------------
 
 **The Python build dependency has been completely removed.** You now only need
