@@ -25,12 +25,12 @@
 /**
  * The minor version number of this Lua library (second part, x.1.x).
  */
-#define UNICORNLUA_VERSION_MINOR    0
+#define UNICORNLUA_VERSION_MINOR    1
 
 /**
  * The patch version number of this Lua library (third part, x.x.1).
  */
-#define UNICORNLUA_VERSION_PATCH    1
+#define UNICORNLUA_VERSION_PATCH    0
 
 /**
  * Create a 24-bit number from a release's major, minor, and patch numbers.

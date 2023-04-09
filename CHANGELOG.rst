@@ -1,6 +1,19 @@
 Changes
 =======
 
+2.1.0 (2023-04-08)
+------------------
+
+**The Python build dependency has been completely removed.** You now only need
+Lua, Make, and a C++ compiler. The script for creating a virtual environment is
+still written in Python, but that's a utility, not required for installation.
+
+Other Changes
+~~~~~~~~~~~~~
+
+The virtual environment script has been removed. Use `lenv <https://github.com/mah0x211/lenv>`_
+instead.
+
 2.0.1 (2023-04-06)
 ------------------
 

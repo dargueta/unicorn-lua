@@ -199,30 +199,14 @@ directory of this repository, and run
 Development
 -----------
 
-Configuration
-~~~~~~~~~~~~~
-
 Using a virtual environment for Lua is strongly recommended. You'll want to avoid
 using your OS's real Lua, and using virtual environments allows you to test with
-multiple versions of Lua.
-
-To create a separate execution environment, you can use the ``lua_venv.py``
-script.
-
-.. code-block:: sh
-
-    python3 tools/lua_venv.py --luarocks  5.3  ~/my-virtualenvs/5.3/
-
-This will download Lua 5.3 and install it in a directory named ``~/my-virtualenvs/5.3``.
-Use ``~/my-virtualenvs/5.3/luarocks/bin/luarocks`` as your LuaRocks executable.
+multiple versions of Lua. You can use `lenv <https://github.com/mah0x211/lenv>`_
+for this.
 
 If you're running MacOS and encounter a linker error with LuaJIT, check out
 `this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
 
-Using Your OS's Lua
-^^^^^^^^^^^^^^^^^^^
-
-Use your global installation of LuaRocks for operations.
 
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
@@ -236,7 +220,7 @@ Building and Testing
     luarocks test
 
 Examples
-~~~~~~~~
+--------
 
 See the ``examples`` directory for examples of how you can use this library.
 
