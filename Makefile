@@ -157,11 +157,10 @@ tests/c/%.$(OBJ_EXTENSION): tests/c/%.cpp
 src/%.$(OBJ_EXTENSION): src/%.cpp
 	$(CXX_CMD) $(CXXFLAGS) -c -o $@ $^
 
-src/registers_const.cpp: src/registers_const.template src/register_types.lua
+
+src/%.cpp: src/%.template src/register_types.lua
 	$(LUA) tools/render_template.lua -o $@ $^
 
-src/registers.cpp: src/registers.template src/register_types.lua
-	$(LUA) tools/render_template.lua -o $@ $^
 
 $(CONSTS_DIR) $(BUILD_DIR):
 	$(MKDIR) $@
