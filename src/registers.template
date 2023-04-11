@@ -3,6 +3,7 @@
 #include "unicornlua/errors.h"
 #include "unicornlua/lua.h"
 #include "unicornlua/registers.h"
+#include "unicornlua/register_template_functions.h"
 
 
 @ for _, bits in ipairs({8, 16, 32, 64}) do
