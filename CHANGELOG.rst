@@ -1,6 +1,12 @@
 Changes
 =======
 
+Unreleased
+----------
+
+* Autogenerate a bunch of register-related files from templates.
+* Add clang-format, use WebKit's style (more or less).
+
 2.1.0 (2023-04-08)
 ------------------
 

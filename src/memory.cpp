@@ -7,13 +7,13 @@
 #include "unicornlua/lua.h"
 #include "unicornlua/utils.h"
 
-
-int ul_mem_write(lua_State *L) {
+int ul_mem_write(lua_State* L)
+{
     size_t length;
 
-    uc_engine *engine = ul_toengine(L, 1);
+    uc_engine* engine = ul_toengine(L, 1);
     auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
-    const void *data = luaL_checklstring(L, 3, &length);
+    const void* data = luaL_checklstring(L, 3, &length);
 
     uc_err error = uc_mem_write(engine, address, data, length);
     if (error != UC_ERR_OK)
@@ -21,13 +21,13 @@ int ul_mem_write(lua_State *L) {
     return 0;
 }
 
-
-int ul_mem_read(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
+int ul_mem_read(lua_State* L)
+{
+    uc_engine* engine = ul_toengine(L, 1);
     auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto length = static_cast<size_t>(luaL_checkinteger(L, 3));
 
-    std::unique_ptr<char[]>data(new char[length]);
+    std::unique_ptr<char[]> data(new char[length]);
     uc_err error = uc_mem_read(engine, address, data.get(), length);
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
@@ -36,9 +36,9 @@ int ul_mem_read(lua_State *L) {
     return 1;
 }
 
-
-int ul_mem_map(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
+int ul_mem_map(lua_State* L)
+{
+    uc_engine* engine = ul_toengine(L, 1);
     auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto size = static_cast<size_t>(luaL_checkinteger(L, 3));
     auto perms = static_cast<uint32_t>(luaL_optinteger(L, 4, UC_PROT_ALL));
@@ -49,9 +49,9 @@ int ul_mem_map(lua_State *L) {
     return 0;
 }
 
-
-int ul_mem_unmap(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
+int ul_mem_unmap(lua_State* L)
+{
+    uc_engine* engine = ul_toengine(L, 1);
     auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto size = static_cast<size_t>(luaL_checkinteger(L, 3));
 
@@ -61,9 +61,9 @@ int ul_mem_unmap(lua_State *L) {
     return 0;
 }
 
-
-int ul_mem_protect(lua_State *L) {
-    uc_engine *engine = ul_toengine(L, 1);
+int ul_mem_protect(lua_State* L)
+{
+    uc_engine* engine = ul_toengine(L, 1);
     auto address = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto size = static_cast<size_t>(luaL_checkinteger(L, 3));
     auto perms = static_cast<uint32_t>(luaL_checkinteger(L, 4));
@@ -74,12 +74,12 @@ int ul_mem_protect(lua_State *L) {
     return 0;
 }
 
-
-int ul_mem_regions(lua_State *L) {
+int ul_mem_regions(lua_State* L)
+{
     uint32_t n_regions;
 
-    uc_engine *engine = ul_toengine(L, 1);
-    uc_mem_region *regions = nullptr;
+    uc_engine* engine = ul_toengine(L, 1);
+    uc_mem_region* regions = nullptr;
     n_regions = 0;
 
     uc_err error = uc_mem_regions(engine, &regions, &n_regions);
