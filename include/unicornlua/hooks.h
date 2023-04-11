@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "unicornlua/engine.h"
+#include <unicorn/unicorn.h>
+
 #include "unicornlua/lua.h"
 
 class Hook {
