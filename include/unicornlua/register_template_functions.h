@@ -70,6 +70,14 @@ T try_cast(lua_Integer value) {
 }
 
 
+/**
+ * Read a Lua integer from the stack and write it to @a buffer as a type @a T.
+ *
+ * @tparam T
+ * @param L
+ * @param value_index
+ * @param buffer
+ */
 template<typename T>
 void write_lua_integer(lua_State *L, int value_index, void *buffer) {
     lua_Integer lua_int = lua_tointeger(L, value_index);
@@ -78,6 +86,18 @@ void write_lua_integer(lua_State *L, int value_index, void *buffer) {
 }
 
 
+/**
+ * Write a sequence of Lua integers from a table into a buffer.
+ *
+ * All values in the table must be representable as a @a T. If any value exceeds
+ * the type's minimum or maximum values, the function throws an exception.
+ *
+ * @tparam T
+ * @param L
+ * @param table_index
+ * @param n_elements
+ * @param buffer
+ */
 template<typename T>
 void write_lua_integer_array(
     lua_State *L, int table_index, int n_elements, void *buffer
