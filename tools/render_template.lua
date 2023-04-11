@@ -1,6 +1,4 @@
-file = require "pl.file"
 lapp = require "pl.lapp"
-tablex = require "pl.tablex"
 stringx = require "pl.stringx"
 template = require "pl.template"
 utils = require "pl.utils"
@@ -19,8 +17,6 @@ Things to note:
       - pairs
       - string
       - stringx (Penlight package)
-      - table
-      - tablex (Penlight package)
 
 Arguments:
     -D... (optional string)
@@ -45,8 +41,6 @@ function main()
         pairs = pairs,
         string = string,
         stringx = stringx,
-        table = table,
-        tablex = tablex,
     }
 
     if args.values then
