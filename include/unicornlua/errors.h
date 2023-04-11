@@ -4,8 +4,7 @@
  * @file errors.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_ERRORS_H_
-#define INCLUDE_UNICORNLUA_ERRORS_H_
+#pragma once
 
 #include <stdexcept>
 
@@ -40,5 +39,3 @@ public:
     explicit LuaBindingError(const char* message);
     void rethrow_as_lua_error(lua_State* L);
 };
-
-#endif // INCLUDE_UNICORNLUA_ERRORS_H_

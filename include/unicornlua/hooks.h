@@ -2,8 +2,7 @@
  * @file hooks.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_HOOKS_H_
-#define INCLUDE_UNICORNLUA_HOOKS_H_
+#pragma once
 
 #include "unicornlua/engine.h"
 #include "unicornlua/lua.h"
@@ -93,5 +92,3 @@ int ul_hook_add(lua_State* L);
  * Nothing is returned.
  */
 int ul_hook_del(lua_State* L);
-
-#endif // INCLUDE_UNICORNLUA_HOOKS_H_

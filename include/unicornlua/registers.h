@@ -4,8 +4,7 @@
  * @file registers.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_REGISTERS_H_
-#define INCLUDE_UNICORNLUA_REGISTERS_H_
+#pragma once
 
 #include <array>
 #include <cfloat>
@@ -354,5 +353,3 @@ lua_Number read_float80(const uint8_t* data);
  *          stored in memory as a quiet NaN.
  */
 void write_float80(lua_Number value, uint8_t* buffer);
-
-#endif // INCLUDE_UNICORNLUA_REGISTERS_H_

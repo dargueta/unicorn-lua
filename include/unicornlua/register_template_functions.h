@@ -1,5 +1,4 @@
-#ifndef INCLUDE_UNICORNLUA_REGISTER_TEMPLATE_FUNCTIONS_H_
-#define INCLUDE_UNICORNLUA_REGISTER_TEMPLATE_FUNCTIONS_H_
+#pragma once
 
 #include <array>
 #include <cstdint>
@@ -110,5 +109,3 @@ void write_lua_integer_array(
         lua_pop(L, 1);
     }
 }
-
-#endif // INCLUDE_UNICORNLUA_REGISTER_TEMPLATE_FUNCTIONS_H_

@@ -4,8 +4,7 @@
  * @file engine.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_ENGINE_H_
-#define INCLUDE_UNICORNLUA_ENGINE_H_
+#pragma once
 
 #include <set>
 
@@ -111,5 +110,3 @@ int ul_errno(lua_State* L);
 int ul_emu_start(lua_State* L);
 int ul_emu_stop(lua_State* L);
 uc_engine* ul_toengine(lua_State* L, int index);
-
-#endif // INCLUDE_UNICORNLUA_ENGINE_H_

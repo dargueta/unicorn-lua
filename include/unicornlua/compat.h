@@ -4,8 +4,7 @@
  * @file compat.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_COMPAT_H_
-#define INCLUDE_UNICORNLUA_COMPAT_H_
+#pragma once
 
 extern "C" {
 #include <lauxlib.h>
@@ -55,5 +54,3 @@ LUALIB_API void lua_rawsetp(lua_State* L, int index, const void* p);
 #define IS_LUAJIT 0
 #endif
 #endif
-
-#endif // INCLUDE_UNICORNLUA_COMPAT_H_

@@ -4,8 +4,7 @@
  * @file unicornlua.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_UNICORNLUA_H_
-#define INCLUDE_UNICORNLUA_UNICORNLUA_H_
+#pragma once
 
 #include <unicorn/unicorn.h>
 
@@ -65,5 +64,3 @@
 #define UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH MAKE_VERSION(UC_VERSION_MAJOR, \
     UC_VERSION_MINOR,                                                       \
     UC_VERSION_EXTRA)
-
-#endif // INCLUDE_UNICORNLUA_UNICORNLUA_H_

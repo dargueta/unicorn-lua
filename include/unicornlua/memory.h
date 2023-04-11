@@ -4,8 +4,7 @@
  * @file memory.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_MEMORY_H_
-#define INCLUDE_UNICORNLUA_MEMORY_H_
+#pragma once
 
 #include "unicornlua/lua.h"
 
@@ -23,5 +22,3 @@ int ul_mem_map(lua_State* L);
 int ul_mem_unmap(lua_State* L);
 int ul_mem_protect(lua_State* L);
 int ul_mem_regions(lua_State* L);
-
-#endif // INCLUDE_UNICORNLUA_MEMORY_H_

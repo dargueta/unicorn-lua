@@ -4,8 +4,7 @@
  * @file utils.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_UTILS_H_
-#define INCLUDE_UNICORNLUA_UTILS_H_
+#pragma once
 
 #include <new>
 #include <stdexcept>
@@ -48,5 +47,3 @@ void load_int_constants(lua_State* L, const struct NamedIntConst* constants);
  * so this function iterates through the entirety of the table and returns the
  * result. */
 size_t count_table_elements(lua_State* L, int table_index);
-
-#endif // INCLUDE_UNICORNLUA_UTILS_H_

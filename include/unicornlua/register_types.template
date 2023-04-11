@@ -1,5 +1,4 @@
-#ifndef INCLUDE_UNICORNLUA_REGISTER_TYPES_H_
-#define INCLUDE_UNICORNLUA_REGISTER_TYPES_H_
+#pragma once
 
 /**
  * An enum used to represent the kind of return value that Lua is expecting.
@@ -20,5 +19,3 @@ enum RegisterDataType {
 @ end
     UL_REG_TYPE_FLOAT80,
 };
-
-#endif  // INCLUDE_UNICORNLUA_REGISTER_TYPES_H_
