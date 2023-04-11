@@ -29,8 +29,7 @@ Arguments:
         The path to the template file to render.
     <values>  (optional string)
         The path to a Lua file providing the variables used to fill the template.
-        All globals are passed to the template, so there's no need to return a
-        table.
+        All globals are passed to the template; any return value is discarded.
 ]]
 
 
@@ -44,16 +43,7 @@ function main()
     }
 
     if args.values then
-        local chunk, err = loadfile(
-            args.values,
-            "t",
-            environment
-        )
-
-        if err then
-            utils.quit(1, "Error loading values file: %s", err)
-        end
-        chunk()
+        load_file(args.values, environment)
     end
 
     -- Add in variables defined on the command line, overriding anything from
@@ -84,5 +74,37 @@ function main()
     args.o:close()
 end
 
+
+function load_file(filename, environment)
+    local chunk, err, ran, file_contents
+
+    file_contents, err = utils.readfile(filename, false)
+    if err then
+       utils.quit(1, "Error reading %q: %s", filename, err)
+    end
+
+    if _VERSION == "Lua 5.1" then
+        chunk, err = loadstring(file_contents, filename)
+        if chunk then
+            setfenv(chunk, environment)
+        end
+    else  -- Lua 5.2+
+        chunk, err = load(
+            file_contents,
+            filename,
+            "t",
+            environment
+        )
+    end
+
+    if err then
+        utils.quit(1, "Error parsing %q: %s", filename, err)
+    end
+
+    ran, err = pcall(chunk)
+    if err then
+        utils.quit(1, "Error executing %q: %s", filename, err)
+    end
+end
 
 main()
