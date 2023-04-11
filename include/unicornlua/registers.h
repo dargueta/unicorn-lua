@@ -13,6 +13,7 @@
 #include <cstdint>
 
 #include "unicornlua/lua.h"
+#include "unicornlua/register_types.h"
 
 
 #if FLT_RADIX != 2
@@ -55,43 +56,6 @@
 #else
     #error "Platform has no way to represent 80-bit floating-point registers."
 #endif
-
-
-/**
- * An enum used to represent the kind of return value that Lua is expecting.
- */
-enum RegisterDataType {
-    UL_REG_TYPE_UNKNOWN,
-    UL_REG_TYPE_INT8,           // 1 byte
-    UL_REG_TYPE_INT16,          // 2 bytes
-    UL_REG_TYPE_INT32,          // 4 bytes
-    UL_REG_TYPE_FLOAT32,
-    UL_REG_TYPE_INT64,          // 8 bytes
-    UL_REG_TYPE_FLOAT64,
-    UL_REG_TYPE_INT8_ARRAY_8,
-    UL_REG_TYPE_INT16_ARRAY_4,
-    UL_REG_TYPE_INT32_ARRAY_2,
-    UL_REG_TYPE_INT64_ARRAY_1,
-    UL_REG_TYPE_FLOAT80,            // 10 bytes
-    UL_REG_TYPE_INT8_ARRAY_16,      // 16 bytes
-    UL_REG_TYPE_INT16_ARRAY_8,
-    UL_REG_TYPE_INT32_ARRAY_4,
-    UL_REG_TYPE_INT64_ARRAY_2,
-    UL_REG_TYPE_FLOAT32_ARRAY_4,
-    UL_REG_TYPE_FLOAT64_ARRAY_2,
-    UL_REG_TYPE_INT8_ARRAY_32,      // 32 bytes
-    UL_REG_TYPE_INT16_ARRAY_16,
-    UL_REG_TYPE_INT32_ARRAY_8,
-    UL_REG_TYPE_INT64_ARRAY_4,
-    UL_REG_TYPE_FLOAT32_ARRAY_8,
-    UL_REG_TYPE_FLOAT64_ARRAY_4,
-    UL_REG_TYPE_INT8_ARRAY_64,      // 64 bytes
-    UL_REG_TYPE_INT32_ARRAY_16,
-    UL_REG_TYPE_INT64_ARRAY_8,
-    UL_REG_TYPE_FLOAT32_ARRAY_16,
-    UL_REG_TYPE_FLOAT64_ARRAY_8,
-    UL_REG_TYPE_INT16_ARRAY_32,
-};
 
 
 class Register {

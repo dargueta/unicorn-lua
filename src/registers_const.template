@@ -1,0 +1,30 @@
+#include <unicorn/unicorn.h>
+
+#include "unicornlua/lua.h"
+#include "unicornlua/registers.h"
+#include "unicornlua/utils.h"
+
+
+static const struct NamedIntConst kConstants[] {
+@ for _, bits in ipairs({8, 16, 32, 64}) do
+    {"REG_TYPE_INT$(bits)", UL_REG_TYPE_INT$(bits)},
+@ end
+@ for _, bits in ipairs({32, 64}) do
+    {"REG_TYPE_FLOAT$(bits)", UL_REG_TYPE_FLOAT$(bits)},
+@ end
+@ for _, conf in ipairs(int_arrays) do
+    {"REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count)", UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count)},
+@ end
+@ for _, conf in ipairs(float_arrays) do
+    {"REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count)", UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count)},
+@ end
+    {"REG_TYPE_FLOAT80", UL_REG_TYPE_FLOAT80},
+    {nullptr, 0}
+};
+
+
+extern "C" UNICORN_EXPORT int luaopen_unicorn_registers_const(lua_State *L) {
+    lua_createtable(L, 0, $(#int_arrays + #float_arrays + 7));
+    load_int_constants(L, kConstants);
+    return 1;
+}
