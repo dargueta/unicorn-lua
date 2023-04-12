@@ -33,8 +33,7 @@ void float_array_to_table(lua_State* L, const std::array<T, N>& arr)
     }
 }
 
-template <class T, int N>
-std::array<T, N> Register::array_cast() const
+template <class T, int N> std::array<T, N> Register::array_cast() const
 {
     std::array<T, N> value {};
     memcpy(value.data(), data_, sizeof(value));
@@ -50,8 +49,7 @@ std::array<T, N> Register::array_cast() const
  *
  * @return @a value cast to type @a T.
  */
-template <typename T>
-T try_cast(lua_Integer value)
+template <typename T> T try_cast(lua_Integer value)
 {
     auto ext_value = static_cast<intmax_t>(value);
 
@@ -62,8 +60,8 @@ T try_cast(lua_Integer value)
 
     // If we get here then `value` isn't representable as a T.
     auto buf = std::ostringstream();
-    buf << "Numeric value out of range: " << value << " is not within ["
-        << min << ", " << max << "].";
+    buf << "Numeric value out of range: " << value << " is not within [" << min
+        << ", " << max << "].";
 
     throw std::domain_error(buf.str());
 }
@@ -102,10 +100,7 @@ void write_lua_integer_array(
 {
     for (int i = 0; i < n_elements; ++i) {
         lua_geti(L, table_index, i + 1);
-        write_lua_integer<T>(
-            L,
-            -1,
-            reinterpret_cast<T*>(buffer) + i);
+        write_lua_integer<T>(L, -1, reinterpret_cast<T*>(buffer) + i);
         lua_pop(L, 1);
     }
 }

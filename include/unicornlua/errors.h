@@ -30,9 +30,10 @@ private:
 /**
  * Base class for exceptions thrown due to an error in the Lua binding.
  *
- * Unlike @ref UnicornLibraryError, these exceptions are never thrown when a library
- * operation fails. Rather, this exception is used when something goes wrong with the
- * glue code, such as when Lua passes the wrong kind of argument to a function.
+ * Unlike @ref UnicornLibraryError, these exceptions are never thrown when a
+ * library operation fails. Rather, this exception is used when something goes
+ * wrong with the glue code, such as when Lua passes the wrong kind of argument
+ * to a function.
  */
 class LuaBindingError : public std::runtime_error {
 public:

@@ -10,14 +10,14 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context")
 
     CHECK_MESSAGE(
         lua_gettop(L) == 1, "Expecting a context object on the stack.");
-    CHECK_MESSAGE(
-        lua_type(L, 1) == LUA_TUSERDATA, "Object at top of stack should be userdata.");
+    CHECK_MESSAGE(lua_type(L, 1) == LUA_TUSERDATA,
+        "Object at top of stack should be userdata.");
 
-    CHECK_MESSAGE(
-        (Context*)lua_touserdata(L, 1) == context,
+    CHECK_MESSAGE((Context*)lua_touserdata(L, 1) == context,
         "TOS isn't the context object we were expecting.");
 
-    // Metatable of the context is at index 2, the expected metatable is at index 3.
+    // Metatable of the context is at index 2, the expected metatable is at
+    // index 3.
     CHECK_MESSAGE(
         lua_getmetatable(L, 1) != 0, "Context object has no metatable.");
     luaL_getmetatable(L, kContextMetatableName);
@@ -26,12 +26,10 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context")
 
 #if LUA_VERSION_NUM < 502
     // lua_compare() was added in 5.2, so we have to use lua_equal() here.
-    CHECK_MESSAGE(
-        lua_equal(L, 2, 3) == 1,
+    CHECK_MESSAGE(lua_equal(L, 2, 3) == 1,
         "Context metatable doesn't match the expected one.");
 #else
-    CHECK_MESSAGE(
-        lua_compare(L, 2, 3, LUA_OPEQ) == 1,
+    CHECK_MESSAGE(lua_compare(L, 2, 3, LUA_OPEQ) == 1,
         "Context metatable doesn't match the expected one.");
 #endif
     // Clean up the stack
@@ -57,7 +55,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test closing a context")
     lua_pop(L, 1);
 }
 
-TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes.")
+TEST_CASE_FIXTURE(
+    AutoclosingEngineFixture, "Closing a closed context explodes.")
 {
     Context* context = uclua_engine->create_context_in_lua();
     CHECK_NE(context->context_handle, nullptr);
@@ -77,7 +76,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Closing a closed context explodes."
     lua_pop(L, 1);
 }
 
-TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent.")
+TEST_CASE_FIXTURE(
+    AutoclosingEngineFixture, "ul_context_maybe_free is idempotent.")
 {
     Context* context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
@@ -100,7 +100,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "ul_context_maybe_free is idempotent
     lua_pop(L, 1);
 }
 
-TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed context explodes.")
+TEST_CASE_FIXTURE(AutoclosingEngineFixture,
+    "Trying to restore from a closed context explodes.")
 {
     Context* context = uclua_engine->create_context_in_lua();
     CHECK_NE(context, nullptr);
@@ -111,7 +112,8 @@ TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Trying to restore from a closed con
 
     auto userdata = reinterpret_cast<Context*>(lua_touserdata(L, -1));
     CHECK_EQ(userdata, context);
-    CHECK_THROWS_AS(uclua_engine->restore_from_context(context), LuaBindingError);
+    CHECK_THROWS_AS(
+        uclua_engine->restore_from_context(context), LuaBindingError);
 
     // Remove the context from the stack.
     lua_pop(L, 1);

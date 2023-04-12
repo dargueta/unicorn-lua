@@ -19,8 +19,10 @@
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
 
-const uint8_t kFP80PositiveInfinity[] = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
-const uint8_t kFP80NegativeInfinity[] = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff };
+const uint8_t kFP80PositiveInfinity[]
+    = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
+const uint8_t kFP80NegativeInfinity[]
+    = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff };
 const uint8_t kFP80SignalingNaN[] = { 1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
 
 lua_Number read_float80(const uint8_t* data)
@@ -83,7 +85,8 @@ lua_Number read_float80(const uint8_t* data)
 
     // If the high bit of the significand is set, this is a normal value. Ignore
     // the high bit of the significand and compensate for the exponent bias.
-    auto f_part = static_cast<lua_Number>(significand & UINT64_C(0x7fffffffffffffff));
+    auto f_part
+        = static_cast<lua_Number>(significand & UINT64_C(0x7fffffffffffffff));
     if (sign)
         f_part *= -1;
 
@@ -101,8 +104,8 @@ static bool is_snan(lua_Number value)
 {
     fenv_t env;
 
-    // Disable floating-point exception traps and clear all exception information.
-    // The current state is saved for later.
+    // Disable floating-point exception traps and clear all exception
+    // information. The current state is saved for later.
     std::feholdexcept(&env);
     std::feclearexcept(FE_ALL_EXCEPT);
 
@@ -110,8 +113,8 @@ static bool is_snan(lua_Number value)
     // floating-point exception.
     value = value * 1;
 
-    // Get the exception state and see if any exceptions were thrown. If so, then
-    // `value` was a signaling NaN.
+    // Get the exception state and see if any exceptions were thrown. If so,
+    // then `value` was a signaling NaN.
     int fenv_flags = std::fetestexcept(FE_ALL_EXCEPT);
 
     // Reset the environment to what it was before and check the exception flags
@@ -147,26 +150,28 @@ void write_float80(lua_Number value, uint8_t* buffer)
         // This is a more complicated case and we handle it farther down.
         break;
     default:
-        throw std::runtime_error(
-            "Unrecognized value returned from std::fpclassify(). This library was"
-            " probably compiled on a newer standard of C++ than it was written for."
-            " Please file a bug ticket.");
+        throw std::runtime_error("Unrecognized value returned from "
+                                 "std::fpclassify(). This library was"
+                                 " probably compiled on a newer standard of "
+                                 "C++ than it was written for."
+                                 " Please file a bug ticket.");
     }
 
     int exponent;
     uclua_float80 float_significand = std::frexp(value, &exponent);
 
     if ((exponent <= -16383) || (exponent >= 16384))
-        throw std::domain_error(
-            "Can't convert value outside representable range for 80-bit float without"
-            " loss of precision.");
+        throw std::domain_error("Can't convert value outside representable "
+                                "range for 80-bit float without"
+                                " loss of precision.");
 
-    // The high bit of the significand is always set for normal numbers, and clear for
-    // denormal numbers. This means the significand is 63 bits, not 64, hence why we
-    // shift here by 2^62 and not 2^63.
+    // The high bit of the significand is always set for normal numbers, and
+    // clear for denormal numbers. This means the significand is 63 bits, not
+    // 64, hence why we shift here by 2^62 and not 2^63.
     //
-    // Remember, float_significand is in the half-open range [0.5, 1). Multiplying by
-    // 2^63 will give us an integer X such that (X / 2^63)^exponent = value
+    // Remember, float_significand is in the half-open range [0.5, 1).
+    // Multiplying by 2^63 will give us an integer X such that (X /
+    // 2^63)^exponent = value
     auto int_significand = static_cast<uint64_t>(
         float_significand * static_cast<uclua_float80>(UINT64_C(1) << 62));
     if (f_type == FP_NORMAL) {
@@ -177,7 +182,8 @@ void write_float80(lua_Number value, uint8_t* buffer)
         exponent = 0;
 
     *reinterpret_cast<uint64_t*>(buffer) = int_significand;
-    *reinterpret_cast<uint16_t*>(buffer + UINT16_C(8)) = static_cast<uint16_t>(exponent | sign_bit);
+    *reinterpret_cast<uint16_t*>(buffer + UINT16_C(8))
+        = static_cast<uint16_t>(exponent | sign_bit);
 }
 
 Register::Register()
@@ -209,7 +215,8 @@ int ul_reg_write(lua_State* L)
     register_buffer_type buffer;
 
     memset(buffer, 0, sizeof(buffer));
-    *reinterpret_cast<int_least64_t*>(buffer) = static_cast<int_least64_t>(luaL_checkinteger(L, 3));
+    *reinterpret_cast<int_least64_t*>(buffer)
+        = static_cast<int_least64_t>(luaL_checkinteger(L, 3));
 
     uc_err error = uc_reg_write(engine, register_id, buffer);
     if (error != UC_ERR_OK)
@@ -297,8 +304,8 @@ int ul_reg_write_batch(lua_State* L)
     std::unique_ptr<int_least64_t[]> values(new int_least64_t[n_registers]);
     std::unique_ptr<void*[]> p_values(new void*[n_registers]);
 
-    /* Iterate through the register/value pairs and put them in the corresponding
-     * array positions. */
+    /* Iterate through the register/value pairs and put them in the
+     * corresponding array positions. */
     lua_pushnil(L);
     for (size_t i = 0; lua_next(L, 2) != 0; ++i) {
         register_ids[i] = static_cast<int>(luaL_checkinteger(L, -2));
@@ -307,18 +314,14 @@ int ul_reg_write_batch(lua_State* L)
         lua_pop(L, 1);
     }
 
-    uc_err error = uc_reg_write_batch(
-        engine,
-        register_ids.get(),
-        p_values.get(),
-        static_cast<int>(n_registers));
+    uc_err error = uc_reg_write_batch(engine, register_ids.get(),
+        p_values.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
     return 0;
 }
 
-static void prepare_batch_buffers(
-    size_t n_registers,
+static void prepare_batch_buffers(size_t n_registers,
     std::unique_ptr<register_buffer_type[]>& values,
     std::unique_ptr<void*[]>& value_pointers)
 {
@@ -341,20 +344,16 @@ int ul_reg_read_batch(lua_State* L)
 
     prepare_batch_buffers(n_registers, values, value_pointers);
     for (size_t i = 0; i < n_registers; ++i)
-        register_ids[i] = static_cast<int>(lua_tointeger(L, static_cast<int>(i) + 2));
+        register_ids[i]
+            = static_cast<int>(lua_tointeger(L, static_cast<int>(i) + 2));
 
-    uc_err error = uc_reg_read_batch(
-        engine,
-        register_ids.get(),
-        value_pointers.get(),
-        static_cast<int>(n_registers));
+    uc_err error = uc_reg_read_batch(engine, register_ids.get(),
+        value_pointers.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
     for (size_t i = 0; i < n_registers; ++i) {
-        lua_pushinteger(
-            L,
-            *reinterpret_cast<lua_Integer*>(values[i]));
+        lua_pushinteger(L, *reinterpret_cast<lua_Integer*>(values[i]));
     }
     return static_cast<int>(n_registers);
 }
@@ -380,11 +379,8 @@ int ul_reg_read_batch_as(lua_State* L)
         lua_pop(L, 1);
     }
 
-    uc_err error = uc_reg_read_batch(
-        engine,
-        register_ids.get(),
-        value_pointers.get(),
-        static_cast<int>(n_registers));
+    uc_err error = uc_reg_read_batch(engine, register_ids.get(),
+        value_pointers.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
@@ -398,8 +394,7 @@ int ul_reg_read_batch_as(lua_State* L)
 
         // Value: Deserialized register
         auto register_object = Register(
-            value_pointers[i],
-            static_cast<RegisterDataType>(value_types[i]));
+            value_pointers[i], static_cast<RegisterDataType>(value_types[i]));
         register_object.push_to_lua(L);
         lua_settable(L, -3);
     }

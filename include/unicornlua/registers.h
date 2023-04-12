@@ -287,8 +287,7 @@ public:
     uint8_t data_[64];
 
 private:
-    template <class T, int N>
-    std::array<T, N> array_cast() const;
+    template <class T, int N> std::array<T, N> array_cast() const;
 
     RegisterDataType kind_;
 };
@@ -311,7 +310,8 @@ int ul_reg_write_batch(lua_State* L);
 int ul_reg_read_batch(lua_State* L);
 
 /**
- * Read a register from the processor, as something other than as a plain integer.
+ * Read a register from the processor, as something other than as a plain
+ * integer.
  *
  * You'll need to use this for reading registers that aren't integers, or for
  * SSE/AVX/AVX-512 registers that can act as arrays of values.
@@ -349,7 +349,7 @@ lua_Number read_float80(const uint8_t* data);
  * @param buffer    The buffer to store the serialized float into. Must hold at
  *                  least 10 bytes.
  *
- * @warning No distinction is made between quiet and signaling NaNs. All NaNs are
- *          stored in memory as a quiet NaN.
+ * @warning No distinction is made between quiet and signaling NaNs. All NaNs
+ * are stored in memory as a quiet NaN.
  */
 void write_float80(lua_Number value, uint8_t* buffer);

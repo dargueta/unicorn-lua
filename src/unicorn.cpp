@@ -50,17 +50,18 @@ static int ul_open(lua_State* L)
     if (error != UC_ERR_OK)
         return ul_crash_on_error(L, error);
 
-    // Create a block of memory for the engine userdata and then create the UCLuaEngine
-    // in there using placement new. This way, Lua controls the memory and will call the
-    // destructor when the engine gets garbage-collected, and we won't have to manage it
-    // ourselves.
+    // Create a block of memory for the engine userdata and then create the
+    // UCLuaEngine in there using placement new. This way, Lua controls the
+    // memory and will call the destructor when the engine gets
+    // garbage-collected, and we won't have to manage it ourselves.
     auto udata = lua_newuserdata(L, sizeof(UCLuaEngine));
     new (udata) UCLuaEngine(L, engine);
 
     luaL_setmetatable(L, kEngineMetatableName);
 
-    // Add a mapping of the uc_engine pointer to the engine object we just created, so
-    // that hook callbacks can get the engine object knowing only the uc_engine pointer.
+    // Add a mapping of the uc_engine pointer to the engine object we just
+    // created, so that hook callbacks can get the engine object knowing only
+    // the uc_engine pointer.
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
     lua_pushvalue(L, -2); // Duplicate engine object as value
     lua_rawsetp(L, -2, engine);
@@ -76,18 +77,15 @@ static int ul_strerror(lua_State* L)
     return 1;
 }
 
-static const luaL_Reg kUnicornLibraryFunctions[] = {
-    { "arch_supported", ul_arch_supported },
-    { "open", ul_open },
-    { "strerror", ul_strerror },
-    { "version", ul_unicorn_version },
-    { nullptr, nullptr }
-};
+static const luaL_Reg kUnicornLibraryFunctions[]
+    = { { "arch_supported", ul_arch_supported }, { "open", ul_open },
+          { "strerror", ul_strerror }, { "version", ul_unicorn_version },
+          { nullptr, nullptr } };
 
 extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State* L)
 {
-    // Initialize the engine bits, such as the metatables that engine and context
-    // instances use.
+    // Initialize the engine bits, such as the metatables that engine and
+    // context instances use.
     ul_init_engines_lib(L);
 
     // Create the main library table with all of the global functions in it.
