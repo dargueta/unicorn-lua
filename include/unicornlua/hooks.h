@@ -13,8 +13,7 @@ class Hook {
 
 protected:
     Hook(lua_State* L, uc_engine* engine);
-    Hook(
-        lua_State* L, uc_engine* engine, uc_hook hook_handle,
+    Hook(lua_State* L, uc_engine* engine, uc_hook hook_handle,
         int callback_func_ref = LUA_NOREF, int user_data_ref = LUA_REFNIL);
 
 public:
@@ -77,7 +76,8 @@ private:
  * ```lua
  *   -- `engine` is implicit first argument
  *
- *   engine:hook_add(unicorn.UC_HOOK_MEM_READ_UNMAPPED, my_fn, nil, nil, my_data)
+ *   engine:hook_add(unicorn.UC_HOOK_MEM_READ_UNMAPPED, my_fn, nil, nil,
+ * my_data)
  * ```
  */
 int ul_hook_add(lua_State* L);

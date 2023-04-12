@@ -18,8 +18,8 @@ LuaFixture::LuaFixture()
 
 LuaFixture::~LuaFixture()
 {
-    // The test may close the state for us in a couple cases where we deliberately
-    // trigger a panic, since the state is no longer valid.
+    // The test may close the state for us in a couple cases where we
+    // deliberately trigger a panic, since the state is no longer valid.
     if (L == nullptr)
         return;
 
@@ -40,8 +40,7 @@ EngineFixture::EngineFixture()
     , uclua_engine(nullptr)
 {
     ul_init_engines_lib(L);
-    CHECK_MESSAGE(
-        lua_gettop(L) == 0,
+    CHECK_MESSAGE(lua_gettop(L) == 0,
         "Garbage left on the stack after initializing the engine system.");
 
     uc_engine* engine_handle;
@@ -50,8 +49,7 @@ EngineFixture::EngineFixture()
 
     uclua_engine = new UCLuaEngine(L, engine_handle);
     CHECK_NE(uclua_engine->get_handle(), nullptr);
-    CHECK_MESSAGE(
-        lua_gettop(L) == 0,
+    CHECK_MESSAGE(lua_gettop(L) == 0,
         "Garbage on the stack after creating the engine object.");
 }
 
@@ -60,11 +58,9 @@ AutoclosingEngineFixture::~AutoclosingEngineFixture()
     // This REQUIRE shouldn't be necessary but we're getting segfaults in LuaJIT
     // but only on OSX. I'm at my wits' end trying to figure this out.
     REQUIRE(L != nullptr);
-    CHECK_MESSAGE(
-        lua_gettop(L) == 0,
+    CHECK_MESSAGE(lua_gettop(L) == 0,
         "Trash on the stack just BEFORE deleting the engine C++ object");
     delete uclua_engine;
-    CHECK_MESSAGE(
-        lua_gettop(L) == 0,
+    CHECK_MESSAGE(lua_gettop(L) == 0,
         "Trash on the stack AFTER deleting the engine C++ object.");
 }

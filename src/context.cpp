@@ -7,24 +7,19 @@
 
 const char* const kContextMetatableName = "unicornlua__context_meta";
 
-const luaL_Reg kContextMetamethods[] = {
-    { "__gc", ul_context_maybe_free },
-    { "__close", ul_context_maybe_free },
-    { nullptr, nullptr }
-};
+const luaL_Reg kContextMetamethods[] = { { "__gc", ul_context_maybe_free },
+    { "__close", ul_context_maybe_free }, { nullptr, nullptr } };
 
-const luaL_Reg kContextInstanceMethods[] = {
-    { "free", ul_context_free },
-    { nullptr, nullptr }
-};
+const luaL_Reg kContextInstanceMethods[]
+    = { { "free", ul_context_free }, { nullptr, nullptr } };
 
 int ul_context_save(lua_State* L)
 {
     auto engine = get_engine_struct(L, 1);
 
     if (lua_gettop(L) < 2) {
-        // Caller didn't provide a context, create a new one and push it to the stack
-        // so we can return it to the caller.
+        // Caller didn't provide a context, create a new one and push it to the
+        // stack so we can return it to the caller.
         engine->create_context_in_lua();
     } else {
         Context* context = get_context_struct(L, 2);

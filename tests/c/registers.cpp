@@ -9,9 +9,12 @@
 #include "unicornlua/registers.h"
 
 // Copied and pasted from registers.cpp because of linker errors
-static const uint8_t kFP80PositiveInfinity[] = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
-static const uint8_t kFP80NegativeInfinity[] = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff };
-static const uint8_t kFP80QuietNaN[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+static const uint8_t kFP80PositiveInfinity[]
+    = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
+static const uint8_t kFP80NegativeInfinity[]
+    = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff };
+static const uint8_t kFP80QuietNaN[]
+    = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 // This is deliberate. C++ apparently defaults to all produced NaN being quiet,
 // so somewhere in here this gets lost in translation, and we can't produce
@@ -93,7 +96,8 @@ TEST_CASE("read_float80(): 7FFF4000000000000000 = NaN (invalid 80387+)")
 
 TEST_CASE("read_float80(): 7FFF8BADC0FFEE15DEAD = sNaN")
 {
-    const uint8_t data[] = { 0xad, 0xde, 0x15, 0xee, 0xff, 0xc0, 0xad, 0x8b, 0xff, 0x7f };
+    const uint8_t data[]
+        = { 0xad, 0xde, 0x15, 0xee, 0xff, 0xc0, 0xad, 0x8b, 0xff, 0x7f };
     lua_Number result = read_float80(data);
     // CHECK_MESSAGE(errno == EDOM, "errno should be EDOM");
     //  TODO (dargueta): How do we check if this is a signaling NaN?
@@ -485,9 +489,8 @@ TEST_CASE("Register::as_16xf32")
 
 TEST_CASE("Register::as_8xf64")
 {
-    std::array<uclua_float64, 8> expected {
-        0, 1, INFINITY, 123456789, 0.987654321, 0x80000000, -189357923, -1
-    };
+    std::array<uclua_float64, 8> expected { 0, 1, INFINITY, 123456789,
+        0.987654321, 0x80000000, -189357923, -1 };
     Register reg(expected.data(), UL_REG_TYPE_FLOAT64_ARRAY_8);
     CHECK_EQ(reg.as_8xf64(), expected);
 }
