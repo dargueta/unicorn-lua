@@ -4,8 +4,7 @@
  * @file errors.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_ERRORS_H_
-#define INCLUDE_UNICORNLUA_ERRORS_H_
+#pragma once
 
 #include <stdexcept>
 
@@ -22,12 +21,11 @@ public:
 
     /** Return the Unicorn error code that triggered this exception. */
     uc_err get_error() const noexcept;
-    void rethrow_as_lua_error(lua_State *L);
+    void rethrow_as_lua_error(lua_State* L);
 
 private:
     uc_err error_;
 };
-
 
 /**
  * Base class for exceptions thrown due to an error in the Lua binding.
@@ -38,8 +36,6 @@ private:
  */
 class LuaBindingError : public std::runtime_error {
 public:
-    explicit LuaBindingError(const char *message);
-    void rethrow_as_lua_error(lua_State *L);
+    explicit LuaBindingError(const char* message);
+    void rethrow_as_lua_error(lua_State* L);
 };
-
-#endif  // INCLUDE_UNICORNLUA_ERRORS_H_

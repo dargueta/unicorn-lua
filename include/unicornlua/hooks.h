@@ -2,28 +2,26 @@
  * @file hooks.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_HOOKS_H_
-#define INCLUDE_UNICORNLUA_HOOKS_H_
+#pragma once
 
-#include "unicornlua/engine.h"
+#include <unicorn/unicorn.h>
+
 #include "unicornlua/lua.h"
-
 
 class Hook {
     friend class UCLuaEngine;
 
 protected:
-    Hook(lua_State *L, uc_engine *engine);
+    Hook(lua_State* L, uc_engine* engine);
     Hook(
-        lua_State *L, uc_engine *engine, uc_hook hook_handle,
-        int callback_func_ref=LUA_NOREF, int user_data_ref=LUA_REFNIL
-    );
+        lua_State* L, uc_engine* engine, uc_hook hook_handle,
+        int callback_func_ref = LUA_NOREF, int user_data_ref = LUA_REFNIL);
 
 public:
     ~Hook() noexcept(false);
 
-    uc_engine *engine() noexcept;
-    lua_State *L() noexcept;
+    uc_engine* engine() noexcept;
+    lua_State* L() noexcept;
     uc_hook get_hook_handle() const noexcept;
     void set_hook_handle(uc_hook hook_handle) noexcept;
 
@@ -36,9 +34,9 @@ public:
     void push_user_data();
 
 private:
-    lua_State *L_;          ///< The Lua state used by this hook.
-    uc_engine *engine_;     ///< The engine this hook is bound to.
-    uc_hook hook_handle_;   ///< The hook handle used by Unicorn.
+    lua_State* L_; ///< The Lua state used by this hook.
+    uc_engine* engine_; ///< The engine this hook is bound to.
+    uc_hook hook_handle_; ///< The hook handle used by Unicorn.
 
     /**
      * A reference in the global registry for this hook's callback function.
@@ -52,7 +50,6 @@ private:
     int user_data_ref_;
     bool is_handle_set_;
 };
-
 
 /**
  * Create a hook. Implements `engine:hook_add()`.
@@ -83,8 +80,7 @@ private:
  *   engine:hook_add(unicorn.UC_HOOK_MEM_READ_UNMAPPED, my_fn, nil, nil, my_data)
  * ```
  */
-int ul_hook_add(lua_State *L);
-
+int ul_hook_add(lua_State* L);
 
 /**
  * Delete a hook. Implements `engine:hook_del()`.
@@ -96,7 +92,4 @@ int ul_hook_add(lua_State *L);
  *
  * Nothing is returned.
  */
-int ul_hook_del(lua_State *L);
-
-
-#endif  /* INCLUDE_UNICORNLUA_HOOKS_H_ */
+int ul_hook_del(lua_State* L);
