@@ -94,10 +94,11 @@ static void get_callback(Hook* hook)
 {
     lua_State* L = hook->L();
     hook->push_callback();
-    if (lua_isnil(L, -1))
+    if (lua_isnil(L, -1)) {
         luaL_error(L,
             "No callback function found for hook %p attached to engine %p",
             hook, hook->engine());
+    }
 }
 
 /* The C wrapper for a code execution hook. */
@@ -111,7 +112,7 @@ static void code_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     hook->push_user_data();
@@ -127,7 +128,7 @@ static void interrupt_hook(uc_engine* uc, uint32_t intno, void* user_data)
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(intno));
     hook->push_user_data();
     lua_call(L, 3, 0);
@@ -143,7 +144,7 @@ static uint32_t port_in_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(port));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     hook->push_user_data();
@@ -165,7 +166,7 @@ static void port_out_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(port));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     lua_pushinteger(L, static_cast<lua_Integer>(value));
@@ -183,7 +184,7 @@ static void memory_access_hook(uc_engine* uc, uc_mem_type type,
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, (lua_Integer)type);
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
@@ -202,7 +203,7 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(type));
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));

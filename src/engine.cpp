@@ -24,6 +24,7 @@ static int maybe_close(lua_State* L)
     return 0;
 }
 
+extern "C" {
 const luaL_Reg kEngineMetamethods[] = { { "__gc", maybe_close },
     { "__close", maybe_close }, { nullptr, nullptr } };
 
@@ -40,6 +41,7 @@ const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "reg_read_batch_as", ul_reg_read_batch_as },
     { "reg_write", ul_reg_write }, { "reg_write_as", ul_reg_write_as },
     { "reg_write_batch", ul_reg_write_batch }, { nullptr, nullptr } };
+}
 
 UCLuaEngine* ul_toluaengine(lua_State* L, int index)
 {
@@ -230,7 +232,7 @@ void ul_init_engines_lib(lua_State* L)
     lua_pop(L, 2);
 }
 
-void ul_get_engine_object(lua_State* L, const uc_engine* engine)
+void ul_find_lua_engine(lua_State* L, const uc_engine* engine)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kEnginePointerMapName);
     lua_pushlightuserdata(L, (void*)engine);

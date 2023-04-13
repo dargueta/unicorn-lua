@@ -16,8 +16,10 @@
 
 extern const char* const kEngineMetatableName;
 extern const char* const kEnginePointerMapName;
+extern "C" {
 extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
+}
 
 struct Context;
 
@@ -79,7 +81,7 @@ private:
  * @param L         A pointer to the current Lua state.
  * @param engine    A pointer to the engine we want to get the Lua object for.
  */
-void ul_get_engine_object(lua_State* L, const uc_engine* engine);
+void ul_find_lua_engine(lua_State* L, const uc_engine* engine);
 
 /**
  * Initialize the engine object internals, such as registering metatables.
