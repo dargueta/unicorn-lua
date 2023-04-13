@@ -138,6 +138,13 @@ test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
 		          -p lua                                    \
 		          tests/lua
 
+.PHONY: autoformat
+autoformat:
+	clang-format --Werror -i --verbose $(wildcard src/*.cpp)
+	clang-format --Werror -i --verbose $(wildcard tests/c/*.cpp)
+	clang-format --Werror -i --verbose $(filter-out %doctest.h,$(wildcard tests/c/*.h))
+	clang-format --Werror -i --verbose $(wildcard include/unicornlua/*.h)
+
 
 $(DOCTEST_HEADER):
 	$(CURL) -sSo $@ https://raw.githubusercontent.com/doctest/doctest/$(DOCTEST_TAG)/doctest/doctest.h
