@@ -214,8 +214,7 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     if (lua_type(L, -1) != LUA_TBOOLEAN) {
         luaL_error(L,
             "Error: Handler for invalid memory accesses must return a boolean, "
-            "got a %s"
-            " instead.",
+            "got a %s instead.",
             lua_typename(L, -1));
         // Technically this is unreachable because luaL_error calls longjmp().
         // The header doesn't declare this, however, so we have no way of

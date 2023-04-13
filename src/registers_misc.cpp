@@ -151,10 +151,9 @@ void write_float80(lua_Number value, uint8_t* buffer)
         break;
     default:
         throw std::runtime_error("Unrecognized value returned from "
-                                 "std::fpclassify(). This library was"
-                                 " probably compiled on a newer standard of "
-                                 "C++ than it was written for."
-                                 " Please file a bug ticket.");
+                                 "std::fpclassify(). This library was probably "
+                                 "compiled on a newer standard of C++ than it "
+                                 "was written for. Please file a bug ticket.");
     }
 
     int exponent;
@@ -162,8 +161,8 @@ void write_float80(lua_Number value, uint8_t* buffer)
 
     if ((exponent <= -16383) || (exponent >= 16384))
         throw std::domain_error("Can't convert value outside representable "
-                                "range for 80-bit float without"
-                                " loss of precision.");
+                                "range for 80-bit float without loss of "
+                                "precision.");
 
     // The high bit of the significand is always set for normal numbers, and
     // clear for denormal numbers. This means the significand is 63 bits, not

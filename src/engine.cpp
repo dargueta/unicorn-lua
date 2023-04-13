@@ -242,8 +242,7 @@ void ul_find_lua_engine(lua_State* L, const uc_engine* engine)
         // Remove nil and engine pointer map at TOS
         lua_pop(L, 2);
         throw LuaBindingError("No engine object is registered for the given "
-                              "pointer. It may have been"
-                              " deleted already.");
+                              "pointer. It may have been deleted already.");
     }
 
     // Remove the engine pointer map from the stack.
