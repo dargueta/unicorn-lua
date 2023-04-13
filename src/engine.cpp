@@ -191,7 +191,7 @@ void UCLuaEngine::free_context(Context* context)
 
     uc_err error;
 
-#if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= 0x010002
+#if UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH >= MAKE_VERSION(1, 0, 2)
     /* Unicorn 1.0.2 added its own separate function for freeing contexts. */
     error = uc_context_free(context->context_handle);
 #else
