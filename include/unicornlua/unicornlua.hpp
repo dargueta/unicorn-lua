@@ -8,8 +8,8 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/compat.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/lua.hpp"
 
 #if UC_VERSION_MAJOR != 1
 #error "Library must be compiled against version 1.x of Unicorn."

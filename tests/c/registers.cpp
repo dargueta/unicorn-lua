@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "doctest.h"
-#include "unicornlua/registers.h"
+#include "unicornlua/registers.hpp"
 
 // Copied and pasted from registers.cpp because of linker errors
 static const uint8_t kFP80PositiveInfinity[]

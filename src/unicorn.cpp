@@ -1,10 +1,10 @@
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/context.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/unicornlua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/context.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/unicornlua.hpp"
+#include "unicornlua/utils.hpp"
 
 static int ul_unicorn_version(lua_State* L)
 {

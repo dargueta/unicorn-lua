@@ -10,9 +10,9 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/hooks.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 extern const char* const kEngineMetatableName;
 extern const char* const kEnginePointerMapName;

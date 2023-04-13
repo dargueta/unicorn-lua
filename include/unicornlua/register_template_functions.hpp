@@ -7,7 +7,7 @@
 #include <sstream>
 
 #include "lua.h"
-#include "registers.h"
+#include "registers.hpp"
 
 template <class T, size_t N>
 void integer_array_to_table(lua_State* L, const std::array<T, N>& arr)

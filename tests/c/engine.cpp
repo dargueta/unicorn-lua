@@ -1,10 +1,10 @@
 #include <unicorn/unicorn.h>
 
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/context.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/lua.h"
+#include "fixtures.hpp"
+#include "unicornlua/context.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
 
 TEST_CASE_FIXTURE(
     EngineFixture, "UCLuaEngine::close() sets engine handle to null")

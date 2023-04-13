@@ -2,8 +2,8 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/errors.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
 
 UnicornLibraryError::UnicornLibraryError(uc_err error)
     : std::runtime_error(uc_strerror(error))

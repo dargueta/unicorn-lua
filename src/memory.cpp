@@ -2,10 +2,10 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/compat.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 int ul_mem_write(lua_State* L)
 {

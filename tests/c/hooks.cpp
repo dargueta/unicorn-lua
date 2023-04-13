@@ -1,7 +1,7 @@
-#include "unicornlua/hooks.h"
+#include "unicornlua/hooks.hpp"
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/lua.h"
+#include "fixtures.hpp"
+#include "unicornlua/lua.hpp"
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Empty Hook created as expected")
 {

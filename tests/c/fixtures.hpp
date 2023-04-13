@@ -3,8 +3,8 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
 
 class LuaFixture {
 public:

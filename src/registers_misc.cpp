@@ -12,12 +12,12 @@
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
 
-#include "unicornlua/compat.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/registers.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/registers.hpp"
+#include "unicornlua/utils.hpp"
 
 const uint8_t kFP80PositiveInfinity[]
     = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };

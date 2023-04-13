@@ -1,14 +1,14 @@
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/context.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/memory.h"
-#include "unicornlua/registers.h"
-#include "unicornlua/unicornlua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/context.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/hooks.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/memory.hpp"
+#include "unicornlua/registers.hpp"
+#include "unicornlua/unicornlua.hpp"
+#include "unicornlua/utils.hpp"
 
 const char* const kEngineMetatableName = "unicornlua__engine_meta";
 const char* const kEnginePointerMapName = "unicornlua__engine_ptr_map";

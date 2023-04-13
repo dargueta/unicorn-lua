@@ -4,9 +4,9 @@
 #include <unicorn/unicorn.h>
 
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
+#include "fixtures.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
 
 LuaFixture::LuaFixture()
 {

@@ -1,7 +1,7 @@
 /**
  * Compatibility shims for differences between Lua versions.
  *
- * @file compat.h
+ * @file compat.hpp
  */
 
 #pragma once

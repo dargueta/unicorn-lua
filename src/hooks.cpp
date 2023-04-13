@@ -1,11 +1,11 @@
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
 
-#include "unicornlua/engine.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/hooks.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 Hook::Hook(lua_State* L, uc_engine* engine)
     : L_(L)

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "unicornlua/lua.h"
+#include "unicornlua/lua.hpp"
 
 /**
  * Write data to a location in a machine's memory.

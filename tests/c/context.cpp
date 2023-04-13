@@ -1,7 +1,7 @@
-#include "unicornlua/context.h"
+#include "unicornlua/context.hpp"
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/errors.h"
+#include "fixtures.hpp"
+#include "unicornlua/errors.hpp"
 
 TEST_CASE_FIXTURE(AutoclosingEngineFixture, "Test creating a context")
 {

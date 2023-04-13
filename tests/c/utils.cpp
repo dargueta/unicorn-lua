@@ -5,9 +5,9 @@
 #include <unicorn/unicorn.h>
 
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "fixtures.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 // FIXME (dargueta): Something's wrong with this test and it's not working
 // right.

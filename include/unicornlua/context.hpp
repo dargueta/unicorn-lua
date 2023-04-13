@@ -1,15 +1,15 @@
 /**
  * Lua bindings for Unicorn context operations.
  *
- * @file context.h
+ * @file context.hpp
  */
 
 #pragma once
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
 
 extern const char* const kContextMetatableName;
 extern const luaL_Reg kContextMetamethods[];
