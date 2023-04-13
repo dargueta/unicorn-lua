@@ -15,7 +15,7 @@ const luaL_Reg kContextInstanceMethods[]
 
 int ul_context_save(lua_State* L)
 {
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
 
     if (lua_gettop(L) < 2) {
         // Caller didn't provide a context, create a new one and push it to the
@@ -33,7 +33,7 @@ int ul_context_save(lua_State* L)
 
 int ul_context_restore(lua_State* L)
 {
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
     Context* context = get_context_struct(L, 2);
     engine->restore_from_context(context);
     return 0;

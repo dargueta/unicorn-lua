@@ -16,7 +16,7 @@ const char* const kEnginePointerMapName = "unicornlua__engine_ptr_map";
 // Close the engine only if it hasn't been closed already.
 static int maybe_close(lua_State* L)
 {
-    UCLuaEngine* engine_object = get_engine_struct(L, 1);
+    UCLuaEngine* engine_object = ul_toluaengine(L, 1);
     uc_engine* engine_handle = engine_object->get_handle();
 
     if (engine_handle != nullptr)
@@ -40,6 +40,12 @@ const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "reg_read_batch_as", ul_reg_read_batch_as },
     { "reg_write", ul_reg_write }, { "reg_write_as", ul_reg_write_as },
     { "reg_write_batch", ul_reg_write_batch }, { nullptr, nullptr } };
+
+UCLuaEngine* ul_toluaengine(lua_State* L, int index)
+{
+    return reinterpret_cast<UCLuaEngine*>(
+        luaL_checkudata(L, index, kEngineMetatableName));
+}
 
 UCLuaEngine::UCLuaEngine(lua_State* L, uc_engine* engine)
     : L_(L)
@@ -244,7 +250,7 @@ void ul_get_engine_object(lua_State* L, const uc_engine* engine)
 
 int ul_close(lua_State* L)
 {
-    UCLuaEngine* engine_object = get_engine_struct(L, 1);
+    UCLuaEngine* engine_object = ul_toluaengine(L, 1);
     uc_engine* engine_handle = engine_object->get_handle();
 
     if (engine_handle == nullptr)
@@ -265,7 +271,7 @@ int ul_close(lua_State* L)
 
 int ul_query(lua_State* L)
 {
-    const UCLuaEngine* engine_object = get_engine_struct(L, 1);
+    const UCLuaEngine* engine_object = ul_toluaengine(L, 1);
     auto query_type = static_cast<uc_query_type>(luaL_checkinteger(L, 2));
 
     size_t result = engine_object->query(query_type);
@@ -275,14 +281,14 @@ int ul_query(lua_State* L)
 
 int ul_errno(lua_State* L)
 {
-    const UCLuaEngine* engine = get_engine_struct(L, 1);
+    const UCLuaEngine* engine = ul_toluaengine(L, 1);
     lua_pushinteger(L, engine->get_errno());
     return 1;
 }
 
 int ul_emu_start(lua_State* L)
 {
-    UCLuaEngine* engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
     auto start = static_cast<uint64_t>(luaL_checkinteger(L, 2));
     auto end = static_cast<uint64_t>(luaL_checkinteger(L, 3));
     auto timeout = static_cast<uint64_t>(luaL_optinteger(L, 4, 0));
@@ -294,14 +300,14 @@ int ul_emu_start(lua_State* L)
 
 int ul_emu_stop(lua_State* L)
 {
-    UCLuaEngine* engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
     engine->stop();
     return 0;
 }
 
 uc_engine* ul_toengine(lua_State* L, int index)
 {
-    const UCLuaEngine* engine_object = get_engine_struct(L, index);
+    const UCLuaEngine* engine_object = ul_toluaengine(L, index);
     uc_engine* engine_handle = engine_object->get_handle();
 
     if (engine_handle == nullptr)

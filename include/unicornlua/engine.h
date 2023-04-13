@@ -99,17 +99,25 @@ void ul_init_engines_lib(lua_State* L);
  * @param L         A pointer to the current Lua state.
  * @param index     The index on the Lua stack of the value to convert.
  *
- * @return The engine.
+ * @return The low-level Unicorn engine.
  */
 uc_engine* ul_toengine(lua_State* L, int index);
 
-#define get_engine_struct(L, index)                                            \
-    reinterpret_cast<UCLuaEngine*>(                                            \
-        luaL_checkudata((L), (index), kEngineMetatableName))
+/**
+ * Return the value on the stack at @a index as a pointer to a @ref UCLuaEngine.
+ *
+ * If the value at @a index is @e not a @ref UCLuaEngine, a Lua error will be
+ * thrown.
+ *
+ * @param L         A pointer to the current Lua state.
+ * @param index     The index on the Lua stack of the value to convert.
+ *
+ * @return The engine.
+ */
+UCLuaEngine* ul_toluaengine(lua_State* L, int index);
 
 int ul_close(lua_State* L);
 int ul_query(lua_State* L);
 int ul_errno(lua_State* L);
 int ul_emu_start(lua_State* L);
 int ul_emu_stop(lua_State* L);
-uc_engine* ul_toengine(lua_State* L, int index);

@@ -240,7 +240,7 @@ static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
         /* TODO (dargueta): Support other architectures beside X86. */
         if (insn_code == UC_X86_INS_IN)
             return (void*)port_in_hook;
-        else if (insn_code == UC_X86_INS_OUT)
+        if (insn_code == UC_X86_INS_OUT)
             return (void*)port_out_hook;
         return (void*)code_hook;
 
@@ -278,7 +278,7 @@ int ul_hook_add(lua_State* L)
 
     int n_args = lua_gettop(L);
 
-    auto engine_object = get_engine_struct(L, 1);
+    UCLuaEngine* engine_object = ul_toluaengine(L, 1);
     int hook_type = static_cast<int>(luaL_checkinteger(L, 2));
     /* Callback function is at position 3 */
 
@@ -355,7 +355,7 @@ int ul_hook_add(lua_State* L)
 int ul_hook_del(lua_State* L)
 {
     auto hook_info = (Hook*)lua_touserdata(L, 2);
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
 
     engine->remove_hook(hook_info);
     return 0;
