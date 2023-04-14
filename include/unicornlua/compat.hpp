@@ -42,10 +42,15 @@ LUALIB_API void luaL_setfuncs(lua_State* L, const luaL_Reg* l, int nup);
 
 LUALIB_API void lua_rawsetp(lua_State* L, int index, const void* p);
 
+#ifndef luaL_newlibtable
 #define luaL_newlibtable(L, l) lua_createtable((L), 0, sizeof(l) / sizeof(*(l)))
+#endif // luaL_newlibtable
+
+#ifndef luaL_newlib
 #define luaL_newlib(L, l)                                                      \
     (luaL_newlibtable((L), (l)), luaL_setfuncs((L), (l), 0))
-#endif
+#endif  // luaL_newlib
+#endif // LUA_VERSION_NUM < 502
 
 // http://lua-users.org/lists/lua-l/2011-11/msg01149.html
 #ifndef IS_LUAJIT
