@@ -34,6 +34,7 @@ const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "emu_stop", ul_emu_stop }, { "errno", ul_errno },
     { "hook_add", ul_hook_add }, { "hook_del", ul_hook_del },
     { "mem_map", ul_mem_map }, { "mem_protect", ul_mem_protect },
+    // n.b. mem_map_ptr() is irrelevant for Lua
     { "mem_read", ul_mem_read }, { "mem_regions", ul_mem_regions },
     { "mem_unmap", ul_mem_unmap }, { "mem_write", ul_mem_write },
     { "query", ul_query }, { "reg_read", ul_reg_read },

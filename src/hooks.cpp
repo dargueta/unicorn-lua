@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
 
@@ -5,6 +7,7 @@
 #include "unicornlua/errors.hpp"
 #include "unicornlua/hooks.hpp"
 #include "unicornlua/lua.hpp"
+#include "unicornlua/transaction.hpp"
 #include "unicornlua/utils.hpp"
 
 Hook::Hook(lua_State* L, uc_engine* engine)
@@ -226,6 +229,42 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     return return_value != 0;
 }
 
+#if UC_API_MAJOR >= 2
+static void edge_generated_hook(
+    uc_engine* uc, uc_tb* cur_tb, uc_tb* prev_tb, void* user_data)
+{
+    auto hook = reinterpret_cast<Hook*>(user_data);
+    lua_State* L = hook->L();
+
+    // Push the callback function onto the stack.
+    get_callback(hook);
+
+    // Push the arguments
+    ul_find_lua_engine(L, uc);
+    create_table_from_transaction_block(L, cur_tb);
+    create_table_from_transaction_block(L, prev_tb);
+    hook->push_user_data();
+
+    lua_call(L, 4, 0);
+}
+
+static void tcg_opcode_hook(uc_engine* uc, uint64_t address, uint64_t arg1,
+    uint64_t arg2, uint32_t size, void* user_data)
+{
+    auto hook = reinterpret_cast<Hook*>(user_data);
+    lua_State* L = hook->L();
+
+    // Push the callback function onto the stack.
+    get_callback(hook);
+    lua_pushinteger(L, static_cast<lua_Integer>(address));
+    lua_pushinteger(L, static_cast<lua_Integer>(arg1));
+    lua_pushinteger(L, static_cast<lua_Integer>(arg2));
+    lua_pushinteger(L, static_cast<lua_Integer>(size));
+    hook->push_user_data();
+    lua_call(L, 6, 0);
+}
+#endif // UC_API_MAJOR >= 2
+
 static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
 {
     switch (hook_type) {
@@ -264,6 +303,13 @@ static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
     case UC_HOOK_MEM_WRITE_PROT:
     case UC_HOOK_MEM_WRITE_UNMAPPED:
         return (void*)invalid_mem_access_hook;
+
+#if UC_API_MAJOR >= 2
+    case UC_HOOK_EDGE_GENERATED:
+        return (void*)edge_generated_hook;
+    case UC_HOOK_TCG_OPCODE:
+        return (void*)tcg_opcode_hook;
+#endif // UC_API_MAJOR >= 2
 
     default:
         return nullptr;
