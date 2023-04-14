@@ -17,12 +17,9 @@ jobs:
           - "5.3"
           - "5.4"
           - "luajit-2.0.5"
+          - "luajit-2.1.0-beta3"
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
       - name: Install Lua
         uses: leafo/gh-actions-lua@v10
         with:
