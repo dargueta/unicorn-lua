@@ -5,14 +5,6 @@ on: [ push ]
 jobs:
   testing:
     runs-on: ${{ matrix.operating-system }}
-    env:
-      # We need the MACOSX_DEPLOYMENT_TARGET environment variable because of
-      # a linker error that happens with LuaJIT:
-      # https://github.com/LuaJIT/LuaJIT/issues/449
-      MACOSX_DEPLOYMENT_TARGET: 11
-      # We get a linker error if we don't mess with the library path. For some
-      # reason, /usr/lib64 isn't on the default search path.
-      LD_LIBRARY_PATH: /usr/lib64:${LD_LIBRARY_PATH}
     strategy:
       fail-fast: false
       matrix:
@@ -25,28 +17,27 @@ jobs:
           - "5.3"
           - "5.4"
           - "luajit-2.0.5"
+          - "luajit-2.1.0-beta3"
         unicorn-version:
           - "1.0.3"
           - "2.0.1"
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install Unicorn
-        run: ./tools/ci/install-unicorn.sh ${{ matrix.unicorn-version }}
+      - uses: actions/checkout@v3
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v9.1.0
+        uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.lua-version }}
+          # We need LUAJIT_ENABLE_GC64 on MacOS: https://github.com/moonjit/moonjit/issues/121
+          luaCompileFlags: XCFLAGS="-DLUAJIT_ENABLE_GC64=1"
       - name: Install LuaRocks
-        uses: leafo/gh-actions-luarocks@v4
+        # Note: This is a fork of the original by leafo. Switch back to that once
+        # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
+        uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
+      - name: Install Unicorn
+        run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
+      - name: Environment
+        run: luarocks config
       - name: Install Binding
-        run: |
-          ./configure -d
-          make install
+        run: luarocks build
       - name: Run tests
-        run: make test
-
-  # TODO (dargueta): Test on Windows?
+        run: luarocks test

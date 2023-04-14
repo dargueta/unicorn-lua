@@ -7,7 +7,7 @@ unicorn-lua
    :alt: Build status
    :target: https://travis-ci.com/dargueta/unicorn-lua
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0-blue
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.020%7C%20LuaJIT2.1-blue-blue
    :alt: Lua versions
    :target: https://www.lua.org
 
@@ -16,9 +16,8 @@ unicorn-lua
 
 Lua bindings for the `Unicorn CPU Emulator`_.
 
-I'm currently testing this on vanilla Lua 5.1 - 5.4, and LuaJIT 2.0 on both Linux
-and OSX. (LuaJIT on OSX is particularly finicky and I would be careful trying to
-use it.)
+I'm currently testing this on vanilla Lua 5.1 - 5.4, LuaJIT 2.0, and LuaJIT 2.1 on
+both Linux and MacOS.
 
 License Change
 --------------
@@ -26,13 +25,21 @@ License Change
 As of version 2.0 the license has changed to GPL v2. This is due to the viral
 nature of the GPL license family: since QEMU uses GPL, this must also be GPL
 even though it only dynamically links to Unicorn. I apologize for the mistake I
-made when I created this.
+made when I created this with the BSD-3 license.
 
 Known Limitations
 -----------------
 
 The following are some limitations that are either impossible to work around due
 to the nature of Lua, or I haven't gotten around to fixing yet.
+
+32-bit Lua Behavior
+~~~~~~~~~~~~~~~~~~~
+
+Behavior for 32-bit Lua (i.e. compiled with ``LUA_32BITS`` set to a nonzero value)
+won't handle 64-bit integers properly. Exactly what happens is technically
+undefined until C++20, but most likely you would silently lose the upper 32 bits.
+It's for this reason I strongly discourage using such builds.
 
 64-bit Integers
 ~~~~~~~~~~~~~~~
@@ -169,118 +176,60 @@ Requirements
 This project has the following dependencies. Ensure you have them installed
 before using.
 
-* `cmake`_ 3.13 or higher. Run ``cmake --version`` if you're not sure what
-  version you have.
+* Lua 5.1 or higher, as well as the static library and headers. Lua 5.3 and above
+  must *not* have been compiled with the ``LUA_32BITS`` option set.
+* A C++ compiler supporting the C++11 standard or later. Supported compilers include
+  GCC 4.1+ and GCC-compatible compilers like Clang.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
-  library location. (As of version 2.0 you can't have it installed anywhere you
-  like.)
+  library location. Currently only Unicorn 1.x is supported.
+* You must also have the Unicorn headers installed.
 * Some examples have additional dependencies; see their READMEs for details.
 
 Just Installing?
 ----------------
 
 If you just want to install this library, open a terminal, navigate to the root
-directory of this repository, and run ``make install``.
+directory of this repository, and run
+
+.. code-block:: sh
+
+    luarocks build
+
 
 Development
 -----------
 
-Configuration
-~~~~~~~~~~~~~
-
 Using a virtual environment for Lua is strongly recommended. You'll want to avoid
 using your OS's real Lua, and using virtual environments allows you to test with
-multiple versions of Lua.
-
-With a Virtual Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To create a separate execution environment, you can use
-the ``lua_venv.py`` script.
-
-.. code-block:: sh
-
-    python3 tools/lua_venv.py --config-out settings.json  \
-                              5.3                         \
-                              ~/my-virtualenvs/5.3/
-
-This will download Lua 5.3, install it in a directory named ``~/my-virtualenvs/5.3``,
-and write all the configuration information needed by ``configure`` into a file
-named ``settings.json``. *It is important that the directory you install Lua into
-doesn't already exist.*
+multiple versions of Lua. You can use `lenv <https://github.com/mah0x211/lenv>`_
+for this.
 
 If you're running MacOS and encounter a linker error with LuaJIT, check out
 `this ticket <https://github.com/LuaJIT/LuaJIT/issues/449>`_.
 
-Using Your OS's Lua
-^^^^^^^^^^^^^^^^^^^
-
-It will probably suffice to run the configure script by itself:
-
-.. code-block:: sh
-
-    python3 configure
-
-You may encounter problems with GCC claiming Lua's headers are missing, or it can't
-find the Lua library. In this case you'll need to find them yourself, and pass
-them to the configure script. For example:
-
-.. code-block:: sh
-
-    make clean
-    python3 configure --lua-headers /usr/include/lua        \
-                      --lua-library /lib/lua/5.3/liblua.a
-
-
-Setting Up the Build Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-After running the ``configure`` script there'll be a new empty directory in the
-repo called ``build``. Change over to this directory and run ``cmake ..``. It'll
-create the build system for you, including creating the Lua virtual environment
-if you requested it.
 
 Building and Testing
 ~~~~~~~~~~~~~~~~~~~~
 
-Here are a few commands you may find useful during development. This isn't a
-script, just a list.
-
 .. code-block:: sh
 
-    make            # Build the project, including libraries and examples
-    make clean      # Delete all build artifacts
-    make docs       # Build the documentation pages
-    make examples   # Build but do not run examples (that must be done manually)
-    make test       # Run all unit tests
+    # Build and install the library into your tree
+    luarocks build
 
-Build artifacts will appear in the ``build`` directory:
-
-* ``build/lib`` contains the built Lua library for Unicorn; ``unicorn.dll`` if
-  you're running Windows, ``unicorn.so`` otherwise.
-* ``build/docs`` contains the HTML documentation
-
-Everything else in there isn't of much interest unless you're directly modifying
-the CMake configuration.
+    # Build and run the tests
+    luarocks test
 
 Examples
-~~~~~~~~
+--------
 
-There are some example programs you can use to see how this library (and Unicorn
-in general) works. You can run an example with
-
-.. code-block:: sh
-
-    make run_example EXAMPLE=name
-
-``name`` is the name of the directory the example is in, e.g. ``disk_io`` or
-``cmos_time``.
+See the ``examples`` directory for examples of how you can use this library.
 
 License
 -------
 
-I'm releasing this under the terms of the `New BSD License`_. For the full legal
-text, see ``LICENSE.txt``.
+See NOTICE.txt and LICENSE.txt for details. I'm legally required to release this
+under GPL 2+ due to QEMU's license, so please don't ask me to change this to MIT
+or 3-clause BSD. Sorry.
 
 
 **Footnotes**
@@ -289,8 +238,4 @@ text, see ``LICENSE.txt``.
        32-bit machines.
 .. [2] *Programming in Lua*, 4th Edition, page 233.
 
-.. _cmake: https://cmake.org
 .. _Unicorn CPU Emulator: http://www.unicorn-engine.org
-.. _New BSD License: https://opensource.org/licenses/BSD-3-Clause
-.. _pyenv: https://github.com/pyenv/pyenv
-.. _pipenv: https://docs.pipenv.org/en/latest

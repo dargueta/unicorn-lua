@@ -1,0 +1,21 @@
+#pragma once
+
+/**
+ * An enum used to represent the kind of return value that Lua is expecting.
+ */
+enum RegisterDataType {
+    UL_REG_TYPE_UNKNOWN,
+@ for _, bits in ipairs({8, 16, 32, 64}) do
+    UL_REG_TYPE_INT$(bits),
+@ end
+@ for _, bits in ipairs({32, 64}) do
+    UL_REG_TYPE_FLOAT$(bits),
+@ end
+@ for _, conf in ipairs(int_arrays) do
+    UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count),
+@ end
+@ for _, conf in ipairs(float_arrays) do
+    UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count),
+@ end
+    UL_REG_TYPE_FLOAT80,
+};

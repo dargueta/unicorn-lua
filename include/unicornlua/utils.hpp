@@ -4,16 +4,14 @@
  * @file utils.h
  */
 
-#ifndef INCLUDE_UNICORNLUA_UTILS_H_
-#define INCLUDE_UNICORNLUA_UTILS_H_
+#pragma once
 
 #include <new>
 #include <stdexcept>
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
-
+#include "unicornlua/lua.hpp"
 
 /**
  * Throw a Lua error with a message derived from the given Unicorn error code.
@@ -24,8 +22,7 @@
  * @note Like lua_error, this function never returns, and should be treated in
  * exactly the same way.
  */
-int ul_crash_on_error(lua_State *L, uc_err error);
-
+int ul_crash_on_error(lua_State* L, uc_err error);
 
 /**
  * Create a new weak table with the given key mode, and push it onto the stack.
@@ -34,15 +31,14 @@ int ul_crash_on_error(lua_State *L, uc_err error);
  * @param mode      The table mode to use. See the Lua documentation for a full
  *                  description of valid modes and how they work.
  */
-void ul_create_weak_table(lua_State *L, const char *mode);
+void ul_create_weak_table(lua_State* L, const char* mode);
 
 struct NamedIntConst {
-    const char *name;
+    const char* name;
     lua_Integer value;
 };
 
-void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
-
+void load_int_constants(lua_State* L, const struct NamedIntConst* constants);
 
 /**
  * Count the number of items in the table.
@@ -50,6 +46,4 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
  * `luaL_len()` only returns the number of entries in the array part of a table,
  * so this function iterates through the entirety of the table and returns the
  * result. */
-int count_table_elements(lua_State *L, int table_index);
-
-#endif  /* INCLUDE_UNICORNLUA_UTILS_H_ */
+size_t count_table_elements(lua_State* L, int table_index);
