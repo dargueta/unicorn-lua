@@ -229,7 +229,34 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     return return_value != 0;
 }
 
+static void generic_hook_with_no_arguments(uc_engine* uc, void* user_data)
+{
+    auto hook = reinterpret_cast<Hook*>(user_data);
+    lua_State* L = hook->L();
+
+    ul_find_lua_engine(L, uc);
+    hook->push_user_data();
+    lua_call(L, 2, 0);
+}
+
 #if UC_API_MAJOR >= 2
+static bool cpuid_hook(uc_engine* uc, void* user_data)
+{
+    auto hook = reinterpret_cast<Hook*>(user_data);
+    lua_State* L = hook->L();
+
+    ul_find_lua_engine(L, uc);
+    hook->push_user_data();
+
+    lua_call(L, 2, 1);
+
+    // TOS is a boolean indicating if the instruction was skipped. This follows
+    // the same rules as Lua, i.e. only `false` and `nil` are considered falsy.
+    int result = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return result != 0;
+}
+
 static void edge_generated_hook(
     uc_engine* uc, uc_tb* cur_tb, uc_tb* prev_tb, void* user_data)
 {
@@ -280,12 +307,21 @@ static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
         return (void*)code_hook;
 
     case UC_HOOK_INSN:
-        /* TODO (dargueta): Support other architectures beside X86. */
-        if (insn_code == UC_X86_INS_IN)
-            return (void*)port_in_hook;
-        if (insn_code == UC_X86_INS_OUT)
-            return (void*)port_out_hook;
-        return (void*)code_hook;
+        switch (insn_code) {
+        case UC_X86_INS_IN:
+            return reinterpret_cast<void*>(port_in_hook);
+        case UC_X86_INS_OUT:
+            return reinterpret_cast<void*>(port_out_hook);
+#if UC_API_MAJOR >= 2
+        case UC_X86_INS_CPUID:
+            return reinterpret_cast<void*>(cpuid_hook);
+#endif
+        case UC_X86_INS_SYSCALL:
+        case UC_X86_INS_SYSENTER:
+            return reinterpret_cast<void*>(generic_hook_with_no_arguments);
+        default:
+            return (void*)code_hook;
+        }
 
     case UC_HOOK_MEM_FETCH:
     case UC_HOOK_MEM_READ:

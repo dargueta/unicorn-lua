@@ -7,7 +7,13 @@ Changes
 New Features
 ~~~~~~~~~~~~
 
-Official support for LuaJIT 2.1.
+* Added support for Unicorn 2.x.
+* Added support for LuaJIT 2.1.
+
+Bugfixes
+~~~~~~~~
+
+Added missing hook for x86 SYSENTER and SYSCALL instructions.
 
 Other Changes
 ~~~~~~~~~~~~~
