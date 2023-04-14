@@ -256,12 +256,16 @@ static void tcg_opcode_hook(uc_engine* uc, uint64_t address, uint64_t arg1,
 
     // Push the callback function onto the stack.
     get_callback(hook);
+
+    // Push the arguments
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(arg1));
     lua_pushinteger(L, static_cast<lua_Integer>(arg2));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     hook->push_user_data();
-    lua_call(L, 6, 0);
+
+    lua_call(L, 7, 0);
 }
 #endif // UC_API_MAJOR >= 2
 
