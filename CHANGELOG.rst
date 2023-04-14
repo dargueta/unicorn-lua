@@ -13,7 +13,10 @@ New Features
 Bugfixes
 ~~~~~~~~
 
-Added missing hook for x86 SYSENTER and SYSCALL instructions.
+Added missing hook for x86 SYSENTER and SYSCALL instructions. Before, it used
+to call the default instruction hook function, which resulted in a segfault
+because the wrong number of arguments were getting passed. Since this never
+worked from the beginning, I don't consider this a breaking change.
 
 Other Changes
 ~~~~~~~~~~~~~
