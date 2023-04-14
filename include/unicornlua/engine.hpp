@@ -10,14 +10,16 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/hooks.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 extern const char* const kEngineMetatableName;
 extern const char* const kEnginePointerMapName;
+extern "C" {
 extern const luaL_Reg kEngineInstanceMethods[];
 extern const luaL_Reg kEngineMetamethods[];
+}
 
 struct Context;
 
@@ -79,7 +81,7 @@ private:
  * @param L         A pointer to the current Lua state.
  * @param engine    A pointer to the engine we want to get the Lua object for.
  */
-void ul_get_engine_object(lua_State* L, const uc_engine* engine);
+void ul_find_lua_engine(lua_State* L, const uc_engine* engine);
 
 /**
  * Initialize the engine object internals, such as registering metatables.
@@ -99,17 +101,25 @@ void ul_init_engines_lib(lua_State* L);
  * @param L         A pointer to the current Lua state.
  * @param index     The index on the Lua stack of the value to convert.
  *
- * @return The engine.
+ * @return The low-level Unicorn engine.
  */
 uc_engine* ul_toengine(lua_State* L, int index);
 
-#define get_engine_struct(L, index)                                            \
-    reinterpret_cast<UCLuaEngine*>(                                            \
-        luaL_checkudata((L), (index), kEngineMetatableName))
+/**
+ * Return the value on the stack at @a index as a pointer to a @ref UCLuaEngine.
+ *
+ * If the value at @a index is @e not a @ref UCLuaEngine, a Lua error will be
+ * thrown.
+ *
+ * @param L         A pointer to the current Lua state.
+ * @param index     The index on the Lua stack of the value to convert.
+ *
+ * @return The engine.
+ */
+UCLuaEngine* ul_toluaengine(lua_State* L, int index);
 
 int ul_close(lua_State* L);
 int ul_query(lua_State* L);
 int ul_errno(lua_State* L);
 int ul_emu_start(lua_State* L);
 int ul_emu_stop(lua_State* L);
-uc_engine* ul_toengine(lua_State* L, int index);

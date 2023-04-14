@@ -1,15 +1,15 @@
 /**
  * Lua bindings for Unicorn context operations.
  *
- * @file context.h
+ * @file context.hpp
  */
 
 #pragma once
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/engine.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/lua.hpp"
 
 extern const char* const kContextMetatableName;
 extern const luaL_Reg kContextMetamethods[];
@@ -37,6 +37,4 @@ int ul_context_free(lua_State* L);
  */
 int ul_context_maybe_free(lua_State* L);
 
-#define get_context_struct(L, index)                                           \
-    (reinterpret_cast<Context*>(                                               \
-        luaL_checkudata((L), (index), kContextMetatableName)))
+Context* ul_toluacontext(lua_State* L, int index);

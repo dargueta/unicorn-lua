@@ -12,12 +12,12 @@
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
 
-#include "unicornlua/compat.h"
-#include "unicornlua/engine.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/registers.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/registers.hpp"
+#include "unicornlua/utils.hpp"
 
 const uint8_t kFP80PositiveInfinity[]
     = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
@@ -151,10 +151,9 @@ void write_float80(lua_Number value, uint8_t* buffer)
         break;
     default:
         throw std::runtime_error("Unrecognized value returned from "
-                                 "std::fpclassify(). This library was"
-                                 " probably compiled on a newer standard of "
-                                 "C++ than it was written for."
-                                 " Please file a bug ticket.");
+                                 "std::fpclassify(). This library was probably "
+                                 "compiled on a newer standard of C++ than it "
+                                 "was written for. Please file a bug ticket.");
     }
 
     int exponent;
@@ -162,8 +161,8 @@ void write_float80(lua_Number value, uint8_t* buffer)
 
     if ((exponent <= -16383) || (exponent >= 16384))
         throw std::domain_error("Can't convert value outside representable "
-                                "range for 80-bit float without"
-                                " loss of precision.");
+                                "range for 80-bit float without loss of "
+                                "precision.");
 
     // The high bit of the significand is always set for normal numbers, and
     // clear for denormal numbers. This means the significand is 63 bits, not

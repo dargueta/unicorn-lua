@@ -2,9 +2,9 @@
 #include <iostream>
 
 #include "doctest.h"
-#include "fixtures.h"
-#include "unicornlua/compat.h"
-#include "unicornlua/lua.h"
+#include "fixtures.hpp"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/lua.hpp"
 
 TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic")
 {

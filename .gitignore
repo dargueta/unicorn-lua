@@ -14,7 +14,7 @@ tests/c/doctest.h
 src/constants/
 src/registers.cpp
 src/registers_const.cpp
-include/unicornlua/register_types.h
+include/unicornlua/register_types.hpp
 
 # Other garbage
 core*

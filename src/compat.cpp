@@ -1,5 +1,5 @@
-#include "unicornlua/compat.h"
-#include "unicornlua/lua.h"
+#include "unicornlua/compat.hpp"
+#include "unicornlua/lua.hpp"
 
 #if LUA_VERSION_NUM < 503
 

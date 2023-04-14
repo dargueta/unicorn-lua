@@ -1,11 +1,11 @@
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
 
-#include "unicornlua/engine.h"
-#include "unicornlua/errors.h"
-#include "unicornlua/hooks.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/hooks.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 Hook::Hook(lua_State* L, uc_engine* engine)
     : L_(L)
@@ -94,10 +94,11 @@ static void get_callback(Hook* hook)
 {
     lua_State* L = hook->L();
     hook->push_callback();
-    if (lua_isnil(L, -1))
+    if (lua_isnil(L, -1)) {
         luaL_error(L,
             "No callback function found for hook %p attached to engine %p",
             hook, hook->engine());
+    }
 }
 
 /* The C wrapper for a code execution hook. */
@@ -111,7 +112,7 @@ static void code_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     hook->push_user_data();
@@ -127,7 +128,7 @@ static void interrupt_hook(uc_engine* uc, uint32_t intno, void* user_data)
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(intno));
     hook->push_user_data();
     lua_call(L, 3, 0);
@@ -143,7 +144,7 @@ static uint32_t port_in_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(port));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     hook->push_user_data();
@@ -165,7 +166,7 @@ static void port_out_hook(
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(port));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
     lua_pushinteger(L, static_cast<lua_Integer>(value));
@@ -183,7 +184,7 @@ static void memory_access_hook(uc_engine* uc, uc_mem_type type,
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, (lua_Integer)type);
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
@@ -202,7 +203,7 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     get_callback(hook);
 
     /* Push the arguments */
-    ul_get_engine_object(L, uc);
+    ul_find_lua_engine(L, uc);
     lua_pushinteger(L, static_cast<lua_Integer>(type));
     lua_pushinteger(L, static_cast<lua_Integer>(address));
     lua_pushinteger(L, static_cast<lua_Integer>(size));
@@ -213,8 +214,7 @@ static bool invalid_mem_access_hook(uc_engine* uc, uc_mem_type type,
     if (lua_type(L, -1) != LUA_TBOOLEAN) {
         luaL_error(L,
             "Error: Handler for invalid memory accesses must return a boolean, "
-            "got a %s"
-            " instead.",
+            "got a %s instead.",
             lua_typename(L, -1));
         // Technically this is unreachable because luaL_error calls longjmp().
         // The header doesn't declare this, however, so we have no way of
@@ -240,7 +240,7 @@ static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
         /* TODO (dargueta): Support other architectures beside X86. */
         if (insn_code == UC_X86_INS_IN)
             return (void*)port_in_hook;
-        else if (insn_code == UC_X86_INS_OUT)
+        if (insn_code == UC_X86_INS_OUT)
             return (void*)port_out_hook;
         return (void*)code_hook;
 
@@ -278,7 +278,7 @@ int ul_hook_add(lua_State* L)
 
     int n_args = lua_gettop(L);
 
-    auto engine_object = get_engine_struct(L, 1);
+    UCLuaEngine* engine_object = ul_toluaengine(L, 1);
     int hook_type = static_cast<int>(luaL_checkinteger(L, 2));
     /* Callback function is at position 3 */
 
@@ -355,7 +355,7 @@ int ul_hook_add(lua_State* L)
 int ul_hook_del(lua_State* L)
 {
     auto hook_info = (Hook*)lua_touserdata(L, 2);
-    auto engine = get_engine_struct(L, 1);
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
 
     engine->remove_hook(hook_info);
     return 0;

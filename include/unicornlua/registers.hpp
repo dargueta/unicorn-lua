@@ -11,8 +11,8 @@
 #include <climits>
 #include <cstdint>
 
-#include "unicornlua/lua.h"
-#include "unicornlua/register_types.h"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/register_types.hpp"
 
 #if FLT_RADIX != 2
 #error "Can't handle floating-point radixes other than 2 right now."

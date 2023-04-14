@@ -1,8 +1,8 @@
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
-#include "unicornlua/registers.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/registers.hpp"
+#include "unicornlua/utils.hpp"
 
 
 static const struct NamedIntConst kConstants[] {

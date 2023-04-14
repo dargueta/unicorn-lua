@@ -1,7 +1,7 @@
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
-#include "unicornlua/utils.h"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/utils.hpp"
 
 int ul_crash_on_error(lua_State* L, uc_err error)
 {

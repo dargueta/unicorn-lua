@@ -1,9 +1,9 @@
 #include <cstdint>
 
-#include "unicornlua/errors.h"
-#include "unicornlua/lua.h"
-#include "unicornlua/registers.h"
-#include "unicornlua/register_template_functions.h"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/registers.hpp"
+#include "unicornlua/register_template_functions.hpp"
 
 
 @ for _, bits in ipairs({8, 16, 32, 64}) do

@@ -11,7 +11,7 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
+#include "unicornlua/lua.hpp"
 
 /**
  * Throw a Lua error with a message derived from the given Unicorn error code.

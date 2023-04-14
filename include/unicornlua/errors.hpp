@@ -10,7 +10,7 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
+#include "unicornlua/lua.hpp"
 
 /**
  * Exception class for translating Unicorn error codes into C++ exceptions.

@@ -6,7 +6,7 @@
 
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.h"
+#include "unicornlua/lua.hpp"
 
 class Hook {
     friend class UCLuaEngine;
