@@ -7,7 +7,7 @@ unicorn-lua
    :alt: Build status
    :target: https://travis-ci.com/dargueta/unicorn-lua
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0-blue
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.020%7C%20LuaJIT2.1-blue-blue
    :alt: Lua versions
    :target: https://www.lua.org
 
@@ -16,8 +16,8 @@ unicorn-lua
 
 Lua bindings for the `Unicorn CPU Emulator`_.
 
-I'm currently testing this on vanilla Lua 5.1 - 5.4, and LuaJIT 2.0 on both Linux
-and OSX.
+I'm currently testing this on vanilla Lua 5.1 - 5.4, LuaJIT 2.0, and LuaJIT 2.1 on
+both Linux and MacOS.
 
 License Change
 --------------

@@ -1,11 +1,21 @@
 Changes
 =======
 
-Unreleased
-----------
+2.2.0 (Unreleased)
+------------------
 
-* Autogenerate a bunch of register-related files from templates.
+New Features
+~~~~~~~~~~~~
+
+Official support for LuaJIT 2.1.
+
+Other Changes
+~~~~~~~~~~~~~
+
 * Add clang-format, use WebKit's style (more or less).
+* Autogenerate a bunch of register-related files from templates. **Note:** Some
+  register type enums values have changed. If you use the symbolic constants
+  provided in ``registers_const`` this won't affect you.
 
 2.1.0 (2023-04-08)
 ------------------

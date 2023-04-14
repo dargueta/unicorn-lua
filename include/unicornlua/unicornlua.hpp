@@ -23,7 +23,7 @@
 /**
  * The minor version number of this Lua library (second part, x.1.x).
  */
-#define UNICORNLUA_VERSION_MINOR 1
+#define UNICORNLUA_VERSION_MINOR 2
 
 /**
  * The patch version number of this Lua library (third part, x.x.1).
