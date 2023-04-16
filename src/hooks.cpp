@@ -1,7 +1,6 @@
 #include <cstdint>
 
 #include <unicorn/unicorn.h>
-#include <unicorn/x86.h>
 
 #include "unicornlua/engine.hpp"
 #include "unicornlua/errors.hpp"
@@ -294,6 +293,45 @@ static void tcg_opcode_hook(uc_engine* uc, uint64_t address, uint64_t arg1,
 
     lua_call(L, 7, 0);
 }
+
+static void arm64_cp_reg_to_lua_table(lua_State* L, const uc_arm64_cp_reg* reg)
+{
+    lua_createtable(L, 0, 6);
+    lua_pushinteger(L, reg->crn);
+    lua_setfield(L, -1, "crn");
+    lua_pushinteger(L, reg->crm);
+    lua_setfield(L, -1, "crm");
+    lua_pushinteger(L, reg->op0);
+    lua_setfield(L, -1, "op0");
+    lua_pushinteger(L, reg->op1);
+    lua_setfield(L, -1, "op1");
+    lua_pushinteger(L, reg->op2);
+    lua_setfield(L, -1, "op2");
+    lua_pushinteger(L, reg->val);
+    lua_setfield(L, -1, "val");
+}
+
+static uint32_t arm64_sys_hook(uc_engine* uc, uc_arm64_reg reg,
+    const uc_arm64_cp_reg* cp_reg, void* user_data)
+{
+    auto hook = reinterpret_cast<Hook*>(user_data);
+    lua_State* L = hook->L();
+
+    // Push the callback function onto the stack.
+    get_callback(hook);
+
+    // Push the arguments
+    ul_find_lua_engine(L, uc);
+    lua_pushinteger(L, static_cast<lua_Integer>(reg));
+    arm64_cp_reg_to_lua_table(L, cp_reg);
+    hook->push_user_data();
+
+    lua_call(L, 3, 1);
+
+    int result = lua_toboolean(L, -1);
+    return result ? 1 : 0;
+}
+
 #endif // UC_API_MAJOR >= 2
 
 static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
@@ -312,13 +350,18 @@ static void* get_c_callback_for_hook_type(int hook_type, int insn_code)
             return reinterpret_cast<void*>(port_in_hook);
         case UC_X86_INS_OUT:
             return reinterpret_cast<void*>(port_out_hook);
-#if UC_API_MAJOR >= 2
-        case UC_X86_INS_CPUID:
-            return reinterpret_cast<void*>(cpuid_hook);
-#endif
         case UC_X86_INS_SYSCALL:
         case UC_X86_INS_SYSENTER:
             return reinterpret_cast<void*>(generic_hook_with_no_arguments);
+#if UC_API_MAJOR >= 2
+        case UC_X86_INS_CPUID:
+            return reinterpret_cast<void*>(cpuid_hook);
+        case UC_ARM64_INS_MRS:
+        case UC_ARM64_INS_MSR:
+        case UC_ARM64_INS_SYS:
+        case UC_ARM64_INS_SYSL:
+            return reinterpret_cast<void*>(arm64_sys_hook);
+#endif
         default:
             return (void*)code_hook;
         }
