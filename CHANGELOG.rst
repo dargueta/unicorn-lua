@@ -8,7 +8,7 @@ New Features
 ~~~~~~~~~~~~
 
 * Added support for LuaJIT 2.1.
-* Added support for Unicorn 2.x.
+* Added support for Unicorn 2.
 
 ``unicorn.arch_supported`` now returns false if the architecture is nil instead
 of crashing. This allows code to easily determine if an architecture is supported
@@ -23,14 +23,14 @@ Old way:
     if uc:version()[1] < 2 then
         have_ppc = false
     else
-        have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC, uc_const.UC_MODE_PPC64)
+        have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
     end
 
 New way:
 
 .. code-block:: lua
 
-    local have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC, uc_const.UC_MODE_PPC64)
+    local have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
 
 See `Unicorn's changelog <https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog>`_
 for the details of API changes, but a summary here:
@@ -42,7 +42,7 @@ All ``uc_ctl_*`` macros are their own methods on an engine, minus the ``uc_``
 prefix. For libraries linked to Unicorn 1.x these functions are present, but
 will throw an exception if used.
 
-*The bare ``uc_ctl()`` function is not exposed.*
+**The bare ``uc_ctl()`` function is not exposed.**
 
 Instruction Hooks
 *****************
@@ -52,6 +52,8 @@ Instruction Hooks
 
 Other Hooks
 ***********
+
+See the Unicorn documentation for what these do.
 
 * ``UC_HOOK_EDGE_GENERATED``
 * ``UC_HOOK_TCG_OPCODE``
@@ -63,6 +65,11 @@ Added missing hook for x86 SYSENTER and SYSCALL instructions. Before, it used
 to call the default instruction hook function, which resulted in a segfault
 because the wrong number of arguments were getting passed. Since this never
 worked from the beginning, I don't consider this a breaking change.
+
+``unicorn.arch_supported()`` now checks the first argument given instead of the
+last argument. It's only supposed to take one argument, so if used correctly
+this changes nothing. If additional arguments are passed (such as mode flags),
+this will now ignore them.
 
 Other Changes
 ~~~~~~~~~~~~~

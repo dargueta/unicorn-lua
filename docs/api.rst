@@ -507,6 +507,31 @@ Arguments
 ``architecture``: An enum value for the architecture to ask about. Constants are
 in the ``unicorn`` namespace and begin with ``UC_ARCH_``.
 
+*Changed in 2.2.0:*
+
+``unicorn.arch_supported`` now returns false if the architecture is nil instead
+of crashing. This allows code to easily determine if an architecture is supported
+without needing to check the Unicorn version AND assume that the Unicorn library
+was compiled with all available architectures. For example:
+
+Old way:
+
+.. code-block:: lua
+
+    local have_ppc
+    if uc:version()[1] < 2 then
+        have_ppc = false
+    else
+        have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
+    end
+
+New way:
+
+.. code-block:: lua
+
+    local have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
+
+
 Returns
 ^^^^^^^
 
