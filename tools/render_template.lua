@@ -27,9 +27,11 @@ Arguments:
         The file to write the rendered template to.
     <template>  (string)
         The path to the template file to render.
-    <values>  (optional string)
-        The path to a Lua file providing the variables used to fill the template.
-        All globals are passed to the template; any return value is discarded.
+    <value_files...>  (optional string)
+        The paths of one or more Lua files providing variables used to fill the
+        template. All globals are passed to the template; any return value is
+        discarded. If two files provide values for the same variable, the last
+        one passed on the command line prevails.
 ]]
 
 
@@ -42,8 +44,8 @@ function main()
         stringx = stringx,
     }
 
-    if args.values then
-        load_file(args.values, environment)
+    for _, file_path in ipairs(args.value_files) do
+        load_file(file_path, environment)
     end
 
     -- Add in variables defined on the command line, overriding anything from

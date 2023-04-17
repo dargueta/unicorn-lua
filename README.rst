@@ -7,7 +7,7 @@ unicorn-lua
    :alt: Build status
    :target: https://travis-ci.com/dargueta/unicorn-lua
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.020%7C%20LuaJIT2.1-blue-blue
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0%20%7C%20LuaJIT2.1-blue
    :alt: Lua versions
    :target: https://www.lua.org
 

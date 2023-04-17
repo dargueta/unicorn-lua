@@ -1,21 +1,85 @@
 Changes
 =======
 
-2.2.0 (Unreleased)
+2.2.0 (2023-04-17)
 ------------------
 
 New Features
 ~~~~~~~~~~~~
 
-Official support for LuaJIT 2.1.
+* Added support for LuaJIT 2.1.
+* Added support for Unicorn 2.
+
+Instead of throwing an error ``unicorn.arch_supported()`` now returns false if
+the given architecture is nil. This allows code to easily determine if an
+architecture is supported without needing to check the Unicorn version AND assume
+that the Unicorn library was compiled with all available architectures. For
+example:
+
+Old way:
+
+.. code-block:: lua
+
+    local have_ppc
+    if uc:version()[1] < 2 then
+        have_ppc = false
+    else
+        have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
+    end
+
+New way:
+
+.. code-block:: lua
+
+    local have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC)
+
+See `Unicorn's changelog <https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog>`_
+for the details of API changes, but a summary here:
+
+Control Functions
+*****************
+
+All ``uc_ctl_*`` macros are their own methods on an engine, minus the ``uc_``
+prefix. For libraries linked to Unicorn 1.x these functions are present, but
+will throw an exception if used.
+
+**The bare ``uc_ctl()`` function is not exposed.**
+
+Instruction Hooks
+*****************
+
+* x86: CPUID (SYSENTER and SYSCALL were broken before and have been fixed)
+* AArch64: MRS, MSR, SYS, SYSL
+
+Other Hooks
+***********
+
+See the Unicorn documentation for what these do.
+
+* ``UC_HOOK_EDGE_GENERATED``
+* ``UC_HOOK_TCG_OPCODE``
+
+Bugfixes
+~~~~~~~~
+
+Added missing hook for x86 SYSENTER and SYSCALL instructions. Before, it used
+to call the default instruction hook function, which resulted in a segfault
+because the wrong number of arguments were getting passed. Since this never
+worked from the beginning, I don't consider this a breaking change.
+
+``unicorn.arch_supported()`` now checks the first argument given instead of the
+last argument. It's only supposed to take one argument, so if used correctly
+this changes nothing. If additional arguments are passed (such as mode flags),
+this will now ignore them.
 
 Other Changes
 ~~~~~~~~~~~~~
 
 * Add clang-format, use WebKit's style (more or less).
-* Autogenerate a bunch of register-related files from templates. **Note:** Some
-  register type enums values have changed. If you use the symbolic constants
-  provided in ``registers_const`` this won't affect you.
+* Autogenerate a bunch of files from templates to reduce duplicated code.
+
+**Note:** Some register type enum values have changed. If you use the symbolic
+constants provided in ``unicorn.registers_const`` this won't affect you.
 
 2.1.0 (2023-04-08)
 ------------------

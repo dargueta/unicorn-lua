@@ -1,0 +1,65 @@
+#include <cstdint>
+
+#include <unicorn/unicorn.h>
+
+#if UC_API_MAJOR >= 2
+
+#include "unicornlua/control_functions.hpp"
+#include "unicornlua/engine.hpp"
+#include "unicornlua/errors.hpp"
+#include "unicornlua/lua.hpp"
+#include "unicornlua/unicornlua.hpp"
+#include "unicornlua/utils.hpp"
+
+
+@ for _, name in ipairs(no_arguments_no_return) do
+int ul_ctl_$(name)(lua_State* L)
+{
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
+
+    uc_err error = uc_ctl_$(name)(engine->get_handle());
+    if (error != UC_ERR_OK)
+        ul_crash_on_error(L, error);
+    return 0;
+}
+@ end
+
+@ for name, info in pairs(no_arguments_scalar_return) do
+int ul_ctl_$(name)(lua_State* L)
+{
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
+    uc_engine* handle = engine->get_handle();
+    $(info.c_type) result;
+
+    uc_err error = uc_ctl_$(name)(handle, &result);
+    if (error != UC_ERR_OK)
+        ul_crash_on_error(L, error);
+
+    lua_push$(info.lua_type)(L, static_cast<lua_$(stringx.title(info.lua_type))>(result));
+    return 1;
+}
+@ end
+
+@ for name, arguments in pairs(scalar_arguments_no_return) do
+int ul_ctl_$(name)(lua_State* L)
+{
+    UCLuaEngine* engine = ul_toluaengine(L, 1);
+    uc_engine* handle = engine->get_handle();
+
+@ for i, arg_info in ipairs(arguments) do
+    auto arg_$(i) = static_cast<$(arg_info.c_type)>(lua_to$(arg_info.lua_type)(L, $(i + 1)));
+@ end
+
+    uc_err error = uc_ctl_$(name)(
+        handle
+@ for i = 1, #arguments, 1 do
+    , arg_$(i)
+@ end
+    );
+    if (error != UC_ERR_OK)
+        ul_crash_on_error(L, error);
+    return 0;
+}
+@ end
+
+#endif // UC_API_MAJOR

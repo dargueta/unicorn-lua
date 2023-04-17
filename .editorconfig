@@ -4,7 +4,7 @@ root = true
 charset = utf-8
 indent_style = space
 
-[*.{cpp,h,lua,py,template,rst}]
+[*.{cpp,hpp,lua,py,template,rst}]
 end_of_line = lf
 indent_size = 4
 insert_final_newline = true
