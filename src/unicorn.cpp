@@ -35,8 +35,19 @@ static int ul_create_unicornlua_version_table(lua_State* L)
 
 static int ul_arch_supported(lua_State* L)
 {
-    auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, -1));
-    lua_pushboolean(L, uc_arch_supported(architecture));
+    int is_supported = 0;
+
+    // If the architecture is nil, return false. This allows code to easily
+    // determine if an architecture is supported without needing to check the
+    // Unicorn version AND assume that the Unicorn library was compiled with all
+    // available architectures.
+    if (!lua_isnil(L, 1))
+    {
+        auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, -1));
+        is_supported = uc_arch_supported(architecture) ? 1 : 0;
+    }
+
+    lua_pushboolean(L, is_supported);
     return 1;
 }
 

@@ -10,8 +10,30 @@ New Features
 * Added support for LuaJIT 2.1.
 * Added support for Unicorn 2.x.
 
+``unicorn.arch_supported`` now returns false if the architecture is nil instead
+of crashing. This allows code to easily determine if an architecture is supported
+without needing to check the Unicorn version AND assume that the Unicorn library
+was compiled with all available architectures. For example:
+
+Old way:
+
+.. code-block:: lua
+
+    local have_ppc
+    if uc:version()[1] < 2 then
+        have_ppc = false
+    else
+        have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC, uc_const.UC_MODE_PPC64)
+    end
+
+New way:
+
+.. code-block:: lua
+
+    local have_ppc = uc.arch_supported(uc_const.UC_ARCH_PPC, uc_const.UC_MODE_PPC64)
+
 See `Unicorn's changelog <https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog>`_
-for the full list of changes, but a summary here:
+for the details of API changes, but a summary here:
 
 Control Functions
 *****************
@@ -19,6 +41,8 @@ Control Functions
 All ``uc_ctl_*`` macros are their own methods on an engine, minus the ``uc_``
 prefix. For libraries linked to Unicorn 1.x these functions are present, but
 will throw an exception if used.
+
+*The bare ``uc_ctl()`` function is not exposed.*
 
 Instruction Hooks
 *****************
@@ -44,9 +68,10 @@ Other Changes
 ~~~~~~~~~~~~~
 
 * Add clang-format, use WebKit's style (more or less).
-* Autogenerate a bunch of register-related files from templates. **Note:** Some
-  register type enums values have changed. If you use the symbolic constants
-  provided in ``registers_const`` this won't affect you.
+* Autogenerate a bunch of files from templates to reduce duplicated code.
+
+**Note:** Some register type enum values have changed. If you use the symbolic
+constants provided in ``unicorn.registers_const`` this won't affect you.
 
 2.1.0 (2023-04-08)
 ------------------
