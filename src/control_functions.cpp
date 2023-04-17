@@ -4,7 +4,7 @@
 #include "unicornlua/errors.hpp"
 #include "unicornlua/lua.hpp"
 
-[[noreturn]] int ul_crash_immediately(lua_State* L)
+[[noreturn]] int ul_crash_unsupported_operation(lua_State* L)
 {
     (void)L;
     throw std::runtime_error("Functionality not supported in this version of Unicorn.");
@@ -88,8 +88,4 @@ int ul_ctl_set_exits(lua_State* L)
         ul_crash_on_error(L, error);
     return 0;
 }
-#else
-const lua_CFunction const ul_ctl_get_exits = ul_crash_immediately;
-const lua_CFunction const ul_ctl_request_cache = ul_crash_immediately;
-const lua_CFunction const ul_ctl_set_exits = ul_crash_immediately;
-#endif
+#endif // UC_API_MAJOR >= 2

@@ -2,6 +2,8 @@
 
 #include <unicorn/unicorn.h>
 
+#if UC_API_MAJOR >= 2
+
 #include "unicornlua/control_functions.hpp"
 #include "unicornlua/engine.hpp"
 #include "unicornlua/errors.hpp"
@@ -11,7 +13,6 @@
 
 
 @ for _, name in ipairs(no_arguments_no_return) do
-#if UC_API_MAJOR >= 2
 int ul_ctl_$(name)(lua_State* L)
 {
     UCLuaEngine* engine = ul_toluaengine(L, 1);
@@ -21,13 +22,9 @@ int ul_ctl_$(name)(lua_State* L)
         ul_crash_on_error(L, error);
     return 0;
 }
-#else
-const lua_CFunction const ul_ctl_$(name) = ul_crash_immediately;
-#endif
 @ end
 
 @ for name, info in pairs(no_arguments_scalar_return) do
-#if UC_API_MAJOR >= 2
 int ul_ctl_$(name)(lua_State* L)
 {
     UCLuaEngine* engine = ul_toluaengine(L, 1);
@@ -41,13 +38,9 @@ int ul_ctl_$(name)(lua_State* L)
     lua_push$(info.lua_type)(L, static_cast<lua_$(stringx.title(info.lua_type))>(result));
     return 1;
 }
-#else
-const lua_CFunction const ul_ctl_$(name) = ul_crash_immediately;
-#endif
 @ end
 
 @ for name, arguments in pairs(scalar_arguments_no_return) do
-#if UC_API_MAJOR >= 2
 int ul_ctl_$(name)(lua_State* L)
 {
     UCLuaEngine* engine = ul_toluaengine(L, 1);
@@ -67,7 +60,6 @@ int ul_ctl_$(name)(lua_State* L)
         ul_crash_on_error(L, error);
     return 0;
 }
-#else
-const lua_CFunction const ul_ctl_$(name) = ul_crash_immediately;
-#endif
 @ end
+
+#endif // UC_API_MAJOR
