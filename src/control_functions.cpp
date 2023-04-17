@@ -7,7 +7,8 @@
 [[noreturn]] int ul_crash_unsupported_operation(lua_State* L)
 {
     (void)L;
-    throw std::runtime_error("Functionality not supported in this version of Unicorn.");
+    throw std::runtime_error(
+        "Functionality not supported in this version of Unicorn.");
 }
 
 #if UC_API_MAJOR >= 2
