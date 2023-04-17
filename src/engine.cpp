@@ -1,6 +1,7 @@
 #include <unicorn/unicorn.h>
 
 #include "unicornlua/context.hpp"
+#include "unicornlua/control_functions.hpp"
 #include "unicornlua/engine.hpp"
 #include "unicornlua/errors.hpp"
 #include "unicornlua/hooks.hpp"
@@ -30,10 +31,25 @@ const luaL_Reg kEngineMetamethods[] = { { "__gc", maybe_close },
 
 const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "context_restore", ul_context_restore },
-    { "context_save", ul_context_save }, { "emu_start", ul_emu_start },
-    { "emu_stop", ul_emu_stop }, { "errno", ul_errno },
-    { "hook_add", ul_hook_add }, { "hook_del", ul_hook_del },
-    { "mem_map", ul_mem_map }, { "mem_protect", ul_mem_protect },
+    { "context_save", ul_context_save },
+    { "ctl_exits_disable", ul_ctl_exits_disable },
+    { "ctl_exits_enable", ul_ctl_exits_enable },
+    { "ctl_flush_tlb", ul_ctl_flush_tlb }, { "ctl_get_arch", ul_ctl_get_arch },
+    { "ctl_get_cpu_model", ul_ctl_get_cpu_model },
+    { "ctl_get_exits", ul_ctl_get_exits },
+    { "ctl_get_exits_cnt", ul_ctl_get_exits_cnt },
+    { "ctl_get_mode", ul_ctl_get_mode },
+    { "ctl_get_page_size", ul_ctl_get_page_size },
+    { "ctl_get_timeout", ul_ctl_get_timeout },
+    { "ctl_remove_cache", ul_ctl_remove_cache },
+    { "ctl_request_cache", ul_ctl_request_cache },
+    { "ctl_set_cpu_model", ul_ctl_set_cpu_model },
+    { "ctl_set_exits", ul_ctl_set_exits },
+    { "ctl_set_page_size", ul_ctl_set_page_size },
+    { "emu_start", ul_emu_start }, { "emu_stop", ul_emu_stop },
+    { "errno", ul_errno }, { "hook_add", ul_hook_add },
+    { "hook_del", ul_hook_del }, { "mem_map", ul_mem_map },
+    { "mem_protect", ul_mem_protect },
     // n.b. mem_map_ptr() is irrelevant for Lua
     { "mem_read", ul_mem_read }, { "mem_regions", ul_mem_regions },
     { "mem_unmap", ul_mem_unmap }, { "mem_write", ul_mem_write },
