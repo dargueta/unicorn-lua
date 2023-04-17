@@ -76,6 +76,67 @@ constants for these error codes are in the ``unicorn`` namespace and begin with
 ``UC_ERR_``.
 
 
+``ctl_exits_disable()``
+~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_exits_enable()``
+~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_flush_tlb()``
+~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_arch()``
+~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_cpu_model()``
+~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_exits()``
+~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_exits_cnt()``
+~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_mode()``
+~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_page_size()``
+~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_get_timeout()``
+~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_remove_cache(start_addr, end_addr)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_request_cache(address)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_set_cpu_model(model)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_set_exits(exits)``
+~~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+``ctl_set_page_size(page_size)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*New in 2.2.0 (requires Unicorn 2)*
+
+
 ``hook_add(kind, callback, start_address=nil, end_address=nil, udata=nil, ...)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
