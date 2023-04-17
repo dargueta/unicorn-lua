@@ -7,8 +7,30 @@ Changes
 New Features
 ~~~~~~~~~~~~
 
-* Added support for Unicorn 2.x.
 * Added support for LuaJIT 2.1.
+* Added support for Unicorn 2.x.
+
+See `Unicorn's changelog <https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog>`_
+for the full list of changes, but a summary here:
+
+Control Functions
+*****************
+
+All ``uc_ctl_*`` macros are their own methods on an engine, minus the ``uc_``
+prefix. For libraries linked to Unicorn 1.x these functions are present, but
+will throw an exception if used.
+
+Instruction Hooks
+*****************
+
+* x86: CPUID (SYSENTER and SYSCALL were broken before and have been fixed)
+* AArch64: MRS, MSR, SYS, SYSL
+
+Other Hooks
+***********
+
+* ``UC_HOOK_EDGE_GENERATED``
+* ``UC_HOOK_TCG_OPCODE``
 
 Bugfixes
 ~~~~~~~~
