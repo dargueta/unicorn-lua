@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.2.0 (Unreleased)
+2.2.0 (2023-04-17)
 ------------------
 
 New Features
@@ -10,10 +10,11 @@ New Features
 * Added support for LuaJIT 2.1.
 * Added support for Unicorn 2.
 
-``unicorn.arch_supported`` now returns false if the architecture is nil instead
-of crashing. This allows code to easily determine if an architecture is supported
-without needing to check the Unicorn version AND assume that the Unicorn library
-was compiled with all available architectures. For example:
+Instead of throwing an error ``unicorn.arch_supported()`` now returns false if
+the given architecture is nil. This allows code to easily determine if an
+architecture is supported without needing to check the Unicorn version AND assume
+that the Unicorn library was compiled with all available architectures. For
+example:
 
 Old way:
 
