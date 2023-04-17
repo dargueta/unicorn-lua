@@ -219,7 +219,7 @@ int ul_reg_write(lua_State* L)
 
     uc_err error = uc_reg_write(engine, register_id, buffer);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -231,7 +231,7 @@ int ul_reg_write_as(lua_State* L)
 
     uc_err error = uc_reg_write(engine, register_id, reg.data_);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -259,7 +259,7 @@ int ul_reg_read(lua_State* L)
 
     uc_err error = uc_reg_read(engine, register_id, value_buffer);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     lua_pushinteger(L, *reinterpret_cast<lua_Integer*>(value_buffer));
     return 1;
@@ -282,7 +282,7 @@ int ul_reg_read_as(lua_State* L)
 
     uc_err error = uc_reg_read(engine, register_id, value_buffer);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     Register register_obj(value_buffer, read_as_type);
     register_obj.push_to_lua(L);
@@ -316,7 +316,7 @@ int ul_reg_write_batch(lua_State* L)
     uc_err error = uc_reg_write_batch(engine, register_ids.get(),
         p_values.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -349,7 +349,7 @@ int ul_reg_read_batch(lua_State* L)
     uc_err error = uc_reg_read_batch(engine, register_ids.get(),
         value_pointers.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     for (size_t i = 0; i < n_registers; ++i) {
         lua_pushinteger(L, *reinterpret_cast<lua_Integer*>(values[i]));
@@ -381,7 +381,7 @@ int ul_reg_read_batch_as(lua_State* L)
     uc_err error = uc_reg_read_batch(engine, register_ids.get(),
         value_pointers.get(), static_cast<int>(n_registers));
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     // Create the table we're going to return the register values in. The result
     // is a key-value mapping where the keys are the register IDs and the values

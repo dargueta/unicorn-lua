@@ -22,7 +22,7 @@
  * @note Like lua_error, this function never returns, and should be treated in
  * exactly the same way.
  */
-int ul_crash_on_error(lua_State* L, uc_err error);
+[[noreturn]] void ul_crash_on_error(lua_State* L, uc_err error);
 
 /**
  * Create a new weak table with the given key mode, and push it onto the stack.

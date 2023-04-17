@@ -17,7 +17,7 @@ int ul_mem_write(lua_State* L)
 
     uc_err error = uc_mem_write(engine, address, data, length);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -30,7 +30,7 @@ int ul_mem_read(lua_State* L)
     std::unique_ptr<char[]> data(new char[length]);
     uc_err error = uc_mem_read(engine, address, data.get(), length);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     lua_pushlstring(L, data.get(), length);
     return 1;
@@ -45,7 +45,7 @@ int ul_mem_map(lua_State* L)
 
     uc_err error = uc_mem_map(engine, address, size, perms);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -57,7 +57,7 @@ int ul_mem_unmap(lua_State* L)
 
     uc_err error = uc_mem_unmap(engine, address, size);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -70,7 +70,7 @@ int ul_mem_protect(lua_State* L)
 
     uc_err error = uc_mem_protect(engine, address, size, perms);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     return 0;
 }
 
@@ -84,7 +84,7 @@ int ul_mem_regions(lua_State* L)
 
     uc_err error = uc_mem_regions(engine, &regions, &n_regions);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     lua_createtable(L, static_cast<int>(n_regions), 0);
     for (uint32_t i = 0; i < n_regions; ++i) {

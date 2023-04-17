@@ -48,7 +48,7 @@ static int ul_open(lua_State* L)
     uc_engine* engine;
     uc_err error = uc_open(architecture, mode, &engine);
     if (error != UC_ERR_OK)
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
 
     // Create a block of memory for the engine userdata and then create the
     // UCLuaEngine in there using placement new. This way, Lua controls the

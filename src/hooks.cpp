@@ -469,7 +469,7 @@ int ul_hook_add(lua_State* L)
 
     if (error != UC_ERR_OK) {
         engine_object->remove_hook(hook_info);
-        return ul_crash_on_error(L, error);
+        ul_crash_on_error(L, error);
     }
 
     hook_info->set_hook_handle(hook_handle);
