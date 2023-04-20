@@ -181,7 +181,7 @@ before using.
 * A C++ compiler supporting the C++11 standard or later. Supported compilers include
   GCC 4.1+ and GCC-compatible compilers like Clang.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
-  library location. Currently only Unicorn 1.x is supported.
+  library location. Versions 1 and 2 are supported.
 * You must also have the Unicorn headers installed.
 * Some examples have additional dependencies; see their READMEs for details.
 
