@@ -93,7 +93,7 @@ ifeq ($(OS),Darwin)
         # This workaround isn't needed for LuaJIT 2.1+
         ifeq ($(LUAJIT_VERSION),2.0)
             LINK_TO_LUA_FLAG += -pagezero_size 10000 -image_base 100000000
-		endif
+        endif
     endif
 endif
 
