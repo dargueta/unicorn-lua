@@ -32,7 +32,7 @@ endif
 
 IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
 ifeq ($(IS_LUAJIT),1)
-    DEFAULT_LUA_LIB_NAME := luajit-5.1
+    DEFAULT_LUA_LIB_NAME := luajit-$(LUA_VERSION)
     LUAJIT_VERSION := $(shell \
         $(LUA) -e 'print(string.format("%d.%d", jit.version_num / 10000, (jit.version_num / 100) % 100))' \
     )
