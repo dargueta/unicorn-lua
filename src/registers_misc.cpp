@@ -19,11 +19,11 @@
 #include "unicornlua/registers.hpp"
 #include "unicornlua/utils.hpp"
 
-const uint8_t kFP80PositiveInfinity[]
+constexpr uint8_t kFP80PositiveInfinity[]
     = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x7f };
-const uint8_t kFP80NegativeInfinity[]
+constexpr uint8_t kFP80NegativeInfinity[]
     = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff };
-const uint8_t kFP80SignalingNaN[] = { 1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
+constexpr uint8_t kFP80SignalingNaN[] = { 1, 0, 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
 
 lua_Number read_float80(const uint8_t* data)
 {
@@ -41,7 +41,7 @@ lua_Number read_float80(const uint8_t* data)
             return 0.0;
         if (sign)
             return std::ldexp(-static_cast<double>(significand), -16382);
-        return std::ldexp(significand, -16382);
+        return std::ldexp(static_cast<double>(significand), -16382);
     } else if (exponent == 0x7fff) {
         // Top two bits of the significand will tell us what kind of number this
         // is and aren't used for storing a value.
@@ -50,8 +50,8 @@ lua_Number read_float80(const uint8_t* data)
             if (significand == 0)
                 return static_cast<lua_Number>(sign ? -INFINITY : +INFINITY);
 
-        // Significand is non-zero, fall through to next case.
-        UL_FALLTHROUGH_MARKER;
+            // Significand is non-zero, fall through to next case.
+            UL_FALLTHROUGH_MARKER;
         case 1:
             /* 8087 - 80287 treat this as a signaling NaN, 80387 and later
              * treat this as an invalid operand and will explode. Compromise

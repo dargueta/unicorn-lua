@@ -16,10 +16,6 @@
 
 extern const char* const kEngineMetatableName;
 extern const char* const kEnginePointerMapName;
-extern "C" {
-extern const luaL_Reg kEngineInstanceMethods[];
-extern const luaL_Reg kEngineMetamethods[];
-}
 
 struct Context;
 

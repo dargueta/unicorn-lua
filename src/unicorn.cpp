@@ -87,7 +87,7 @@ static int ul_strerror(lua_State* L)
     return 1;
 }
 
-static const luaL_Reg kUnicornLibraryFunctions[]
+static constexpr luaL_Reg kUnicornLibraryFunctions[]
     = { { "arch_supported", ul_arch_supported }, { "open", ul_open },
           { "strerror", ul_strerror }, { "version", ul_unicorn_version },
           { nullptr, nullptr } };

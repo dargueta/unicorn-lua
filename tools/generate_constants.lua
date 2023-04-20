@@ -25,7 +25,7 @@ OUTPUT_CPP_TEMPLATE = [[
 #include "unicornlua/lua.hpp"
 #include "unicornlua/utils.hpp"
 
-static const struct NamedIntConst kConstants[] {
+static constexpr struct NamedIntConst kConstants[] {
 ! for name, text in pairs(constants) do
     {"$(name)", $(name)},
 ! end
