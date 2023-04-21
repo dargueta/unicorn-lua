@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unicorn/unicorn.h>
-
 #include "lua.hpp"
 
 [[noreturn]] int ul_crash_unsupported_operation(lua_State* L);

@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <new>
 #include <stdexcept>
 #include <utility>
 

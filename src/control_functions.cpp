@@ -1,7 +1,6 @@
 #include <stdexcept>
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/errors.hpp"
 #include "unicornlua/lua.hpp"
 
 [[noreturn]] int ul_crash_unsupported_operation(lua_State* L)
@@ -17,9 +16,7 @@
 
 #include "unicornlua/control_functions.hpp"
 #include "unicornlua/engine.hpp"
-#include "unicornlua/errors.hpp"
 #include "unicornlua/transaction.hpp"
-#include "unicornlua/unicornlua.hpp"
 #include "unicornlua/utils.hpp"
 
 int ul_ctl_get_exits(lua_State* L)
