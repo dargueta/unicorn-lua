@@ -25,11 +25,10 @@ static int maybe_close(lua_State* L)
     return 0;
 }
 
-extern "C" {
-const luaL_Reg kEngineMetamethods[] = { { "__gc", maybe_close },
+static constexpr luaL_Reg kEngineMetamethods[] = { { "__gc", maybe_close },
     { "__close", maybe_close }, { nullptr, nullptr } };
 
-const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
+static constexpr luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "context_restore", ul_context_restore },
     { "context_save", ul_context_save },
     { "ctl_exits_disable", ul_ctl_exits_disable },
@@ -58,7 +57,6 @@ const luaL_Reg kEngineInstanceMethods[] = { { "close", ul_close },
     { "reg_read_batch_as", ul_reg_read_batch_as },
     { "reg_write", ul_reg_write }, { "reg_write_as", ul_reg_write_as },
     { "reg_write_batch", ul_reg_write_batch }, { nullptr, nullptr } };
-}
 
 UCLuaEngine* ul_toluaengine(lua_State* L, int index)
 {

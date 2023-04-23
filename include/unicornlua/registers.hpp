@@ -19,13 +19,13 @@
 #endif
 
 #if FLT_MANT_DIG == 24
-typedef float uclua_float32;
+using uclua_float32 = float;
 #else
 #error "`float` isn't 32 bits. This library can't handle that yet."
 #endif
 
 #if DBL_MANT_DIG == 53
-typedef double uclua_float64;
+using uclua_float64 = double;
 #else
 #error "`double` isn't 64 bits. This library can't handle that yet."
 #endif
@@ -35,7 +35,7 @@ typedef double uclua_float64;
 #endif
 
 #if defined(LDBL_MANT_DIG)
-typedef long double uclua_float80;
+using uclua_float80 = long double;
 
 #if LDBL_MANT_DIG == 64
 // `long double` is 80 bits on this platform.
@@ -50,7 +50,7 @@ typedef long double uclua_float80;
 #elif defined(UCLUA_HAVE_GNUFLOAT128)
 // Platform doesn't support `long double` but does support __float128.
 #define UCLUA_FLOAT80_SIZE 128
-typedef __float128 uclua_float80;
+using uclua_float80 = __float128;
 #else
 #error "Platform has no way to represent 80-bit floating-point registers."
 #endif
@@ -299,7 +299,7 @@ private:
  * low 32 or 64 bits are accessible to Lua. Eventually we'll figure out how to
  * use the rest.
  */
-typedef uint8_t register_buffer_type[64];
+using register_buffer_type = uint8_t[64];
 
 /**
  * Write to an architecture register.

@@ -5,7 +5,7 @@
 #include "unicornlua/utils.hpp"
 
 
-static const struct NamedIntConst kConstants[] {
+static constexpr struct NamedIntConst kConstants[] {
 @ for _, bits in ipairs({8, 16, 32, 64}) do
     {"REG_TYPE_INT$(bits)", UL_REG_TYPE_INT$(bits)},
 @ end

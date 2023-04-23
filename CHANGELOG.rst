@@ -1,6 +1,16 @@
 Changes
 =======
 
+(Unreleased)
+------------
+
+* Minor code cleanup, removed unused imports.
+* (Development) Code formatting target has been renamed from ``autoformat`` to
+  ``format``.
+* (Development) Cross-platform ``fallthrough`` and ``noreturn`` directives that
+  will "just work" when MSVC support is added.
+
+
 2.2.0 (2023-04-17)
 ------------------
 

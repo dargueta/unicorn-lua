@@ -1,16 +1,14 @@
-#include <unicorn/unicorn.h>
-
 #include "unicornlua/context.hpp"
 #include "unicornlua/engine.hpp"
 #include "unicornlua/errors.hpp"
-#include "unicornlua/utils.hpp"
+#include "unicornlua/lua.hpp"
 
 const char* const kContextMetatableName = "unicornlua__context_meta";
 
-const luaL_Reg kContextMetamethods[] = { { "__gc", ul_context_maybe_free },
+constexpr luaL_Reg kContextMetamethods[] = { { "__gc", ul_context_maybe_free },
     { "__close", ul_context_maybe_free }, { nullptr, nullptr } };
 
-const luaL_Reg kContextInstanceMethods[]
+constexpr luaL_Reg kContextInstanceMethods[]
     = { { "free", ul_context_free }, { nullptr, nullptr } };
 
 Context* ul_toluacontext(lua_State* L, int index)

@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <new>
 #include <stdexcept>
+#include <utility>
 
 #include <unicorn/unicorn.h>
 
@@ -47,3 +47,24 @@ void load_int_constants(lua_State* L, const struct NamedIntConst* constants);
  * so this function iterates through the entirety of the table and returns the
  * result. */
 size_t count_table_elements(lua_State* L, int table_index);
+
+// Define a cross-platform marker for telling the compiler we're deliberately
+// falling through to the next case in a switch statement.
+#if __STDC_VERSION__ >= 201603L
+#define UL_FALLTHROUGH_MARKER [[fallthrough]]
+#elif defined(__GNUC__)
+#define UL_FALLTHROUGH_MARKER __attribute__((fallthrough))
+#else
+// MSVC
+#define UL_FALLTHROUGH_MARKER
+#endif
+
+#if defined(__cpp_lib_unreachable)
+#define UL_UNREACHABLE_MARKER std::unreachable()
+#elif defined(__GNUC__) // GCC, Clang, ICC
+#define UL_UNREACHABLE_MARKER __builtin_unreachable()
+#elif defined(_MSC_VER) // MSVC
+#define UL_UNREACHABLE_MARKER __assume(false)
+#else
+#define UL_UNREACHABLE_MARKER
+#endif
