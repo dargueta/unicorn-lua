@@ -1,5 +1,6 @@
 lapp = require "pl.lapp"
 stringx = require "pl.stringx"
+tablex = require "pl.tablex"
 template = require "pl.template"
 utils = require "pl.utils"
 
@@ -17,6 +18,7 @@ Things to note:
       - pairs
       - string
       - stringx (Penlight package)
+      - tablex (Penlight package)
 
 Arguments:
     -D... (optional string)
@@ -42,6 +44,7 @@ function main()
         pairs = pairs,
         string = string,
         stringx = stringx,
+        tablex = tablex,
     }
 
     for _, file_path in ipairs(args.value_files) do

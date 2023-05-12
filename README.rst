@@ -1,11 +1,11 @@
-unicorn-lua
-===========
+Unicorn CPU Emulator for Lua
+============================
 
 |build-status| |lua-versions| |platforms|
 
-.. |build-status| image:: https://travis-ci.com/dargueta/unicorn-lua.svg?branch=master
+.. |build-status| image:: https://github.com/dargueta/unicorn-lua/actions/workflows/ci.yml/badge.svg
    :alt: Build status
-   :target: https://travis-ci.com/dargueta/unicorn-lua
+   :target: https://github.com/dargueta/unicorn-lua/actions/workflows/ci.yml
 
 .. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0%20%7C%20LuaJIT2.1-blue
    :alt: Lua versions
