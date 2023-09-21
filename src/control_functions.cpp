@@ -31,7 +31,7 @@ int ul_ctl_get_exits(lua_State* L)
         ul_crash_on_error(L, error);
 
     // Get the exit points.
-    std::unique_ptr<uint64_t> array(new uint64_t[count]);
+    std::unique_ptr<uint64_t[]> array(new uint64_t[count]);
     error = uc_ctl_get_exits(handle, array.get(), count);
     if (error != UC_ERR_OK)
         ul_crash_on_error(L, error);
@@ -71,7 +71,7 @@ int ul_ctl_set_exits(lua_State* L)
     if (n_entries < 1)
         return 0;
 
-    std::unique_ptr<uint64_t> entries(new uint64_t[n_entries]);
+    std::unique_ptr<uint64_t[]> entries(new uint64_t[n_entries]);
 
     // The table argument lists all the exit points. Iterate over these, putting
     // them into the array we're about to pass Unicorn.

@@ -20,9 +20,5 @@ include/unicornlua/register_types.hpp
 # Other garbage
 core*
 venv/
-.venv/
-.venv-5.1/
-.venv-5.2/
-.venv-5.3/
-.venv-5.4/
-.venv-luajit/
+.venv*/
+.luaenv*/

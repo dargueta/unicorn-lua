@@ -64,7 +64,7 @@ static int ul_open(lua_State* L)
     // UCLuaEngine in there using placement new. This way, Lua controls the
     // memory and will call the destructor when the engine gets
     // garbage-collected, and we won't have to manage it ourselves.
-    auto udata = lua_newuserdata(L, sizeof(UCLuaEngine));
+    void *udata = lua_newuserdata(L, sizeof(UCLuaEngine));
     new (udata) UCLuaEngine(L, engine);
 
     luaL_setmetatable(L, kEngineMetatableName);
@@ -98,7 +98,7 @@ extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State* L)
     // context instances use.
     ul_init_engines_lib(L);
 
-    // Create the main library table with all of the global functions in it.
+    // Create the main library table with all the global functions in it.
     luaL_newlib(L, kUnicornLibraryFunctions);
 
     // Create a table in the library that contains the major, minor, and patch
