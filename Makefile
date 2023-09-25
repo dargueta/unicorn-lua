@@ -71,7 +71,7 @@ TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 TEMPLATE_DATA_FILES = $(wildcard src/template_data/*.lua)
 
 LIBRARY_DIRECTORIES = $(strip $(LUA_LIBDIR) $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) /usr/lib64 /usr/local/lib)
-HEADER_DIRECTORIES = $(strip $(CURDIR)/include $(LUA_INCDIR) $(UNICORN_INCDIR) /usr/local/include)
+HEADER_DIRECTORIES = $(strip $(CURDIR)/include $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(UNICORN_INCDIR) /usr/local/include)
 
 ifndef USER_CXX_FLAGS
     USER_CXX_FLAGS =
