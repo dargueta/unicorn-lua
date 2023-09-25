@@ -58,7 +58,8 @@ test = {
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
         "MKDIR=$(MKDIR)",
         -- The following are needed but not provided by LuaRocks
-        -- "LUA_INCDIR=$(LUA_INCDIR)",
+        "LUA_INCDIR=$(LUA_DIR)/include",
+        "LUA_LIBDIR=$(LUA_DIR)/lib",
         -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
         -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
         -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
