@@ -41,16 +41,19 @@ DOWNLOAD = cd '$(1)' && curl -sS '$(2)' | tar -xz --strip-components=1
 
 unexport
 
-ifndef OS
-    OS = $(shell uname -s)
-endif
+UNAME = $(shell uname -s)
+IS_WINDOWS = $(if $(findstring Windows_NT,$(OS)),1,0)
+IS_CYGWIN = $(if $(findstring CYGWIN,$(UNAME)),1,0)
 
-ifeq ($(OS),Linux)
+
+ifeq ($(UNAME),Linux)
     LUA_BUILD_TARGET = linux
-else ifeq ($(OS),Darwin)
+else ifeq ($(UNAME),Darwin)
     LUA_BUILD_TARGET = macosx
-else ifneq ($(findstring CYGWIN,$(OS)),)
+else ifeq ($(IS_CYGWIN),1)
     LUA_BUILD_TARGET = mingw
+else ifeq ($(IS_WINDOWS),1)
+	$(error Windows is not supported yet.)
 else
     LUA_BUILD_TARGET = posix
 endif
@@ -76,7 +79,7 @@ $(VENV_DIR):
 ################################################################################
 # LUA
 
-$(VENV_LUA): $(LUA_ARCHIVE_DIRNAME)/Makefile
+$(VENV_LUA): $(LUA_ARCHIVE_DIRNAME)/Makefile | $(VENV_DIR)
 	$(MAKE) -C '$(<D)' $(LUA_BUILD_TARGET)
 	$(MAKE) -C '$(<D)' 'test'
 	$(MAKE) -C '$(<D)' install INSTALL_TOP=$(VENV_DIR)
