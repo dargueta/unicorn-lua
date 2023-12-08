@@ -58,8 +58,8 @@ test = {
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
         "MKDIR=$(MKDIR)",
         -- The following are needed but not provided by LuaRocks
-        -- "LUA_INCDIR=$(LUA_INCDIR)",
-        -- "LUA_LIBDIR=$(LUA_LIBDIR)",
+        "LUA_INCDIR=$(LUA_DIR)/include",
+        "LUA_LIBDIR=$(LUA_DIR)/lib",
         -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
         -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
         -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
@@ -86,14 +86,11 @@ build = {
         LIBFLAG = "$(LIBFLAG)",
         LUA_DIR = "$(LUA_DIR)",
         LUA_INCDIR="$(LUA_INCDIR)",
-        LUA_LIBDIR = "$(LUA_LIBDIR)",
         UNICORN_INCDIR = "$(UNICORN_INCDIR)",
         UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
         PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
         MKDIR = "$(MKDIR)",
-        -- We need one of these
         LUALIB = "$(LUALIB)",
-        LUA_LIBDIR_FILE = "$(LUA_LIBDIR_FILE)",
     },
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
