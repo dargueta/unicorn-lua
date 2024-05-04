@@ -7,12 +7,13 @@
 #include "unicornlua/control_functions.hpp"
 #include "unicornlua/engine.hpp"
 #include "unicornlua/errors.hpp"
+#include "unicornlua/integer_conversions.hpp"
 #include "unicornlua/lua.hpp"
 #include "unicornlua/unicornlua.hpp"
 #include "unicornlua/utils.hpp"
 
 
-@ for _, name in ipairs(no_arguments_no_return) do
+@ for _, name in ipairs(no_arguments_return_void) do
 int ul_ctl_$(name)(lua_State* L)
 {
     UCLuaEngine* engine = ul_toluaengine(L, 1);
@@ -35,19 +36,19 @@ int ul_ctl_$(name)(lua_State* L)
     if (error != UC_ERR_OK)
         ul_crash_on_error(L, error);
 
-    lua_push$(info.lua_type)(L, static_cast<lua_$(stringx.title(info.lua_type))>(result));
+    ul_push_$(info.c_type)_equiv(L, static_cast<ul_lua_$(info.c_type)_equiv_type>(result));
     return 1;
 }
 @ end
 
-@ for name, arguments in pairs(scalar_arguments_no_return) do
+@ for name, arguments in pairs(scalar_arguments_return_void) do
 int ul_ctl_$(name)(lua_State* L)
 {
     UCLuaEngine* engine = ul_toluaengine(L, 1);
     uc_engine* handle = engine->get_handle();
 
 @ for i, arg_info in ipairs(arguments) do
-    auto arg_$(i) = static_cast<$(arg_info.c_type)>(lua_to$(arg_info.lua_type)(L, $(i + 1)));
+    auto arg_$(i) = static_cast<$(arg_info.c_type)>(ul_to_$(arg_info.c_type)_equiv(L, $(i + 1)));
 @ end
 
     uc_err error = uc_ctl_$(name)(

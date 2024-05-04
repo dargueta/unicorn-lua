@@ -12,13 +12,13 @@ To add a function, put it in the appropriate section according to the number of
 arguments and its return value. Remove the `uc_ctl_` prefix (uc_ctl_foo -> foo)
 and don't count the pointer to the Unicorn engine as an argument.
 
-    void uc_ctl_nanr(uc_engine *uc)
+    void uc_ctl_narv(uc_engine *uc)
 
-        This goes in `no_arguments_no_return` as "nanr".
+        This goes in `no_arguments_return_void` as "narv".
 
-    void uc_ctl_sanr(uc_engine *uc, size_t one, int two)
+    void uc_ctl_sarv(uc_engine *uc, size_t one, int two)
 
-        This goes in `scalar_arguments_no_return` as "sanr"
+        This goes in `scalar_arguments_return_void` as "sarv"
 
 Type information is the same for arguments and return values.
 ]]
@@ -29,7 +29,7 @@ Type information is the same for arguments and return values.
 --
 -- List your function here with the "uc_" prefix stripped. Please maintain
 -- alphabetical order and add a trailing comma to minimize the size of the diff.
-no_arguments_no_return = {
+no_arguments_return_void = {
     "exits_disable",
     "exits_enable",
     "flush_tlb",
@@ -41,12 +41,12 @@ no_arguments_no_return = {
 -- Each entry is the name of the function mapped to a table with the type
 -- information of the return value.
 no_arguments_scalar_return = {
-    get_arch = { c_type = "int", lua_type = "integer" },
-    get_cpu_model = { c_type = "int", lua_type = "integer" },
-    get_exits_cnt = { c_type = "size_t", lua_type = "integer" },
-    get_mode = { c_type = "int", lua_type = "integer" },
-    get_page_size = { c_type = "uint32_t", lua_type = "integer" },
-    get_timeout = { c_type = "uint64_t", lua_type = "number" },
+    get_arch = { c_type = "int" },
+    get_cpu_model = { c_type = "int" },
+    get_exits_cnt = { c_type = "size_t" },
+    get_mode = { c_type = "int" },
+    get_page_size = { c_type = "uint32_t" },
+    get_timeout = { c_type = "uint64_t" },
 }
 
 --------------------------------------------------------------------------------
@@ -54,16 +54,16 @@ no_arguments_scalar_return = {
 --
 -- Each entry is the name of the function mapped to an array table with the type
 -- information of each argument, in order.
-scalar_arguments_no_return = {
+scalar_arguments_return_void = {
     remove_cache = {
-        { c_type = "uint64_t", lua_type = "integer" },
-        { c_type = "uint64_t", lua_type = "integer" },
+        { c_type = "uint64_t" },
+        { c_type = "uint64_t" },
     },
     set_cpu_model = {
-        { c_type = "int", lua_type = "integer" },
+        { c_type = "int" },
     },
     set_page_size = {
-        { c_type = "uint32_t", lua_type = "integer" },
+        { c_type = "uint32_t" },
     },
 }
 

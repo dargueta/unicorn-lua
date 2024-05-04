@@ -9,6 +9,7 @@
 extern "C" {
 #include <lauxlib.h>
 #include <lua.h>
+#include <luaconf.h>
 }
 
 /* Compatibility stuff for Lua < 5.3 */
