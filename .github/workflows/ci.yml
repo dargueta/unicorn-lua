@@ -20,7 +20,7 @@ jobs:
           - "luajit-2.1.0-beta3"
         unicorn-version:
           - "1.0.3"
-          - "2.0.1"
+          - "2.0.1.post1"
     steps:
       - uses: actions/checkout@v3
       - name: Install Lua

@@ -185,6 +185,13 @@ before using.
 * You must also have the Unicorn headers installed.
 * Some examples have additional dependencies; see their READMEs for details.
 
+Known Issues
+~~~~~~~~~~~~
+
+Unicorn 2.0.1 will not compile on macOS with Boost 1.73.0 or newer. If you run
+into an error involving the header ``boost/detail/endian.hpp``, use Unicorn
+version 2.0.1.post1 or higher. (Ticket `here <https://github.com/unicorn-engine/unicorn/issues/1734>`_).
+
 Just Installing?
 ----------------
 
