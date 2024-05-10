@@ -1,8 +1,24 @@
 Changes
 =======
 
-(Unreleased)
-------------
+2.2.1 (2024-05-10)
+------------------
+
+Bugs
+~~~~
+
+Integer widths for the Unicorn 2.x control functions were broken on Lua 5.1 and
+5.2 on certain combinations of architecture and OS. Depending on these factors,
+return values from the control could result in integer overflows or truncation
+where there didn't need to be. This has now been fixed.
+
+The only place it will *not* work is for Lua 5.1 or 5.2 where ``lua_Integer``
+was manually changed from ``ptrdiff_t`` to a narrower type when Lua itself was
+being compiled. It's likely that such a change would fundamentally break Lua,
+so that's a risk I'm willing to take.
+
+Miscellaneous
+~~~~~~~~~~~~~
 
 * Minor code cleanup, removed unused imports.
 * (Development) Code formatting target has been renamed from ``autoformat`` to

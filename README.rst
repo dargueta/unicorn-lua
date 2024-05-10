@@ -17,7 +17,8 @@ Unicorn CPU Emulator for Lua
 Lua bindings for the `Unicorn CPU Emulator`_.
 
 I'm currently testing this on vanilla Lua 5.1 - 5.4, LuaJIT 2.0, and LuaJIT 2.1 on
-both Linux and MacOS.
+both Linux and MacOS. This does not work on MacOS 14 with Unicorn 1.x; see
+*Known Issues* below for details.
 
 License Change
 --------------
@@ -191,6 +192,11 @@ Known Issues
 Unicorn 2.0.1 will not compile on macOS with Boost 1.73.0 or newer. If you run
 into an error involving the header ``boost/detail/endian.hpp``, use Unicorn
 version 2.0.1.post1 or higher. (Ticket `here <https://github.com/unicorn-engine/unicorn/issues/1734>`_).
+
+On Unicorn 1.x and macOS 14+ (using Apple silicon), this sometimes crashes with no
+warning and no error. My suspicion is that it's some binary incompatibility caused
+by LuaRocks's compiler settings, specifically `this issue <https://github.com/luarocks/luarocks/issues/1381>`_
+rearing its head again. I don't know for sure.
 
 Just Installing?
 ----------------
