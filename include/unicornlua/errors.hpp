@@ -15,15 +15,16 @@
 /**
  * Exception class for translating Unicorn error codes into C++ exceptions.
  */
-class UnicornLibraryError : public std::runtime_error {
-public:
+class UnicornLibraryError : public std::runtime_error
+{
+  public:
     explicit UnicornLibraryError(uc_err error);
 
     /** Return the Unicorn error code that triggered this exception. */
     uc_err get_error() const noexcept;
-    void rethrow_as_lua_error(lua_State* L);
+    void rethrow_as_lua_error(lua_State *L);
 
-private:
+  private:
     uc_err error_;
 };
 
@@ -35,8 +36,9 @@ private:
  * wrong with the glue code, such as when Lua passes the wrong kind of argument
  * to a function.
  */
-class LuaBindingError : public std::runtime_error {
-public:
-    explicit LuaBindingError(const char* message);
-    void rethrow_as_lua_error(lua_State* L);
+class LuaBindingError : public std::runtime_error
+{
+  public:
+    explicit LuaBindingError(const char *message);
+    void rethrow_as_lua_error(lua_State *L);
 };

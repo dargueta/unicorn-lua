@@ -4,7 +4,8 @@
  * @file lua.h
  */
 
-extern "C" {
+extern "C"
+{
 #include <lauxlib.h>
 #include <lua.h>
 }

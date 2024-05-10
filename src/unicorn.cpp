@@ -6,7 +6,7 @@
 #include "unicornlua/unicornlua.hpp"
 #include "unicornlua/utils.hpp"
 
-static int ul_unicorn_version(lua_State* L)
+static int ul_unicorn_version(lua_State *L)
 {
     unsigned major, minor;
 
@@ -18,7 +18,7 @@ static int ul_unicorn_version(lua_State* L)
 
 // Create a three-element table that indicates the major, minor, and patch
 // versions of this Lua binding.
-static int ul_create_unicornlua_version_table(lua_State* L)
+static int ul_create_unicornlua_version_table(lua_State *L)
 {
     lua_createtable(L, 3, 0);
 
@@ -33,7 +33,7 @@ static int ul_create_unicornlua_version_table(lua_State* L)
     return 1;
 }
 
-static int ul_arch_supported(lua_State* L)
+static int ul_arch_supported(lua_State *L)
 {
     int is_supported = 0;
 
@@ -41,7 +41,8 @@ static int ul_arch_supported(lua_State* L)
     // determine if an architecture is supported without needing to check the
     // Unicorn version AND assume that the Unicorn library was compiled with all
     // available architectures.
-    if (!lua_isnil(L, 1)) {
+    if (!lua_isnil(L, 1))
+    {
         auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, 1));
         is_supported = uc_arch_supported(architecture) ? 1 : 0;
     }
@@ -50,12 +51,12 @@ static int ul_arch_supported(lua_State* L)
     return 1;
 }
 
-static int ul_open(lua_State* L)
+static int ul_open(lua_State *L)
 {
     auto architecture = static_cast<uc_arch>(luaL_checkinteger(L, 1));
     auto mode = static_cast<uc_mode>(luaL_checkinteger(L, 2));
 
-    uc_engine* engine;
+    uc_engine *engine;
     uc_err error = uc_open(architecture, mode, &engine);
     if (error != UC_ERR_OK)
         ul_crash_on_error(L, error);
@@ -80,19 +81,21 @@ static int ul_open(lua_State* L)
     return 1;
 }
 
-static int ul_strerror(lua_State* L)
+static int ul_strerror(lua_State *L)
 {
     auto error = static_cast<uc_err>(luaL_checkinteger(L, 1));
     lua_pushstring(L, uc_strerror(error));
     return 1;
 }
 
-static constexpr luaL_Reg kUnicornLibraryFunctions[]
-    = { { "arch_supported", ul_arch_supported }, { "open", ul_open },
-          { "strerror", ul_strerror }, { "version", ul_unicorn_version },
-          { nullptr, nullptr } };
+static constexpr luaL_Reg kUnicornLibraryFunctions[] = {
+    {"arch_supported", ul_arch_supported},
+    {"open", ul_open},
+    {"strerror", ul_strerror},
+    {"version", ul_unicorn_version},
+    {nullptr, nullptr}};
 
-extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State* L)
+extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State *L)
 {
     // Initialize the engine bits, such as the metatables that engine and
     // context instances use.

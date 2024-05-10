@@ -53,26 +53,26 @@ TEST_CASE_FIXTURE(LuaFixture, "[ul_create_weak_table] basic test -- weak values"
 #endif
 
 jmp_buf gCrashJmpBuffer;
-const char* gExpectedErrorMessage;
+const char *gExpectedErrorMessage;
 
-int crash_handler(lua_State* L)
+int crash_handler(lua_State *L)
 {
-    const char* error_message = lua_tostring(L, -1);
+    const char *error_message = lua_tostring(L, -1);
     CHECK_MESSAGE(strcmp(gExpectedErrorMessage, error_message) == 0,
-        "Error messages don't match.");
+                  "Error messages don't match.");
 
     // Error message matches, jump back into the test.
     longjmp(gCrashJmpBuffer, 123);
 }
 
-TEST_CASE_FIXTURE(
-    LuaFixture, "ul_crash_on_error() panics with the right error message")
+TEST_CASE_FIXTURE(LuaFixture, "ul_crash_on_error() panics with the right error message")
 {
     gExpectedErrorMessage = uc_strerror(UC_ERR_OK);
 
 #if !IS_LUAJIT
     int recover_flag = setjmp(gCrashJmpBuffer);
-    if (recover_flag == 0) {
+    if (recover_flag == 0)
+    {
         lua_atpanic(L, crash_handler);
         ul_crash_on_error(L, UC_ERR_OK);
         // Execution won't continue past here (inside this block)
@@ -85,24 +85,25 @@ TEST_CASE_FIXTURE(
     // Depending on the Lua version, there may be other stuff on the stack aside
     // from our error message.
     lua_pop(L, lua_gettop(L));
-    CHECK_MESSAGE(
-        (lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
+    CHECK_MESSAGE((lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
 #else
-    try {
+    try
+    {
         ul_crash_on_error(L, UC_ERR_OK);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // Some sort of unhandled exception happened. LuaJIT doesn't provide a
         // way for us to see inside that exception, but we *can* check the error
         // message.
         CHECK_MESSAGE(strcmp(lua_tostring(L, -1), uc_strerror(UC_ERR_OK)) == 0,
-            "Error message doesn't match what's expected.");
+                      "Error message doesn't match what's expected.");
 
         // Clear out the stack or the test will fail. The error message will be
         // at the top of the stack but the interpreter is allowed to put other
         // stuff beneath it.
         lua_pop(L, lua_gettop(L));
-        CHECK_MESSAGE(
-            (lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
+        CHECK_MESSAGE((lua_gettop(L) == 0), "Failed to clear the Lua stack on cleanup.");
         return;
     }
     // If we get out here then an exception wasn't thrown.

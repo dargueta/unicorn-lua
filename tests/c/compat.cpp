@@ -14,7 +14,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic")
 
     lua_seti(L, 1, 5);
 
-    CHECK_EQ(lua_gettop(L), 1); // Only the table should be on the stack.
+    CHECK_EQ(lua_gettop(L), 1);             // Only the table should be on the stack.
     REQUIRE_EQ(lua_type(L, 1), LUA_TTABLE); // Verify it's a table
 
     // Retrieve whatever it is at index 5
@@ -23,7 +23,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_seti() basic")
 
     // Should be a string...
     CHECK_EQ(lua_type(L, -1), LUA_TSTRING);
-    const char* result = lua_tostring(L, -1);
+    const char *result = lua_tostring(L, -1);
     CHECK_EQ(strcmp(result, "This is a string."), 0);
 
     // Remove the string and table
@@ -42,7 +42,7 @@ TEST_CASE_FIXTURE(LuaFixture, "[5.3 compat] lua_geti() basic")
     // Don't use lua_seti because it crashes on OSX + LuaJIT.
     lua_rawset(L, 1);
 
-    CHECK_EQ(lua_gettop(L), 1); // Only the table should be on the stack.
+    CHECK_EQ(lua_gettop(L), 1);           // Only the table should be on the stack.
     CHECK_EQ(lua_type(L, 1), LUA_TTABLE); // Verify it's a table
 
     // Retrieve whatever it is at index 1

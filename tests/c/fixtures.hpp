@@ -6,23 +6,26 @@
 #include "unicornlua/engine.hpp"
 #include "unicornlua/lua.hpp"
 
-class LuaFixture {
-public:
+class LuaFixture
+{
+  public:
     LuaFixture();
     virtual ~LuaFixture();
 
-    lua_State* L;
+    lua_State *L;
 };
 
-class EngineFixture : public LuaFixture {
-public:
+class EngineFixture : public LuaFixture
+{
+  public:
     EngineFixture();
 
-    UCLuaEngine* uclua_engine;
+    UCLuaEngine *uclua_engine;
 };
 
-class AutoclosingEngineFixture : public EngineFixture {
-public:
+class AutoclosingEngineFixture : public EngineFixture
+{
+  public:
     ~AutoclosingEngineFixture() override;
 };
 

@@ -37,8 +37,7 @@
  *          // Executes on versions 1.1.0 and above (including 1.1.1)
  *      #endif
  */
-#define MAKE_VERSION(major, minor, patch)                                      \
-    (((major) << 16) | ((minor) << 8) | (patch))
+#define MAKE_VERSION(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 
 /**
  * The full version number of this Lua library, as an integer.
@@ -48,9 +47,9 @@
  * the minor version is the 8 bits below that, and the patch number is below
  * that. Thus, release 1.10.16 would be represented by 0x010A10.
  */
-#define UNICORNLUA_VERSION                                                     \
-    MAKE_VERSION(UNICORNLUA_VERSION_MAJOR, UNICORNLUA_VERSION_MINOR,           \
-        UNICORNLUA_VERSION_PATCH)
+#define UNICORNLUA_VERSION                                                               \
+    MAKE_VERSION(UNICORNLUA_VERSION_MAJOR, UNICORNLUA_VERSION_MINOR,                     \
+                 UNICORNLUA_VERSION_PATCH)
 
 /**
  * The full version number of the Unicorn library this was compiled with, as an
@@ -59,5 +58,5 @@
  * The construction and semantics of this version number are the same as in
  * @ref UNICORNLUA_VERSION.
  */
-#define UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH                                   \
+#define UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH                                             \
     MAKE_VERSION(UC_VERSION_MAJOR, UC_VERSION_MINOR, UC_VERSION_EXTRA)

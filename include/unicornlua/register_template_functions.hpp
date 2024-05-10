@@ -10,24 +10,26 @@
 #include "registers.hpp"
 
 template <class T, size_t N>
-void integer_array_to_table(lua_State* L, const std::array<T, N>& arr)
+void integer_array_to_table(lua_State *L, const std::array<T, N> &arr)
 {
     static_assert(N > 0 && N <= 128, "Array length must be in [1, 128]");
     lua_createtable(L, N, 0);
 
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i)
+    {
         lua_pushinteger(L, arr[i]);
         lua_seti(L, -2, static_cast<int>(i) + 1);
     }
 }
 
 template <class T, size_t N>
-void float_array_to_table(lua_State* L, const std::array<T, N>& arr)
+void float_array_to_table(lua_State *L, const std::array<T, N> &arr)
 {
     static_assert(N > 0 && N <= 128, "Array length must be in [1, 128]");
     lua_createtable(L, N, 0);
 
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i)
+    {
         lua_pushnumber(L, arr[i]);
         lua_seti(L, -2, static_cast<int>(i) + 1);
     }
@@ -35,7 +37,7 @@ void float_array_to_table(lua_State* L, const std::array<T, N>& arr)
 
 template <class T, int N> std::array<T, N> Register::array_cast() const
 {
-    std::array<T, N> value {};
+    std::array<T, N> value{};
     memcpy(value.data(), data_, sizeof(value));
     return value;
 }
@@ -60,8 +62,8 @@ template <typename T> T try_cast(lua_Integer value)
 
     // If we get here then `value` isn't representable as a T.
     auto buf = std::ostringstream();
-    buf << "Numeric value out of range: " << value << " is not within [" << min
-        << ", " << max << "].";
+    buf << "Numeric value out of range: " << value << " is not within [" << min << ", "
+        << max << "].";
 
     throw std::domain_error(buf.str());
 }
@@ -74,12 +76,11 @@ template <typename T> T try_cast(lua_Integer value)
  * @param value_index
  * @param buffer
  */
-template <typename T>
-void write_lua_integer(lua_State* L, int value_index, void* buffer)
+template <typename T> void write_lua_integer(lua_State *L, int value_index, void *buffer)
 {
     lua_Integer lua_int = lua_tointeger(L, value_index);
     T native_value = try_cast<T>(lua_int);
-    *reinterpret_cast<T*>(buffer) = native_value;
+    *reinterpret_cast<T *>(buffer) = native_value;
 }
 
 /**
@@ -95,12 +96,12 @@ void write_lua_integer(lua_State* L, int value_index, void* buffer)
  * @param buffer
  */
 template <typename T>
-void write_lua_integer_array(
-    lua_State* L, int table_index, int n_elements, void* buffer)
+void write_lua_integer_array(lua_State *L, int table_index, int n_elements, void *buffer)
 {
-    for (int i = 0; i < n_elements; ++i) {
+    for (int i = 0; i < n_elements; ++i)
+    {
         lua_geti(L, table_index, i + 1);
-        write_lua_integer<T>(L, -1, reinterpret_cast<T*>(buffer) + i);
+        write_lua_integer<T>(L, -1, reinterpret_cast<T *>(buffer) + i);
         lua_pop(L, 1);
     }
 }

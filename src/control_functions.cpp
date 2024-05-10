@@ -3,26 +3,25 @@
 
 #include "unicornlua/lua.hpp"
 
-[[noreturn]] int ul_crash_unsupported_operation(lua_State* L)
+[[noreturn]] int ul_crash_unsupported_operation(lua_State *L)
 {
     (void)L;
-    throw std::runtime_error(
-        "Functionality not supported in this version of Unicorn.");
+    throw std::runtime_error("Functionality not supported in this version of Unicorn.");
 }
 
 #if UC_API_MAJOR >= 2
-#include <cstdint>
-#include <memory>
+#    include <cstdint>
+#    include <memory>
 
-#include "unicornlua/control_functions.hpp"
-#include "unicornlua/engine.hpp"
-#include "unicornlua/transaction.hpp"
-#include "unicornlua/utils.hpp"
+#    include "unicornlua/control_functions.hpp"
+#    include "unicornlua/engine.hpp"
+#    include "unicornlua/transaction.hpp"
+#    include "unicornlua/utils.hpp"
 
-int ul_ctl_get_exits(lua_State* L)
+int ul_ctl_get_exits(lua_State *L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
-    uc_engine* handle = engine->get_handle();
+    UCLuaEngine *engine = ul_toluaengine(L, 1);
+    uc_engine *handle = engine->get_handle();
     size_t count;
 
     // Determine how many exit points we have registered.
@@ -38,7 +37,8 @@ int ul_ctl_get_exits(lua_State* L)
 
     // Put the exit points into a Lua table.
     lua_createtable(L, static_cast<int>(count), 0);
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < count; i++)
+    {
         lua_pushinteger(L, static_cast<lua_Integer>(array.get()[i]));
         lua_seti(L, -1, static_cast<int>(i));
     }
@@ -46,10 +46,10 @@ int ul_ctl_get_exits(lua_State* L)
     return 1;
 }
 
-int ul_ctl_request_cache(lua_State* L)
+int ul_ctl_request_cache(lua_State *L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
-    uc_engine* handle = engine->get_handle();
+    UCLuaEngine *engine = ul_toluaengine(L, 1);
+    uc_engine *handle = engine->get_handle();
 
     auto address = static_cast<uint64_t>(lua_tointeger(L, 2));
     uc_tb tblock;
@@ -62,10 +62,10 @@ int ul_ctl_request_cache(lua_State* L)
     return 1;
 }
 
-int ul_ctl_set_exits(lua_State* L)
+int ul_ctl_set_exits(lua_State *L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
-    uc_engine* handle = engine->get_handle();
+    UCLuaEngine *engine = ul_toluaengine(L, 1);
+    uc_engine *handle = engine->get_handle();
 
     auto n_entries = static_cast<size_t>(luaL_len(L, 2));
     if (n_entries < 1)
@@ -75,7 +75,8 @@ int ul_ctl_set_exits(lua_State* L)
 
     // The table argument lists all the exit points. Iterate over these, putting
     // them into the array we're about to pass Unicorn.
-    for (int i = 0; i < static_cast<int>(n_entries); i++) {
+    for (int i = 0; i < static_cast<int>(n_entries); i++)
+    {
         lua_geti(L, 2, i + 1);
         entries.get()[i] = static_cast<uint64_t>(lua_tointeger(L, -1));
         lua_pop(L, 1);
