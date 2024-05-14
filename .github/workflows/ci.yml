@@ -21,15 +21,6 @@ jobs:
         unicorn-version:
           - "1.0.3"
           - "2.0.1.post1"
-#        exclude:
-#          # LuaJIT 2.0 doesn't support the aarch64 architecture, meaning it
-#          # won't even build on macOS 14 and higher.
-#          - operating-system: macos-latest
-#            lua-version: luajit-2.0.5
-#        include:
-#          # Since LuaJIT 2.0 doesn't run on macOS 14+, test it on macOS 13.
-#          - operating-system: macos-13
-#            lua-version: luajit-2.0.5
     steps:
       - uses: actions/checkout@v3
       - name: Install Lua
