@@ -3,9 +3,10 @@ root = true
 [*]
 charset = utf-8
 indent_style = space
-
-[*.{cpp,hpp,lua,py,template,rst}]
 end_of_line = lf
 indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[{Makefile,*.mk}]
+indent_style = unset

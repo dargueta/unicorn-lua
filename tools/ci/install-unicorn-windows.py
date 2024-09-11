@@ -55,7 +55,7 @@ def main():
         logging.error("Expected one argument, the exact version of Unicorn to install.")
         sys.exit(1)
 
-    if sys.maxsize > 2**32:
+    if sys.maxsize >= 2**32:
         bits = 64
     else:
         bits = 32

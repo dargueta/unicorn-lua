@@ -1,8 +1,10 @@
 UNICORN_DIRECTORY=__unicorn_repo
-UNICORN_MAJOR_VERSION := $(firstword $(subst ., ,$(UNICORN_VERSION)))
+UNICORN_MAJOR_VERSION=$(firstword $(subst ., ,$(UNICORN_VERSION)))
 
+ifndef OS
+    OS=$(shell uname -s)
+endif
 
-OS ?= $(shell uname -s)
 ifeq ($(OS),Windows_NT)
     CI_UNICORN_INSTALL_RULE=install_unicorn__windows
 else

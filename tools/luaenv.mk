@@ -9,7 +9,7 @@ endif
 # If only the major and minor version number was given, use the latest version
 # of Lua for that series.
 ifeq ($(LUA),5.4)
-    LUA_VERSION = 5.4.6
+    LUA_VERSION = 5.4.7
 else ifeq ($(LUA),5.3)
     LUA_VERSION = 5.3.6
 else ifeq ($(LUA),5.2)

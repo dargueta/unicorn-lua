@@ -22,9 +22,11 @@ jobs:
           - "1.0.3"
           - "2.0.1.post1"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.7
+        with:
+          persist-credentials: false
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v10
+        uses: leafo/gh-actions-lua@v10.0.0
         with:
           luaVersion: ${{ matrix.lua-version }}
           # We need LUAJIT_ENABLE_GC64 on MacOS: https://github.com/moonjit/moonjit/issues/121
@@ -33,6 +35,8 @@ jobs:
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
+        with:
+          luaRocksVersion: "3.11.1"
       - name: Install Unicorn
         run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
       - name: Environment
