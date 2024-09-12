@@ -55,9 +55,9 @@ function handle_71_in(engine, port, size, cmos)
 end
 
 
-_WEEKDAYS = {'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'}
-_MONTHS = {'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
-           'Nov', 'Dec'}
+WEEKDAYS = {'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'}
+MONTHS = {'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+          'Nov', 'Dec'}
 
 
 function main()
@@ -97,7 +97,8 @@ function main()
   local wday = raw_data:byte(4)
   local day = raw_data:byte(5)
   local month = raw_data:byte(6)
-  local year = raw_data:byte(7)
+  -- Byte 7 contains the year as an unsigned offset from some epoch I haven't
+  -- bothered to look up. Bytes 9-10 give the full year, so we don't need this.
   local century = raw_data:byte(8)
   local full_year_low, full_year_high = raw_data:byte(9, 10)
   local full_year = (full_year_high * 256) + full_year_low
@@ -105,8 +106,8 @@ function main()
   engine:close()
 
   print(string.format(
-    '\nToday is: %s, %d %s %d %02d:%02d:%02d (C=%d)', _WEEKDAYS[wday], day,
-    _MONTHS[month], full_year, hour, min, sec, century))
+    '\nToday is: %s, %d %s %d %02d:%02d:%02d (C=%d)', WEEKDAYS[wday], day,
+    MONTHS[month], full_year, hour, min, sec, century))
 end
 
 main()

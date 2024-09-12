@@ -9,16 +9,18 @@ USAGE = [[
 Render a template.
 
 Things to note:
-    o The Lua line escape character is @, not the default #
+    o The Lua line escape character is `@', not the default `#'. This prevents
+      the template engine from mistaking a C/C++ preprocessor directive for a
+      line comment.
     o The inline escape is the default $(...)
     o The template and values files are executed in a mostly-empty environment,
       except for the following functions and tables:
 
-      - ipairs
-      - pairs
-      - string
-      - stringx (Penlight package)
-      - tablex (Penlight package)
+      - `ipairs()'
+      - `pairs()'
+      - `string'
+      - `stringx' (Penlight package)
+      - `tablex' (Penlight package)
 
 Arguments:
     -D... (optional string)

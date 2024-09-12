@@ -3,7 +3,7 @@ ifndef LUA
 endif
 
 ifndef ROCKS
-    ROCKS = 3.11.0
+    ROCKS = 3.11.1
 endif
 
 # If only the major and minor version number was given, use the latest version
