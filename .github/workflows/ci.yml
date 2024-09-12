@@ -16,8 +16,10 @@ jobs:
           - "5.2"
           - "5.3"
           - "5.4"
-          - "luajit-2.0.5"
-          - "luajit-2.1.0-beta3"
+          # We can't specifically select versions of LuaJIT as of August 2024. This may or
+          # may not be fixable.
+          # https://github.com/leafo/gh-actions-lua/issues/49
+          - "luajit-openresty"  # Judging from the docs, this is basically LuaJIT 2.1
         unicorn-version:
           - "1.0.3"
           - "2.0.1.post1"
