@@ -71,11 +71,23 @@ TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 TEMPLATE_DATA_FILES = $(wildcard src/template_data/*.lua)
 
 LIBRARY_DIRECTORIES = $(strip $(LUA_LIBDIR) $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) /usr/lib64 /usr/local/lib)
-HEADER_DIRECTORIES = $(strip $(CURDIR)/include $(LUA_INCDIR) $(FALLBACK_LUA_INCDIR) $(UNICORN_INCDIR) /usr/local/include)
+
+# The hardcoded version-specific paths here are fallbacks because my IDE can't find the
+# Lua headers without them. Is it necessary? No. Will it cause problems? Unlikely. But
+# without it, every file is a sea of red squiggles and I'm. Losing. My. Mind.
+HEADER_DIRECTORIES = $(strip \
+    $(CURDIR)/include \
+    $(LUA_INCDIR) \
+    $(FALLBACK_LUA_INCDIR) \
+    $(UNICORN_INCDIR) \
+    /usr/local/include \
+    /usr/include/lua$(LUA_VERSION) \
+    /usr/local/include/lua$(LUA_VERSION))
 
 ifndef USER_CXX_FLAGS
     USER_CXX_FLAGS =
 endif
+
 OTHER_CXXFLAGS = -std=c++11 -DIS_LUAJIT=$(IS_LUAJIT)
 WARN_FLAGS = -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 INCLUDE_PATH_FLAGS = $(addprefix -I,$(HEADER_DIRECTORIES))
@@ -173,12 +185,11 @@ $(LIB_BUILD_TARGET): $(LIB_OBJECT_FILES) | $(BUILD_DIR)
 	$(LINK_CMD) $(LIBFLAG) -o $@ $^ $(REQUIRED_LIBS_FLAGS)
 
 
-$(TEST_EXECUTABLE): $(DOCTEST_HEADER) $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) $(TEST_HEADERS)
+$(TEST_EXECUTABLE): $(DOCTEST_HEADER) $(TEST_CPP_OBJECT_FILES) $(LIB_OBJECT_FILES) $(TEST_HEADERS) | $(BUILD_DIR)
 	$(LINK_CMD) -o $@ $(filter %.$(OBJ_EXTENSION),$^) $(REQUIRED_LIBS_FLAGS) $(LINK_TO_LUA_FLAG) -lm
 
 
 $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
-	@echo "Generating $@"
 	$(SET_SEARCH_PATHS); $(LUA) tools/generate_constants.lua $< $@
 
 
@@ -187,14 +198,16 @@ $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
 
 
 %.cpp: %.template $(TEMPLATE_DATA_FILES)
-	@echo "Generating $@"
 	$(SET_SEARCH_PATHS); $(LUA) tools/render_template.lua -o $@ $^
 
 
 %.hpp: %.template $(TEMPLATE_DATA_FILES)
-	@echo "Generating $@"
 	$(SET_SEARCH_PATHS); $(LUA) tools/render_template.lua -o $@ $^
 
 
 $(CONSTS_DIR) $(BUILD_DIR):
 	$(MKDIR) $@
+
+
+include dependencies-src.d
+include dependencies-tests.d
