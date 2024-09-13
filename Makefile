@@ -207,7 +207,3 @@ $(CONSTS_DIR)/%_const.cpp: $(UNICORN_INCDIR)/unicorn/%.h | $(CONSTS_DIR)
 
 $(CONSTS_DIR) $(BUILD_DIR):
 	$(MKDIR) $@
-
-
-include dependencies-src.d
-include dependencies-tests.d
