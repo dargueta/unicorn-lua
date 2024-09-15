@@ -8,19 +8,28 @@
 # These are only used when this Makefile is run manually. You should only be
 # doing that for `make clean`. Use `luarocks` for everything else.
 
-CURL = curl
-LIB_EXTENSION = so
-LUA = lua
-LUA_DIR = /usr/local
 LUAROCKS = luarocks
-MKDIR = mkdir
-OBJ_EXTENSION = o
+get_luarocks_var = $(shell $(LUAROCKS) config variables.$1)
+
+BUSTED = $(call get_luarocks_var,SCRIPTS_DIR)/busted
+CC = $(call get_luarocks_var,CC)
+CXXFLAGS = $(call get_luarocks_var,CFLAGS)
+CURL = $(call get_luarocks_var,CURL)
+LD = $(call get_luarocks_var,LD)
+LIBFLAG = $(call get_luarocks_var,LIBFLAG)
+LIB_EXTENSION = $(call get_luarocks_var,LIB_EXTENSION)
+LUA = $(call get_luarocks_var,LUA)
+LUA_DIR = $(call get_luarocks_var,LUA_DIR)
+LUA_INCDIR = $(call get_luarocks_var,LUA_INCDIR)
+LUA_LIBDIR = $(call get_luarocks_var,LUA_LIBDIR)
+LUA_VERSION = $(call get_luarocks_var,LUA_VERSION)
+MKDIR = $(call get_luarocks_var,MKDIR)
+OBJ_EXTENSION = $(call get_luarocks_var,OBJ_EXTENSION)
 UNICORN_INCDIR = /usr/include
 
 ################################################################################
 
 # Disable 64-bit integer tests for Lua <5.3
-LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 ifeq ($(LUA_VERSION),5.1)
     BUSTED_FLAGS = --exclude-tags="int64only"
 else ifeq ($(LUA_VERSION),5.2)
@@ -166,6 +175,10 @@ $(CONSTS_DIR) $(BUILD_DIR):
 	$(MKDIR) $@
 
 
+$(BUSTED):
+	$(LUAROCKS) install --local busted
+
+
 .PHONY: all
 all: $(LIB_BUILD_TARGET) $(TEST_EXECUTABLE)
 
@@ -178,7 +191,7 @@ clean:
 
 
 .PHONY: test
-test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES)
+test: $(TEST_EXECUTABLE) $(TEST_LUA_SOURCES) | $(BUSTED)
 	$(SET_LUA_PATHS); $(TEST_EXECUTABLE)
 	$(SET_LUA_PATHS); \
 		$(BUSTED) $(BUSTED_FLAGS)                           \
