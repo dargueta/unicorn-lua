@@ -77,6 +77,7 @@ build = {
         LUA = "$(LUA)",
         LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
+        LUA_VERSION = "$(LUA_VERSION)",
     },
     build_variables = {
         CC = "$(CC)",
