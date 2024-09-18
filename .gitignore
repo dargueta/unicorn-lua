@@ -15,7 +15,7 @@ src/constants/
 src/basic_control_functions.cpp
 src/registers.cpp
 src/registers_const.cpp
-include/unicornlua/register_types.hpp
+src/unicornlua/register_types.hpp
 
 # Other garbage
 core*
@@ -23,3 +23,4 @@ venv/
 .venv*/
 .luaenv*/
 pyproject.toml
+poetry.lock
