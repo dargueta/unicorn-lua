@@ -8,11 +8,6 @@
 # These are only used when this Makefile is run manually. You should only be
 # doing that for `make clean`. Use `luarocks` for everything else.
 
-# Override `LUAROCKS` to use a virtual environment. For example, if you have Lua
-# installed in `.venv` you can do `make LUAROCKS=.venv/bin/luarocks` to run all
-# commands using that installation. Honestly, though, you should be using LR to
-# invoke the build and test commands, not running them directly in here.
-
 LUAROCKS = luarocks
 get_luarocks_var = $(shell $(LUAROCKS) config variables.$1)
 
