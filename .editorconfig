@@ -16,3 +16,6 @@ indent_style = unset
 
 [*.{yml,yaml}]
 indent_size = 2
+
+[*.win]
+end_of_line = crlf
