@@ -54,7 +54,6 @@ test = {
         "LUA=$(LUA)",
         "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
         "LUA_DIR=$(LUA_DIR)",
-        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
         "MKDIR=$(MKDIR)",
         -- The following are needed but not provided by LuaRocks
@@ -75,7 +74,6 @@ build = {
     variables = {
         LIB_EXTENSION = "$(LIB_EXTENSION)",
         LUA = "$(LUA)",
-        LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
         LUA_VERSION = "$(LUA_VERSION)",
     },
