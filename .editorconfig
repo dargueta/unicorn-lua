@@ -13,3 +13,6 @@ indent_size = 2
 
 [{Makefile,*.mk}]
 indent_style = unset
+
+[*.{yml,yaml}]
+indent_size = 2

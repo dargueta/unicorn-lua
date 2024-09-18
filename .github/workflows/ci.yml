@@ -11,7 +11,6 @@ jobs:
         operating-system:
           - ubuntu-latest
           - macos-13
-          - windows-latest
         lua-version:
           - "5.1"
           - "5.2"
@@ -28,9 +27,6 @@ jobs:
       - uses: actions/checkout@v4.1.7
         with:
           persist-credentials: false
-      - name: Lua prereqs on Windows
-        uses: ilammy/msvc-dev-cmd@v1
-        if: runner.os == 'Windows'
       - name: Install Lua
         uses: leafo/gh-actions-lua@v10.0.0
         with:
@@ -38,13 +34,53 @@ jobs:
           # We need LUAJIT_ENABLE_GC64 on MacOS: https://github.com/moonjit/moonjit/issues/121
           luaCompileFlags: XCFLAGS="-DLUAJIT_ENABLE_GC64=1"
       - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4.3.0
+        with:
+          luaRocksVersion: "3.11.1"
+      - name: Install Unicorn
+        run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
+      - name: Environment
+        run: luarocks config
+      - name: Install Binding
+        run: luarocks build
+      - name: Run tests
+        run: luarocks test
+
+  testing-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep this identical to the *NIX one
+        # https://github.com/actions/runner/issues/1182
+        lua-version:
+          - "5.1"
+          - "5.2"
+          - "5.3"
+          - "5.4"
+          - "luajit-openresty"
+    steps:
+      - uses: actions/checkout@v4.1.7
+        with:
+          persist-credentials: false
+      - name: Lua prereqs on Windows
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v10.0.0
+        with:
+          luaVersion: ${{ matrix.lua-version }}
+      - name: Install LuaRocks
         # Note: This is a fork of the original by leafo. Switch back to that once
         # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
         uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
         with:
           luaRocksVersion: "3.11.1"
       - name: Install Unicorn
-        run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
+        run: |
+          Expand-Archive -Path 'tools\ci\win64-8e6499f.zip'
+          Move-Item -Path '.\win64-8e6499f\windows_mingw64-shared\bin\libunicorn.dll' -Destination 'C:\Windows\System32'
+          New-Item  -Path 'C:\Windows\System32' -Name 'include' -ItemType 'directory' -Force
+          Move-Item -Path '.\win64-8e6499f\windows_mingw64-shared\include\unicorn' -Destination 'C:\Windows\System32\include'
       - name: Environment
         run: luarocks config
       - name: Install Binding
