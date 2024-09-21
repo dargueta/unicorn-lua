@@ -10,7 +10,7 @@ jobs:
       matrix:
         operating-system:
           - ubuntu-latest
-          - macos-13
+          - macos-latest
         lua-version:
           - "5.1"
           - "5.2"
@@ -46,8 +46,8 @@ jobs:
       - name: Install Binding
         run: luarocks build
         env:
-          USER_CXX_FLAGS: -std=c++11 -Wall -Wextra -Werror -Wpedantic -pedantic-errors
+          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
       - name: Run tests
         run: luarocks test
         env:
-          USER_CXX_FLAGS: -std=c++11 -Wall -Wextra -Werror -Wpedantic -pedantic-errors
+          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
