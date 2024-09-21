@@ -36,38 +36,6 @@ external_dependencies = {
 }
 external_dependencies.platforms.macos = external_dependencies.platforms.linux
 
-test_dependencies = {
-    "busted",
-}
-
-test = {
-    type = "command",
-    command = "make",
-    flags = {
-        "test",
-        "BUSTED=$(SCRIPTS_DIR)/busted",
-        "CC=$(CC)",
-        "CURL=$(CURL)",
-        "CXXFLAGS=$(CFLAGS)",
-        "LD=$(LD)",
-        "LIB_EXTENSION=$(LIB_EXTENSION)",
-        "LUA=$(LUA)",
-        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
-        "LUA_DIR=$(LUA_DIR)",
-        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
-        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
-        "MKDIR=$(MKDIR)",
-        -- The following are needed for building the tests, but aren't provided by
-        -- LuaRocks when testing.
-        "LUA_INCDIR=$(LUA_DIR)/include",
-        "LUA_LIBDIR=$(LUA_DIR)/lib",
-        -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
-        -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
-        -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
-        "CALLED_FROM_LUAROCKS=1",
-    },
-}
-
 build_dependencies = {
     "penlight >=1.8.1, <2.0",
 }
@@ -99,8 +67,56 @@ build = {
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
     },
+    platforms = {
+        -- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it
+        -- defaults to an older standard.
+        macos = {
+            build_variables = {
+                CXXFLAGS = "$(CFLAGS) -std=c++11"
+            }
+        }
+    }
 }
 
--- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it defaults
--- to C++03 or thereabouts.
-build.platforms.macos.build_variables.CXXFLAGS = "$(CFLAGS) -std=c++11"
+
+test_dependencies = {
+    "busted",
+}
+
+test = {
+    type = "command",
+    command = "make",
+    flags = {
+        "test",
+        "BUSTED=$(SCRIPTS_DIR)/busted",
+        "CC=$(CC)",
+        "CURL=$(CURL)",
+        "CXXFLAGS=$(CFLAGS)",
+        "LD=$(LD)",
+        "LIB_EXTENSION=$(LIB_EXTENSION)",
+        "LUA=$(LUA)",
+        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
+        "LUA_DIR=$(LUA_DIR)",
+        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
+        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
+        "MKDIR=$(MKDIR)",
+        -- The following are needed for building the tests, but aren't provided by
+        -- LuaRocks when testing.
+        "LUA_INCDIR=$(LUA_DIR)/include",
+        "LUA_LIBDIR=$(LUA_DIR)/lib",
+        -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
+        -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
+        -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
+        "CALLED_FROM_LUAROCKS=1",
+    },
+
+    platforms = {
+        -- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it
+        -- defaults to an older standard.
+        macos = {
+            flags = {
+                CXXFLAGS = "$(CFLAGS) -std=c++11"
+            }
+        }
+    }
+}
