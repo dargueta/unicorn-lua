@@ -57,12 +57,14 @@ test = {
         "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
         "MKDIR=$(MKDIR)",
-        -- The following are needed but not provided by LuaRocks
+        -- The following are needed for building the tests, but aren't provided by
+        -- LuaRocks when testing.
         "LUA_INCDIR=$(LUA_DIR)/include",
         "LUA_LIBDIR=$(LUA_DIR)/lib",
         -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
         -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
         -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
+        "CALLED_FROM_LUAROCKS=1",
     },
 }
 
@@ -78,6 +80,7 @@ build = {
         LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
         LUA_VERSION = "$(LUA_VERSION)",
+        CALLED_FROM_LUAROCKS = "1",
     },
     build_variables = {
         CC = "$(CC)",
@@ -97,3 +100,7 @@ build = {
         INST_LIBDIR = "$(LIBDIR)",
     },
 }
+
+-- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it defaults
+-- to C++03 or thereabouts.
+build.platforms.macos.build_variables.CXXFLAGS = "$(CFLAGS) -std=c++11"

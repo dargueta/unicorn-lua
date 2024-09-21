@@ -11,21 +11,23 @@
 LUAROCKS = luarocks
 get_luarocks_var = $(shell $(LUAROCKS) config variables.$1)
 
-BUSTED := $(call get_luarocks_var,SCRIPTS_DIR)/busted
-CC := $(call get_luarocks_var,CC)
-CXXFLAGS := $(call get_luarocks_var,CFLAGS)
-CURL := $(call get_luarocks_var,CURL)
-LD := $(call get_luarocks_var,LD)
-LIBFLAG := $(call get_luarocks_var,LIBFLAG)
-LIB_EXTENSION := $(call get_luarocks_var,LIB_EXTENSION)
-LUA := $(call get_luarocks_var,LUA)
-LUA_DIR := $(call get_luarocks_var,LUA_DIR)
-LUA_INCDIR := $(call get_luarocks_var,LUA_INCDIR)
-LUA_LIBDIR := $(call get_luarocks_var,LUA_LIBDIR)
-LUA_VERSION := $(call get_luarocks_var,LUA_VERSION)
-MKDIR := $(call get_luarocks_var,MKDIR)
-OBJ_EXTENSION := $(call get_luarocks_var,OBJ_EXTENSION)
-UNICORN_INCDIR = /usr/include
+ifndef CALLED_FROM_LUAROCKS
+    BUSTED := $(call get_luarocks_var,SCRIPTS_DIR)/busted
+    CC := $(call get_luarocks_var,CC)
+    CXXFLAGS := $(call get_luarocks_var,CFLAGS)
+    CURL := $(call get_luarocks_var,CURL)
+    LD := $(call get_luarocks_var,LD)
+    LIBFLAG := $(call get_luarocks_var,LIBFLAG)
+    LIB_EXTENSION := $(call get_luarocks_var,LIB_EXTENSION)
+    LUA := $(call get_luarocks_var,LUA)
+    LUA_DIR := $(call get_luarocks_var,LUA_DIR)
+    LUA_INCDIR := $(call get_luarocks_var,LUA_INCDIR)
+    LUA_LIBDIR := $(call get_luarocks_var,LUA_LIBDIR)
+    LUA_VERSION := $(call get_luarocks_var,LUA_VERSION)
+    MKDIR := $(call get_luarocks_var,MKDIR)
+    OBJ_EXTENSION := $(call get_luarocks_var,OBJ_EXTENSION)
+    UNICORN_INCDIR = /usr/include
+endif
 
 ################################################################################
 
