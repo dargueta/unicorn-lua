@@ -95,6 +95,7 @@ test = {
         "LD=$(LD)",
         "LIB_EXTENSION=$(LIB_EXTENSION)",
         "LUA=$(LUA)",
+        "LUA_VERSION=$(LUA_VERSION)",
         "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
         "LUA_DIR=$(LUA_DIR)",
         "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
