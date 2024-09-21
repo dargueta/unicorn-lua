@@ -123,7 +123,10 @@ ifeq ($(OS),Darwin)
     endif
 endif
 
-CXX_CMD = $(CC) $(USER_CXX_FLAGS) $(INCLUDE_PATH_FLAGS)
+
+# On MacOS, we need to explicitly tell the compiler to use C++11 because it defaults to an
+# older standard. GCC on Linux appears to work fine without it.
+CXX_CMD = $(CC) $(USER_CXX_FLAGS) $(INCLUDE_PATH_FLAGS) -std=c++11
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 DOCTEST_TAG = v2.4.11

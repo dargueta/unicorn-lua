@@ -43,12 +43,12 @@ build_dependencies = {
 build = {
     type = "make",
     variables = {
+        CALLED_FROM_LUAROCKS = "1",
         LIB_EXTENSION = "$(LIB_EXTENSION)",
         LUA = "$(LUA)",
         LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
         LUA_VERSION = "$(LUA_VERSION)",
-        CALLED_FROM_LUAROCKS = "1",
     },
     build_variables = {
         CC = "$(CC)",
@@ -67,15 +67,6 @@ build = {
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
     },
-    platforms = {
-        -- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it
-        -- defaults to an older standard.
-        macos = {
-            build_variables = {
-                CXXFLAGS = "$(CFLAGS) -std=c++11"
-            }
-        }
-    }
 }
 
 
@@ -89,9 +80,10 @@ test = {
     flags = {
         "test",
         "BUSTED=$(SCRIPTS_DIR)/busted",
+        "CALLED_FROM_LUAROCKS=1",
         "CC=$(CC)",
-        "CURL=$(CURL)",
         "CXXFLAGS=$(CFLAGS)",
+        "CURL=$(CURL)",
         "LD=$(LD)",
         "LIB_EXTENSION=$(LIB_EXTENSION)",
         "LUA=$(LUA)",
@@ -105,19 +97,5 @@ test = {
         -- LuaRocks when testing.
         "LUA_INCDIR=$(LUA_DIR)/include",
         "LUA_LIBDIR=$(LUA_DIR)/lib",
-        -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
-        -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
-        -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
-        "CALLED_FROM_LUAROCKS=1",
     },
-
-    platforms = {
-        -- Clang on MacOS needs to be explicitly told to use the C++11 standard, since it
-        -- defaults to an older standard.
-        macos = {
-            flags = {
-                CXXFLAGS = "$(CFLAGS) -std=c++11"
-            }
-        }
-    }
 }
