@@ -97,8 +97,6 @@ ifndef USER_CXX_FLAGS
     USER_CXX_FLAGS =
 endif
 
-OTHER_CXXFLAGS = -std=c++11 -DIS_LUAJIT=$(IS_LUAJIT)
-WARN_FLAGS = -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 INCLUDE_PATH_FLAGS = $(addprefix -I,$(HEADER_DIRECTORIES))
 LIB_PATH_FLAGS = $(addprefix -L,$(LIBRARY_DIRECTORIES))
 REQUIRED_LIBS = unicorn pthread stdc++
@@ -123,7 +121,7 @@ ifeq ($(OS),Darwin)
     endif
 endif
 
-CXX_CMD = $(CC) $(OTHER_CXXFLAGS) $(USER_CXX_FLAGS) $(WARN_FLAGS) $(INCLUDE_PATH_FLAGS)
+CXX_CMD = $(CC) $(USER_CXX_FLAGS) $(INCLUDE_PATH_FLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 DOCTEST_TAG = v2.4.11
