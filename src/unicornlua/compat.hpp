@@ -71,7 +71,7 @@ LUALIB_API void lua_rawsetp(lua_State *L, int index, const void *p);
 
 // http://lua-users.org/lists/lua-l/2011-11/msg01149.html
 #ifndef IS_LUAJIT
-#    ifdef LUA_JDIR
+#    if defined(LUA_JDIR) || defined(LUA_JROOT)
 #        define IS_LUAJIT 1
 #    else
 #        define IS_LUAJIT 0
