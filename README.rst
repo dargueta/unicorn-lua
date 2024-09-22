@@ -11,7 +11,7 @@ Unicorn CPU Emulator for Lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos%7C%20windows-lightgrey
    :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
@@ -37,12 +37,12 @@ the host operating systems, though:
       - **No**
     * - 2.0
       - Yes
-      - Planned
+      - Yes
       - Yes
       - **Limited**
     * - 2.1+
       - Yes
-      - Planned
+      - Yes
       - Yes
       - Yes
 

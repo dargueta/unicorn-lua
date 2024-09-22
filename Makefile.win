@@ -1,0 +1,35 @@
+SOURCE_DIR=.\csrc
+UNICORN_ROOT=$(UNICORN_INCDIR)\unicorn
+HEADER_ROOT=$(SOURCE_DIR)\unicornlua
+LIB_BUILD_TARGET=$(SOURCE_DIR)\unicorn.$(LIB_EXTENSION)
+TEST_EXECUTABLE=$(SOURCE_DIR)/cpp_test.exe
+
+
+$(LIB_BUILD_TARGET): constant_files $(SOURCE_DIR)\*.$(OBJ_EXTENSION) $(HEADER_ROOT)\register_types.$(OBJ_EXTENSION)
+    $(LD) /Fo $@ $**
+
+
+.PHONY: constant_files
+constant_files: $(UNICORN_INCDIR)\unicorn\*.h
+    $(MAKE) $(patsubst $(UNICORN_ROOT)\%.h,$(SOURCE_DIR)\%_const.cpp,$(filterout $(UNICORN_ROOT)\platform.h,$(**)))
+
+
+.cpp.$(OBJ_EXTENSION): constant_files
+    $(CXX) $(CXXFLAGS) /I $(SOURCE_DIR) /I $(UNICORN_INCDIR) /c /Fo $@ $<
+
+
+.template.cpp .template.hpp: $(TEMPLATE_DATA_FILES)
+	$(LUA) tools\render_template.lua -o $@ $**
+
+
+{$(UNICORN_ROOT)\}.h{$(SOURCE_DIR)\%|fF_const}.cpp:
+	$(LUA) tools\generate_constants.lua $< $@
+
+
+__install: $(LIB_BUILD_TARGET)
+    $(CP) $** $(INST_LIBDIR)
+
+
+__test: $(TEST_EXECUTABLE) .\tests\lua\*.lua
+	$(TEST_EXECUTABLE)
+	$(BUSTED) $(BUSTED_FLAGS) --lua=$(LUA) --shuffle --pattern lua tests/lua
