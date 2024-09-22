@@ -1,6 +1,12 @@
 Changes
 =======
 
+2.3.0
+-----
+
+Update documentation to indicate Unicorn 1.x never claimed support for Apple
+silicon
+
 2.2.1 (2024-05-10)
 ------------------
 
