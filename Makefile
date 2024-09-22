@@ -8,26 +8,20 @@
 # These are only used when this Makefile is run manually. You should only be
 # doing that for `make clean`. Use `luarocks` for everything else.
 
+CURL = curl
+LIB_EXTENSION = so
+LUA = lua
 LUAROCKS = luarocks
-get_luarocks_var = $(shell $(LUAROCKS) config variables.$1)
+MKDIR = mkdir
+OBJ_EXTENSION = o
+UNICORN_INCDIR = /usr/include
 
-ifndef CALLED_FROM_LUAROCKS
-    BUSTED := $(call get_luarocks_var,SCRIPTS_DIR)/busted
-    CC := $(call get_luarocks_var,CC)
-    CXXFLAGS := $(call get_luarocks_var,CFLAGS)
-    CURL := $(call get_luarocks_var,CURL)
-    LD := $(call get_luarocks_var,LD)
-    LIBFLAG := $(call get_luarocks_var,LIBFLAG)
-    LIB_EXTENSION := $(call get_luarocks_var,LIB_EXTENSION)
-    LUA := $(call get_luarocks_var,LUA)
-    LUA_DIR := $(call get_luarocks_var,LUA_DIR)
-    LUA_INCDIR := $(call get_luarocks_var,LUA_INCDIR)
-    LUA_LIBDIR := $(call get_luarocks_var,LUA_LIBDIR)
-    LUA_VERSION := $(call get_luarocks_var,LUA_VERSION)
-    MKDIR := $(call get_luarocks_var,MKDIR)
-    OBJ_EXTENSION := $(call get_luarocks_var,OBJ_EXTENSION)
-    UNICORN_INCDIR = /usr/include
-endif
+BUSTED := $(shell $(LUAROCKS) config variables.SCRIPTS_DIR)/busted
+LIBFLAG := $(shell $(LUAROCKS) config variables.LIBFLAG)
+LUA_DIR := $(shell $(LUAROCKS) config variables.LUA_DIR)
+LUA_INCDIR = $(LUA_DIR)/include
+LUA_LIBDIR = $(LUA_DIR)/lib
+LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 
 ################################################################################
 
@@ -110,11 +104,7 @@ REQUIRED_LIBS_FLAGS = $(addprefix -l,$(REQUIRED_LIBS))
 LINK_TO_LUA_FLAG = $(if $(LUALIB),-l:$(LUALIB),-l$(DEFAULT_LUA_LIB_NAME))
 
 # https://github.com/PowerDNS/pdns/issues/4295
-ifndef OS
-    OS = $(shell uname -s)
-endif
-
-ifeq ($(OS),Darwin)
+ifeq ($(shell uname -s),Darwin)
     ifeq ($(IS_LUAJIT),1)
         # This workaround isn't needed for LuaJIT 2.1+
         ifeq ($(LUAJIT_VERSION),2.0)
