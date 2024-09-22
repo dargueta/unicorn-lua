@@ -11,22 +11,42 @@ Unicorn CPU Emulator for Lua
    :alt: Lua versions
    :target: https://www.lua.org
 
-.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey
+.. |platforms| image:: https://img.shields.io/badge/platform-linux%20%7C%20macos%7C%20windows-lightgrey
    :alt: Supported platforms
 
 Lua bindings for the `Unicorn CPU Emulator`_.
 
-I'm currently testing this on vanilla Lua 5.1 - 5.4, LuaJIT 2.0, and LuaJIT 2.1 on
-both Linux and MacOS. This does not work on MacOS 14 with Unicorn 1.x; see
-*Known Issues* below for details.
+Platform Support
+----------------
 
-License Change
---------------
+This works for PUC Lua 5.1 - 5.4 and LuaJIT. There are a few restrictions on
+the host operating systems, though:
 
-As of version 2.0 the license has changed to GPL v2. This is due to the viral
-nature of the GPL license family: since QEMU uses GPL, this must also be GPL
-even though it only dynamically links to Unicorn. I apologize for the mistake I
-made when I created this with the BSD-3 license.
+.. list-table:: Host Platform Support
+    :header-rows: 1
+
+    * - Unicorn Engine
+      - Linux\*
+      - Windows
+      - macOS ≤13
+      - macOS ≥14
+    * - 1.x
+      - Yes
+      - **No**
+      - Yes
+      - **No**
+    * - 2.0
+      - Yes
+      - Yes
+      - Yes
+      - **Limited**
+    * - 2.1+
+      - Yes
+      - Yes
+      - Yes
+      - Yes
+
+\* Tested on Ubuntu and Gentoo
 
 Known Limitations
 -----------------
@@ -48,7 +68,7 @@ It's for this reason I strongly discourage using such builds.
 64-bit integers *do not* fully work on Lua 5.2 or 5.1. This is because Lua only
 added direct support for integers in 5.3; Lua 5.1 and 5.2 use floating-point
 numbers, which provide at most 17 `digits of precision`_. Thus, values over 53
-bits cannot be represented accurately before 5.3.
+bits cannot be represented accurately before Lua 5.3.
 
 We can work around this limitation by:
 
@@ -186,17 +206,6 @@ before using.
 * You must also have the Unicorn headers installed.
 * Some examples have additional dependencies; see their READMEs for details.
 
-Known Issues
-~~~~~~~~~~~~
-
-Unicorn 2.0.1 will not compile on macOS with Boost 1.73.0 or newer. If you run
-into an error involving the header ``boost/detail/endian.hpp``, use Unicorn
-version 2.0.1.post1 or higher. (Ticket `here <https://github.com/unicorn-engine/unicorn/issues/1734>`_).
-
-On Unicorn 1.x and macOS 14+ (using Apple silicon), this sometimes crashes with no
-warning and no error. My suspicion is that it's some binary incompatibility caused
-by LuaRocks's compiler settings, specifically `this issue <https://github.com/luarocks/luarocks/issues/1381>`_
-rearing its head again. I don't know for sure.
 
 Just Installing?
 ----------------
