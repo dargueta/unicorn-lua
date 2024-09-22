@@ -8,14 +8,12 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.lua]
+[*.{lua,yaml,yml}]
 indent_size = 2
 
 [{Makefile,*.mk}]
 indent_style = unset
 
-[*.{yml,yaml}]
-indent_size = 2
-
-[*.win]
+[Makefile.win]
 end_of_line = crlf
+indent_style = unset
