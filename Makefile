@@ -75,7 +75,9 @@ TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 
 TEMPLATE_DATA_FILES = $(wildcard $(SOURCE_DIR)/template_data/*.lua)
 
-LIBRARY_DIRECTORIES = $(strip $(LUA_LIBDIR) $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR))
+# Unicorn 1.x gets put into places not on the typical linker search path, so we need to
+# hardcode these additional directories it could appear in.
+LIBRARY_DIRECTORIES = $(strip $(LUA_LIBDIR) $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR) /usr/lib64 /usr/local/lib)
 
 # The hardcoded version-specific paths here are fallbacks because my IDE can't find the
 # Lua headers without them. Is it necessary? No. Will it cause problems? Unlikely. But
