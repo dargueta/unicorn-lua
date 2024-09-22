@@ -44,11 +44,12 @@ build = {
     type = "make",
     variables = {
         CALLED_FROM_LUAROCKS = "1",
+        CP = "$(CP)",
         LIB_EXTENSION = "$(LIB_EXTENSION)",
         LUA = "$(LUA)",
         LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
-        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
         LUA_VERSION = "$(LUA_VERSION)",
+        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
     },
     build_variables = {
         CC = "$(CC)",
@@ -61,9 +62,9 @@ build = {
         UNICORN_INCDIR = "$(UNICORN_INCDIR)",
         UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
         PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
-        MKDIR = "$(MKDIR)",
         LUALIB = "$(LUALIB)",
     },
+    install_target = "__install",
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
     },
@@ -78,7 +79,7 @@ test = {
     type = "command",
     command = "make",
     flags = {
-        "test",
+        "__test",
         "BUSTED=$(SCRIPTS_DIR)/busted",
         "CALLED_FROM_LUAROCKS=1",
         "CC=$(CC)",
@@ -92,7 +93,6 @@ test = {
         "LUA_DIR=$(LUA_DIR)",
         "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
         "OBJ_EXTENSION=$(OBJ_EXTENSION)",
-        "MKDIR=$(MKDIR)",
         -- The following are needed for building the tests, but aren't provided by
         -- LuaRocks when testing.
         "LUA_INCDIR=$(LUA_DIR)/include",
