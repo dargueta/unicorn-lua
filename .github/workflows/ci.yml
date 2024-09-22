@@ -23,6 +23,7 @@ jobs:
         unicorn-version:
           - "1.0.3"
           - "2.0.1.post1"
+          - "2.1.0"
         exclude:
           # Unicorn 1.x breaks on macOS 14+
           - operating-system: macos-latest
