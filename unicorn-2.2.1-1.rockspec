@@ -52,7 +52,7 @@ build = {
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
     },
     build_variables = {
-        CC = "$(CC)",
+        CXX = "$(CC)",
         CURL = "$(CURL)",
         CXXFLAGS = "$(CFLAGS)",
         LD = "$(LD)",
@@ -82,7 +82,7 @@ test = {
         "__test",
         "BUSTED=$(SCRIPTS_DIR)/busted",
         "CALLED_FROM_LUAROCKS=1",
-        "CC=$(CC)",
+        "CXX=$(CC)",
         "CXXFLAGS=$(CFLAGS)",
         "CURL=$(CURL)",
         "LD=$(LD)",
