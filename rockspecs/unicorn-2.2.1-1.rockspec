@@ -36,36 +36,6 @@ external_dependencies = {
 }
 external_dependencies.platforms.macos = external_dependencies.platforms.linux
 
-test_dependencies = {
-    "busted",
-}
-
-test = {
-    type = "command",
-    command = "make",
-    flags = {
-        "test",
-        "BUSTED=$(SCRIPTS_DIR)/busted",
-        "CC=$(CC)",
-        "CURL=$(CURL)",
-        "CXXFLAGS=$(CFLAGS)",
-        "LD=$(LD)",
-        "LIB_EXTENSION=$(LIB_EXTENSION)",
-        "LUA=$(LUA)",
-        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
-        "LUA_DIR=$(LUA_DIR)",
-        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
-        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
-        "MKDIR=$(MKDIR)",
-        -- The following are needed but not provided by LuaRocks
-        "LUA_INCDIR=$(LUA_DIR)/include",
-        "LUA_LIBDIR=$(LUA_DIR)/lib",
-        -- "UNICORN_INCDIR=$(UNICORN_INCDIR)",
-        -- "UNICORN_LIBDIR=$(UNICORN_LIBDIR)",
-        -- "PTHREAD_LIBDIR=$(PTHREAD_LIBDIR)",
-    },
-}
-
 build_dependencies = {
     "penlight >=1.8.1, <2.0",
 }
@@ -73,14 +43,16 @@ build_dependencies = {
 build = {
     type = "make",
     variables = {
+        CALLED_FROM_LUAROCKS = "1",
+        CP = "$(CP)",
         LIB_EXTENSION = "$(LIB_EXTENSION)",
         LUA = "$(LUA)",
         LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
-        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
         LUA_VERSION = "$(LUA_VERSION)",
+        OBJ_EXTENSION = "$(OBJ_EXTENSION)",
     },
     build_variables = {
-        CC = "$(CC)",
+        CXX = "$(CC)",
         CURL = "$(CURL)",
         CXXFLAGS = "$(CFLAGS)",
         LD = "$(LD)",
@@ -90,10 +62,40 @@ build = {
         UNICORN_INCDIR = "$(UNICORN_INCDIR)",
         UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
         PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
-        MKDIR = "$(MKDIR)",
         LUALIB = "$(LUALIB)",
     },
+    install_target = "__install",
     install_variables = {
         INST_LIBDIR = "$(LIBDIR)",
+    },
+}
+
+
+test_dependencies = {
+    "busted",
+}
+
+test = {
+    type = "command",
+    command = "make",
+    flags = {
+        "__test",
+        "BUSTED=$(SCRIPTS_DIR)/busted",
+        "CALLED_FROM_LUAROCKS=1",
+        "CXX=$(CC)",
+        "CXXFLAGS=$(CFLAGS)",
+        "CURL=$(CURL)",
+        "LD=$(LD)",
+        "LIB_EXTENSION=$(LIB_EXTENSION)",
+        "LUA=$(LUA)",
+        "LUA_VERSION=$(LUA_VERSION)",
+        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
+        "LUA_DIR=$(LUA_DIR)",
+        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
+        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
+        -- The following are needed for building the tests, but aren't provided by
+        -- LuaRocks when testing.
+        "LUA_INCDIR=$(LUA_DIR)/include",
+        "LUA_LIBDIR=$(LUA_DIR)/lib",
     },
 }

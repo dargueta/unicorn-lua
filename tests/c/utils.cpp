@@ -74,7 +74,7 @@ const char *gExpectedErrorMessage;
 int crash_handler(lua_State *L)
 {
     const char *error_message = lua_tostring(L, -1);
-    CHECK_MESSAGE(strcmp(gExpectedErrorMessage, error_message) == 0,
+    CHECK_MESSAGE((strcmp(gExpectedErrorMessage, error_message) == 0),
                   "Error messages don't match.");
 
     // Error message matches, jump back into the test.

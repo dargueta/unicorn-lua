@@ -10,7 +10,7 @@ jobs:
       matrix:
         operating-system:
           - ubuntu-latest
-          - macos-13
+          - macos-latest
         lua-version:
           - "5.1"
           - "5.2"
@@ -23,6 +23,26 @@ jobs:
         unicorn-version:
           - "1.0.3"
           - "2.0.1.post1"
+        exclude:
+          # Unicorn 1.x breaks on macOS 14+
+          - operating-system: macos-latest
+            unicorn-version: "1.0.3"
+        include:
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
+            lua-version: "5.1"
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
+            lua-version: "5.2"
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
+            lua-version: "5.3"
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
+            lua-version: "5.4"
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
+            lua-version: "luajit-openresty"
     steps:
       - uses: actions/checkout@v4.1.7
         with:
@@ -43,8 +63,12 @@ jobs:
         run: luarocks config
       - name: Install Binding
         run: luarocks build
+        env:
+          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
       - name: Run tests
         run: luarocks test
+        env:
+          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
 
   testing-windows:
     runs-on: windows-latest
