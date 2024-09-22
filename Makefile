@@ -1,6 +1,10 @@
-# WARNING: This makefile is intended to be invoked by LuaRocks, not manually.
+# WARNING: This makefile is intended to be invoked by LuaRocks, not manually. Only use
+# it form `clean`, `format` and if your IDE is grumpy, `autogen-files` might work.
 
-# Disable all default build rules so that we have full control.
+# If we don't disable suffixes, Make fails to detect our default %.o rule because it has
+# extra prerequisites. Because of this, it falls back to its internal built-in recipe for
+# %.o from %.cpp. This default rule doesn't have any of the header search paths, and will
+# fail.
 .SUFFIXES:
 
 ################################################################################
