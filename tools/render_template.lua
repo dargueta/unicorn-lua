@@ -27,8 +27,8 @@ Render a template.
 Things to note:
     o The Lua line escape character is `@', not the default `#'. This prevents
       the template engine from mistaking a C/C++ preprocessor directive for a
-      line comment.
-    o The inline escape is the default $(...)
+      line comment. This can be overridden.
+    o The inline escape is the default $(...) but can be overridden.
     o The template and values files are executed in a mostly-empty environment,
       except for the following functions and tables:
 
@@ -43,6 +43,12 @@ Arguments:
         A string variable to define, either "X" (empty string) or "X=YZ"
         (variable X assigned to "YZ"). Variables defined on the command line
         override values given by the values file.
+    -e,--escape (default "@")
+        Override the character that escapes a line into Lua.
+    -i,--inline-escape (default "$()")
+        Override the inline escape form. This must be three characters,
+        corresponding to the escape character, the opening bracket, and the
+        closing bracket. The brackets should be different characters.
     -o (default stdout)
         The file to write the rendered template to.
     <template>  (string)
@@ -83,7 +89,9 @@ function main()
         utils.quit(1, "Error opening template file %q: %s", args.template, err)
     end
 
-    environment._escape = "@"
+    environment._escape = args.escape
+    environment._inline_escape = string.sub(args.inline_escape, 1, 1)
+    environment._brackets = string.sub(args.inline_escape, 2, 3)
     environment._parent = {ipairs = ipairs, pairs = pairs}
     environment._chunk_name = "template"
 

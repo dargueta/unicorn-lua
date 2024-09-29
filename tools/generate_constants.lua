@@ -30,28 +30,34 @@ OUTPUT_CPP_TEMPLATE = [[
  *
  * Source: $(header_file)
  *
- * @file $(slug)_const.cpp
+ * @file $(slug)_const.c
  */
 
 #include <unicorn/unicorn.h>
-! if slug ~= "unicorn" then
+! if pl_tablex.size(constants) > 0 then
 #include <unicorn/$(slug).h>
 ! end
 
-#include "unicornlua/lua.hpp"
-#include "unicornlua/utils.hpp"
+#include <stdio.h>
 
-static constexpr struct NamedIntConst kConstants[] {
+int main(void)
+{
+! if pl_tablex.size(constants) > 0 then
+    printf(
+        "--- Constants exported by \"$(slug).h\".\n" \
+        "--- For more information, consult the Unicorn Engine library's docs.\n" \
+        "--- @module $(slug)_const\n" \
+        "return {\n"
+    );
 ! for name, text in pairs(constants) do
-    {"$(name)", $(name)},
+    printf("    --- $(name)\n    $(name) = %d;\n", $(name));
 ! end
-    {nullptr, 0}
-};
-
-extern "C" UNICORN_EXPORT int luaopen_unicorn_$(slug)_const(lua_State *L) {
-    lua_createtable(L, 0, $(pl_tablex.size(constants)));
-    load_int_constants(L, kConstants);
-    return 1;
+    printf("}\n");
+! else
+    printf(
+        "error(\"Unicorn wasn't compiled with support for the `$(slug)' architecture.\")\n"
+    );
+! end
 }
 ]]
 
