@@ -14,89 +14,71 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+lapp = require "pl.lapp"
 pl_file = require "pl.file"
 pl_lexer = require "pl.lexer"
 pl_path = require "pl.path"
+pl_pretty = require "pl.pretty"
 pl_stringx = require "pl.stringx"
-pl_tablex = require "pl.tablex"
-pl_template = require "pl.template"
 pl_utils = require "pl.utils"
 
 pl_stringx.import()
 
 
-OUTPUT_CPP_TEMPLATE = [[
-! if pl_tablex.size(constants) > 0 then
-#include <unicorn/$(slug).h>
-! end
+USAGE = [[
+Parse a C header file and extract all defined constants.
 
-#include <stdio.h>
+The output of the script is valid Lua file, with the following key-value pairs:
 
-int main(void)
-{
-! if pl_tablex.size(constants) > 0 then
-    printf(
-        "--- Constants exported by \"$(slug).h\".\n" \
-        "--- For more information, consult the Unicorn Engine library's docs.\n" \
-        "--- @module $(slug)_const\n" \
-        "return {\n"
-    );
-! for name, text in pairs(constants) do
-    printf("    --- $(name)\n    $(name) = %d;\n", $(name));
-! end
-    printf("}\n");
-! else
-    printf(
-        "error(\"Unicorn wasn't compiled with support for the `$(slug)' architecture.\")\n"
-    );
-! end
-}
+    * constants:
+        A sequence table with the names of all enum values and non-function
+        macros extracted from the header file. Only those beginning with "UC_"
+        (case-insensitive) are selected.
+    * source_header:
+        The path to the file that was processed, as it was passed in on the
+        command line.
+    * source_basename:
+        The basename of the file that was processed. For "/usr/include/blah.h",
+        this would be "blah.h".
+    * source_stem:
+        The stem of the name of the file that was processed. For
+        "/usr/include/blah.h", this would be "blah".
+
+--missing-ok
+    If `header_file` doesn't exist, don't throw an error. Instead, behave as if
+    it were just an empty file.
+
+<header_file> (string)
+    The path to the header file to read.
+<output_file> (default stdout)
+    A file to write the extracted constants and other information to.
 ]]
 
 
 function main()
-    local source_header = arg[1]
-    local output_file = arg[2]
+    local args = lapp(USAGE)
 
-    if #arg < 1 or #arg > 2 then
-        pl_utils.quit(
-            1,
-            "USAGE: %s header_file  [output_file]\nIf `output_file` isn't given"
-            .. " or is \"-\", stdout is used.\n",
-            arg[-1]
-        )
-    end
-
-    -- Read in the entire file so we can tack on a trailing newline at the end
-    -- of the text.
-    -- https://github.com/lunarmodules/Penlight/issues/450
-    local source_text = pl_file.read(source_header) .. "\n"
-
-    local constants = extract_constants(source_text)
-    local source_basename = pl_path.basename(source_header)
-    local stem = pl_path.splitext(source_basename)
-
-    local text, render_error = pl_template.substitute(
-        OUTPUT_CPP_TEMPLATE,
-        {
-            _chunk_name = "cpp_template",
-            _escape = "!",
-            _parent = _G,
-            constants = constants,
-            header_file = source_header,
-            slug = stem,
-        }
+    local source_basename = pl_path.basename(args.header_file)
+    local output_text = string.format(
+        "source_header = %q\nsource_basename = %q\nsource_stem = %q\nconstants = ",
+        args.header_file,
+        source_basename,
+        pl_path.splitext(source_basename)
     )
 
-    if render_error ~= nil then
-        pl_utils.quit(1, "%s\n", render_error)
+    local constants = {}
+    if pl_path.exists(args.header_file) then
+        -- Read in the entire file so we can tack on a trailing newline at the
+        -- end of the text.
+        -- https://github.com/lunarmodules/Penlight/issues/450
+        local source_text = pl_file.read(args.header_file) .. "\n"
+        constants = extract_constants(source_text)
+    elseif not args.missing_ok then
+        pl_utils.quit(1, "Source file not found: %s", args.header_file)
     end
 
-    if output_file == nil or output_file == "-" then
-        print(text)
-    else
-        pl_file.write(output_file, text)
-    end
+    args.output_file:write(output_text)
+    args.output_file:write(pl_pretty.write(constants) .. "\n")
 end
 
 
@@ -206,7 +188,7 @@ function maybe_extract_enum(tokenizer)
             ttype, text = tokenizer()
         end
         if ttype == nil then
-            pl_lexer.quit(
+            pl_utils.quit(
                 1,
                 "Unexpected EOF while processing enum value starting line %d",
                 current_lineno

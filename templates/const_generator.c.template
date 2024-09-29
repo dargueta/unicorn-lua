@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <unicorn/unicorn.h>
+@ if tablex.size(constants) > 0 then
+#include <unicorn/$(source_stem).h>
+@ end
+
+int main(void)
+{
+@ if tablex.size(constants) > 0 then
+    printf(
+        "--- Constants exported by \"$(source_basename)\".\n" \
+        "--- @module $(source_stem)_const\n" \
+        "return {\n"
+    );
+@ for name, text in pairs(constants) do
+    printf("    --- $(name)\n    $(name) = %d;\n", $(name));
+@ end
+    printf("}\n");
+@ else
+    printf(
+        "error(\"Unicorn wasn't compiled with support for the `$(source_stem)' architecture.\")\n"
+    );
+@ end
+    return 0;
+}
