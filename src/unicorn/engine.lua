@@ -3,14 +3,35 @@
 local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
 
-local EngineMethods = {}
-local EngineMeta = {__index = EngineMethods}
-
-
---- Create an object-oriented wrapper around an opened Unicorn engine.
+--- An object-oriented wrapper around an opened Unicorn engine.
 ---
---- @param handle  A handle returned by the Unicorn C library (not the lua binding).
-function Engine(handle)
+--- **Garbage Collection**
+---
+--- The @{Engine} supports automatic cleanup in two situations: it gets garbage collected,
+--- or it goes out of scope (its function returns, the `for` loop it was declared inside
+--- exits, etc.). In both of these cases, @{Engine:close} is automatically called. Really,
+--- though, you should call @{Engine:close} as soon as you don't need an engine, since
+--- there are cases when automatic cleanup is *not* triggered.
+---
+--- See "To-be-closed Variables", section 3.3.8 of the Lua manual for details on scope and
+--- caveats on when it doesn't work as expected. For similar caveats about when the `__gc`
+--- metamethod isn't called, see *Programming in Lua*, 4th Edition, page 233.
+---
+--- @type Engine
+local Engine = {}
+
+local M = {
+    Engine = Engine
+}
+
+local EngineMeta_ = {__index = Engine}
+
+
+--- Create a new @{Engine}.
+---
+--- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
+--- @treturn Engine  A class instance wrapping the handle.
+function M.new_engine(handle)
     local instance = {
         engine_handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
@@ -24,10 +45,10 @@ function Engine(handle)
         hooks_ = {},
     }
 
-    return setmetatable(instance, EngineMeta)
+    return setmetatable(instance, EngineMeta_)
 end
 
-function EngineMeta:__close()
+function EngineMeta_:__close()
     -- Only close the engine if it hasn't been closed already. We want to allow double-
     -- closing here because the user may want to explicitly close an engine on some
     -- control paths, but let Lua automatically close it on others.
@@ -36,7 +57,7 @@ function EngineMeta:__close()
     end
 end
 
-function EngineMeta:__gc()
+function EngineMeta_:__gc()
     if self.engine_handle_ ~= nil then
         self:close()
     end
@@ -46,7 +67,7 @@ end
 ---
 --- This removes all hooks, frees contexts and memory, then closes the underlying Unicorn
 --- engine. The object must not be used after this is called.
-function EngineMethods:close()
+function Engine:close()
     if self.engine_handle_ == nil then
         error("Attempted to close an engine twice.")
     end
@@ -59,16 +80,16 @@ function EngineMethods:close()
     self.engine_handle_ = nil
 end
 
-function EngineMethods:context_restore(context)
+function Engine:context_restore(context)
     return uc_c.context_restore(self.engine_handle_, context.context_handle_)
 end
 
-function EngineMethods:context_save(context)
+function Engine:context_save(context)
     local context_handle = uc_c.context_save(self.engine_handle_, context)
     return uc_context.Context(self.engine_handle_, context_handle)
 end
 
-function EngineMethods:emu_start(start_addr, end_addr, timeout, n_instructions)
+function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
     return uc_c.emu_start(
         self.engine_handle_,
         start_addr,
@@ -78,7 +99,7 @@ function EngineMethods:emu_start(start_addr, end_addr, timeout, n_instructions)
     )
 end
 
-function EngineMethods:emu_stop()
+function Engine:emu_stop()
     for context in pairs(self.contexts_) do
         context:free()
     end
@@ -92,138 +113,137 @@ function EngineMethods:emu_stop()
     uc_c.emu_stop(self.engine_handle_)
 end
 
-function EngineMethods:errno()
+function Engine:errno()
     return uc_c.errno(self.engine_handle_)
 end
 
-function EngineMethods:hook_add()
+function Engine:hook_add()
     error("Not implemented yet")
 end
 
-function EngineMethods:hook_del()
+function Engine:hook_del()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_map()
+function Engine:mem_map()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_protect()
+function Engine:mem_protect()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_read()
+function Engine:mem_read()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_regions()
+function Engine:mem_regions()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_unmap()
+function Engine:mem_unmap()
     error("Not implemented yet")
 end
 
-function EngineMethods:mem_write()
+function Engine:mem_write()
     error("Not implemented yet")
 end
 
-function EngineMethods:query(query_flag)
+function Engine:query(query_flag)
     return uc_c.query(self.engine_handle_, query_flag)
 end
 
-function EngineMethods:reg_read()
+function Engine:reg_read()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_read_as()
+function Engine:reg_read_as()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_read_batch()
+function Engine:reg_read_batch()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_read_batch_as()
+function Engine:reg_read_batch_as()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_write()
+function Engine:reg_write()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_write_as()
+function Engine:reg_write_as()
     error("Not implemented yet")
 end
 
-function EngineMethods:reg_write_batch()
+function Engine:reg_write_batch()
     error("Not implemented yet")
 end
 
 
 -- These functions are only available in Unicorn 2.x.
 if uc_c.version()[1] > 1 then
-    function EngineMethods:ctl_exits_disable()
+    function Engine:ctl_exits_disable()
         return uc_c.ctl_exits_disable(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_exits_enable()
+    function Engine:ctl_exits_enable()
         return uc_c.ctl_exits_enable(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_flush_tlb()
+    function Engine:ctl_flush_tlb()
         return uc_c.ctl_flush_tlb(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_get_arch()
+    function Engine:ctl_get_arch()
         return uc_c.ctl_get_arch(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_get_cpu_model()
+    function Engine:ctl_get_cpu_model()
         return uc_c.ctl_get_cpu_model(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_get_exits()
+    function Engine:ctl_get_exits()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_get_exits_cnt()
+    function Engine:ctl_get_exits_cnt()
         return uc_c.ctl_get_exits_cnt(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_get_mode()
+    function Engine:ctl_get_mode()
         return uc_c.ctl_get_mode(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_get_page_size()
+    function Engine:ctl_get_page_size()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_get_timeout()
+    function Engine:ctl_get_timeout()
         return uc_c.ctl_get_timeout(self.engine_handle_)
     end
 
-    function EngineMethods:ctl_remove_cache()
+    function Engine:ctl_remove_cache()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_request_cache()
+    function Engine:ctl_request_cache()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_set_cpu_model()
+    function Engine:ctl_set_cpu_model()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_set_exits()
+    function Engine:ctl_set_exits()
         error("Not implemented yet")
     end
 
-    function EngineMethods:ctl_set_page_size()
+    function Engine:ctl_set_page_size()
         error("Not implemented yet")
     end
 end
 
 
---- @export
-return {Engine = Engine}
+return M

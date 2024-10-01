@@ -13,7 +13,7 @@ int main(void)
         "return {\n"
     );
 @ for name, text in pairs(constants) do
-    printf("    --- $(name)\n    $(name) = %d;\n", $(name));
+    printf("    --- `$(name)`\n    $(name) = %d;\n", $(name));
 @ end
     printf("}\n");
 @ else
