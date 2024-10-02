@@ -111,7 +111,7 @@ static constexpr luaL_Reg kUnicornLibraryFunctions[] = {
     {"version", ul_unicorn_version},
     {nullptr, nullptr}};
 
-extern "C" UNICORN_EXPORT int luaopen_unicorn(lua_State *L)
+extern "C" UNICORN_EXPORT int luaopen_unicorn_c_(lua_State *L)
 {
     // Initialize the engine bits, such as the metatables that engine and
     // context instances use.
