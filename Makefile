@@ -179,16 +179,18 @@ $(LUA_SOURCE_DIR)/%_extracted_consts.lua:
 	$(LUA) tools/process_header.lua --missing-ok $(UNICORN_INCDIR)/unicorn/$*.h $@
 
 
-%registers_const_gen.cpp: templates/registers_const_generator.ltp  $(SOURCE_DIR)/template_data/register_types.lua
+%registers_const_gen.c: templates/registers_const_generator.template \
+                        $(SOURCE_DIR)/template_data/register_types.lua \
+                        $(SOURCE_DIR)/unicornlua/register_types.hpp
+	$(LUA) tools/render_template.lua -o $@ $(filter-out %.hpp,$^)
+
+
+%_const_gen.c: templates/arch_const_generator.template  %_extracted_consts.lua
 	$(LUA) tools/render_template.lua -o $@ $^
 
 
-%_const_gen.cpp: templates/arch_const_generator.template  %_extracted_consts.lua
-	$(LUA) tools/render_template.lua -o $@ $^
-
-
-%_const_gen: %_const_gen.cpp
-	$(CXX_CMD) -o $@ $<
+%_const_gen: %_const_gen.c
+	$(CC) $(INCLUDE_PATH_FLAGS) -o $@ $<
 
 
 %_const.lua: %_const_gen
