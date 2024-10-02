@@ -183,7 +183,8 @@ end
 
 
 -- These functions are only available in Unicorn 2.x.
-if uc_c.version()[1] > 1 then
+local unicorn_major_version = uc_c.version()
+if unicorn_major_version >= 2 then
     function Engine:ctl_exits_disable()
         return uc_c.ctl_exits_disable(self.engine_handle_)
     end

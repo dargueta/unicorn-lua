@@ -11,19 +11,19 @@ local M = {
     --- @{unicorn_const.UC_ARCH_X86}.
     --- @treturn bool  A boolean indicating if Unicorn supports the given architecture.
     --- @function arch_supported
-    arch_supported = uc.arch_supported,
+    arch_supported = uc_c.arch_supported,
 
     --- Return the error message corresponding to the given Unicorn error code.
     --- @tparam int code  An error code as returned from one of the API functions.
     --- @treturn string   A standard error message describing the code.
     --- @function strerror
-    strerror = uc.strerror,
+    strerror = uc_c.strerror,
 
-    --- Return a two-element table of the major and minor version numbers of the
-    --- underlying Unicorn Engine library.
+    --- Return two values, the major and minor version numbers of the underlying Unicorn
+    --- Engine C library.
     --- @treturn {int,int} The major and minor version of the library, respectively.
     --- @function version
-    version = uc.version,
+    version = uc_c.version,
 }
 
 
