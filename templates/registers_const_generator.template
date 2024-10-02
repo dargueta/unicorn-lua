@@ -1,0 +1,59 @@
+#include <unicorn/unicorn.h>
+#include "unicornlua/registers.hpp"
+#include <stdio.h>
+
+int main() {
+    printf(
+        "--- Enum values for casting register types.\n" \
+        "--- @module registers_const\n" \
+        "return {\n"
+    );
+@ for _, bits in ipairs({8, 16, 32, 64}) do
+    printf(
+        "    --- A $(bits)-bit signed integer.\n" \
+        "    REG_TYPE_INT$(bits) = %d,\n",
+        UL_REG_TYPE_INT$(bits)
+    );
+@ end
+@ for _, bits in ipairs({32, 64}) do
+    printf(
+        "    --- A $(bits)-bit floating-point number.\n" \
+        "    REG_TYPE_FLOAT$(bits) = %d,\n",
+        UL_REG_TYPE_FLOAT$(bits)
+    );
+@ end
+@ for _, conf in ipairs(int_arrays) do
+    printf(
+@   if conf.count == 1 then
+        "    --- An array of $(conf.bits)-bit signed integers with one element.\n" \
+        "    ---\n" \
+        "    --- It may seem weird to have a one-element array, but it maintains symmetry\n" \
+        "    --- when working with x86's SIMD instructions that operate on arrays of\n" \
+        "    --- integers.\n" \
+@    else
+        "    --- An array of $(conf.bits)-bit signed integers with $(conf.count) element(s).\n" \
+@    end
+        "    REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count) = %d,\n",
+        UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count)
+    );
+@ end
+@ for _, conf in ipairs(float_arrays) do
+    printf(
+        "    --- An array of $(conf.bits)-bit floating-point numbers with $(conf.count) element(s).\n" \
+        "    REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count) = %d,\n",
+        UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count)
+    );
+@ end
+    printf(
+        "    --- An 80-bit floating-point number.\n" \
+        "    ---\n" \
+        "    --- Unless Lua was explicitly compiled with `lua_Number` defined as a\n" \
+        "    --- `long double`, it can't losslessly represent a float this big. Thus,\n"
+        "    --- precision is necessarily lost when reading a register, but not when\n"
+        "    --- setting a register's value.\n" \
+        "    REG_TYPE_FLOAT80 = %d,\n" \
+        "}\n",
+        UL_REG_TYPE_FLOAT80
+    );
+    return 0;
+}
