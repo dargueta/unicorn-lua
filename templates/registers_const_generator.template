@@ -3,8 +3,11 @@
 #include <stdio.h>
 
 int main() {
+@ for _, line in ipairs(copyright_notice) do
+    printf("-- $(line)\n");
+@ end
     printf(
-        "--- Enum values for casting register types.\n" \
+        "\n--- Enum values for casting register types.\n" \
         "--- @module registers_const\n" \
         "return {\n"
     );
