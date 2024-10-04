@@ -47,15 +47,16 @@ local M = {
 ---
 --- @tparam int architecture  An enum value indicating which architecture to emulate. The
 --- constants are available in @{unicorn_const} and all start with "UC\_ARCH\_".
---- @tparam int flags  Architecture-specific flags that control the engine's behavior.
---- These can be used to select a specific version of an architecture, endianness (for
---- bi-endian architectures), and so on.
+--- @tparam int mode_flags  Flags providing broad details of the CPU's operating mode.
+--- For example, these can be used to choose between starting an x86 CPU in 16-, 32-, or
+--- 64-bit mode, or selecting the endianness on bi-endian architectures. These flags are
+--- available in @{unicorn_const} and all start with "UC\_MODE\_".
 ---
---- Flags are exposed in each architecture's `const` module. For example, the x86
---- architecture's flags are in @{x86_const}, ARM64 in @{arm64_const}, and so on.
 --- @treturn Engine  An initialized @{engine.Engine}.
-function M.open(architecture, flags)
-    local handle, err = uc_c.open(architecture, flags or 0)
+---
+--- @usage unicorn.open(unicorn_const.UC_ARCH_X86, unicorn_const.UC_MODE_32)
+function M.open(architecture, mode_flags)
+    local handle, err = uc_c.open(architecture, mode_flags or 0)
     if err ~= nil then
         return nil, err
     end
