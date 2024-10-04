@@ -133,11 +133,32 @@ function Engine:errno()
     return uc_c.errno(self.engine_handle_)
 end
 
-function Engine:hook_add()
+--- Add a new event hook to the engine.
+---
+--- The return value is a handle used to keep track of the hook. Unlike contexts, hooks
+--- are not removed if the handle is garbage collected.
+---
+--- @tparam int kind  The type of hook to create. The constants are in @{unicorn_const}
+--- and begin with `UC_HOOK_`.
+--- @tparam function callback  The function to call when the hook is triggered. The
+--- arguments passed to the callback depend on the type of hook.
+--- @tparam int start_address  The lowest memory address this hook will be active for. If
+--- not given or `nil`, defaults to 0.
+--- @tparam int end_address  The highest memory address this hook will be active for. If
+--- not given or `nil`, defaults to the highest possible memory address.
+--- @param udata  An additional argument to pass to the hook for its use, such as a file
+--- handle or a table. Unicorn keeps a hard reference to it in the registry until the hook
+--- is deleted, but otherwise doesn't care what it is.
+---
+--- @return A handle to the hook that was just created.
+function Engine:hook_add(kind, callback, start_address, end_address, udata, ...)
     error("Not implemented yet")
 end
 
-function Engine:hook_del()
+--- Remove a hook from the engine.
+---
+--- @param handle  A hook handle returned from @{Engine:hook_add}.
+function Engine:hook_del(handle)
     error("Not implemented yet")
 end
 
