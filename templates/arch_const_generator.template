@@ -15,8 +15,10 @@ int main(void)
         "--- @module $(source_stem)_const\n" \
         "return {\n"
     );
+@ predef_docs = docstrings[source_stem] or {}
 @ for name, text in tablex.sort(constants) do
-    printf("    --- `$(name)`\n    $(name) = %d;\n", $(name));
+@     local doc = predef_docs[name] or "`" .. name .. "`"
+    printf("    --- $(doc)\n    $(name) = %d;\n", $(name));
 @ end
     printf("}\n");
 @ else
