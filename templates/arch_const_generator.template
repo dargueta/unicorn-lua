@@ -15,7 +15,7 @@ int main(void)
         "--- @module $(source_stem)_const\n" \
         "return {\n"
     );
-@ for name, text in pairs(constants) do
+@ for name, text in tablex.sort(constants) do
     printf("    --- `$(name)`\n    $(name) = %d;\n", $(name));
 @ end
     printf("}\n");
