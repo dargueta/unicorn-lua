@@ -72,7 +72,7 @@ order to control aspects of the engine such as its address width (@{UC_MODE_16},
             slug = "protection",
             title = "Memory Protection Flags.",
             description = [[
-These flags can be OR'ed together to define protections on memory mapped in to the engine.
+These flags can be OR'ed together to define protections on memory mapped into the engine.
 
 @see Engine:mem_map
 @see Engine:mem_protect
@@ -120,5 +120,217 @@ Use these to query aspects of an open engine, such as its mode flags, page size,
 ]],
             pattern = "UC_QUERY_",
         },
-    }
+    },
+    arm64 = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_ARM64_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_ARM64_REG_",
+        },
+        {
+            slug = "instruction_hooks",
+            title = "Instruction Hooks.",
+            description = [[
+Use these as the additional argument in @{engine.Engine:hook_add} to define a hook to
+execute whenever one of these instructions is executed.
+]],
+            pattern = "UC_ARM64_INS_",
+        },
+    },
+    arm = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_ARM_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_ARM_REG_",
+        },
+    },
+    m68k = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_M68K_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_M68K_REG_",
+        },
+    },
+    mips = {
+        {
+            slug = "mode_flags_32",
+            title = "32-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_MIPS32_",
+        },
+        {
+            slug = "mode_flags_64",
+            title = "64-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_MIPS64_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_MIPS_REG_",
+        },
+    },
+    ppc = {
+        {
+            slug = "mode_flags_32",
+            title = "32-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_PPC32_",
+        },
+        {
+            slug = "mode_flags_64",
+            title = "64-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_PPC64_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_PPC_REG_",
+        },
+    },
+    riscv = {
+        {
+            slug = "mode_flags_32",
+            title = "32-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_RISCV32_",
+        },
+        {
+            slug = "mode_flags_64",
+            title = "64-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_RISCV64_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_RISCV_REG_",
+        },
+    },
+    s390x = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_S390X_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_S390X_REG_",
+        },
+    },
+    sparc = {
+        {
+            slug = "mode_flags_32",
+            title = "32-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_SPARC32_",
+        },
+        {
+            slug = "mode_flags_64",
+            title = "64-bit Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_SPARC64_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_SPARC_REG_",
+        },
+    },
+    tricore = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_TRICORE_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_TRICORE_REG_",
+        },
+    },
+    x86 = {
+        {
+            slug = "mode_flags",
+            title = "Mode Flags.",
+            description = "Mode flags to use with @{unicorn.open}.",
+            pattern = "UC_CPU_X86_",
+        },
+        {
+            slug = "registers",
+            title = "Registers.",
+            description = [[
+Enum constants to use in @{engine.Engine:reg_read}, @{engine.Engine:reg_write}, and
+related methods.
+]],
+            pattern = "UC_X86_REG_",
+        },
+        {
+            slug = "instruction_hooks",
+            title = "Instruction Hooks.",
+            description = [[
+Use these as the additional argument in @{engine.Engine:hook_add} to define a hook to
+execute whenever one of these instructions is executed.
+]],
+            pattern = "UC_X86_INS_",
+        },
+    },
 }
