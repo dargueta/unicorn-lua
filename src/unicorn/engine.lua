@@ -100,9 +100,21 @@ function Engine:context_restore(context)
     return uc_c.context_restore(self.engine_handle_, context.context_handle_)
 end
 
+--- Save the engine's current state.
+---
+--- @tparam[opt] context.Context context  An existing context object to reuse. If not
+--- given, a new one is created.
 function Engine:context_save(context)
-    local context_handle = uc_c.context_save(self.engine_handle_, context)
-    return uc_context.Context(self.engine_handle_, context_handle)
+    local raw_context_handle
+    if context ~= nil then
+        raw_context_handle = context.handle_
+    end
+    raw_context_handle = uc_c.context_save(self.engine_handle_, raw_context_handle)
+
+    if context == nil then
+        return uc_context.Context(self.engine_handle_, raw_context_handle)
+    end
+    return context
 end
 
 function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
@@ -129,6 +141,9 @@ function Engine:emu_stop()
     uc_c.emu_stop(self.engine_handle_)
 end
 
+--- Get the status code of the last API operation on this engine.
+---
+--- @treturn int  One of the UC\_ERR\_ constants, like @{unicorn_const.UC_ERR_OK}.
 function Engine:errno()
     return uc_c.errno(self.engine_handle_)
 end
@@ -142,15 +157,14 @@ end
 --- and begin with `UC_HOOK_`.
 --- @tparam function callback  The function to call when the hook is triggered. The
 --- arguments passed to the callback depend on the type of hook.
---- @tparam int start_address  The lowest memory address this hook will be active for. If
---- not given or `nil`, defaults to 0.
---- @tparam int end_address  The highest memory address this hook will be active for. If
---- not given or `nil`, defaults to the highest possible memory address.
---- @param udata  An additional argument to pass to the hook for its use, such as a file
---- handle or a table. Unicorn keeps a hard reference to it in the registry until the hook
---- is deleted, but otherwise doesn't care what it is.
+--- @tparam[opt=0] int start_address  The lowest memory address this hook is be active for.
+--- @tparam[opt=MAX] int end_address  The highest memory address this hook is
+--- active for. If not given, defaults to the end of memory.
+--- @param[opt] udata  An additional argument to pass to the hook for its use, such as a
+--- file handle or a table. Unicorn keeps a hard reference to it in the registry until the
+--- hook is deleted, but otherwise doesn't care what it is.
 ---
---- @return A handle to the hook that was just created.
+--- @treturn userdata  A handle to the hook that was just created.
 function Engine:hook_add(kind, callback, start_address, end_address, udata, ...)
     error("Not implemented yet")
 end
@@ -162,6 +176,7 @@ function Engine:hook_del(handle)
     error("Not implemented yet")
 end
 
+---
 function Engine:mem_map()
     error("Not implemented yet")
 end
@@ -186,11 +201,26 @@ function Engine:mem_write()
     error("Not implemented yet")
 end
 
+
+--- Get information about an initialized engine, such as its page size, mode flags, etc.
+---
+--- @tparam int query_flag  Any UC\_QUERY\_* constant like @{unicorn_const.UC_QUERY_MODE}.
+---
+--- @treturn int    The requested value.
 function Engine:query(query_flag)
     return uc_c.query(self.engine_handle_, query_flag)
 end
 
-function Engine:reg_read()
+--- Read the current value of a CPU register from the engine.
+---
+--- @tparam int register  An architecture-specific enum value indicating the register to
+--- read. These are found in the const module for the relevant architecture, and are
+--- always of the form `UC_<arch>_REG_<reg name>`. For example, @{ppc_const.UC_PPC_REG_CR5}
+--- would read the CR5 register from a PowerPC engine. Passing a constant from the wrong
+--- architecture has undefined behavior.
+---
+--- @treturn int  The register's value.
+function Engine:reg_read(register)
     error("Not implemented yet")
 end
 
@@ -206,7 +236,12 @@ function Engine:reg_read_batch_as()
     error("Not implemented yet")
 end
 
-function Engine:reg_write()
+--- Set the current value of a CPU register in the engine.
+---
+--- @tparam int register  An architecture-specific enum value indicating the register to
+--- write to. The meaning is the same as in @{Engine:reg_read}.
+--- @tparam int value  The value to write to the register.
+function Engine:reg_write(register, value)
     error("Not implemented yet")
 end
 

@@ -21,9 +21,14 @@ local uc_c = require("unicorn_c_")
 local ContextMethods = {}
 local ContextMeta = {__index = ContextMethods}
 
+--- Create a new engine context.
+---
+--- @tparam engine.Engine engine  The engine this context is bound to.
+--- @param[opt] context_handle  A context handle from the C library to wrap. If not given,
+--- the engine state will be saved in a new context handle.
 function Context(engine, context_handle)
     if context_handle == nil then
-        context_handle = uc_c.context_save(engine)
+        context_handle = uc_c.context_save(engine.engine_handle_)
     end
 
     -- We want to hold a weak reference to the engine so that this context laying around
@@ -53,6 +58,9 @@ function ContextMeta:__gc()
 end
 
 
+--- Deallocate the engine context.
+---
+--- This releases all underlying resources, so the object must not be used again.
 function ContextMethods:free()
     if self.handle_ == nil then
         error("Attempted to free the same context twice.")
