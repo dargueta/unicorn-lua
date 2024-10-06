@@ -80,7 +80,7 @@ TEST_LUA_SOURCES = $(wildcard tests/lua/*.lua)
 TEST_HEADERS = $(wildcard tests/c/*.hpp)
 TEST_CPP_OBJECT_FILES = $(TEST_CPP_SOURCES:.cpp=.$(OBJ_EXTENSION))
 
-TEMPLATE_DATA_FILES = $(addprefix $(SOURCE_DIR)/template_data,basic_control_functions.lua register_types.lua)
+TEMPLATE_DATA_FILES = $(addprefix $(SOURCE_DIR)/template_data/,basic_control_functions.lua register_types.lua)
 
 # Unicorn 1.x gets put into places not on the typical linker search path, so we need to
 # hardcode these additional directories it could appear in.

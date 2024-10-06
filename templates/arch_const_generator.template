@@ -6,24 +6,49 @@
 
 int main(void)
 {
-@ if tablex.size(constants) > 0 then
-    printf(
+    puts(
 @ for _, line in ipairs(copyright_notice) do
         "-- $(line)\n" \
 @ end
-        "\n--- Constants exported by \"$(source_basename)\".\n" \
-        "--- @module $(source_stem)_const\n" \
-        "return {\n"
+        "\n--- Constants exported by \"$(source_basename)\".\n--- @module $(source_stem)_const\n"
     );
-@ predef_docs = docstrings[source_stem] or {}
-@ for name, text in tablex.sort(constants) do
-@     local doc = predef_docs[name] or "`" .. name .. "`"
-    printf("    --- $(doc)\n    $(name) = %d;\n", $(name));
-@ end
-    printf("}\n");
+
+@   fields_seen = {}
+@   predef_docs = docstrings[source_stem] or {}
+@   predef_sections = sections[source_stem] or {}
+
+@ if tablex.size(constants) > 0 then
+    puts("return {\n");
+@   for _, section in ipairs(predef_sections) do
+        puts("--- $(section.title)\n---");
+@       for _, line in ipairs((section.description or ""):splitlines()) do
+            puts("--- " $(string.format("%q", line)));
+@       end
+        puts("--- @section $(section.slug)\n");
+
+@       for name, text in tablex.sort(constants) do
+@           if (name:lfind(section.pattern) ~= nil) and (fields_seen[name] == nil) then
+@               doc = predef_docs[name] or "`" .. name .. "`"
+                puts("--- " $(string.format("%q", doc)));
+                printf("$(name) = %d;\n", $(name));
+@               fields_seen[name] = true
+@           end
+@       end
+@   end
+@   if #predef_sections > 0 then
+        puts("\n--- @section end");
+@   end
+@   for name, text in tablex.sort(constants) do
+@       if fields_seen[name] == nil then
+@           doc = predef_docs[name] or "`" .. name .. "`"
+            puts("--- " $(string.format("%q", doc)));
+            printf("$(name) = %d;\n", $(name));
+@       end
+@   end
+      puts("}\n");
 @ else
-    printf(
-        "error(\"Unicorn wasn't compiled with support for the `$(source_stem)' architecture.\")\n"
+    puts(
+        "error(\"Unicorn wasn't compiled with support for the `$(source_stem)' architecture.\")"
     );
 @ end
     return 0;
