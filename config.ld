@@ -5,3 +5,4 @@ not_luadoc = true
 dir = "gendocs"
 boilerplate = true
 -- template_escape = "%"
+sort = true
