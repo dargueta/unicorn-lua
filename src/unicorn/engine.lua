@@ -18,6 +18,16 @@
 
 local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
+local unicorn_const = require("unicorn.unicorn_const")
+
+--- A structure representing a block of emulated memory mapped into the engine.
+---
+--- @type MemoryRegion
+--- @field int begins  The base address of this block of memory.
+--- @field int ends  The last valid address in this block of memory.
+--- @field int perms Permission flags.
+--- @see Engine:mem_regions
+local MemoryRegion = setmetatable({}, {__setindex = function () end})
 
 --- An object-oriented wrapper around an opened Unicorn engine.
 ---
@@ -82,7 +92,8 @@ end
 --- Stop the emulator engine and free all resources.
 ---
 --- This removes all hooks, frees contexts and memory, then closes the underlying Unicorn
---- engine. The object must not be used after this is called.
+--- engine. The object must not be used after this is called. If you only want to pause
+--- emulation, use @{engine.Engine:emu_stop}.
 function Engine:close()
     if self.engine_handle_ == nil then
         error("Attempted to close an engine twice.")
@@ -96,7 +107,7 @@ function Engine:close()
     self.contexts_ = {}
 
     for hook_handle in pairs(self.hooks_) do
-        hook_handle:close()
+        uc_c.hook_del(self.engine_handle_, hook_handle)
     end
     self.hooks_ = {}
 
@@ -142,13 +153,14 @@ function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
     )
 end
 
+--- Pause emulation.
 function Engine:emu_stop()
     uc_c.emu_stop(self.engine_handle_)
 end
 
 --- Get the status code of the last API operation on this engine.
 ---
---- @treturn int  One of the UC\_ERR\_ constants, like @{unicorn_const.UC_ERR_OK}.
+--- @treturn int  One of the `UC_ERR_` constants, like @{unicorn_const.UC_ERR_OK}.
 function Engine:errno()
     return uc_c.errno(self.engine_handle_)
 end
@@ -170,46 +182,91 @@ end
 --- hook is deleted, but otherwise doesn't care what it is.
 ---
 --- @treturn userdata  A handle to the hook that was just created.
+--- @usage engine:hook_add(unicorn_const.UC_HOOK_MEM_WRITE, my_callback, 0xb8000, 0xbffff)
+--- @see hook_del
 function Engine:hook_add(kind, callback, start_address, end_address, udata, ...)
     error("Not implemented yet")
 end
 
 --- Remove a hook from the engine.
 ---
---- @param handle  A hook handle returned from @{Engine:hook_add}.
-function Engine:hook_del(handle)
-    error("Not implemented yet")
+--- @param hook_handle  A hook handle returned from @{hook_add}.
+--- @see hook_add
+function Engine:hook_del(hook_handle)
+    uc_c.hook_del(self.engine_handle_, hook_handle)
 end
 
+--- Create a new region of emulated RAM in the engine.
 ---
-function Engine:mem_map()
-    error("Not implemented yet")
+--- When it's first created, there's no emulated RAM for an engine to access. Any memory
+--- needs to be declared explicitly.
+---
+--- @tparam int address  The address where the new block of memory will begin.
+--- @tparam int size  The size of the memory block, in bytes.
+--- @tparam[opt=UC_PROT_ALL] int perms  Access permissions for the memory block. These are
+--- flags defined in @{unicorn_const} that start with ``UC_PROT_``. They can be OR'ed
+--- together to set multiple permissions.
+---
+--- @usage engine:mem_map(0, 0x400, unicorn_const.UC_PROT_READ | unicorn_const.UC_PROT_WRITE)
+---
+--- @see mem_protect
+--- @see mem_unmap
+function Engine:mem_map(address, size, perms)
+    if perms == nil then
+        perms = unicorn_const.UC_PROT_ALL
+    end
+
+    uc_c.mem_map(self.engine_handle_, address, size, perms)
 end
 
-function Engine:mem_protect()
-    error("Not implemented yet")
+--- Change access permissions on an existing block of memory.
+---
+--- @tparam int address  The address of the the memory block to modify.
+--- @tparam int size  The size of the memory block, in bytes.
+--- @tparam int perms  The new access permissions.
+function Engine:mem_protect(address, size, perms)
+    uc_c.mem_protect(self.engine_handle_, address, size, perms)
 end
 
-function Engine:mem_read()
-    error("Not implemented yet")
+
+--- Read a block of memory from the engine.
+---
+--- Permissions set in @{mem_map} or @{mem_protect} don't apply to this method, so it's
+--- possible to read from memory that doesn't have @{unicorn_const.UC_PROT_READ} set.
+---
+--- @tparam int address  The address of the memory block to read.
+--- @tparam int size  The number of bytes to read.
+--- @treturn string  The contents of emulated memory.
+function Engine:mem_read(address, size)
+    uc_c.mem_read(self.engine_handle_, address, size)
 end
 
+
+--- Get an enumeration of all memory regions mapped into the engine.
+---
+--- @treturn {MemoryRegion}
 function Engine:mem_regions()
-    error("Not implemented yet")
+    return uc_c.mem_regions(self.engine_handle_)
 end
 
-function Engine:mem_unmap()
-    error("Not implemented yet")
+--- Unmap a region of emulated RAM from the engine.
+---
+--- After a successful call, any attempt by the engine to access memory in this region
+--- will cause an error.
+---
+--- @tparam int address  The address of the beginning of the block to unmap.
+--- @tparam int size  The size of the memory block to unmap, in bytes.
+function Engine:mem_unmap(address, size)
+    uc_c.mem_unmap(self.engine_handle_, address, size)
 end
 
 function Engine:mem_write()
     error("Not implemented yet")
 end
 
-
 --- Get information about an initialized engine, such as its page size, mode flags, etc.
 ---
---- @tparam int query_flag  Any UC\_QUERY\_* constant like @{unicorn_const.UC_QUERY_MODE}.
+--- @tparam int query_flag  Any `UC_QUERY_` constant like @{unicorn_const.UC_QUERY_MODE}.
 ---
 --- @treturn int    The requested value.
 function Engine:query(query_flag)
