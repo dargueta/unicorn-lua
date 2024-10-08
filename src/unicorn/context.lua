@@ -18,15 +18,26 @@
 
 local uc_c = require("unicorn_c_")
 
-local ContextMethods = {}
-local ContextMeta = {__index = ContextMethods}
+--- An engine context saves the state of an engine so that it can be restored later.
+---
+--- @type Context
+local Context = {}
 
---- Create a new engine context.
+local M = {
+    Context = Context
+}
+
+local ContextMeta = {__index = Context}
+
+--- Create an object-oriented wrapper for engine contexts.
 ---
 --- @tparam engine.Engine engine  The engine this context is bound to.
 --- @param[opt] context_handle  A context handle from the C library to wrap. If not given,
---- the engine state will be saved in a new context handle.
-function Context(engine, context_handle)
+--- the engine state will be saved in a new context handle. If `context_handle` is given,
+--- it must not have already been wrapped by a different Context object.
+---
+--- @treturn Context  An object-oriented wrapper for the engine context.
+function M.new_context(engine, context_handle)
     if context_handle == nil then
         context_handle = uc_c.context_save(engine.engine_handle_)
     end
@@ -61,7 +72,7 @@ end
 --- Deallocate the engine context.
 ---
 --- This releases all underlying resources, so the object must not be used again.
-function ContextMethods:free()
+function Context:free()
     if self.handle_ == nil then
         error("Attempted to free the same context twice.")
     end
@@ -79,4 +90,4 @@ function ContextMethods:free()
 end
 
 
-return {Context = Context}
+return M

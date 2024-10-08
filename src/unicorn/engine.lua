@@ -89,6 +89,17 @@ function Engine:close()
     end
 
     self:emu_stop()
+
+    for context in pairs(self.contexts_) do
+        context:free()
+    end
+    self.contexts_ = {}
+
+    for hook_handle in pairs(self.hooks_) do
+        hook_handle:close()
+    end
+    self.hooks_ = {}
+
     uc_c.close(self.engine_handle_)
 
     -- We need to delete the handle so that when the garbage collector runs, we don't try
@@ -96,6 +107,10 @@ function Engine:close()
     self.engine_handle_ = nil
 end
 
+--- Restore the engine's state to a previously-saved state.
+---
+--- @tparam context.Context context  The saved state to restore the engine to.
+--- @see engine.Engine:context_save
 function Engine:context_restore(context)
     return uc_c.context_restore(self.engine_handle_, context.context_handle_)
 end
@@ -128,16 +143,6 @@ function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
 end
 
 function Engine:emu_stop()
-    for context in pairs(self.contexts_) do
-        context:free()
-    end
-    self.contexts_ = {}
-
-    for hook_handle in pairs(self.hooks_) do
-        hook_handle:close()
-    end
-    self.hooks_ = {}
-
     uc_c.emu_stop(self.engine_handle_)
 end
 
@@ -158,8 +163,8 @@ end
 --- @tparam function callback  The function to call when the hook is triggered. The
 --- arguments passed to the callback depend on the type of hook.
 --- @tparam[opt=0] int start_address  The lowest memory address this hook is be active for.
---- @tparam[opt=MAX] int end_address  The highest memory address this hook is
---- active for. If not given, defaults to the end of memory.
+--- @tparam[opt] int end_address  The highest memory address this hook is active for. If
+--- not given, defaults to the end of memory.
 --- @param[opt] udata  An additional argument to pass to the hook for its use, such as a
 --- file handle or a table. Unicorn keeps a hard reference to it in the registry until the
 --- hook is deleted, but otherwise doesn't care what it is.
