@@ -22,5 +22,6 @@ boilerplate = true
 backtick_references = false
 dir = "gendocs"
 format = "markdown"
+no_space_before_args = true
 not_luadoc = true
 sort = true

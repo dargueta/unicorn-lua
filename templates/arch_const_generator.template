@@ -15,7 +15,7 @@ int main(void)
 
 @ if tablex.size(constants) > 0 then
     puts("return {\n");
-@   for name, text in ipairs(constants) do
+@   for name, text in pairs(constants) do
         printf("$(name) = %d;\n", $(name));
 @   end
     puts("}\n");
