@@ -23,7 +23,7 @@ local uc_engine = require("unicorn.engine")
 local M = {
     --- Determine if `architecture` is supported by the underlying Unicorn library.
     --- @tparam int architecture  An enum value indicating the architecture, from
-    --- @{unicorn_const}. These all start with "UC\_ARCH\_", e.g.
+    --- @{unicorn_const}. These all start with `UC_ARCH_`, e.g.
     --- @{unicorn_const.UC_ARCH_X86}.
     --- @treturn bool  A boolean indicating if Unicorn supports the given architecture.
     --- @function arch_supported
@@ -60,7 +60,7 @@ function M.open(architecture, mode_flags)
     if err ~= nil then
         return nil, err
     end
-    return uc_engine.new_engine(handle), nil
+    return uc_engine.wrap_handle_(handle), nil
 end
 
 return M

@@ -32,16 +32,12 @@ local ContextMeta = {__index = Context}
 --- Create an object-oriented wrapper for engine contexts.
 ---
 --- @tparam engine.Engine engine  The engine this context is bound to.
---- @param[opt] context_handle  A context handle from the C library to wrap. If not given,
---- the engine state will be saved in a new context handle. If `context_handle` is given,
---- it must not have already been wrapped by a different Context object.
+--- @tparam userdata context_handle  A context handle from the C library to wrap. This
+--- must not have already been wrapped by a different @{Context} object. Doing so will
+--- cause a double free and invalidate the handle while one of these is still active.
 ---
 --- @treturn Context  An object-oriented wrapper for the engine context.
-function M.new_context(engine, context_handle)
-    if context_handle == nil then
-        context_handle = uc_c.context_save(engine.engine_handle_)
-    end
-
+function M.wrap_handle_(engine, context_handle)
     -- We want to hold a weak reference to the engine so that this context laying around
     -- won't prevent it from being collected, but we do need to hold a strong reference to
     -- the handle returned to us by Unicorn. Thus, we need to put the engine into a weak
@@ -84,7 +80,7 @@ function Context:free()
         error("BUG: Engine was garbage collected before a context.")
     end
 
-    uc_c.context_free(self.engine_ref_.engine, self.handle_)
+    uc_c.context_free(self.engine_ref_.engine.handle_, self.handle_)
     self.engine_ref_.engine = nil
     self.handle_ = nil
 end

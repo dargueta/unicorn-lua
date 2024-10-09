@@ -53,11 +53,11 @@ local M = {
 local EngineMeta_ = {__index = Engine}
 
 
---- Create a new @{Engine}.
+--- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn Engine  A class instance wrapping the handle.
-function M.new_engine(handle)
+function M.wrap_handle_(handle)
     local instance = {
         engine_handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
@@ -78,13 +78,13 @@ function EngineMeta_:__close()
     -- Only close the engine if it hasn't been closed already. We want to allow double-
     -- closing here because the user may want to explicitly close an engine on some
     -- control paths, but let Lua automatically close it on others.
-    if self.engine_handle_ ~= nil then
+    if self.handle_ ~= nil then
         self:close()
     end
 end
 
 function EngineMeta_:__gc()
-    if self.engine_handle_ ~= nil then
+    if self.handle_ ~= nil then
         self:close()
     end
 end
@@ -95,27 +95,27 @@ end
 --- engine. The object must not be used after this is called. If you only want to pause
 --- emulation, use @{engine.Engine:emu_stop}.
 function Engine:close()
-    if self.engine_handle_ == nil then
+    if self.handle_ == nil then
         error("Attempted to close an engine twice.")
     end
 
     self:emu_stop()
 
-    for context in pairs(self.contexts_) do
+    for _, context in ipairs(self.contexts_) do
         context:free()
     end
     self.contexts_ = {}
 
     for hook_handle in pairs(self.hooks_) do
-        uc_c.hook_del(self.engine_handle_, hook_handle)
+        uc_c.hook_del(self.handle_, hook_handle)
     end
     self.hooks_ = {}
 
-    uc_c.close(self.engine_handle_)
+    uc_c.close(self.handle_)
 
     -- We need to delete the handle so that when the garbage collector runs, we don't try
     -- closing an already deallocated engine.
-    self.engine_handle_ = nil
+    self.handle_ = nil
 end
 
 --- Restore the engine's state to a previously-saved state.
@@ -123,29 +123,33 @@ end
 --- @tparam context.Context context  The saved state to restore the engine to.
 --- @see engine.Engine:context_save
 function Engine:context_restore(context)
-    return uc_c.context_restore(self.engine_handle_, context.context_handle_)
+    return uc_c.context_restore(self.handle_, context.handle_)
 end
+
 
 --- Save the engine's current state.
 ---
 --- @tparam[opt] context.Context context  An existing context object to reuse. If not
 --- given, a new one is created.
+--- @treturn context.Context  `context` if it was passed in, otherwise a new one.
+--- @see context_restore
 function Engine:context_save(context)
-    local raw_context_handle
     if context ~= nil then
-        raw_context_handle = context.handle_
+        context.handle_ = uc_c.context_save(self.handle_, context.handle_)
+        return context
     end
-    raw_context_handle = uc_c.context_save(self.engine_handle_, raw_context_handle)
 
-    if context == nil then
-        return uc_context.Context(self.engine_handle_, raw_context_handle)
-    end
-    return context
+    local raw_context_handle = uc_c.context_save(engine.engine_handle_, nil)
+    local wrapped_handle = uc_context.wrap_handle_(self, raw_context_handle)
+
+    self.contexts_[#self.contexts_] = wrapped_handle
+    return wrapped_handle
 end
+
 
 function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
     return uc_c.emu_start(
-        self.engine_handle_,
+        self.handle_,
         start_addr,
         end_addr,
         timeout or 0,
@@ -155,14 +159,14 @@ end
 
 --- Pause emulation.
 function Engine:emu_stop()
-    uc_c.emu_stop(self.engine_handle_)
+    uc_c.emu_stop(self.handle_)
 end
 
 --- Get the status code of the last API operation on this engine.
 ---
 --- @treturn int  One of the `UC_ERR_` constants, like @{unicorn_const.UC_ERR_OK}.
 function Engine:errno()
-    return uc_c.errno(self.engine_handle_)
+    return uc_c.errno(self.handle_)
 end
 
 --- Add a new event hook to the engine.
@@ -190,10 +194,10 @@ end
 
 --- Remove a hook from the engine.
 ---
---- @param hook_handle  A hook handle returned from @{hook_add}.
+--- @tparam userdata hook  A hook handle returned from @{hook_add}.
 --- @see hook_add
-function Engine:hook_del(hook_handle)
-    uc_c.hook_del(self.engine_handle_, hook_handle)
+function Engine:hook_del(hook)
+    uc_c.hook_del(self.handle_, hook)
 end
 
 --- Create a new region of emulated RAM in the engine.
@@ -216,7 +220,7 @@ function Engine:mem_map(address, size, perms)
         perms = unicorn_const.UC_PROT_ALL
     end
 
-    uc_c.mem_map(self.engine_handle_, address, size, perms)
+    uc_c.mem_map(self.handle_, address, size, perms)
 end
 
 --- Change access permissions on an existing block of memory.
@@ -225,7 +229,7 @@ end
 --- @tparam int size  The size of the memory block, in bytes.
 --- @tparam int perms  The new access permissions.
 function Engine:mem_protect(address, size, perms)
-    uc_c.mem_protect(self.engine_handle_, address, size, perms)
+    uc_c.mem_protect(self.handle_, address, size, perms)
 end
 
 
@@ -238,7 +242,7 @@ end
 --- @tparam int size  The number of bytes to read.
 --- @treturn string  The contents of emulated memory.
 function Engine:mem_read(address, size)
-    uc_c.mem_read(self.engine_handle_, address, size)
+    uc_c.mem_read(self.handle_, address, size)
 end
 
 
@@ -246,7 +250,7 @@ end
 ---
 --- @treturn {MemoryRegion}
 function Engine:mem_regions()
-    return uc_c.mem_regions(self.engine_handle_)
+    return uc_c.mem_regions(self.handle_)
 end
 
 --- Unmap a region of emulated RAM from the engine.
@@ -257,7 +261,7 @@ end
 --- @tparam int address  The address of the beginning of the block to unmap.
 --- @tparam int size  The size of the memory block to unmap, in bytes.
 function Engine:mem_unmap(address, size)
-    uc_c.mem_unmap(self.engine_handle_, address, size)
+    uc_c.mem_unmap(self.handle_, address, size)
 end
 
 function Engine:mem_write()
@@ -270,7 +274,7 @@ end
 ---
 --- @treturn int    The requested value.
 function Engine:query(query_flag)
-    return uc_c.query(self.engine_handle_, query_flag)
+    return uc_c.query(self.handle_, query_flag)
 end
 
 --- Read the current value of a CPU register from the engine.
@@ -315,28 +319,31 @@ function Engine:reg_write_batch()
     error("Not implemented yet")
 end
 
+local not_supported_handler_ = function ()
+    error("Operation not supported by the underlying Unicorn C library.")
+end
 
 -- These functions are only available in Unicorn 2.x.
 local unicorn_major_version = uc_c.version()
 if unicorn_major_version >= 2 then
     function Engine:ctl_exits_disable()
-        return uc_c.ctl_exits_disable(self.engine_handle_)
+        return uc_c.ctl_exits_disable(self.handle_)
     end
 
     function Engine:ctl_exits_enable()
-        return uc_c.ctl_exits_enable(self.engine_handle_)
+        return uc_c.ctl_exits_enable(self.handle_)
     end
 
     function Engine:ctl_flush_tlb()
-        return uc_c.ctl_flush_tlb(self.engine_handle_)
+        return uc_c.ctl_flush_tlb(self.handle_)
     end
 
     function Engine:ctl_get_arch()
-        return uc_c.ctl_get_arch(self.engine_handle_)
+        return uc_c.ctl_get_arch(self.handle_)
     end
 
     function Engine:ctl_get_cpu_model()
-        return uc_c.ctl_get_cpu_model(self.engine_handle_)
+        return uc_c.ctl_get_cpu_model(self.handle_)
     end
 
     function Engine:ctl_get_exits()
@@ -344,11 +351,11 @@ if unicorn_major_version >= 2 then
     end
 
     function Engine:ctl_get_exits_cnt()
-        return uc_c.ctl_get_exits_cnt(self.engine_handle_)
+        return uc_c.ctl_get_exits_cnt(self.handle_)
     end
 
     function Engine:ctl_get_mode()
-        return uc_c.ctl_get_mode(self.engine_handle_)
+        return uc_c.ctl_get_mode(self.handle_)
     end
 
     function Engine:ctl_get_page_size()
@@ -356,7 +363,7 @@ if unicorn_major_version >= 2 then
     end
 
     function Engine:ctl_get_timeout()
-        return uc_c.ctl_get_timeout(self.engine_handle_)
+        return uc_c.ctl_get_timeout(self.handle_)
     end
 
     function Engine:ctl_remove_cache()
@@ -378,6 +385,22 @@ if unicorn_major_version >= 2 then
     function Engine:ctl_set_page_size()
         error("Not implemented yet")
     end
+else
+    Engine.ctl_exits_disable = not_supported_handler_
+    Engine.ctl_exits_enable = not_supported_handler_
+    Engine.ctl_flush_tlb = not_supported_handler_
+    Engine.ctl_get_arch = not_supported_handler_
+    Engine.ctl_get_cpu_model = not_supported_handler_
+    Engine.ctl_get_exits = not_supported_handler_
+    Engine.ctl_get_exits_cnt = not_supported_handler_
+    Engine.ctl_get_mode = not_supported_handler_
+    Engine.ctl_get_page_size = not_supported_handler_
+    Engine.ctl_get_timeout = not_supported_handler_
+    Engine.ctl_remove_cache = not_supported_handler_
+    Engine.ctl_request_cache = not_supported_handler_
+    Engine.ctl_set_cpu_model = not_supported_handler_
+    Engine.ctl_set_exits = not_supported_handler_
+    Engine.ctl_set_page_size = not_supported_handler_
 end
 
 
