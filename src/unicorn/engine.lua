@@ -147,10 +147,22 @@ function Engine:context_save(context)
 end
 
 
+--- Start execution at the given location.
+---
+--- @tparam[opt=0] int start_addr  The address to start execution at.
+--- @tparam[opt] int end_addr  The highest address in memory to execute instructions to;
+--- the engine will automatically halt once it reaches or exceeds this address. If not
+--- given, there's no upper limit.
+--- @tparam[opt] int timeout  The maximum amount of time to execute, in microseconds. If
+--- not given or 0, there is no limit.
+--- @tparam[opt] int n_instructions  The maximum number of instructions to execute. If not
+--- given or 0, there is no limit.
+---
+---@see emu_stop
 function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
-    return uc_c.emu_start(
+    uc_c.emu_start(
         self.handle_,
-        start_addr,
+        start_addr or 0,
         end_addr,
         timeout or 0,
         n_instructions or 0
