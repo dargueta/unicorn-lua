@@ -16,19 +16,18 @@
 
 /// @module unicorn_c_
 
-#include <lua.h>
 #include <lauxlib.h>
+#include <lua.h>
 #include <unicorn/unicorn.h>
 
 void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
 {
-    if (code==UC_ERR_OK)
+    if (code == UC_ERR_OK)
         return;
 
     const char *message = uc_strerror(code);
     luaL_error(L, "[error %d] %s: %s", code, context, message);
 }
-
 
 /**
  * Open a new Unicorn engine.
@@ -38,7 +37,8 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
  * @treturn userdata  A handle to an open engine.
  * @function open
  */
-int ul_open(lua_State *L){
+int ul_open(lua_State *L)
+{
     int architecture = lua_tointeger(L, 1);
     int mode_flags = lua_tointeger(L, 2);
 
@@ -50,8 +50,14 @@ int ul_open(lua_State *L){
     return 1;
 }
 
-
-int ul_close(lua_State *L){
+/**
+ * Close an open Unicorn engine.
+ *
+ * @tparam userdata engine  A handle to an open engine.
+ * @function close
+ */
+int ul_close(lua_State *L)
+{
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
 
     uc_err error = uc_close(engine);
@@ -59,14 +65,29 @@ int ul_close(lua_State *L){
     return 0;
 }
 
-static const luaL_Reg kFunctions[] = {
-    {"open", ul_open},
-    {NULL, NULL}
-};
+/**
+ * Get the version of the Unicorn C library (not this Lua binding).
+ *
+ * @treturn {int,int}  The major and minor versions of the library, respectively.
+ * @function version
+ */
+int ul_version(lua_State *L)
+{
+    unsigned major, minor;
+    uc_err error = uc_version(&major, &minor);
 
+    ulinternal_crash_if_failed(L, error, "Failed to get Unicorn library version");
+    lua_pushinteger(L, (lua_Integer)major);
+    lua_pushinteger(L, (lua_Integer)minor);
+    return 2;
+}
+
+static const luaL_Reg kFunctions[] = {
+    {"open", ul_open}, {"close", ul_close}, {"version", ul_version}, {NULL, NULL}};
 
 UNICORN_EXPORT
-int luaopen_unicorn_c_(lua_State *L) {
+int luaopen_unicorn_c_(lua_State *L)
+{
     lua_createtable(L, 0, 4);
     luaL_setfuncs(L, kFunctions, 0);
     return 1;

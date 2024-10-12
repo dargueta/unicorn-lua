@@ -25,7 +25,6 @@
 #include <lua.h>
 #include <unicorn/unicorn.h>
 
-
 /**
  * The major version number of this Lua library (first part, 1.x.x).
  */
