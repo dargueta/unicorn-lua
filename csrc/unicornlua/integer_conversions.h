@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "lua.hpp"
-#include <climits>
-#include <cstdint>
+#include <lua.h>
+#include <limits.h>
+#include <stdint.h>
 
 // We know lua_Integer is always at least 32 bits, so we don't need any checks here.
 #define ul_lua_int32_t_equiv_type lua_Integer
-#define ul_push_int32_t_equiv(L, i) lua_pushinteger((L), static_cast<lua_Integer>(i))
-#define ul_to_int32_t_equiv(L, i) static_cast<int32_t>(lua_tointeger((L), (i)))
+#define ul_push_int32_t_equiv(L, i) lua_pushinteger((L), (lua_Integer)(i))
+#define ul_to_int32_t_equiv(L, i) ((int32_t)(lua_tointeger((L), (i))))
 
 #define ul_lua_int_equiv_type lua_Integer
-#define ul_push_int_equiv(L, i) lua_pushinteger((L), static_cast<lua_Integer>(i))
-#define ul_to_int_equiv(L, i) static_cast<int>(lua_tointeger((L), (i)))
+#define ul_push_int_equiv(L, i) lua_pushinteger((L), (lua_Integer)(i))
+#define ul_to_int_equiv(L, i) ((int)(lua_tointeger((L), (i))))
 
 /*
  * The following are default configurations and definitions for Lua integers. Note that
@@ -56,22 +56,22 @@
 #    if LUA_MAXINTEGER >= UINT32_MAX
 #        define ul_lua_uint32_t_equiv_type lua_Unsigned
 #        define ul_push_uint32_t_equiv(L, i)                                             \
-            lua_pushinteger((L), static_cast<lua_Integer>(i))
-#        define ul_to_uint32_t_equiv(L, i) static_cast<uint32_t>(lua_tointeger((L), (i)))
+            lua_pushinteger((L), ((lua_Integer)(i)))
+#        define ul_to_uint32_t_equiv(L, i) ((uint32_t)(lua_tointeger((L), (i))))
 #    endif
 
 #    if LUA_MAXINTEGER >= INT64_MAX
 #        define ul_lua_int64_t_equiv_type lua_Integer
 #        define ul_push_int64_t_equiv(L, i)                                              \
-            lua_pushinteger((L), static_cast<lua_Integer>(i))
-#        define ul_to_int64_t_equiv(L, i) static_cast<int64_t>(lua_tointeger((L), (i)))
+            lua_pushinteger((L), ((lua_Integer)(i)))
+#        define ul_to_int64_t_equiv(L, i) ((int64_t)(lua_tointeger((L), (i))))
 #    endif
 
 #    if LUA_MAXINTEGER >= UINT64_MAX
 #        define ul_lua_uint64_t_equiv_type lua_Integer
 #        define ul_push_uint64_t_equiv(L, i)                                             \
-            lua_pushinteger((L), static_cast<lua_Integer>(i))
-#        define ul_to_uint64_t_equiv(L, i) lstatic_cast<uint64_t>(lua_tointeger((L), (i)))
+            lua_pushinteger((L), ((lua_Integer)(i)))
+#        define ul_to_uint64_t_equiv(L, i) ((uint64_t)(lua_tointeger((L), (i))))
 #    endif
 
 #    if LUA_MAXINTEGER >= SIZE_MAX
@@ -80,8 +80,8 @@
 // This is uncommon but does exist.
 #        define ul_lua_size_t_equiv_type lua_Unsigned
 #        define ul_push_size_t_equiv(L, i)                                               \
-            lua_pushinteger((L), static_cast<lua_Integer>(i))
-#        define ul_to_size_t_equiv(L, i) static_cast<size_t>(lua_tointeger((L), (i)))
+            lua_pushinteger((L), ((lua_Integer)(i)))
+#        define ul_to_size_t_equiv(L, i) ((size_t)(lua_tointeger((L), (i))))
 #    endif
 #endif // LUA_MAXINTEGER
 
@@ -94,8 +94,8 @@
 // ptrdiff_t.
 #if (LUA_VERSION_NUM == 501 || LUA_VERSION_NUM == 502) && (PTRDIFF_MAX >= UINT32_MAX)
 #    define ul_lua_uint32_t_equiv_type lua_Integer
-#    define ul_push_uint32_t_equiv(L, i) lua_pushinteger((L), static_cast<lua_Integer>(i))
-#    define ul_to_uint32_t_equiv(L, i) static_cast<uint32_t>(lua_tointeger((L), (i)))
+#    define ul_push_uint32_t_equiv(L, i) lua_pushinteger((L), ((lua_Integer)(i)))
+#    define ul_to_uint32_t_equiv(L, i) ((uint32_t)(lua_tointeger((L), (i))))
 #endif
 
 // ---------------------------------------------------------------------------------------
@@ -103,24 +103,24 @@
 
 #ifndef ul_lua_uint32_t_equiv_type
 #    define ul_lua_uint32_t_equiv_type lua_Number
-#    define ul_push_uint32_t_equiv(L, i) lua_pushnumber((L), static_cast<lua_Number>(i))
-#    define ul_to_uint32_t_equiv(L, i) static_cast<uint32_t>(lua_tonumber((L), (i)))
+#    define ul_push_uint32_t_equiv(L, i) lua_pushnumber((L), ((lua_Number)(i)))
+#    define ul_to_uint32_t_equiv(L, i) ((uint32_t)(lua_tonumber((L), (i))))
 #endif // ul_lua_uint32_t_equiv_type
 
 #ifndef ul_lua_int64_t_equiv_type
 #    define ul_lua_int64_t_equiv_type lua_Number
-#    define ul_push_int64_t_equiv(L, i) lua_pushnumber((L), static_cast<lua_Number>(i))
-#    define ul_to_int64_t_equiv(L, i) static_cast<int64_t>(lua_tonumber((L), (i)))
+#    define ul_push_int64_t_equiv(L, i) lua_pushnumber((L), ((lua_Number)(i)))
+#    define ul_to_int64_t_equiv(L, i) ((int64_t)(lua_tonumber((L), (i))))
 #endif // ul_lua_int64_t_equiv_type
 
 #ifndef ul_lua_uint64_t_equiv_type
 #    define ul_lua_uint64_t_equiv_type lua_Number
-#    define ul_push_uint64_t_equiv(L, i) lua_pushnumber((L), static_cast<lua_Number>(i))
-#    define ul_to_uint64_t_equiv(L, i) static_cast<uint64_t>(lua_tonumber((L), (i)))
+#    define ul_push_uint64_t_equiv(L, i) lua_pushnumber((L), ((lua_Number)(i)))
+#    define ul_to_uint64_t_equiv(L, i) ((uint64_t)(lua_tonumber((L), (i))))
 #endif // ul_lua_uint64_t_equiv_type
 
 #ifndef ul_lua_size_t_equiv_type
 #    define ul_lua_size_t_equiv_type lua_Number
-#    define ul_push_size_t_equiv(L, i) lua_pushnumber((L), static_cast<lua_Number>(i))
-#    define ul_to_size_t_equiv(L, i) static_cast<size_t>(lua_tonumber((L), (i)))
+#    define ul_push_size_t_equiv(L, i) lua_pushnumber((L), ((lua_Number)(i)))
+#    define ul_to_size_t_equiv(L, i) ((size_t)(lua_tonumber((L), (i))))
 #endif // ul_lua_size_t_equiv_type

@@ -14,7 +14,11 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
---- @module hooks
+--[[--
+
+
+@module hooks
+]]
 
 local M = {}
 
@@ -187,7 +191,7 @@ function M.create_hook(
         wrapper = INSTRUCTION_HOOK_WRAPPERS[instruction_id] or create_code_hook
     else
         wrapper = DEFAULT_HOOK_WRAPPERS[hook_type]
-           or error(string.format("Unrecognized hook type code: %q", hook_type))
+            or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
     return wrapper(engine, callback, start_addr, end_addr, user_extra, {...})

@@ -16,10 +16,10 @@ src/unicorn/*_const_gen.c
 src/unicorn/*_const_gen
 src/unicorn/*_extracted_consts.txt
 csrc/cpp_test
-csrc/basic_control_functions.cpp
-csrc/registers.cpp
-csrc/registers_const.cpp
-csrc/unicornlua/register_types.hpp
+csrc/basic_control_functions.c
+csrc/registers.c
+csrc/registers_const.c
+csrc/unicornlua/register_types.h
 
 # Other garbage
 core*

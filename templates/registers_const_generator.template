@@ -1,5 +1,5 @@
+#include "unicornlua/register_types.h"
 #include <unicorn/unicorn.h>
-#include "unicornlua/register_types.hpp"
 #include <stdio.h>
 
 int main() {

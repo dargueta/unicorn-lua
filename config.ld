@@ -3,6 +3,7 @@ title = "Unicorn CPU Engine"
 description = "Lua bindings for the Unicorn CPU emulator"
 file = {
     "src/unicorn",
+    "csrc/unicorn.c",
     exclude = {
         -- Unfortunately LDoc can't handle globs
         "src/unicorn/arm64_const.lua",

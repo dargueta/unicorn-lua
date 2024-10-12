@@ -22,10 +22,9 @@
 
 #pragma once
 
+#include <lua.h>
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/compat.hpp"
-#include "unicornlua/lua.hpp"
 
 /**
  * The major version number of this Lua library (first part, 1.x.x).

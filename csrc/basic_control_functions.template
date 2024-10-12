@@ -14,29 +14,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#include <cstdint>
-
+#include "unicornlua/integer_conversions.h"
+#include <lua.h>
 #include <unicorn/unicorn.h>
+#include <stdint.h>
+
+extern void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context);
 
 #if UC_API_MAJOR >= 2
-
-#include "unicornlua/control_functions.hpp"
-#include "unicornlua/engine.hpp"
-#include "unicornlua/errors.hpp"
-#include "unicornlua/integer_conversions.hpp"
-#include "unicornlua/lua.hpp"
-#include "unicornlua/unicornlua.hpp"
-#include "unicornlua/utils.hpp"
 
 
 @ for _, name in ipairs(no_arguments_return_void) do
 int ul_ctl_$(name)(lua_State* L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uc_err error = uc_ctl_$(name)(engine);
 
-    uc_err error = uc_ctl_$(name)(engine->get_handle());
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
     return 0;
 }
 @ end
@@ -44,15 +38,13 @@ int ul_ctl_$(name)(lua_State* L)
 @ for name, info in pairs(no_arguments_scalar_return) do
 int ul_ctl_$(name)(lua_State* L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
-    uc_engine* handle = engine->get_handle();
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     $(info.c_type) result;
 
-    uc_err error = uc_ctl_$(name)(handle, &result);
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    uc_err error = uc_ctl_$(name)(engine, &result);
+    ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
 
-    ul_push_$(info.c_type)_equiv(L, static_cast<ul_lua_$(info.c_type)_equiv_type>(result));
+    ul_push_$(info.c_type)_equiv(L, (ul_lua_$(info.c_type)_equiv_type)result);
     return 1;
 }
 @ end
@@ -60,21 +52,19 @@ int ul_ctl_$(name)(lua_State* L)
 @ for name, arguments in pairs(scalar_arguments_return_void) do
 int ul_ctl_$(name)(lua_State* L)
 {
-    UCLuaEngine* engine = ul_toluaengine(L, 1);
-    uc_engine* handle = engine->get_handle();
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
 
 @ for i, arg_info in ipairs(arguments) do
-    auto arg_$(i) = static_cast<$(arg_info.c_type)>(ul_to_$(arg_info.c_type)_equiv(L, $(i + 1)));
+    $(arg_info.c_type) arg_$(i) = ($(arg_info.c_type))ul_to_$(arg_info.c_type)_equiv(L, $(i + 1));
 @ end
 
     uc_err error = uc_ctl_$(name)(
-        handle
+        engine
 @ for i = 1, #arguments, 1 do
     , arg_$(i)
 @ end
     );
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
     return 0;
 }
 @ end
