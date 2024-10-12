@@ -16,6 +16,7 @@
 
 /// @module unicorn_c_
 
+#include "unicornlua/control_functions.h"
 #include <lauxlib.h>
 #include <lua.h>
 #include <unicorn/unicorn.h>
@@ -82,8 +83,27 @@ int ul_version(lua_State *L)
     return 2;
 }
 
-static const luaL_Reg kFunctions[] = {
-    {"open", ul_open}, {"close", ul_close}, {"version", ul_version}, {NULL, NULL}};
+static const luaL_Reg kFunctions[] = {{"open", ul_open},
+                                      {"close", ul_close},
+                                      {"version", ul_version},
+#if UC_VERSION_MAJOR >= 2
+                                      {"ctl_exits_disable", ul_ctl_exits_disable},
+                                      {"ctl_exits_enable", ul_ctl_exits_enable},
+                                      {"ctl_flush_tlb", ul_ctl_flush_tlb},
+                                      {"ctl_get_arch", ul_ctl_get_arch},
+                                      {"ctl_get_cpu_model", ul_ctl_get_cpu_model},
+                                      {"ctl_get_exits", ul_ctl_get_exits},
+                                      {"ctl_get_exits_cnt", ul_ctl_get_exits_cnt},
+                                      {"ctl_get_mode", ul_ctl_get_mode},
+                                      {"ctl_get_page_size", ul_ctl_get_page_size},
+                                      {"ctl_get_timeout", ul_ctl_get_timeout},
+                                      {"ctl_remove_cache", ul_ctl_remove_cache},
+                                      {"ctl_request_cache", ul_ctl_request_cache},
+                                      {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
+                                      {"ctl_set_exits", ul_ctl_set_exits},
+                                      {"ctl_set_page_size", ul_ctl_set_page_size},
+#endif // UC_VERSION_MAJOR >= 2
+                                      {NULL, NULL}};
 
 UNICORN_EXPORT
 int luaopen_unicorn_c_(lua_State *L)
