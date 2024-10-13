@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "lua.hpp"
+#include <lua.h>
+#include <stdnoreturn.h>
 
-[[noreturn]] int ul_crash_unsupported_operation(lua_State *L);
+_Noreturn int ul_crash_unsupported_operation(lua_State *L);
 
 #if UC_API_MAJOR >= 2
 int ul_ctl_exits_disable(lua_State *L);
