@@ -14,17 +14,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+/** @submodule unicorn_c_ */
+
 #include "unicornlua/integer_conversions.h"
+#include "unicornlua/unicornlua.h"
 #include <lua.h>
 #include <unicorn/unicorn.h>
 #include <stdint.h>
 
-extern void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context);
 
 #if UC_API_MAJOR >= 2
 
-
 @ for _, name in ipairs(no_arguments_return_void) do
+/**
+ * Wrapper for uc_ctl_$(name).
+ *
+ * @tparam userdata engine  A handle to an open Unicorn engine.
+ * @function ctl_$(name)
+ */
 int ul_ctl_$(name)(lua_State* L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
@@ -36,6 +43,13 @@ int ul_ctl_$(name)(lua_State* L)
 @ end
 
 @ for name, info in pairs(no_arguments_scalar_return) do
+/**
+ * Wrapper for uc_ctl_$(name).
+ *
+ * @tparam userdata engine  A handle to an open Unicorn engine.
+ * @treturn int arg  See the Unicorn Engine documentation for the meaning of the return value.
+ * @function ctl_$(name)
+ */
 int ul_ctl_$(name)(lua_State* L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
@@ -50,6 +64,16 @@ int ul_ctl_$(name)(lua_State* L)
 @ end
 
 @ for name, arguments in pairs(scalar_arguments_return_void) do
+/**
+ * Wrapper for uc_ctl_$(name).
+ *
+ * @tparam userdata engine  A handle to an open Unicorn engine.
+ @ for i, arg_info in ipairs(arguments) do
+ * @tparam int arg_$(i)  See the Unicorn Engine documentation for the meaning of this argument.
+ @ end
+ * @treturn int  See the Unicorn Engine documentation for the meaning of the return value.
+ * @function ctl_$(name)
+ */
 int ul_ctl_$(name)(lua_State* L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
@@ -69,4 +93,4 @@ int ul_ctl_$(name)(lua_State* L)
 }
 @ end
 
-#endif // UC_API_MAJOR
+#endif // UC_API_MAJOR >= 2

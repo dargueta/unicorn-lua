@@ -22,23 +22,18 @@
 
 #pragma once
 
-#include <stdexcept>
-#include <utility>
 
+#include <lua.h>
 #include <unicorn/unicorn.h>
 
-#include "unicornlua/lua.hpp"
-
 /**
- * Throw a Lua error with a message derived from the given Unicorn error code.
+ * Call `luaL_error` if and only if @a error is not @ref UC_ERR_OK.
  *
  * @param L         A pointer to the current Lua state.
  * @param error     A unicorn error code.
- *
- * @note Like lua_error, this function never returns, and should be treated in
- * exactly the same way.
+ * @param context   Extra information to include as the first part of the error message.
  */
-[[noreturn]] void ul_crash_on_error(lua_State *L, uc_err error);
+void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context);
 
 /**
  * Create a new weak table with the given key mode, and push it onto the stack.
@@ -76,9 +71,7 @@ size_t count_table_elements(lua_State *L, int table_index);
 #    define UL_FALLTHROUGH_MARKER
 #endif
 
-#if defined(__cpp_lib_unreachable)
-#    define UL_UNREACHABLE_MARKER std::unreachable()
-#elif defined(__GNUC__) // GCC, Clang, ICC
+#if defined(__GNUC__) // GCC, Clang, ICC
 #    define UL_UNREACHABLE_MARKER __builtin_unreachable()
 #elif defined(_MSC_VER) // MSVC
 #    define UL_UNREACHABLE_MARKER __assume(false)

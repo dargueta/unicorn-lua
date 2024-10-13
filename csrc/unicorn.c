@@ -17,6 +17,7 @@
 /// @module unicorn_c_
 
 #include "unicornlua/control_functions.h"
+#include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
 #include <unicorn/unicorn.h>
@@ -28,6 +29,7 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
 
     const char *message = uc_strerror(code);
     luaL_error(L, "[error %d] %s: %s", code, context, message);
+    UL_UNREACHABLE_MARKER;
 }
 
 /**

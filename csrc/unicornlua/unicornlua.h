@@ -74,3 +74,5 @@
  */
 #define UNICORNLUA_UNICORN_MAJOR_MINOR_PATCH                                             \
     MAKE_VERSION(UC_VERSION_MAJOR, UC_VERSION_MINOR, UC_VERSION_EXTRA)
+
+void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context);
