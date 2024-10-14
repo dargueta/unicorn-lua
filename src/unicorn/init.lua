@@ -37,7 +37,7 @@ local M = {
 
     --- Return two values, the major and minor version numbers of the underlying Unicorn
     --- Engine C library.
-    --- @treturn {int,int} The major and minor version of the library, respectively.
+    --- @treturn int,int The major and minor version of the library, respectively.
     --- @function version
     version = uc_c.version,
 }
@@ -46,15 +46,15 @@ local M = {
 --- Create a new Unicorn engine.
 ---
 --- @tparam int architecture  An enum value indicating which architecture to emulate. The
---- constants are available in @{unicorn_const} and all start with "UC\_ARCH\_".
+--- constants are available in @{unicorn_const} and all start with `UC_ARCH_`.
 --- @tparam int mode_flags  Flags providing broad details of the CPU's operating mode.
 --- For example, these can be used to choose between starting an x86 CPU in 16-, 32-, or
 --- 64-bit mode, or selecting the endianness on bi-endian architectures. These flags are
---- available in @{unicorn_const} and all start with "UC\_MODE\_".
+--- available in @{unicorn_const} and all start with `UC_MODE_`.
 ---
 --- @treturn Engine  An initialized @{engine.Engine}.
 ---
---- @usage unicorn.open(unicorn_const.UC_ARCH_X86, unicorn_const.UC_MODE_32)
+--- @usage local engine = unicorn.open(unicorn_const.UC_ARCH_X86, unicorn_const.UC_MODE_32)
 function M.open(architecture, mode_flags)
     local handle, err = uc_c.open(architecture, mode_flags or 0)
     if err ~= nil then

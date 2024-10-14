@@ -120,7 +120,7 @@ ifeq ($(shell uname -s),Darwin)
 endif
 
 
-C_CMD = $(CC) $(USER_C_FLAGS) $(INCLUDE_PATH_FLAGS) $(CFLAGS)
+C_CMD = $(CC) $(USER_C_FLAGS) $(INCLUDE_PATH_FLAGS) $(CFLAGS) -Wall -Wextra -Wpedantic -Werror
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 DOCTEST_TAG = v2.4.11

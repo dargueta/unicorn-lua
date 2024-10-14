@@ -2,8 +2,11 @@ project = "Unicorn"
 title = "Unicorn CPU Engine"
 description = "Lua bindings for the Unicorn CPU emulator"
 file = {
+    -- Lua files must come first, as the C files reference them.
     "src/unicorn",
-    "csrc/unicorn.c",  -- This must come before all other C files
+    -- C files come after Lua files. `unicorn.c` must come first since it declares the C
+    -- module. Ordering after that doesn't matter.
+    "csrc/unicorn.c",
     "csrc/basic_control_functions.c",
     exclude = {
         -- Unfortunately LDoc can't handle globs

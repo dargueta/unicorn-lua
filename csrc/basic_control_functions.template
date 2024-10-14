@@ -1,20 +1,26 @@
-// Copyright (C) 2017-2024 by Diego Argueta
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along
-// with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+/*
+Copyright (C) 2017-2024 by Diego Argueta
 
-/** @submodule unicorn_c_ */
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+/**
+Implements engine control functions added in Unicorn 2.0.
+
+$("@")submodule unicorn_c_
+*/
 
 #include "unicornlua/integer_conversions.h"
 #include "unicornlua/unicornlua.h"
@@ -27,10 +33,12 @@
 
 @ for _, name in ipairs(no_arguments_return_void) do
 /**
- * Wrapper for uc_ctl_$(name).
+ * Wrapper for `uc_ctl_$(name)`.
  *
- * @tparam userdata engine  A handle to an open Unicorn engine.
+ * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
+ *
  * @function ctl_$(name)
+ * @tparam userdata engine  A handle to an open Unicorn engine.
  */
 int ul_ctl_$(name)(lua_State* L)
 {
@@ -44,11 +52,13 @@ int ul_ctl_$(name)(lua_State* L)
 
 @ for name, info in pairs(no_arguments_scalar_return) do
 /**
- * Wrapper for uc_ctl_$(name).
+ * Wrapper for `uc_ctl_$(name)`.
  *
+ * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
+ *
+ * @function ctl_$(name)
  * @tparam userdata engine  A handle to an open Unicorn engine.
  * @treturn int arg  See the Unicorn Engine documentation for the meaning of the return value.
- * @function ctl_$(name)
  */
 int ul_ctl_$(name)(lua_State* L)
 {
@@ -65,14 +75,16 @@ int ul_ctl_$(name)(lua_State* L)
 
 @ for name, arguments in pairs(scalar_arguments_return_void) do
 /**
- * Wrapper for uc_ctl_$(name).
+ * Wrapper for `uc_ctl_$(name)`.
  *
+ * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
+ *
+ * @function ctl_$(name)
  * @tparam userdata engine  A handle to an open Unicorn engine.
- @ for i, arg_info in ipairs(arguments) do
+ @ for i = 1, #arguments, 1 do
  * @tparam int arg_$(i)  See the Unicorn Engine documentation for the meaning of this argument.
  @ end
  * @treturn int  See the Unicorn Engine documentation for the meaning of the return value.
- * @function ctl_$(name)
  */
 int ul_ctl_$(name)(lua_State* L)
 {
@@ -93,4 +105,4 @@ int ul_ctl_$(name)(lua_State* L)
 }
 @ end
 
-#endif // UC_API_MAJOR >= 2
+#endif /* UC_API_MAJOR >= 2 */

@@ -20,15 +20,6 @@ local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
 local unicorn_const = require("unicorn.unicorn_const")
 
---- A structure representing a block of emulated memory mapped into the engine.
----
---- @type MemoryRegion
---- @field int begins  The base address of this block of memory.
---- @field int ends  The last valid address in this block of memory.
---- @field int perms Permission flags.
---- @see Engine:mem_regions
-local MemoryRegion = setmetatable({}, {__setindex = function () end})
-
 --- An object-oriented wrapper around an opened Unicorn engine.
 ---
 --- **Garbage Collection**
@@ -51,6 +42,16 @@ local M = {
 }
 
 local EngineMeta_ = {__index = Engine}
+
+
+--- A structure representing a block of emulated memory mapped into the engine.
+---
+--- @type MemoryRegion
+--- @field int begins  The base address of this block of memory.
+--- @field int ends  The last valid address in this block of memory.
+--- @field int perms Permission flags.
+--- @see Engine:mem_regions
+local MemoryRegion = setmetatable({}, {__setindex = function () end})
 
 
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.

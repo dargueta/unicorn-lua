@@ -14,7 +14,15 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-/// @module unicorn_c_
+/**
+ * `unicorn_c` is a very very thin wrapper around the C library.
+ *
+ * Users are discouraged from using it directly, as it makes no provisions for garbage
+ * collection or type safety. Instead, use the functions provided by the @{unicorn} module
+ * and @{engine.Engine}.
+ *
+ * @module unicorn_c_
+ */
 
 #include "unicornlua/control_functions.h"
 #include "unicornlua/utils.h"
@@ -35,10 +43,12 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
 /**
  * Open a new Unicorn engine.
  *
+ * This is an internal library function. End users should use @{unicorn.open}.
+ *
+ * @function open
  * @tparam int architecture  The architecture of the engine to create.
  * @tparam int mode_flags  Flags controlling the engine's features and behavior.
  * @treturn userdata  A handle to an open engine.
- * @function open
  */
 int ul_open(lua_State *L)
 {
@@ -55,6 +65,8 @@ int ul_open(lua_State *L)
 
 /**
  * Close an open Unicorn engine.
+ *
+ * This is an internal library function. End users should use @{engine.Engine:close}.
  *
  * @tparam userdata engine  A handle to an open engine.
  * @function close
