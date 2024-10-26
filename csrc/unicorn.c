@@ -15,7 +15,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 /**
- * `unicorn_c` is a very very thin wrapper around the C library.
+ * `unicorn_c_` is a very very thin wrapper around the C library.
  *
  * Users are discouraged from using it directly, as it makes no provisions for garbage
  * collection or type safety. Instead, use the functions provided by the @{unicorn} module
@@ -97,9 +97,26 @@ int ul_version(lua_State *L)
     return 2;
 }
 
+
+/**
+ * Get the message for the given error code, like `strerror` in the C standard library.
+ *
+ * @tparam int error_code  The error code to get a message for.
+ * @treturn string  Unicorn's error message for that error code.
+ * @function strerror
+ */
+int ul_strerror(lua_State *L)
+{
+    uc_err error_code = (uc_err)lua_tointeger(L, 1);
+    lua_pushstring(L, uc_strerror(error_code));
+    return 1;
+}
+
+
 static const luaL_Reg kFunctions[] = {{"open", ul_open},
                                       {"close", ul_close},
                                       {"version", ul_version},
+                                      {"strerror", ul_strerror},
 #if UC_VERSION_MAJOR >= 2
                                       {"ctl_exits_disable", ul_ctl_exits_disable},
                                       {"ctl_exits_enable", ul_ctl_exits_enable},
@@ -116,7 +133,7 @@ static const luaL_Reg kFunctions[] = {{"open", ul_open},
                                       {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
                                       {"ctl_set_exits", ul_ctl_set_exits},
                                       {"ctl_set_page_size", ul_ctl_set_page_size},
-#endif // UC_VERSION_MAJOR >= 2
+#endif /* UC_VERSION_MAJOR >= 2 */
                                       {NULL, NULL}};
 
 UNICORN_EXPORT
