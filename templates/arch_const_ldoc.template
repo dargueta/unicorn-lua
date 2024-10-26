@@ -1,15 +1,15 @@
-# for _, line in ipairs(copyright_notice) do
+! for _, line in ipairs(copyright_notice) do
 -- $(line)
-# end
+! end
 
 --- Constants exported by "$(source_basename)".
 --- @module $(source_stem)_const
 
-# fields_seen = {}
-# predef_docs = docstrings[source_stem] or {}
-# predef_sections = sections[source_stem] or {}
+! fields_seen = {}
+! predef_docs = docstrings[source_stem] or {}
+! predef_sections = sections[source_stem] or {}
 
-# for _, section in ipairs(predef_sections) do
+! for _, section in ipairs(predef_sections) do
 --[[--
 $(section.title)
 
@@ -18,30 +18,30 @@ $(section.description or "")
 @section $(section.slug)
 ]]
 
-#     for name, text in tablex.sort(constants) do
-#         if (name:lfind(section.pattern) ~= nil) and (fields_seen[name] == nil) then
-#             fields_seen[name] = true
-#             doc = predef_docs[name] or "`" .. name .. "`"
+!     for name, text in tablex.sort(constants) do
+!         if (name:lfind(section.pattern) ~= nil) and (fields_seen[name] == nil) then
+!             fields_seen[name] = true
+!             doc = predef_docs[name] or "`" .. name .. "`"
 --[[-- $(doc)
 
 @field $(name)
 ]]
 $(name) = "dummy value"
 
-#         end
-#     end
-# end
+!         end
+!     end
+! end
 
-# if #predef_sections > 0 then
+! if #predef_sections > 0 then
 --- @section end
-# end
+! end
 
-# for name, _ in tablex.sort(constants) do
-#     if fields_seen[name] == nil then
-#         doc = predef_docs[name] or "`" .. name .. "`"
+! for name, _ in tablex.sort(constants) do
+!     if fields_seen[name] == nil then
+!         doc = predef_docs[name] or "`" .. name .. "`"
 --[[-- $(doc)
 
 @field $(name)
 ]]
-#     end
-# end
+!     end
+! end

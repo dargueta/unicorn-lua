@@ -16,10 +16,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-/**
+/***
 Implements engine control functions added in Unicorn 2.0.
 
-$("@")submodule unicorn_c_
+@submodule unicorn_c_
 */
 
 #include "unicornlua/integer_conversions.h"
@@ -31,8 +31,8 @@ $("@")submodule unicorn_c_
 
 #if UC_API_MAJOR >= 2
 
-@ for _, name in ipairs(no_arguments_return_void) do
-/**
+! for _, name in ipairs(no_arguments_return_void) do
+/***
  * Wrapper for `uc_ctl_$(name)`.
  *
  * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
@@ -48,10 +48,10 @@ int ul_ctl_$(name)(lua_State* L)
     ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
     return 0;
 }
-@ end
+! end
 
-@ for name, info in pairs(no_arguments_scalar_return) do
-/**
+! for name, info in pairs(no_arguments_scalar_return) do
+/***
  * Wrapper for `uc_ctl_$(name)`.
  *
  * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
@@ -71,38 +71,38 @@ int ul_ctl_$(name)(lua_State* L)
     ul_push_$(info.c_type)_equiv(L, (ul_lua_$(info.c_type)_equiv_type)result);
     return 1;
 }
-@ end
+! end
 
-@ for name, arguments in pairs(scalar_arguments_return_void) do
-/**
+! for name, arguments in pairs(scalar_arguments_return_void) do
+/***
  * Wrapper for `uc_ctl_$(name)`.
  *
  * This is an internal library function. End users should use @{engine.Engine:ctl_$(name)}.
  *
  * @function ctl_$(name)
  * @tparam userdata engine  A handle to an open Unicorn engine.
- @ for i = 1, #arguments, 1 do
+! for i = 1, #arguments, 1 do
  * @tparam int arg_$(i)  See the Unicorn Engine documentation for the meaning of this argument.
- @ end
+! end
  * @treturn int  See the Unicorn Engine documentation for the meaning of the return value.
  */
 int ul_ctl_$(name)(lua_State* L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
 
-@ for i, arg_info in ipairs(arguments) do
+! for i, arg_info in ipairs(arguments) do
     $(arg_info.c_type) arg_$(i) = ($(arg_info.c_type))ul_to_$(arg_info.c_type)_equiv(L, $(i + 1));
-@ end
+! end
 
     uc_err error = uc_ctl_$(name)(
         engine
-@ for i = 1, #arguments, 1 do
+! for i = 1, #arguments, 1 do
     , arg_$(i)
-@ end
+! end
     );
     ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
     return 0;
 }
-@ end
+! end
 
 #endif /* UC_API_MAJOR >= 2 */

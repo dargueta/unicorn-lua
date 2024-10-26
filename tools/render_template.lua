@@ -44,7 +44,7 @@ USAGE = [[
 Render a template.
 
 Things to note:
-    o The Lua line escape character is `@', not the default `#'. This prevents
+    o The Lua line escape character is `!', not the default `#'. This prevents
       the template engine from mistaking a C/C++ preprocessor directive for a
       line comment. This can be overridden.
     o The inline escape is the default $(...) but can be overridden.
@@ -62,7 +62,7 @@ Arguments:
         A string variable to define, either "X" (empty string) or "X=YZ"
         (variable X assigned to "YZ"). Variables defined on the command line
         override values given by the values file.
-    -e,--escape (default "@")
+    -e,--escape (default "!")
         Override the character that escapes a line into Lua.
     -i,--inline-escape (default "$()")
         Override the inline escape form. This must be three characters,

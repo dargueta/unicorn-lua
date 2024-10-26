@@ -1,28 +1,28 @@
 #include <stdio.h>
 #include <unicorn/unicorn.h>
-@ if tablex.size(constants) > 0 then
+! if tablex.size(constants) > 0 then
 #include <unicorn/$(source_stem).h>
-@ end
+! end
 
 int main(void)
 {
     puts(
-@ for _, line in ipairs(copyright_notice) do
+! for _, line in ipairs(copyright_notice) do
         "-- $(line)\n" \
-@ end
+! end
         "\n--- Constants exported by \"$(source_basename)\".\n"
     );
 
-@ if tablex.size(constants) > 0 then
+! if tablex.size(constants) > 0 then
     puts("return {\n");
-@   for name, text in pairs(constants) do
+!   for name, text in pairs(constants) do
         printf("$(name) = %d;\n", $(name));
-@   end
+!   end
     puts("}\n");
-@ else
+! else
     puts(
         "error(\"Unicorn wasn't compiled with support for the `$(source_stem)' architecture.\")"
     );
-@ end
+! end
     return 0;
 }

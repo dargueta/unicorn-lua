@@ -21,17 +21,17 @@
  */
 enum RegisterDataType {
     UL_REG_TYPE_UNKNOWN,
-@ for _, bits in ipairs({8, 16, 32, 64}) do
+! for _, bits in ipairs({8, 16, 32, 64}) do
     UL_REG_TYPE_INT$(bits),
-@ end
-@ for _, bits in ipairs({32, 64}) do
+! end
+! for _, bits in ipairs({32, 64}) do
     UL_REG_TYPE_FLOAT$(bits),
-@ end
-@ for _, conf in ipairs(int_arrays) do
+! end
+! for _, conf in ipairs(int_arrays) do
     UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count),
-@ end
-@ for _, conf in ipairs(float_arrays) do
+! end
+! for _, conf in ipairs(float_arrays) do
     UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count),
-@ end
+! end
     UL_REG_TYPE_FLOAT80,
 };
