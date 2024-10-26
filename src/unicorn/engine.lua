@@ -303,7 +303,17 @@ function Engine:reg_read(register)
     error("Not implemented yet")
 end
 
-function Engine:reg_read_as()
+--- Read the current value of a CPU register as something other than an a plain integer.
+---
+--- This is primarily useful for SIMD instructions, where a single register can be
+--- interpreted as (for example) an array of two 64-bit integers, four 32-bit integers,
+--- eight 16-bit integers, and so on. While especially useful for SIMD registers, any
+--- registers, any register can be read from with this method.
+---
+--- @tparam int register  The ID of the register to read (same as @{Engine:reg_read}.
+--- @tparam int type_id  An enum value indicating how to reinterpret the register. These
+--- can be found in @{registers_const}.
+function Engine:reg_read_as(register, type_id)
     error("Not implemented yet")
 end
 
@@ -319,16 +329,28 @@ end
 ---
 --- @tparam int register  An architecture-specific enum value indicating the register to
 --- write to. The meaning is the same as in @{Engine:reg_read}.
---- @tparam int value  The value to write to the register.
+--- @tparam number value  The value to write to the register.
 function Engine:reg_write(register, value)
     error("Not implemented yet")
 end
 
+--- Write an array of values to a register.
+---
+--- This is the converse of @{Engine:reg_read_as}, and lets you set a register using an
+--- array of (for example) eight 16-bit integers. While especially useful for SIMD
+--- registers, any register can be written to with this method.
 function Engine:reg_write_as()
     error("Not implemented yet")
 end
 
-function Engine:reg_write_batch()
+--- Set the value of multiple CPU registers at once.
+---
+--- This should only be used when setting a register to an integer or floating-point
+--- value. To set multiple registers to non-scalar values (e.g. setting XMM0 to an array
+--- of 8-bit ints) you must call @{Engine:reg_write_as} individually.
+---
+--- @param registers A table mapping register IDs to numeric values to assign them.
+function Engine:reg_write_batch(registers)
     error("Not implemented yet")
 end
 
@@ -339,6 +361,7 @@ end
 -- These functions are only available in Unicorn 2.x.
 local unicorn_major_version = uc_c.version()
 if unicorn_major_version >= 2 then
+    ---
     function Engine:ctl_exits_disable()
         return uc_c.ctl_exits_disable(self.handle_)
     end

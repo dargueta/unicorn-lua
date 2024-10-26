@@ -22,21 +22,28 @@ local uc_engine = require("unicorn.engine")
 
 local M = {
     --- Determine if `architecture` is supported by the underlying Unicorn library.
+    ---
     --- @tparam int architecture  An enum value indicating the architecture, from
     --- @{unicorn_const}. These all start with `UC_ARCH_`, e.g.
     --- @{unicorn_const.UC_ARCH_X86}.
+    ---
     --- @treturn bool  A boolean indicating if Unicorn supports the given architecture.
+    ---
     --- @function arch_supported
+    --- @usage unicorn.arch_supported(unicorn_const.UC_ARCH_ARM64)
     arch_supported = uc_c.arch_supported,
 
     --- Return the error message corresponding to the given Unicorn error code.
+    ---
     --- @tparam int code  An error code as returned from one of the API functions.
     --- @treturn string   A standard error message describing the code.
+    ---
     --- @function strerror
     strerror = uc_c.strerror,
 
     --- Return two values, the major and minor version numbers of the underlying Unicorn
     --- Engine C library.
+    ---
     --- @treturn int,int The major and minor version of the library, respectively.
     --- @function version
     version = uc_c.version,
@@ -57,8 +64,15 @@ local M = {
 --- @usage local engine = unicorn.open(unicorn_const.UC_ARCH_X86, unicorn_const.UC_MODE_32)
 function M.open(architecture, mode_flags)
     local handle, err = uc_c.open(architecture, mode_flags or 0)
-    if err ~= nil then
-        return nil, err
+    if err ~= 0 then
+        error(
+            string.format(
+                "Failed to open engine with architecture=%d and mode=0x%08X: %s",
+                architecture,
+                mode_flags,
+                M.strerror(err)
+            )
+        )
     end
     return uc_engine.wrap_handle_(handle), nil
 end
