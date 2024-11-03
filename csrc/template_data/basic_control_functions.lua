@@ -67,5 +67,9 @@ scalar_arguments_return_void = {
     },
 }
 
+--------------------------------------------------------------------------------
+-- These are too complicated to include here and must be implemented manually.
+
 -- tb ctl_request_cache(address)
 -- ctl_set_exits(exits)
+-- ctl_get_exits(exits)

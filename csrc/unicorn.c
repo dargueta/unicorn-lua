@@ -25,10 +25,19 @@
  */
 
 #include "unicornlua/control_functions.h"
+#include "unicornlua/engine.h"
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
+#include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
+
+_Noreturn int ulinternal_crash_not_implemented(lua_State *L)
+{
+    lua_pushstring(L, "BUG: This function isn't implemented in the Lua binding yet.");
+    lua_error(L);
+    UL_UNREACHABLE_MARKER;
+}
 
 void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
 {
@@ -37,6 +46,13 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
 
     const char *message = uc_strerror(code);
     luaL_error(L, "[error %d] %s: %s", code, context, message);
+    UL_UNREACHABLE_MARKER;
+}
+
+_Noreturn int ulinternal_crash_unsupported_operation(lua_State *L)
+{
+    lua_pushstring(L, "The operation is not supported for this version of Unicorn.");
+    lua_error(L);
     UL_UNREACHABLE_MARKER;
 }
 
@@ -63,11 +79,7 @@ int ul_open(lua_State *L)
         luaL_error(
             L,
             "[error %d] Failed to open engine with architecture=%d and flags=%#08X: %s",
-            error,
-            architecture,
-            mode_flags,
-            uc_strerror(error)
-        );
+            error, architecture, mode_flags, uc_strerror(error));
     }
     lua_pushlightuserdata(L, engine);
     return 1;
@@ -106,7 +118,6 @@ int ul_version(lua_State *L)
     return 2;
 }
 
-
 /**
  * Get the message for the given error code, like `strerror` in the C standard library.
  *
@@ -121,11 +132,18 @@ int ul_strerror(lua_State *L)
     return 1;
 }
 
-
 static const luaL_Reg kFunctions[] = {{"open", ul_open},
                                       {"close", ul_close},
                                       {"version", ul_version},
                                       {"strerror", ul_strerror},
+                                      {"errno", ul_errno},
+                                      {"emu_start", ul_emu_start},
+                                      {"emu_stop", ul_emu_stop},
+                                      {"mem_unmap", ul_mem_unmap},
+                                      {"mem_protect", ul_mem_protect},
+                                      {"mem_read", ul_mem_read},
+                                      {"mem_regions", ul_mem_regions},
+                                      {"mem_map", ul_mem_map},
 #if UC_VERSION_MAJOR >= 2
                                       {"ctl_exits_disable", ul_ctl_exits_disable},
                                       {"ctl_exits_enable", ul_ctl_exits_enable},
@@ -145,7 +163,7 @@ static const luaL_Reg kFunctions[] = {{"open", ul_open},
 #endif /* UC_VERSION_MAJOR >= 2 */
                                       {NULL, NULL}};
 
-UNICORN_EXPORT
+LUA_API
 int luaopen_unicorn_c_(lua_State *L)
 {
     lua_createtable(L, 0, 4);

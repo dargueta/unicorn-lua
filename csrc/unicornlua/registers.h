@@ -23,9 +23,9 @@
 #pragma once
 
 #include "register_types.h"
+#include <float.h>
 #include <lua.h>
 #include <stdint.h>
-#include <float.h>
 
 #if FLT_RADIX != 2
 #    error "Can't handle floating-point radixes other than 2 right now."
@@ -67,7 +67,6 @@ typedef __float128 uclua_float80;
 #else
 #    error "Platform has no way to represent 80-bit floating-point registers."
 #endif
-
 
 /**
  * Define a buffer large enough to hold the largest registers available.
@@ -137,4 +136,5 @@ lua_Number read_float80(const uint8_t *data);
  */
 void write_float80(lua_Number value, uint8_t *buffer);
 
-void register__assign_value(register_buffer_type reg, const void *buffer, enum RegisterDataType kind);
+void register__assign_value(register_buffer_type reg, const void *buffer,
+                            enum RegisterDataType kind);

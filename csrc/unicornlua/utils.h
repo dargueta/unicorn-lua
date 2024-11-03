@@ -22,9 +22,13 @@
 
 #pragma once
 
-
 #include <lua.h>
+#include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
+
+_Noreturn int ulinternal_crash_not_implemented(lua_State *L);
+
+_Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
 
 /**
  * Call `luaL_error` if and only if @a error is not @ref UC_ERR_OK.

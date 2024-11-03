@@ -24,6 +24,7 @@ Implements engine control functions added in Unicorn 2.0.
 
 #include "unicornlua/integer_conversions.h"
 #include "unicornlua/unicornlua.h"
+#include "unicornlua/utils.h"
 #include <lua.h>
 #include <unicorn/unicorn.h>
 #include <stdint.h>
