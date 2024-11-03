@@ -57,8 +57,18 @@ int ul_open(lua_State *L)
 
     uc_engine *engine;
     uc_err error = uc_open(architecture, mode_flags, &engine);
-    ulinternal_crash_if_failed(L, error, "Failed to open engine");
 
+    if (error != UC_ERR_OK)
+    {
+        luaL_error(
+            L,
+            "[error %d] Failed to open engine with architecture=%d and flags=%#08X: %s",
+            error,
+            architecture,
+            mode_flags,
+            uc_strerror(error)
+        );
+    }
     lua_pushlightuserdata(L, engine);
     return 1;
 }
@@ -89,9 +99,8 @@ int ul_close(lua_State *L)
 int ul_version(lua_State *L)
 {
     unsigned major, minor;
-    uc_err error = uc_version(&major, &minor);
 
-    ulinternal_crash_if_failed(L, error, "Failed to get Unicorn library version");
+    uc_version(&major, &minor);
     lua_pushinteger(L, (lua_Integer)major);
     lua_pushinteger(L, (lua_Integer)minor);
     return 2;

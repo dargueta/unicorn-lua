@@ -63,18 +63,8 @@ local M = {
 ---
 --- @usage local engine = unicorn.open(unicorn_const.UC_ARCH_X86, unicorn_const.UC_MODE_32)
 function M.open(architecture, mode_flags)
-    local handle, err = uc_c.open(architecture, mode_flags or 0)
-    if err ~= 0 then
-        error(
-            string.format(
-                "Failed to open engine with architecture=%d and mode=0x%08X: %s",
-                architecture,
-                mode_flags,
-                M.strerror(err)
-            )
-        )
-    end
-    return uc_engine.wrap_handle_(handle), nil
+    local handle = uc_c.open(architecture, mode_flags or 0)
+    return uc_engine.wrap_handle_(handle)
 end
 
 return M
