@@ -21,6 +21,12 @@ local uc_c = require("unicorn_c_")
 local uc_engine = require("unicorn.engine")
 
 local M = {
+    --- The major, minor, and patch numbers of this Lua library's version.
+    ---
+    --- To get the version of the Unicorn C library this binding wraps around, see
+    --- @{unicorn.version}.
+    LUA_LIBRARY_VERSION = {2, 2, 2};
+
     --- Determine if `architecture` is supported by the underlying Unicorn library.
     ---
     --- @tparam int architecture  An enum value indicating the architecture, from
