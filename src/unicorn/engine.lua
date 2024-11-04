@@ -164,7 +164,7 @@ function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
     uc_c.emu_start(
         self.handle_,
         start_addr or 0,
-        end_addr,
+        end_addr or 0,
         timeout or 0,
         n_instructions or 0
     )
