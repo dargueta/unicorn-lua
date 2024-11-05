@@ -16,8 +16,8 @@
 
 #include "unicornlua/utils.h"
 #include <inttypes.h>
-#include <lauxlib.h>
 #include <lua.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <unicorn/unicorn.h>
 
@@ -37,28 +37,38 @@ int ul_emu_start(lua_State *L)
     size_t n_instructions = (size_t)lua_tointeger(L, 5);
 
     uc_err error = uc_emu_start(engine, start, stop, timeout, n_instructions);
-    if (error != UC_ERR_OK)
-    {
-        luaL_error(L,
-                   "[error %d] Failed to start emulator with start=%#08" PRIX64
-                   ", end=%08" PRIX64 ", timeout=" PRId64
-                   "us (0=none), max instructions=%z"
-                   " (0=no limit): %s",
-                   start, stop, timeout, n_instructions, uc_strerror(error));
-        UL_UNREACHABLE_MARKER;
-    }
+    ulinternal_crash_if_failed(L, error,
+                               "Failed to start emulator with start=%#08" PRIX64 ", end="
+                               "%08" PRIX64 ", timeout=%" PRId64 "us (0 means none), max"
+                               " instructions=%z (0 means no limit)",
+                               start, stop, timeout, n_instructions);
 
     return 0;
 }
 
 int ul_emu_stop(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uc_err error = uc_emu_stop(engine);
+
+    ulinternal_crash_if_failed(L, error, "Failed to halt emulation.");
+    return 0;
 }
 
 int ul_mem_map(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t start = (uint64_t)lua_tointeger(L, 2);
+    size_t length = (size_t)lua_tointeger(L, 3);
+    uint32_t perms = (uint32_t)lua_tointeger(L, 4);
+
+    uc_err error = uc_mem_map(engine, start, length, perms);
+    ulinternal_crash_if_failed(L, error,
+                               "Failed to map memory with start=0x%08" PRIX64
+                               ", length=%zd bytes, perm flags=0x%08" PRIX32,
+                               (int)error, start, length, perms);
+
+    return 0;
 }
 
 int ul_mem_protect(lua_State *L)

@@ -22,9 +22,30 @@
 
 #pragma once
 
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
+#include <varargs.h>
+
+#define UL_MAX_ERROR_MESSAGE_LENGTH 1024
+
+/**
+ * Use snprintf to build a string and push it onto the Lua stack.
+ *
+ * Lua's string formatter is highly limited in the format specifiers it supports, so if we
+ * want to do anything beyond that, we need to derive our own method. The final string is
+ * pushed onto the Lua stack.
+ *
+ * @param L  The Lua state.
+ * @param max_size  The maximum size of the final string, excluding the terminating null.
+ *                  The generated string will always fit this size.
+ * @param format  The format string.
+ * @param argv  An initialized varargs list pointing to the first argument of the format
+ *              string.
+ */
+void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format,
+                          va_list argv);
 
 _Noreturn int ulinternal_crash_not_implemented(lua_State *L);
 
@@ -37,16 +58,26 @@ _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
  * @param error     A unicorn error code.
  * @param context   Extra information to include as the first part of the error message.
  */
-void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context);
+#ifdef __GNUC__
+__attribute__((format(printf, 3, 4)))
+#endif
+void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
 
 /**
- * Create a new weak table with the given key mode, and push it onto the stack.
+ * Call `luaL_error` with a string created using the C standard sprintf().
  *
- * @param L         A pointer to the current Lua state.
- * @param mode      The table mode to use. See the Lua documentation for a full
- *                  description of valid modes and how they work.
+ * @param L  The Lua state.
+ * @param format
+ *      The format string for the error message. This uses sprintf(), not Lua's formatter,
+ *      so the full standard library's capabilities can be used. The final error message
+ *      is truncated to @ref UL_MAX_ERROR_MESSAGE_LENGTH characters.
+ * @param ...
  */
-void ul_create_weak_table(lua_State *L, const char *mode);
+#ifdef __GNUC__
+__attribute__((format(printf, 2, 3)))
+#endif
+_Noreturn void
+ulinternal_crash(lua_State *L, const char *format, ...);
 
 struct NamedIntConst
 {

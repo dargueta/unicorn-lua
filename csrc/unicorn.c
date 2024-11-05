@@ -29,8 +29,18 @@
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
-#include <stdnoreturn.h>
+#include <stdio.h>
 #include <unicorn/unicorn.h>
+#include <varargs.h>
+
+void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format, va_list argv)
+{
+    char *message = malloc(max_size + 1);
+
+    vsnprintf(message, max_size + 1, format, argv);
+    lua_pushstring(L, message);
+    free(message);
+}
 
 _Noreturn int ulinternal_crash_not_implemented(lua_State *L)
 {
@@ -39,19 +49,45 @@ _Noreturn int ulinternal_crash_not_implemented(lua_State *L)
     UL_UNREACHABLE_MARKER;
 }
 
-void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *context)
+void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...)
 {
     if (code == UC_ERR_OK)
         return;
 
-    const char *message = uc_strerror(code);
-    luaL_error(L, "[error %d] %s: %s", code, context, message);
+    luaL_Buffer msgbuf;
+    luaL_buffinit(L, &msgbuf);
+
+    lua_pushfstring(L, "[Unicorn error %d] ", (int)code);
+    luaL_addvalue(&msgbuf);
+
+    va_list argv;
+    va_start(argv, format);
+    ulinternal_vsnprintf(L, UL_MAX_ERROR_MESSAGE_LENGTH, format, argv);
+    va_end(argv);
+
+    luaL_addvalue(&msgbuf);
+
+    lua_pushfstring(L, ": %s", uc_strerror(code));
+    luaL_addvalue(&msgbuf);
+
+    luaL_pushresult(&msgbuf);
+    lua_error(L);
     UL_UNREACHABLE_MARKER;
 }
 
 _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L)
 {
     lua_pushstring(L, "The operation is not supported for this version of Unicorn.");
+    lua_error(L);
+    UL_UNREACHABLE_MARKER;
+}
+
+_Noreturn void ulinternal_crash(lua_State *L, const char *format, ...)
+{
+    va_list argv;
+    va_start(argv, format);
+    ulinternal_vsnprintf(L, UL_MAX_ERROR_MESSAGE_LENGTH, format, argv);
+    va_end(argv);
     lua_error(L);
     UL_UNREACHABLE_MARKER;
 }
@@ -74,13 +110,9 @@ int ul_open(lua_State *L)
     uc_engine *engine;
     uc_err error = uc_open(architecture, mode_flags, &engine);
 
-    if (error != UC_ERR_OK)
-    {
-        luaL_error(
-            L,
-            "[error %d] Failed to open engine with architecture=%d and flags=%#08X: %s",
-            error, architecture, mode_flags, uc_strerror(error));
-    }
+    ulinternal_crash_if_failed(L, error,
+                               "Can't open engine with architecture=%d and flags=%#08X",
+                               architecture, mode_flags);
     lua_pushlightuserdata(L, engine);
     return 1;
 }
