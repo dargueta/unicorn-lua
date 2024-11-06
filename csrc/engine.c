@@ -73,7 +73,17 @@ int ul_mem_map(lua_State *L)
 
 int ul_mem_protect(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t start = (uint64_t)lua_tointeger(L, 2);
+    size_t length = (size_t)lua_tointeger(L, 3);
+    uint32_t perms = (uint32_t)lua_tointeger(L, 4);
+
+    uc_err error = uc_mem_protect(engine, start, length, perms);
+    ulinternal_crash_if_failed(L, error,
+                               "Failed to set memory protections with start=0x%08" PRIX64
+                               ", length=%zu bytes, perm flags=0x%08" PRIX32,
+                               start, length, perms);
+    return 0;
 }
 
 int ul_mem_read(lua_State *L)

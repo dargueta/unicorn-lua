@@ -26,13 +26,13 @@ int ul_ctl_get_exits(lua_State *L)
     ulinternal_crash_if_failed(L, error, "ctl_get_exits() API call failed.");
 
     lua_createtable(L, (int)n_exits, 0);
-    for (int i = 0; i < (int)n_exits; i++)
+    for (size_t i = 0; i < n_exits; i++)
     {
 #if LUA_VERSION_NUM >= 502
         lua_pushinteger(L, (lua_Integer)exits[i]);
-        lua_rawseti(L, i, -2);
+        lua_rawseti(L, (int)(i + 1), -2);
 #else
-        lua_pushinteger(L, (lua_Integer)i);
+        lua_pushinteger(L, (lua_Integer)(i + 1));
         lua_pushinteger(L, (lua_Integer)exits[i]);
         lua_rawset(L, -3);
 #endif

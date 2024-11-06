@@ -1,0 +1,17 @@
+local version_number = _VERSION:sub(5)
+local exclude_tags = {}
+
+
+if version_number == "5.1" or version_number == "5.2" then
+    exclude_tags[#exclude_tags] = "int64only"
+end
+
+
+return {
+    default = {
+        shuffle = true,
+        ROOT = { "./tests/lua" },
+        verbose = true,
+        exclude_tags = exclude_tags,
+    }
+}

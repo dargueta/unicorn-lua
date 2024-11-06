@@ -75,28 +75,3 @@ build = {
 test_dependencies = {
     "busted",
 }
-
-test = {
-    type = "command",
-    command = "make",
-    flags = {
-        "__test",
-        "BUSTED=$(SCRIPTS_DIR)/busted",
-        "CALLED_FROM_LUAROCKS=1",
-        "CXX=$(CC)",
-        "CXXFLAGS=$(CFLAGS)",
-        "CURL=$(CURL)",
-        "LD=$(LD)",
-        "LIB_EXTENSION=$(LIB_EXTENSION)",
-        "LUA=$(LUA)",
-        "LUA_VERSION=$(LUA_VERSION)",
-        "LUALIB=$(LUALIB)",  -- Always empty on *NIX systems
-        "LUA_DIR=$(LUA_DIR)",
-        "LUAROCKS=$(SCRIPTS_DIR)/luarocks",
-        "OBJ_EXTENSION=$(OBJ_EXTENSION)",
-        -- The following are needed for building the tests, but aren't provided by
-        -- LuaRocks when testing.
-        "LUA_INCDIR=$(LUA_DIR)/include",
-        "LUA_LIBDIR=$(LUA_DIR)/lib",
-    },
-}

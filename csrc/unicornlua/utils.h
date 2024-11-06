@@ -24,9 +24,9 @@
 
 #include <lauxlib.h>
 #include <lua.h>
+#include <stdarg.h>
 #include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
-#include <stdarg.h>
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
 
