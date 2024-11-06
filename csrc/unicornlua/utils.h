@@ -26,7 +26,7 @@
 #include <lua.h>
 #include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
 

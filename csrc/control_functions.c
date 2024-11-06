@@ -18,8 +18,8 @@ int ul_ctl_get_exits(lua_State *L)
     uint64_t *exits = (uint64_t *)malloc(sizeof(*exits) * n_exits);
     if (exits == NULL)
     {
-        ulinternal_crash(L, "Failed to allocate space for %u exit addresses: %s", n_exits,
-                         strerror(errno));
+        ulinternal_crash(L, "Failed to allocate space for %zu exit addresses: %s",
+                         n_exits, strerror(errno));
     }
 
     error = uc_ctl_get_exits(engine, exits, n_exits);

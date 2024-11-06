@@ -40,7 +40,7 @@ int ul_emu_start(lua_State *L)
     ulinternal_crash_if_failed(L, error,
                                "Failed to start emulator with start=%#08" PRIX64 ", end="
                                "%08" PRIX64 ", timeout=%" PRId64 "us (0 means none), max"
-                               " instructions=%z (0 means no limit)",
+                               " instructions=%zu (0 means no limit)",
                                start, stop, timeout, n_instructions);
 
     return 0;
@@ -65,8 +65,8 @@ int ul_mem_map(lua_State *L)
     uc_err error = uc_mem_map(engine, start, length, perms);
     ulinternal_crash_if_failed(L, error,
                                "Failed to map memory with start=0x%08" PRIX64
-                               ", length=%zd bytes, perm flags=0x%08" PRIX32,
-                               (int)error, start, length, perms);
+                               ", length=%zu bytes, perm flags=0x%08" PRIX32,
+                               start, length, perms);
 
     return 0;
 }
