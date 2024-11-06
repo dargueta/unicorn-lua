@@ -15,10 +15,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "unicornlua/utils.h"
+#include <errno.h>
 #include <inttypes.h>
 #include <lua.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <unicorn/unicorn.h>
 
 int ul_errno(lua_State *L)
@@ -88,7 +90,30 @@ int ul_mem_protect(lua_State *L)
 
 int ul_mem_read(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t address = (uint64_t)lua_tointeger(L, 2);
+    size_t size = (size_t)lua_tointeger(L, 3);
+
+    void *buffer = malloc(size);
+    if (buffer == NULL)
+    {
+        ulinternal_crash(L,
+                         "Failed to read %zu bytes from address 0x%08" PRIX64
+                         ": buffer allocation"
+                         " failed (%d -- %s)",
+                         size, address, errno, strerror(errno));
+    }
+
+    uc_err error = uc_mem_read(engine, address, buffer, size);
+
+    if (error == UC_ERR_OK)
+        lua_pushlstring(L, buffer, size);
+
+    free(buffer);
+    ulinternal_crash_if_failed(
+        L, error, "Failed to read %zu bytes of memory at address=0x%08" PRIX64, size,
+        address);
+    return 1;
 }
 
 int ul_mem_regions(lua_State *L)
