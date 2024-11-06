@@ -40,11 +40,10 @@ int ul_emu_start(lua_State *L)
 
     uc_err error = uc_emu_start(engine, start, stop, timeout, n_instructions);
     ulinternal_crash_if_failed(L, error,
-                               "Failed to start emulator with start=%#08" PRIX64 ", end="
+                               "Failed to start emulator with start=0x%08" PRIX64 ", end="
                                "%08" PRIX64 ", timeout=%" PRId64 "us (0 means none), max"
                                " instructions=%zu (0 means no limit)",
                                start, stop, timeout, n_instructions);
-
     return 0;
 }
 
@@ -66,10 +65,9 @@ int ul_mem_map(lua_State *L)
 
     uc_err error = uc_mem_map(engine, start, length, perms);
     ulinternal_crash_if_failed(L, error,
-                               "Failed to map memory with start=0x%08" PRIX64
-                               ", length=%zu bytes, perm flags=0x%08" PRIX32,
-                               start, length, perms);
-
+                               "Failed to map %zu bytes of memory at address 0x%08" PRIX64
+                               ", perm flags=0x%08" PRIX32,
+                               length, start, perms);
     return 0;
 }
 
@@ -82,8 +80,8 @@ int ul_mem_protect(lua_State *L)
 
     uc_err error = uc_mem_protect(engine, start, length, perms);
     ulinternal_crash_if_failed(L, error,
-                               "Failed to set memory protections with start=0x%08" PRIX64
-                               ", length=%zu bytes, perm flags=0x%08" PRIX32,
+                               "Failed to set memory protections at 0x%08" PRIX64 " for"
+                               " %zu bytes with flags=0x%08" PRIX32,
                                start, length, perms);
     return 0;
 }
@@ -98,30 +96,78 @@ int ul_mem_read(lua_State *L)
     if (buffer == NULL)
     {
         ulinternal_crash(L,
-                         "Failed to read %zu bytes from address 0x%08" PRIX64
-                         ": buffer allocation"
-                         " failed (%d -- %s)",
+                         "Failed to read %zu bytes from address 0x%08" PRIX64 ": buffer"
+                         " allocation failed (%d -- %s)",
                          size, address, errno, strerror(errno));
     }
 
     uc_err error = uc_mem_read(engine, address, buffer, size);
-
     if (error == UC_ERR_OK)
         lua_pushlstring(L, buffer, size);
 
     free(buffer);
     ulinternal_crash_if_failed(
-        L, error, "Failed to read %zu bytes of memory at address=0x%08" PRIX64, size,
+        L, error, "Failed to read %zu bytes of memory at address 0x%08" PRIX64, size,
         address);
     return 1;
 }
 
 int ul_mem_regions(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+
+    uc_mem_region *regions;
+    uint32_t n_regions;
+
+    uc_err error = uc_mem_regions(engine, &regions, &n_regions);
+    ulinternal_crash_if_failed(L, error, "Failed to enumerate mapped memory regions.");
+
+    lua_createtable(L, (int)n_regions, 0);
+    for (uint32_t i = 0; i < n_regions; i++)
+    {
+        lua_pushinteger(L, (int)(i + 1));
+
+        lua_createtable(L, 0, 3);
+        lua_pushinteger(L, (lua_Integer)regions[i].begin);
+        lua_setfield(L, -2, "begins");
+
+        lua_pushinteger(L, (lua_Integer)regions[i].end);
+        lua_setfield(L, -2, "ends");
+
+        lua_pushinteger(L, (lua_Integer)regions[i].perms);
+        lua_setfield(L, -2, "perms");
+
+        lua_rawset(L, -3);
+    }
+
+    uc_free(regions);
+    return 1;
 }
 
 int ul_mem_unmap(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t address = (uint64_t)lua_tointeger(L, 2);
+    size_t length = (size_t)lua_tointeger(L, 3);
+
+    uc_err error = uc_mem_unmap(engine, address, length);
+    ulinternal_crash_if_failed(
+        L, error, "Failed to unmap %zu bytes of memory at address 0x%08" PRIX64, length,
+        address);
+    return 0;
+}
+
+int ul_mem_write(lua_State *L)
+{
+    size_t data_size;
+
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t address = (uint64_t)lua_tointeger(L, 2);
+    const void *data = lua_tolstring(L, 3, &data_size);
+
+    uc_err error = uc_mem_write(engine, address, data, data_size);
+    ulinternal_crash_if_failed(L, error,
+                               "Failed to write %zu bytes to memory at 0x%08" PRIX64,
+                               data_size, address);
+    return 0;
 }

@@ -245,7 +245,6 @@ function Engine:mem_protect(address, size, perms)
     uc_c.mem_protect(self.handle_, address, size, perms)
 end
 
-
 --- Read a block of memory from the engine.
 ---
 --- Permissions set in @{mem_map} or @{mem_protect} don't apply to this method, so it's
@@ -255,9 +254,8 @@ end
 --- @tparam int size  The number of bytes to read.
 --- @treturn string  The contents of emulated memory.
 function Engine:mem_read(address, size)
-    uc_c.mem_read(self.handle_, address, size)
+    return uc_c.mem_read(self.handle_, address, size)
 end
-
 
 --- Get an enumeration of all memory regions mapped into the engine.
 ---
@@ -277,8 +275,8 @@ function Engine:mem_unmap(address, size)
     uc_c.mem_unmap(self.handle_, address, size)
 end
 
-function Engine:mem_write()
-    error("Not implemented yet")
+function Engine:mem_write(address, data)
+    uc_c.mem_write(self.handle_, address, data)
 end
 
 --- Get information about an initialized engine, such as its page size, mode flags, etc.
