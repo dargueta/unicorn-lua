@@ -29,9 +29,9 @@
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <unicorn/unicorn.h>
-#include <varargs.h>
 
 void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format, va_list argv)
 {
@@ -57,8 +57,8 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, .
     luaL_Buffer msgbuf;
     luaL_buffinit(L, &msgbuf);
 
-    lua_pushfstring(L, "[Unicorn error %d] ", (int)code);
-    luaL_addvalue(&msgbuf);
+    // The general form of the produced error message is:
+    //      {user message} (Unicorn: error ### -- {unicorn message})
 
     va_list argv;
     va_start(argv, format);
@@ -67,7 +67,7 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, .
 
     luaL_addvalue(&msgbuf);
 
-    lua_pushfstring(L, ": %s", uc_strerror(code));
+    lua_pushfstring(L, " (Unicorn: error %d -- %s)", (int)code, uc_strerror(code));
     luaL_addvalue(&msgbuf);
 
     luaL_pushresult(&msgbuf);
