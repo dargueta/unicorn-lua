@@ -199,7 +199,11 @@ static const luaL_Reg kFunctions[] = {{"open", ul_open},
 LUA_API
 int luaopen_unicorn_c_(lua_State *L)
 {
-    lua_createtable(L, 0, 4);
-    luaL_setfuncs(L, kFunctions, 0);
+#if LUA_VERSION_NUM >= 502
+    luaL_newlib(L, kFunctions);
+#else
+    lua_createtable(L, 0, 10);
+    luaL_register(L, "unicorn_c_", kFunctions);
+#endif
     return 1;
 }
