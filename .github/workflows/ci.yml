@@ -67,8 +67,11 @@ jobs:
       - name: Install Binding
         run: luarocks build
         env:
-          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
+          # We need to disable the newline-eof warning because third-party code trips the
+          # warning. We could use `-isystem` instead of `-I` for adding include paths to
+          # third-party headers, but that's specific to GCC and Clang.
+          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wno-newline-eof
       - name: Run tests
         run: luarocks test
         env:
-          USER_CXX_FLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors
+          LD_LIBRARY_FLAGS: /usr/lib64:/usr/local/lib:${LD_LIBRARY_FLAGS}
