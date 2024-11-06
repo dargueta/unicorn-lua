@@ -60,7 +60,7 @@ local MemoryRegion = setmetatable({}, {__setindex = function () end})
 --- @treturn Engine  A class instance wrapping the handle.
 function M.wrap_handle_(handle)
     local instance = {
-        engine_handle_ = handle,
+        handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
         -- the state the context describes. Since there's no point to holding onto a
         -- context the user can no longer use, we use a weak table to store them to allow
@@ -140,7 +140,7 @@ function Engine:context_save(context)
         return context
     end
 
-    local raw_context_handle = uc_c.context_save(engine.engine_handle_, nil)
+    local raw_context_handle = uc_c.context_save(engine.handle_, nil)
     local wrapped_handle = uc_context.wrap_handle_(self, raw_context_handle)
 
     self.contexts_[#self.contexts_] = wrapped_handle

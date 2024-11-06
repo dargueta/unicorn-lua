@@ -32,16 +32,6 @@ LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 
 ################################################################################
 
-# Disable 64-bit integer tests for Lua <5.3
-ifeq ($(LUA_VERSION),5.1)
-    BUSTED_FLAGS = --exclude-tags="int64only"
-else ifeq ($(LUA_VERSION),5.2)
-    BUSTED_FLAGS = --exclude-tags="int64only"
-else
-    BUSTED_FLAGS =
-endif
-
-
 IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
 ifeq ($(IS_LUAJIT),1)
     # LuaJIT
