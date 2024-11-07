@@ -26,6 +26,7 @@
 
 #include "unicornlua/control_functions.h"
 #include "unicornlua/engine.h"
+#include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
@@ -164,37 +165,49 @@ int ul_strerror(lua_State *L)
     return 1;
 }
 
-static const luaL_Reg kFunctions[] = {{"open", ul_open},
-                                      {"close", ul_close},
-                                      {"version", ul_version},
-                                      {"strerror", ul_strerror},
-                                      {"errno", ul_errno},
-                                      {"emu_start", ul_emu_start},
-                                      {"emu_stop", ul_emu_stop},
-                                      {"mem_map", ul_mem_map},
-                                      {"mem_protect", ul_mem_protect},
-                                      {"mem_read", ul_mem_read},
-                                      {"mem_regions", ul_mem_regions},
-                                      {"mem_unmap", ul_mem_unmap},
-                                      {"mem_write", ul_mem_write},
+static const luaL_Reg kFunctions[] = {
+    {"open", ul_open},
+    {"close", ul_close},
+    {"version", ul_version},
+    {"strerror", ul_strerror},
+    {"errno", ul_errno},
+    {"emu_start", ul_emu_start},
+    {"emu_stop", ul_emu_stop},
+    {"mem_map", ul_mem_map},
+    {"mem_protect", ul_mem_protect},
+    {"mem_read", ul_mem_read},
+    {"mem_regions", ul_mem_regions},
+    {"mem_unmap", ul_mem_unmap},
+    {"mem_write", ul_mem_write},
+    {"hook_del", ul_hook_del},
+    {"create_interrupt_hook", ul_create_interrupt_hook},
+    {"create_memory_access_hook", ul_create_memory_access_hook},
+    {"create_invalid_mem_access_hook", ul_create_invalid_mem_access_hook},
+    {"create_port_in_hook", ul_create_port_in_hook},
+    {"create_port_out_hook", ul_create_port_out_hook},
+    {"create_arm64_sys_hook", ul_create_arm64_sys_hook},
+    {"create_invalid_instruction_hook", ul_create_invalid_instruction_hook},
+    {"create_cpuid_hook", ul_create_cpuid_hook},
+    {"create_generic_hook_with_no_arguments", ul_create_generic_hook_with_no_arguments},
+    {"create_edge_generated_hook", ul_create_edge_generated_hook},
 #if UC_VERSION_MAJOR >= 2
-                                      {"ctl_exits_disable", ul_ctl_exits_disable},
-                                      {"ctl_exits_enable", ul_ctl_exits_enable},
-                                      {"ctl_flush_tlb", ul_ctl_flush_tlb},
-                                      {"ctl_get_arch", ul_ctl_get_arch},
-                                      {"ctl_get_cpu_model", ul_ctl_get_cpu_model},
-                                      {"ctl_get_exits", ul_ctl_get_exits},
-                                      {"ctl_get_exits_cnt", ul_ctl_get_exits_cnt},
-                                      {"ctl_get_mode", ul_ctl_get_mode},
-                                      {"ctl_get_page_size", ul_ctl_get_page_size},
-                                      {"ctl_get_timeout", ul_ctl_get_timeout},
-                                      {"ctl_remove_cache", ul_ctl_remove_cache},
-                                      {"ctl_request_cache", ul_ctl_request_cache},
-                                      {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
-                                      {"ctl_set_exits", ul_ctl_set_exits},
-                                      {"ctl_set_page_size", ul_ctl_set_page_size},
+    {"ctl_exits_disable", ul_ctl_exits_disable},
+    {"ctl_exits_enable", ul_ctl_exits_enable},
+    {"ctl_flush_tlb", ul_ctl_flush_tlb},
+    {"ctl_get_arch", ul_ctl_get_arch},
+    {"ctl_get_cpu_model", ul_ctl_get_cpu_model},
+    {"ctl_get_exits", ul_ctl_get_exits},
+    {"ctl_get_exits_cnt", ul_ctl_get_exits_cnt},
+    {"ctl_get_mode", ul_ctl_get_mode},
+    {"ctl_get_page_size", ul_ctl_get_page_size},
+    {"ctl_get_timeout", ul_ctl_get_timeout},
+    {"ctl_remove_cache", ul_ctl_remove_cache},
+    {"ctl_request_cache", ul_ctl_request_cache},
+    {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
+    {"ctl_set_exits", ul_ctl_set_exits},
+    {"ctl_set_page_size", ul_ctl_set_page_size},
 #endif /* UC_VERSION_MAJOR >= 2 */
-                                      {NULL, NULL}};
+    {NULL, NULL}};
 
 LUA_API
 int luaopen_unicorn_c_(lua_State *L)

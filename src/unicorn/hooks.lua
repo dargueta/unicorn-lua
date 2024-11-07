@@ -32,7 +32,7 @@ if not have_x86 then x86_const = {} end
 
 
 local function create_hook_creator_by_name(name)
-    return function (engine, callback, start_addr, end_addr, userdata)
+    return function (engine, hook_type_, callback, start_addr, end_addr, userdata)
         if end_addr == nil then
             if start_addr == nil then
                 -- If neither a starting nor ending address is given, the caller wants
@@ -50,6 +50,7 @@ local function create_hook_creator_by_name(name)
 
         return uc_c[name](
             engine.handle_,
+            hook_type_,
             callback,
             start_addr or 0,
             end_addr,
@@ -59,7 +60,7 @@ local function create_hook_creator_by_name(name)
 end
 
 
-local function create_code_hook(engine, callback, start_addr, end_addr, userdata, remaining_args)
+local function create_code_hook(engine, hook_type_, callback, start_addr, end_addr, userdata, remaining_args)
     local instruction_id = remaining_args[1]
     if instruction_id == nil then
         error("Can't create instruction hook: no opcode was passed to hook_add().")
@@ -75,7 +76,7 @@ local function create_code_hook(engine, callback, start_addr, end_addr, userdata
     )
 end
 
-local function create_tcg_opcode_hook(engine, callback, start_addr, end_addr, userdata, remaining_args)
+local function create_tcg_opcode_hook(engine, hook_type_, callback, start_addr, end_addr, userdata, remaining_args)
     local opcode, flags = table.unpack(remaining_args, 1, 2)
 
     if opcode == nil then
@@ -194,7 +195,7 @@ function M.create_hook(
             or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
-    return wrapper(engine, callback, start_addr, end_addr, user_extra, {...})
+    return wrapper(engine, hook_type, callback, start_addr, end_addr, user_extra, {...})
 end
 
 --- Information about the coprocessor, used by ARM64 instruction hooks.
