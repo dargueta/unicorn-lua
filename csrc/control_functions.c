@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
+#if UC_VERSION_MAJOR >= 2
 int ul_ctl_get_exits(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
@@ -28,14 +29,14 @@ int ul_ctl_get_exits(lua_State *L)
     lua_createtable(L, (int)n_exits, 0);
     for (size_t i = 0; i < n_exits; i++)
     {
-#if LUA_VERSION_NUM >= 502
+#    if LUA_VERSION_NUM >= 502
         lua_pushinteger(L, (lua_Integer)exits[i]);
         lua_rawseti(L, (int)(i + 1), -2);
-#else
+#    else
         lua_pushinteger(L, (lua_Integer)(i + 1));
         lua_pushinteger(L, (lua_Integer)exits[i]);
         lua_rawset(L, -3);
-#endif
+#    endif
     }
 
     free(exits);
@@ -51,3 +52,4 @@ int ul_ctl_request_cache(lua_State *L)
 {
     ulinternal_crash_not_implemented(L);
 }
+#endif
