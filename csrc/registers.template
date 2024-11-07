@@ -160,7 +160,12 @@ struct Register *register__from_lua(lua_State *L, int value_index, int kind_inde
 ! for _, conf in ipairs(int_arrays) do
         case UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count):
             for (i = 0; i < $(conf.count); ++i) {
+#if LUA_VERSION_NUMBER >= 503
                 lua_geti(L, value_index, i + 1);
+#else
+                lua_pushinteger(L, i + 1);
+                lua_gettable(L, value_index);
+#endif
                 ((int$(conf.bits)_t *)reg->data)[i] =
                     (int$(conf.bits)_t)lua_tointeger(L, -1);
                 lua_pop(L, 1);
@@ -170,7 +175,12 @@ struct Register *register__from_lua(lua_State *L, int value_index, int kind_inde
 ! for _, conf in ipairs(float_arrays) do
         case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count):
             for (i = 0; i < $(conf.count); ++i) {
+#if LUA_VERSION_NUMBER >= 503
                 lua_geti(L, value_index, i + 1);
+#else
+                lua_pushinteger(L, i + 1);
+                lua_gettable(L, value_index);
+#endif
                 ((uclua_float$(conf.bits) *)reg->data)[i] =
                     (uclua_float$(conf.bits))lua_tonumber(L, -1);
                 lua_pop(L, 1);
