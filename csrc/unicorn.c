@@ -124,7 +124,7 @@ int ul_open(lua_State *L)
     uc_err error = uc_open(architecture, mode_flags, &engine);
 
     ulinternal_crash_if_failed(L, error,
-                               "Can't open engine with architecture=%d and flags=%#08X",
+                               "Can't open engine with architecture=%d and flags=0x%08X",
                                architecture, mode_flags);
     lua_pushlightuserdata(L, engine);
     return 1;
@@ -183,7 +183,7 @@ static const luaL_Reg kFunctions[] = {
     {"create_code_hook", ul_create_code_hook},
     {"create_cpuid_hook", ul_create_cpuid_hook},
     {"create_edge_generated_hook", ul_create_edge_generated_hook},
-    {"create_generic_hook_with_no_arguments", ul_create_generic_hook_with_no_arguments},
+    {"create_generic_hook_with_no_arguments", ul_create_generic_no_arguments_hook},
     {"create_interrupt_hook", ul_create_interrupt_hook},
     {"create_invalid_instruction_hook", ul_create_invalid_instruction_hook},
     {"create_invalid_mem_access_hook", ul_create_invalid_mem_access_hook},

@@ -15,20 +15,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include <lua.h>
-#include <stdint.h>
 #include <unicorn/unicorn.h>
 
 #pragma once
 
 typedef struct
 {
-    uc_engine *engine;
-    uc_hook_type hook_type;
-    uint64_t start_address;
-    uint64_t end_address;
-    int callback_ref;
-    uc_hook hook_handle;
     lua_State *L;
+    uc_hook hook_handle;
+    int callback_ref;
 } ULHook;
 
 int ul_hook_del(lua_State *L);
@@ -40,7 +35,7 @@ int ul_create_port_out_hook(lua_State *L);
 int ul_create_arm64_sys_hook(lua_State *L);
 int ul_create_invalid_instruction_hook(lua_State *L);
 int ul_create_cpuid_hook(lua_State *L);
-int ul_create_generic_hook_with_no_arguments(lua_State *L);
+int ul_create_generic_no_arguments_hook(lua_State *L);
 int ul_create_edge_generated_hook(lua_State *L);
 int ul_create_tcg_opcode_hook(lua_State *L);
 int ul_create_code_hook(lua_State *L);
