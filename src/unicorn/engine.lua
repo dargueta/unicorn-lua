@@ -18,6 +18,7 @@
 
 local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
+local uc_hooks = require("unicorn.hooks")
 local unicorn_const = require("unicorn.unicorn_const")
 
 --- An object-oriented wrapper around an opened Unicorn engine.
@@ -201,8 +202,16 @@ end
 --- @treturn userdata  A handle to the hook that was just created.
 --- @usage engine:hook_add(unicorn_const.UC_HOOK_MEM_WRITE, my_callback, 0xb8000, 0xbffff)
 --- @see hook_del
-function Engine:hook_add(kind, callback, start_address, end_address, udata, ...)
-    error("Not implemented yet")
+function Engine:hook_add(hook_type, callback, start_address, end_address, udata, ...)
+    return uc_hooks.create_hook(
+        self,
+        hook_type,
+        callback,
+        start_address,
+        end_address,
+        udata,
+        ...
+    )
 end
 
 --- Remove a hook from the engine.
