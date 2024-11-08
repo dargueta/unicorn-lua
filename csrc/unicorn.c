@@ -27,10 +27,12 @@
 #include "unicornlua/control_functions.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/hooks.h"
+#include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <unicorn/unicorn.h>
 
@@ -91,6 +93,16 @@ _Noreturn void ulinternal_crash(lua_State *L, const char *format, ...)
     va_end(argv);
     lua_error(L);
     UL_UNREACHABLE_MARKER;
+}
+
+size_t count_table_elements(lua_State *L, int table_index)
+{
+    size_t count;
+
+    lua_pushnil(L);
+    for (count = 0; lua_next(L, table_index) != 0; ++count)
+        lua_pop(L, 1);
+    return count;
 }
 
 /**
@@ -166,20 +178,7 @@ int ul_strerror(lua_State *L)
 }
 
 static const luaL_Reg kFunctions[] = {
-    {"open", ul_open},
     {"close", ul_close},
-    {"version", ul_version},
-    {"strerror", ul_strerror},
-    {"errno", ul_errno},
-    {"emu_start", ul_emu_start},
-    {"emu_stop", ul_emu_stop},
-    {"mem_map", ul_mem_map},
-    {"mem_protect", ul_mem_protect},
-    {"mem_read", ul_mem_read},
-    {"mem_regions", ul_mem_regions},
-    {"mem_unmap", ul_mem_unmap},
-    {"mem_write", ul_mem_write},
-    {"hook_del", ul_hook_del},
     {"create_arm64_sys_hook", ul_create_arm64_sys_hook},
     {"create_code_hook", ul_create_code_hook},
     {"create_cpuid_hook", ul_create_cpuid_hook},
@@ -192,6 +191,26 @@ static const luaL_Reg kFunctions[] = {
     {"create_port_in_hook", ul_create_port_in_hook},
     {"create_port_out_hook", ul_create_port_out_hook},
     {"create_tcg_opcode_hook", ul_create_tcg_opcode_hook},
+    {"emu_start", ul_emu_start},
+    {"emu_stop", ul_emu_stop},
+    {"errno", ul_errno},
+    {"hook_del", ul_hook_del},
+    {"mem_map", ul_mem_map},
+    {"mem_protect", ul_mem_protect},
+    {"mem_read", ul_mem_read},
+    {"mem_regions", ul_mem_regions},
+    {"mem_unmap", ul_mem_unmap},
+    {"mem_write", ul_mem_write},
+    {"open", ul_open},
+    {"reg_read", ul_reg_read},
+    {"reg_read_batch", ul_reg_read_batch},
+    {"reg_read_batch_as", ul_reg_read_batch_as},
+    {"reg_read_as", ul_reg_read_as},
+    {"reg_write", ul_reg_write},
+    {"reg_write_batch", ul_reg_write_batch},
+    {"reg_write_as", ul_reg_write_as},
+    {"strerror", ul_strerror},
+    {"version", ul_version},
 #if UC_VERSION_MAJOR >= 2
     {"ctl_exits_disable", ul_ctl_exits_disable},
     {"ctl_exits_enable", ul_ctl_exits_enable},

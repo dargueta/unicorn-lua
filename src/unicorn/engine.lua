@@ -307,7 +307,7 @@ end
 ---
 --- @treturn int  The register's value.
 function Engine:reg_read(register)
-    error("Not implemented yet")
+    return uc_c.reg_read(self.handle_, register)
 end
 
 --- Read the current value of a CPU register as something other than an a plain integer.
@@ -321,15 +321,15 @@ end
 --- @tparam int type_id  An enum value indicating how to reinterpret the register. These
 --- can be found in @{registers_const}.
 function Engine:reg_read_as(register, type_id)
-    error("Not implemented yet")
+    return uc_c.reg_read_as(self.handle_, register, type_id)
 end
 
-function Engine:reg_read_batch()
-    error("Not implemented yet")
+function Engine:reg_read_batch(registers)
+    return uc_c.reg_read_batch(self.handle_, registers)
 end
 
-function Engine:reg_read_batch_as()
-    error("Not implemented yet")
+function Engine:reg_read_batch_as(registers)
+    return uc_c.reg_read_batch_as(self.handle_, registers)
 end
 
 --- Set the current value of a CPU register in the engine.
@@ -338,7 +338,7 @@ end
 --- write to. The meaning is the same as in @{Engine:reg_read}.
 --- @tparam number value  The value to write to the register.
 function Engine:reg_write(register, value)
-    error("Not implemented yet")
+    return uc_c.reg_write(self.handle_, register, value)
 end
 
 --- Write an array of values to a register.
@@ -346,8 +346,8 @@ end
 --- This is the converse of @{Engine:reg_read_as}, and lets you set a register using an
 --- array of (for example) eight 16-bit integers. While especially useful for SIMD
 --- registers, any register can be written to with this method.
-function Engine:reg_write_as()
-    error("Not implemented yet")
+function Engine:reg_write_as(register, value, as_type)
+    return uc_c.reg_write_as(self.handle_, register, value, as_type)
 end
 
 --- Set the value of multiple CPU registers at once.
@@ -358,7 +358,7 @@ end
 ---
 --- @param registers A table mapping register IDs to numeric values to assign them.
 function Engine:reg_write_batch(registers)
-    error("Not implemented yet")
+    return uc_c.reg_write_batch(self.handle_, registers)
 end
 
 local not_supported_handler_ = function ()

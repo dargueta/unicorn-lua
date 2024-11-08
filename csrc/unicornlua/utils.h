@@ -88,11 +88,10 @@ struct NamedIntConst
 void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
 
 /**
- * Count the number of items in the table.
+ * Get the total number of items in the table, both in the array and mapping parts.
  *
- * `luaL_len()` only returns the number of entries in the array part of a table,
- * so this function iterates through the entirety of the table and returns the
- * result. */
+ * `luaL_len()` only returns the number of entries in the array part of a table, so this
+ * so this function iterates through both. */
 size_t count_table_elements(lua_State *L, int table_index);
 
 // Define a cross-platform marker for telling the compiler we're deliberately

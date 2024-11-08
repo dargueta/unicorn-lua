@@ -48,8 +48,6 @@ static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port,
 static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
                                            uint32_t size, void *userdata);
 
-
-
 /* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
  * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
  * that the compiler doesn't blow up. */
