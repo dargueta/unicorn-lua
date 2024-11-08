@@ -48,6 +48,14 @@ static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port,
 static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
                                            uint32_t size, void *userdata);
 
+
+
+/* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
+ * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
+ * that the compiler doesn't blow up. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 int ul_create_interrupt_hook(lua_State *L)
 {
     ULHook *hook =
@@ -128,6 +136,8 @@ int ul_create_code_hook(lua_State *L)
     return 1;
 }
 
+#pragma GCC diagnostic pop
+
 static ULHook *get_common_arguments(lua_State *L)
 {
     ULHook *hook = malloc(sizeof(*hook));
@@ -155,14 +165,8 @@ ULHook *helper_create_generic_hook(lua_State *L, void *callback)
 {
     ULHook *hook = get_common_arguments(L);
 
-    /* ISO C forbids casting a function pointer to an object pointer (void* in this case).
-     * As Unicorn requires us to do this, we have to disable pedantic warnings temporarily
-     * so that the compiler doesn't blow up. */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
     uc_err error = uc_hook_add(hook->engine, &hook->hook_handle, hook->hook_type,
                                callback, hook, hook->start_address, hook->end_address);
-#pragma GCC diagnostic pop
 
     if (error != UC_ERR_OK)
     {
@@ -275,7 +279,7 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_call(hook->L, 2, 1);
 
-    uint32_t return_value = (uint32_t)luaL_checkinteger(L, -1);
+    uint32_t return_value = (uint32_t)luaL_checkinteger(hook->L, -1);
     lua_pop(hook->L, 1);
     return return_value;
 }
