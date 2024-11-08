@@ -43,18 +43,14 @@ build_dependencies = {
 build = {
     type = "make",
     variables = {
-        CALLED_FROM_LUAROCKS = "1",
-        CP = "$(CP)",
         LIB_EXTENSION = "$(LIB_EXTENSION)",
         LUA = "$(LUA)",
-        LUAROCKS = "$(SCRIPTS_DIR)/luarocks",
         LUA_VERSION = "$(LUA_VERSION)",
         OBJ_EXTENSION = "$(OBJ_EXTENSION)",
     },
     build_variables = {
-        CXX = "$(CC)",
-        CURL = "$(CURL)",
-        CXXFLAGS = "$(CFLAGS)",
+        CC = "$(CC)",
+        CFLAGS = "$(CFLAGS)",
         LD = "$(LD)",
         LIBFLAG = "$(LIBFLAG)",
         LUA_DIR = "$(LUA_DIR)",
@@ -66,6 +62,7 @@ build = {
     },
     install_target = "__install",
     install_variables = {
+        CP = "$(CP)",
         INST_LIBDIR = "$(LIBDIR)",
         INST_LUADIR = "$(LUADIR)",
     },
