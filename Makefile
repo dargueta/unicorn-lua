@@ -105,7 +105,7 @@ ifeq ($(shell uname -s),Darwin)
 endif
 
 
-C_CMD = $(CC) $(USER_C_FLAGS) $(INCLUDE_PATH_FLAGS) $(CFLAGS) -Wall -Wextra -Wpedantic -Werror
+C_CMD = $(CC) $(USER_C_FLAGS) $(INCLUDE_PATH_FLAGS) $(CFLAGS)
 LINK_CMD = $(LD) $(LIB_PATH_FLAGS) $(LDFLAGS)
 
 
