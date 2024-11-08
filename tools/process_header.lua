@@ -126,7 +126,7 @@ function maybe_extract_preprocessor(text)
 
     if directive == "#define"
         and macro_name:startswith("UC_")
-        and not macro_name:gmatch("^%w%(")  -- Ignore function macros
+        and not macro_name:find("%(")    -- Ignore function macros
         and macro_text ~= nil
         and macro_text ~= ""
     then
