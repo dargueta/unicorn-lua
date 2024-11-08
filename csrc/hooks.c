@@ -1,3 +1,19 @@
+// Copyright (C) 2017-2024 by Diego Argueta
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
 #include <errno.h>
@@ -8,57 +24,25 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
-#ifdef __GNUC__
-__attribute__((returns_nonnull, warn_unused_result))
-#elif _MSC_VER
-_Must_inspect_result_
-#endif
-static ULHook *
-get_common_arguments(lua_State *L)
-{
-    ULHook *hook = malloc(sizeof(*hook));
-    if (hook == NULL)
-    {
-        ulinternal_crash(L, "Failed to allocate memory for creating a hook: %s",
-                         strerror(errno));
-    }
-
-    hook->L = L;
-    hook->engine = (uc_engine *)lua_topointer(L, 1);
-    hook->hook_type = (uc_hook_type)lua_tointeger(L, 2);
-    hook->start_address = (uint64_t)lua_tointeger(L, 4);
-    hook->end_address = (uint64_t)lua_tointeger(L, 5);
-
-    /* The user's callback function is in stack position 3, custom user data is at stack
-     * position 6 (if it exists). We can't assume the user data is at the top of the
-     * stack because some hooks require arguments.
-     *
-     * First, we save a reference to the callback function into the registry. This lets us
-     * keep a hard reference to it, ensuring the function will always exist when the hook
-     * is triggered. The original copy is left on the stack at its original position.
-     */
-    lua_pushvalue(L, 3);
-    hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-    /* Similarly, we keep a hard reference to the userdata if it's not nil. */
-    if (lua_isnil(L, 6))
-        hook->extra_data_ref = LUA_REFNIL;
-    else
-    {
-        lua_pushvalue(L, 6);
-        hook->extra_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    }
-    return hook;
-}
+UL_RETURNS_POINTER
+static ULHook *get_common_arguments(lua_State *L);
+UL_RETURNS_POINTER
+static ULHook *helper_create_generic_hook(lua_State *L, void *callback);
 
 int ul_create_interrupt_hook(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    ULHook *hook =
+        helper_create_generic_hook(L, (void *)ulinternal_hook_callback__interrupt);
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_create_memory_access_hook(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    ULHook *hook =
+        helper_create_generic_hook(L, (void *)ulinternal_hook_callback__memory_access);
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_create_invalid_mem_access_hook(lua_State *L)
@@ -93,6 +77,38 @@ int ul_create_cpuid_hook(lua_State *L)
 
 int ul_create_generic_hook_with_no_arguments(lua_State *L)
 {
+    ULHook *hook =
+        helper_create_generic_hook(L, (void *)ulinternal_hook_callback__no_arguments);
+    lua_pushlightuserdata(L, hook);
+    return 1;
+}
+
+static ULHook *get_common_arguments(lua_State *L)
+{
+    ULHook *hook = malloc(sizeof(*hook));
+    if (hook == NULL)
+    {
+        ulinternal_crash(L, "Failed to allocate memory for creating a hook: %s",
+                         strerror(errno));
+    }
+
+    hook->L = L;
+    hook->engine = (uc_engine *)lua_topointer(L, 1);
+    hook->hook_type = (uc_hook_type)lua_tointeger(L, 2);
+    hook->start_address = (uint64_t)lua_tointeger(L, 4);
+    hook->end_address = (uint64_t)lua_tointeger(L, 5);
+
+    /* The user's callback function is in stack position 3. To be able to call it later,
+     * we save a strong reference to it in the registry. This ensures the function will
+     * always exist when the hook is triggered. */
+    lua_pushvalue(L, 3);
+    hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    return hook;
+}
+
+ULHook *helper_create_generic_hook(lua_State *L, void *callback)
+{
     ULHook *hook = get_common_arguments(L);
 
     /* ISO C forbids casting a function pointer to an object pointer (void* in this case).
@@ -101,8 +117,7 @@ int ul_create_generic_hook_with_no_arguments(lua_State *L)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
     uc_err error = uc_hook_add(hook->engine, &hook->hook_handle, hook->hook_type,
-                               (void *)ulinternal_hook_callback__no_arguments, hook,
-                               hook->start_address, hook->end_address);
+                               callback, hook, hook->start_address, hook->end_address);
 #pragma GCC diagnostic pop
 
     if (error != UC_ERR_OK)
@@ -121,8 +136,7 @@ int ul_create_generic_hook_with_no_arguments(lua_State *L)
             hook_type, start, end);
     }
 
-    lua_pushlightuserdata(L, hook);
-    return 1;
+    return hook;
 }
 
 int ul_create_edge_generated_hook(lua_State *L)
@@ -139,7 +153,6 @@ int ul_hook_del(lua_State *L)
      * protected call, the user may want to try again later. */
     ulinternal_crash_if_failed(L, error, "Failed to unset hook.");
 
-    luaL_unref(L, LUA_REGISTRYINDEX, hook->extra_data_ref);
     luaL_unref(L, LUA_REGISTRYINDEX, hook->callback_ref);
     hook->engine = NULL;
     free(hook);
@@ -152,6 +165,32 @@ void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata)
     ULHook *hook = (ULHook *)userdata;
 
     lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->extra_data_ref);
+    lua_call(hook->L, 0, 0);
+}
+
+void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
+                                         void *userdata)
+{
+    (void)engine;
+    ULHook *hook = (ULHook *)userdata;
+
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushinteger(hook->L, (lua_Integer)intno);
     lua_call(hook->L, 1, 0);
+}
+
+void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
+                                             uint64_t address, int size, int64_t value,
+                                             void *userdata)
+{
+    (void)engine;
+
+    ULHook *hook = (ULHook *)userdata;
+
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushinteger(hook->L, (lua_Integer)type);
+    lua_pushinteger(hook->L, (lua_Integer)address);
+    lua_pushinteger(hook->L, (lua_Integer)size);
+    lua_pushinteger(hook->L, (lua_Integer)value);
+    lua_call(hook->L, 4, 0);
 }

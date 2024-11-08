@@ -113,3 +113,13 @@ size_t count_table_elements(lua_State *L, int table_index);
 #else
 #    define UL_UNREACHABLE_MARKER
 #endif
+
+#if __STDC_VERSION__ >= 202311L
+#    define UL_RETURNS_POINTER [[nodiscard]]
+#elif defined(__GNUC__)
+#    define UL_RETURNS_POINTER __attribute__((returns_nonnull, warn_unused_result))
+#elif defined(_MSC_VER)
+#    define UL_RETURNS_POINTER _Must_inspect_result_
+#else
+#    define UL_RETURNS_POINTER
+#endif

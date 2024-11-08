@@ -32,7 +32,7 @@ if not have_x86 then x86_const = {} end
 
 
 local function create_hook_creator_by_name(name)
-    return function (engine, hook_type_, callback, start_addr, end_addr, userdata)
+    return function (engine, hook_type, callback, start_addr, end_addr, userdata)
         if end_addr == nil then
             if start_addr == nil then
                 -- If neither a starting nor ending address is given, the caller wants
@@ -48,10 +48,14 @@ local function create_hook_creator_by_name(name)
             end
         end
 
+        local wrapped_callback = function (...)
+            return callback(engine, ..., userdata)
+        end
+
         return uc_c[name](
             engine.handle_,
-            hook_type_,
-            callback,
+            hook_type,
+            wrapped_callback,
             start_addr or 0,
             end_addr,
             userdata
@@ -60,23 +64,27 @@ local function create_hook_creator_by_name(name)
 end
 
 
-local function create_code_hook(engine, hook_type_, callback, start_addr, end_addr, userdata, remaining_args)
+local function create_code_hook(engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args)
     local instruction_id = remaining_args[1]
     if instruction_id == nil then
         error("Can't create instruction hook: no opcode was passed to hook_add().")
     end
 
+    local wrapped_callback = function (...)
+        return callback(engine, ..., userdata)
+    end
+
     return uc_c.create_code_hook(
         engine,
-        callback,
+        hook_type,
+        wrapped_callback,
         start_addr or 0,
         end_addr or 0,
-        userdata,
         instruction_id
     )
 end
 
-local function create_tcg_opcode_hook(engine, hook_type_, callback, start_addr, end_addr, userdata, remaining_args)
+local function create_tcg_opcode_hook(engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args)
     local opcode, flags = table.unpack(remaining_args, 1, 2)
 
     if opcode == nil then
@@ -86,12 +94,16 @@ local function create_tcg_opcode_hook(engine, hook_type_, callback, start_addr, 
         error("Can't create TCG hook: no trap flags were passed to hook_add().")
     end
 
+    local wrapped_callback = function (...)
+        return callback(engine, ..., userdata)
+    end
+
     return uc_c.create_tcg_opcode_hook(
         engine,
-        callback,
+        hook_type,
+        wrapped_callback,
         start_addr,
         end_addr,
-        userdata,
         opcode,
         flags
     )
