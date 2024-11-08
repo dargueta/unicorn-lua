@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,24 @@ UL_RETURNS_POINTER
 static ULHook *get_common_arguments(lua_State *L);
 UL_RETURNS_POINTER
 static ULHook *helper_create_generic_hook(lua_State *L, void *callback);
+
+static void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata);
+static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
+                                                void *userdata);
+static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
+                                                    uint64_t address, int size,
+                                                    int64_t value, void *userdata);
+static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
+                                                         uc_mem_type type,
+                                                         uint64_t address, int size,
+                                                         int64_t value, void *userdata);
+
+static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
+                                                  int size, void *userdata);
+static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port, int size,
+                                               uint32_t value, void *userdata);
+static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
+                                           uint32_t size, void *userdata);
 
 int ul_create_interrupt_hook(lua_State *L)
 {
@@ -47,17 +66,26 @@ int ul_create_memory_access_hook(lua_State *L)
 
 int ul_create_invalid_mem_access_hook(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    ULHook *hook = helper_create_generic_hook(
+        L, (void *)ulinternal_hook_callback__invalid_mem_access);
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_create_port_in_hook(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    ULHook *hook =
+        helper_create_generic_hook(L, (void *)ulinternal_hook_callback__port_in);
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_create_port_out_hook(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    ULHook *hook =
+        helper_create_generic_hook(L, (void *)ulinternal_hook_callback__port_out);
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_create_arm64_sys_hook(lua_State *L)
@@ -83,6 +111,23 @@ int ul_create_generic_hook_with_no_arguments(lua_State *L)
     return 1;
 }
 
+int ul_create_edge_generated_hook(lua_State *L)
+{
+    ulinternal_crash_not_implemented(L);
+}
+
+int ul_create_tcg_opcode_hook(lua_State *L)
+{
+    ulinternal_crash_not_implemented(L);
+}
+
+int ul_create_code_hook(lua_State *L)
+{
+    ULHook *hook = helper_create_generic_hook(L, (void *)ulinternal_hook_callback__code);
+    lua_pushlightuserdata(L, hook);
+    return 1;
+}
+
 static ULHook *get_common_arguments(lua_State *L)
 {
     ULHook *hook = malloc(sizeof(*hook));
@@ -103,7 +148,6 @@ static ULHook *get_common_arguments(lua_State *L)
      * always exist when the hook is triggered. */
     lua_pushvalue(L, 3);
     hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
     return hook;
 }
 
@@ -139,11 +183,6 @@ ULHook *helper_create_generic_hook(lua_State *L, void *callback)
     return hook;
 }
 
-int ul_create_edge_generated_hook(lua_State *L)
-{
-    ulinternal_crash_not_implemented(L);
-}
-
 int ul_hook_del(lua_State *L)
 {
     ULHook *hook = (ULHook *)lua_topointer(L, 1);
@@ -159,7 +198,7 @@ int ul_hook_del(lua_State *L)
     return 0;
 }
 
-void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata)
+static void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata)
 {
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
@@ -168,8 +207,8 @@ void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata)
     lua_call(hook->L, 0, 0);
 }
 
-void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
-                                         void *userdata)
+static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
+                                                void *userdata)
 {
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
@@ -179,12 +218,11 @@ void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
     lua_call(hook->L, 1, 0);
 }
 
-void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
-                                             uint64_t address, int size, int64_t value,
-                                             void *userdata)
+static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
+                                                    uint64_t address, int size,
+                                                    int64_t value, void *userdata)
 {
     (void)engine;
-
     ULHook *hook = (ULHook *)userdata;
 
     lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
@@ -193,4 +231,76 @@ void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_pushinteger(hook->L, (lua_Integer)value);
     lua_call(hook->L, 4, 0);
+}
+
+static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
+                                                         uc_mem_type type,
+                                                         uint64_t address, int size,
+                                                         int64_t value, void *userdata)
+{
+    (void)engine;
+    ULHook *hook = (ULHook *)userdata;
+
+    /* Push the callback function onto the stack. */
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+
+    /* Push the arguments */
+    lua_pushinteger(hook->L, (lua_Integer)type);
+    lua_pushinteger(hook->L, (lua_Integer)address);
+    lua_pushinteger(hook->L, (lua_Integer)size);
+    lua_pushinteger(hook->L, (lua_Integer)value);
+    lua_call(hook->L, 4, 1);
+
+    if (lua_type(hook->L, -1) != LUA_TBOOLEAN)
+    {
+        luaL_error(hook->L,
+                   "Error: Handler for invalid memory accesses must return a boolean, "
+                   "got a %s instead.",
+                   lua_typename(hook->L, -1));
+        UL_UNREACHABLE_MARKER;
+    }
+    int return_value = lua_toboolean(hook->L, -1);
+    lua_pop(hook->L, 1);
+    return return_value != 0;
+}
+
+static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
+                                                  int size, void *userdata)
+{
+    (void)engine;
+    ULHook *hook = (ULHook *)userdata;
+
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushinteger(hook->L, (lua_Integer)port);
+    lua_pushinteger(hook->L, (lua_Integer)size);
+    lua_call(hook->L, 2, 1);
+
+    uint32_t return_value = (uint32_t)luaL_checkinteger(L, -1);
+    lua_pop(hook->L, 1);
+    return return_value;
+}
+
+static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port, int size,
+                                               uint32_t value, void *userdata)
+{
+    (void)engine;
+    ULHook *hook = (ULHook *)userdata;
+
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushinteger(hook->L, (lua_Integer)port);
+    lua_pushinteger(hook->L, (lua_Integer)size);
+    lua_pushinteger(hook->L, (lua_Integer)value);
+    lua_call(hook->L, 3, 0);
+}
+
+static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
+                                           uint32_t size, void *userdata)
+{
+    (void)engine;
+    ULHook *hook = (ULHook *)userdata;
+
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushinteger(hook->L, (lua_Integer)address);
+    lua_pushinteger(hook->L, (lua_Integer)size);
+    lua_call(hook->L, 2, 0);
 }

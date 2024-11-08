@@ -42,10 +42,5 @@ int ul_create_invalid_instruction_hook(lua_State *L);
 int ul_create_cpuid_hook(lua_State *L);
 int ul_create_generic_hook_with_no_arguments(lua_State *L);
 int ul_create_edge_generated_hook(lua_State *L);
-
-void ulinternal_hook_callback__no_arguments(uc_engine *engine, void *userdata);
-void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
-                                         void *userdata);
-void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
-                                             uint64_t address, int size, int64_t value,
-                                             void *userdata);
+int ul_create_tcg_opcode_hook(lua_State *L);
+int ul_create_code_hook(lua_State *L);
