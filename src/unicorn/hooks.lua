@@ -84,7 +84,17 @@ local function create_code_hook(engine, hook_type, callback, start_addr, end_add
     )
 end
 
-local function create_tcg_opcode_hook(engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args)
+
+-- This function will crash on Unicorn 1.0.
+local function create_tcg_opcode_hook(
+    engine,
+    hook_type,
+    callback,
+    start_addr,
+    end_addr,
+    userdata,
+    remaining_args
+)
     local opcode, flags = table.unpack(remaining_args, 1, 2)
 
     if opcode == nil then
@@ -125,7 +135,6 @@ local create_edge_generated_hook = create_hook_creator_by_name("create_edge_gene
 local DEFAULT_HOOK_WRAPPERS = {
     [uc_const.UC_HOOK_BLOCK] = create_code_hook;
     [uc_const.UC_HOOK_CODE] = create_code_hook;
-    [uc_const.UC_HOOK_EDGE_GENERATED] = create_edge_generated_hook;
     [uc_const.UC_HOOK_INSN_INVALID] = create_invalid_instruction_hook;
     [uc_const.UC_HOOK_INTR] = create_interrupt_hook;
     [uc_const.UC_HOOK_MEM_FETCH] = create_memory_access_hook;
@@ -145,21 +154,30 @@ local DEFAULT_HOOK_WRAPPERS = {
     [uc_const.UC_HOOK_MEM_WRITE_INVALID] = create_invalid_mem_access_hook;
     [uc_const.UC_HOOK_MEM_WRITE_PROT] = create_invalid_mem_access_hook;
     [uc_const.UC_HOOK_MEM_WRITE_UNMAPPED] = create_invalid_mem_access_hook;
-    [uc_const.UC_HOOK_TCG_OPCODE] = create_tcg_opcode_hook;
 }
+
+-- These two hooks were added in Unicorn 2.0.
+if uc_const.UC_HOOK_EDGE_GENERATED ~= nil then
+    DEFAULT_HOOK_WRAPPERS[uc_const.UC_HOOK_EDGE_GENERATED] = create_edge_generated_hook
+    DEFAULT_HOOK_WRAPPERS[uc_const.UC_HOOK_TCG_OPCODE] = create_tcg_opcode_hook
+end
 
 
 local INSTRUCTION_HOOK_WRAPPERS = {
-    [arm64_const.UC_ARM64_INS_MRS] = create_arm64_sys_hook;
-    [arm64_const.UC_ARM64_INS_MSR] = create_arm64_sys_hook;
-    [arm64_const.UC_ARM64_INS_SYSL] = create_arm64_sys_hook;
-    [arm64_const.UC_ARM64_INS_SYS] = create_arm64_sys_hook;
     [x86_const.UC_X86_INS_CPUID] = create_cpuid_hook;
     [x86_const.UC_X86_INS_IN] = create_port_in_hook;
     [x86_const.UC_X86_INS_OUT] = create_port_out_hook;
     [x86_const.UC_X86_INS_SYSCALL] = create_generic_hook_with_no_arguments;
     [x86_const.UC_X86_INS_SYSENTER] = create_generic_hook_with_no_arguments;
 }
+
+-- These were all added at the same time in Unicorn 2.0
+if arm64_const.UC_ARM64_INS_MRS ~= nil then
+    INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_MRS] = create_arm64_sys_hook
+    INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_MSR] = create_arm64_sys_hook
+    INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_SYSL] = create_arm64_sys_hook
+    INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_SYS] = create_arm64_sys_hook
+end
 
 
 --- Create a new hook.
