@@ -37,8 +37,5 @@ int ul_create_invalid_instruction_hook(lua_State *L);
 int ul_create_cpuid_hook(lua_State *L);
 int ul_create_generic_no_arguments_hook(lua_State *L);
 int ul_create_code_hook(lua_State *L);
-
-#if UC_VERSION_MAJOR >= 2
 int ul_create_edge_generated_hook(lua_State *L);
 int ul_create_tcg_opcode_hook(lua_State *L);
-#endif

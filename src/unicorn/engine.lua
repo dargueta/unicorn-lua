@@ -106,12 +106,12 @@ function Engine:close()
     for _, context in ipairs(self.contexts_) do
         context:free()
     end
-    self.contexts_ = {}
+    self.contexts_ = nil
 
     for hook_handle in pairs(self.hooks_) do
         uc_c.hook_del(self.handle_, hook_handle)
     end
-    self.hooks_ = {}
+    self.hooks_ = nil
 
     uc_c.close(self.handle_)
 
@@ -361,90 +361,64 @@ function Engine:reg_write_batch(registers)
     return uc_c.reg_write_batch(self.handle_, registers)
 end
 
-local not_supported_handler_ = function ()
-    error("Operation not supported by the underlying Unicorn C library.")
+function Engine:ctl_exits_disable()
+    return uc_c.ctl_exits_disable(self.handle_)
 end
 
--- These functions are only available in Unicorn 2.x.
-local unicorn_major_version = uc_c.version()
-if unicorn_major_version >= 2 then
-    ---
-    function Engine:ctl_exits_disable()
-        return uc_c.ctl_exits_disable(self.handle_)
-    end
-
-    function Engine:ctl_exits_enable()
-        return uc_c.ctl_exits_enable(self.handle_)
-    end
-
-    function Engine:ctl_flush_tlb()
-        return uc_c.ctl_flush_tlb(self.handle_)
-    end
-
-    function Engine:ctl_get_arch()
-        return uc_c.ctl_get_arch(self.handle_)
-    end
-
-    function Engine:ctl_get_cpu_model()
-        return uc_c.ctl_get_cpu_model(self.handle_)
-    end
-
-    function Engine:ctl_get_exits()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_get_exits_cnt()
-        return uc_c.ctl_get_exits_cnt(self.handle_)
-    end
-
-    function Engine:ctl_get_mode()
-        return uc_c.ctl_get_mode(self.handle_)
-    end
-
-    function Engine:ctl_get_page_size()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_get_timeout()
-        return uc_c.ctl_get_timeout(self.handle_)
-    end
-
-    function Engine:ctl_remove_cache()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_request_cache()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_set_cpu_model()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_set_exits()
-        error("Not implemented yet")
-    end
-
-    function Engine:ctl_set_page_size()
-        error("Not implemented yet")
-    end
-else
-    Engine.ctl_exits_disable = not_supported_handler_
-    Engine.ctl_exits_enable = not_supported_handler_
-    Engine.ctl_flush_tlb = not_supported_handler_
-    Engine.ctl_get_arch = not_supported_handler_
-    Engine.ctl_get_cpu_model = not_supported_handler_
-    Engine.ctl_get_exits = not_supported_handler_
-    Engine.ctl_get_exits_cnt = not_supported_handler_
-    Engine.ctl_get_mode = not_supported_handler_
-    Engine.ctl_get_page_size = not_supported_handler_
-    Engine.ctl_get_timeout = not_supported_handler_
-    Engine.ctl_remove_cache = not_supported_handler_
-    Engine.ctl_request_cache = not_supported_handler_
-    Engine.ctl_set_cpu_model = not_supported_handler_
-    Engine.ctl_set_exits = not_supported_handler_
-    Engine.ctl_set_page_size = not_supported_handler_
+function Engine:ctl_exits_enable()
+    return uc_c.ctl_exits_enable(self.handle_)
 end
 
+function Engine:ctl_flush_tlb()
+    return uc_c.ctl_flush_tlb(self.handle_)
+end
+
+function Engine:ctl_get_arch()
+    return uc_c.ctl_get_arch(self.handle_)
+end
+
+function Engine:ctl_get_cpu_model()
+    return uc_c.ctl_get_cpu_model(self.handle_)
+end
+
+function Engine:ctl_get_exits()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_get_exits_cnt()
+    return uc_c.ctl_get_exits_cnt(self.handle_)
+end
+
+function Engine:ctl_get_mode()
+    return uc_c.ctl_get_mode(self.handle_)
+end
+
+function Engine:ctl_get_page_size()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_get_timeout()
+    return uc_c.ctl_get_timeout(self.handle_)
+end
+
+function Engine:ctl_remove_cache()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_request_cache()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_set_cpu_model()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_set_exits()
+    error("Not implemented yet")
+end
+
+function Engine:ctl_set_page_size()
+    error("Not implemented yet")
+end
 
 return M

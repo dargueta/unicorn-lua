@@ -40,7 +40,8 @@ void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format, va_
 {
     char *message = malloc(max_size + 1);
 
-    vsnprintf(message, max_size + 1, format, argv);
+    vsnprintf(message, max_size, format, argv);
+    message[max_size] = '\0';
     lua_pushstring(L, message);
     free(message);
 }
@@ -209,7 +210,6 @@ static const luaL_Reg kFunctions[] = {
     {"reg_write_as", ul_reg_write_as},
     {"strerror", ul_strerror},
     {"version", ul_version},
-#if UC_VERSION_MAJOR >= 2
     {"create_edge_generated_hook", ul_create_edge_generated_hook},
     {"create_tcg_opcode_hook", ul_create_tcg_opcode_hook},
     {"ctl_exits_disable", ul_ctl_exits_disable},
@@ -227,7 +227,6 @@ static const luaL_Reg kFunctions[] = {
     {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
     {"ctl_set_exits", ul_ctl_set_exits},
     {"ctl_set_page_size", ul_ctl_set_page_size},
-#endif /* UC_VERSION_MAJOR >= 2 */
     {NULL, NULL}};
 
 LUA_API

@@ -4,8 +4,27 @@ Changes
 2.3.0
 -----
 
-Update documentation to indicate Unicorn 1.x never claimed support for Apple
-silicon
+New Features
+~~~~~~~~~~~~
+
+* Official support for Unicorn 2.1.x.
+* Documentation for the Lua API is now available.
+
+Bugs
+~~~~
+
+* Update documentation to indicate Unicorn 1.x never claimed support for Apple
+  silicon.
+* Macros with a line continuation that contained parentheses weren't detected,
+  so some constants like `UC_HOOK_MEM_READ_INVALID` were unavailable.
+* M
+
+Other Changes
+~~~~~~~~~~~~~
+
+The library has been completely rewritten in a mixture of C and Lua, rather than
+entirely in C++. This has allowed some drastic simplifications, such as removing
+a complex weak table tracking
 
 2.2.1 (2024-05-10)
 ------------------

@@ -96,12 +96,20 @@ int ul_create_cpuid_hook(lua_State *L)
 
 int ul_create_edge_generated_hook(lua_State *L)
 {
+#if UC_VERSION_MAJOR < 2
+    ulinternal_crash_unsupported_operation(L);
+#else
     ulinternal_crash_not_implemented(L);
+#endif
 }
 
 int ul_create_tcg_opcode_hook(lua_State *L)
 {
+#if UC_VERSION_MAJOR < 2
+    ulinternal_crash_unsupported_operation(L);
+#else
     ulinternal_crash_not_implemented(L);
+#endif
 }
 
 static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
