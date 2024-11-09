@@ -33,6 +33,8 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
 UL_RETURNS_POINTER
 static ULHook *helper_create_generic_hook(lua_State *L, void *callback);
 
+static void push_callback_to_lua(const ULHook *hook);
+
 static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
                                                            void *userdata);
 static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
@@ -177,13 +179,22 @@ int ul_hook_del(lua_State *L)
     return 0;
 }
 
+static void push_callback_to_lua(const ULHook *hook)
+{
+#if LUA_VERSION_NUMBER >= 503
+    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+#else
+    lua_pushinteger(hook->L, hook->callback_ref);
+    lua_gettable(hook->L, LUA_REGISTRYINDEX);
+#endif
+}
+
 static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
                                                            void *userdata)
 {
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
-
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_call(hook->L, 0, 0);
 }
 
@@ -193,7 +204,7 @@ static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intn
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)intno);
     lua_call(hook->L, 1, 0);
 }
@@ -205,7 +216,7 @@ static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_ty
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)type);
     lua_pushinteger(hook->L, (lua_Integer)address);
     lua_pushinteger(hook->L, (lua_Integer)size);
@@ -221,10 +232,7 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    /* Push the callback function onto the stack. */
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
-
-    /* Push the arguments */
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)type);
     lua_pushinteger(hook->L, (lua_Integer)address);
     lua_pushinteger(hook->L, (lua_Integer)size);
@@ -250,7 +258,7 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)port);
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_call(hook->L, 2, 1);
@@ -266,7 +274,7 @@ static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port,
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)port);
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_pushinteger(hook->L, (lua_Integer)value);
@@ -279,7 +287,7 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
 
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
+    push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)address);
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_call(hook->L, 2, 0);
