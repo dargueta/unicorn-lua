@@ -161,7 +161,7 @@ void register__from_lua(struct Register *reg, lua_State *L, int value_index, int
 ! for _, conf in ipairs(int_arrays) do
         case UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count):
             for (i = 0; i < $(conf.count); ++i) {
-#if LUA_VERSION_NUMBER >= 503
+#if LUA_VERSION_NUM >= 503
                 lua_geti(L, value_index, i + 1);
 #else
                 lua_pushinteger(L, i + 1);
@@ -176,7 +176,7 @@ void register__from_lua(struct Register *reg, lua_State *L, int value_index, int
 ! for _, conf in ipairs(float_arrays) do
         case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count):
             for (i = 0; i < $(conf.count); ++i) {
-#if LUA_VERSION_NUMBER >= 503
+#if LUA_VERSION_NUM >= 503
                 lua_geti(L, value_index, i + 1);
 #else
                 lua_pushinteger(L, i + 1);

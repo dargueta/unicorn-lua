@@ -235,7 +235,7 @@ int ul_hook_del(lua_State *L)
 
 static void push_callback_to_lua(const ULHook *hook)
 {
-#if LUA_VERSION_NUMBER >= 503
+#if LUA_VERSION_NUM >= 503
     lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
 #else
     lua_pushinteger(hook->L, hook->callback_ref);
