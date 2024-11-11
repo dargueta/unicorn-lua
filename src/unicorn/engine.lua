@@ -61,15 +61,16 @@ local MemoryRegion = setmetatable({}, {__setindex = function () end})
 --- @treturn Engine  A class instance wrapping the handle.
 function M.wrap_handle_(handle)
     local instance = {
+        is_running_ = false,
         handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
         -- the state the context describes. Since there's no point to holding onto a
         -- context the user can no longer use, we use a weak table to store them to allow
         -- them to be garbage collected once the user can't use them anymore.
         --
-        -- We still need this table because if there are active contexts laying around
-        -- when the engine is closed, we need to release those as well.
-        contexts_ = setmetatable({}, {__mode = "k"}),
+        -- We still need this table because if there are active contexts lying around when
+        -- the engine is closed, we need to release those as well.
+        contexts_ = setmetatable({}, {__mode = "kv"}),
         hooks_ = {},
     }
 
@@ -101,9 +102,11 @@ function Engine:close()
         error("Attempted to close an engine twice.")
     end
 
-    self:emu_stop()
+    if self.is_running_ then
+        self:emu_stop()
+    end
 
-    for _, context in ipairs(self.contexts_) do
+    for context in pairs(self.contexts_) do
         context:free()
     end
     self.contexts_ = nil
@@ -169,11 +172,13 @@ function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
         timeout or 0,
         n_instructions or 0
     )
+    self.is_running_ = true
 end
 
 --- Pause emulation.
 function Engine:emu_stop()
     uc_c.emu_stop(self.handle_)
+    self.is_running_ = false
 end
 
 --- Get the status code of the last API operation on this engine.
@@ -345,7 +350,8 @@ end
 ---
 --- This is the converse of @{Engine:reg_read_as}, and lets you set a register using an
 --- array of (for example) eight 16-bit integers. While especially useful for SIMD
---- registers, any register can be written to with this method.
+--- registers, any register can be written to with this method. For example, you can set
+--- AX using two eight-bit values instead of having to compute `(AH << 8) | AL` manually.
 function Engine:reg_write_as(register, value, as_type)
     return uc_c.reg_write_as(self.handle_, register, value, as_type)
 end
