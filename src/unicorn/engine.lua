@@ -208,7 +208,7 @@ end
 --- @usage engine:hook_add(unicorn_const.UC_HOOK_MEM_WRITE, my_callback, 0xb8000, 0xbffff)
 --- @see hook_del
 function Engine:hook_add(hook_type, callback, start_address, end_address, udata, ...)
-    return uc_hooks.create_hook(
+    local hook_handle = uc_hooks.create_hook(
         self,
         hook_type,
         callback,
@@ -217,6 +217,8 @@ function Engine:hook_add(hook_type, callback, start_address, end_address, udata,
         udata,
         ...
     )
+    self.hooks_[hook_handle] = hook_handle
+    return hook_handle
 end
 
 --- Remove a hook from the engine.
@@ -225,6 +227,7 @@ end
 --- @see hook_add
 function Engine:hook_del(hook)
     uc_c.hook_del(self.handle_, hook)
+    self.hooks_[hook] = nil
 end
 
 --- Create a new region of emulated RAM in the engine.
