@@ -38,10 +38,10 @@ local ContextMeta = {__index = Context}
 ---
 --- @treturn Context  An object-oriented wrapper for the engine context.
 function M.wrap_handle_(engine, context_handle)
-    -- We want to hold a weak reference to the engine so that this context laying around
-    -- won't prevent it from being collected, but we do need to hold a strong reference to
-    -- the handle returned to us by Unicorn. Thus, we need to put the engine into a weak
-    -- table instead of directly in the Context object.
+    -- We want to hold a weak reference to the engine so that this context lying around
+    -- won't prevent the engine from being collected. However, we do need to hold a strong
+    -- reference to the context handle returned to us by Unicorn. Thus, we need to put the
+    -- engine into a weak table instead of directly in the Context object.
     local instance = {
         engine_ref_ = setmetatable({engine = engine}, {__mode = "v"}),
         handle_ = context_handle,
