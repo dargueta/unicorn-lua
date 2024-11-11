@@ -17,7 +17,23 @@
 local unicorn = require 'unicorn'
 local uc_const = require 'unicorn.unicorn_const'
 local x86 = require 'unicorn.x86_const'
+local pl_pretty = require "pl.pretty"
+local pl_utils = require "pl.utils"
 
+
+function assert_argument_count(argv, expected_count)
+  if #argv == expected_count then
+    return
+  end
+
+  local emsg = string.format(
+    "Bad number of arguments; expected %d, got %d;\n%s",
+      expected_count,
+      #argv,
+      pl_pretty.write(argv)
+  )
+  error(emsg)
+end
 
 describe('Hook tests', function ()
   it('[x86] Catch valid memory read', function ()
@@ -25,12 +41,19 @@ describe('Hook tests', function ()
     uc:mem_map(0, 2^20)
 
     local callback = spy.new(
-      function (engine, access_type, address, size, value)
+      function (...)
+        local argv = {...}
+        -- There are six arguments to the function, but `userdata` should be nil. Trailing
+        -- nil arguments get clipped, so in this case we only receive five.
+        assert_argument_count(argv, 5)
+
+        local engine, access_type, address, size, value, userdata = pl_utils.unpack(argv)
         assert.are.equals(uc, engine)
-        assert.are.equals(uc_const.UC_MEM_READ_AFTER, access_type)
-        assert.are.equals(0x12345, address)
-        assert.are.equals(4, size)
-        assert.are.equals(0, value)
+        assert.are.equal(uc_const.UC_MEM_READ_AFTER, access_type)
+        assert.are.equal(0x12345, address)
+        assert.are.equal(4, size)
+        assert.are.equal(0, value)
+        assert.are.equals(nil, userdata)
 
         engine:emu_stop()
       end)
@@ -51,10 +74,15 @@ describe('Hook tests', function ()
     uc:mem_map(0, 2^20)
 
     local callback = spy.new(
-      function (engine, port, size)
+      function (...)
+        local argv = {...}
+        assert_argument_count(argv, 3)
+
+        local engine, port, size, userdata = pl_utils.unpack(argv)
         assert.are.equals(uc, engine)
-        assert.are.equals(0x80, port)
-        assert.are.equals(4, size)
+        assert.are.equal(0x80, port)
+        assert.are.equal(4, size)
+        assert.are.equals(nil, userdata)
         return 0xdeadbeef
       end)
 

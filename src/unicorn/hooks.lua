@@ -15,8 +15,6 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 --[[--
-
-
 @module hooks
 ]]
 
@@ -29,6 +27,27 @@ local have_x86, x86_const = pcall(require, "unicorn.x86_const")
 
 if not have_arm64 then arm64_const = {} end
 if not have_x86 then x86_const = {} end
+
+
+local function wrap_callback(callback, engine, userdata)
+    if _G.unpack == nil then
+        -- Lua 5.2+
+        return function (...)
+            local arguments = {...}
+            table.insert(arguments, 1, engine)
+            table.insert(arguments, userdata)
+            return callback(table.unpack(arguments))
+        end
+    end
+
+    -- Lua 5.1
+    return function (...)
+        local arguments = {...}
+        table.insert(arguments, 1, engine)
+        table.insert(arguments, userdata)
+        return callback(unpack(arguments))
+    end
+end
 
 
 local function create_hook_creator_by_name(name)
@@ -48,15 +67,15 @@ local function create_hook_creator_by_name(name)
             end
         end
 
-        local wrapped_callback = function (...)
-            return callback(engine, ..., userdata)
+        if start_addr == nil then
+            start_addr = 0
         end
 
         return uc_c[name](
             engine.handle_,
             hook_type,
-            wrapped_callback,
-            start_addr or 0,
+            wrap_callback(callback, engine, userdata),
+            start_addr,
             end_addr,
             userdata
         )
@@ -64,20 +83,18 @@ local function create_hook_creator_by_name(name)
 end
 
 
-local function create_code_hook(engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args)
+local function create_code_hook(
+    engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args
+)
     local instruction_id = remaining_args[1]
     if instruction_id == nil then
         error("Can't create instruction hook: no opcode was passed to hook_add().")
     end
 
-    local wrapped_callback = function (...)
-        return callback(engine, ..., userdata)
-    end
-
     return uc_c.create_code_hook(
         engine,
         hook_type,
-        wrapped_callback,
+        wrap_callback(callback, engine, userdata),
         start_addr or 0,
         end_addr or 0,
         instruction_id
@@ -95,7 +112,7 @@ local function create_tcg_opcode_hook(
     userdata,
     remaining_args
 )
-    local opcode, flags = table.unpack(remaining_args, 1, 2)
+    local opcode, flags = (table.unpack or _G.unpack)(remaining_args, 1, 2)
 
     if opcode == nil then
         error("Can't create TCG hook: no opcode was passed to hook_add().")
@@ -104,14 +121,10 @@ local function create_tcg_opcode_hook(
         error("Can't create TCG hook: no trap flags were passed to hook_add().")
     end
 
-    local wrapped_callback = function (...)
-        return callback(engine, ..., userdata)
-    end
-
     return uc_c.create_tcg_opcode_hook(
         engine,
         hook_type,
-        wrapped_callback,
+        wrap_callback(callback, engine, userdata),
         start_addr,
         end_addr,
         opcode,
@@ -218,14 +231,17 @@ function M.create_hook(
     ...
 )
     local wrapper
+    local extra_arguments = {...}
+
     if hook_type == uc_const.UC_HOOK_INSN then
+        local instruction_id = extra_arguments[1]
         wrapper = INSTRUCTION_HOOK_WRAPPERS[instruction_id] or create_code_hook
     else
         wrapper = DEFAULT_HOOK_WRAPPERS[hook_type]
             or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
-    return wrapper(engine, hook_type, callback, start_addr, end_addr, user_extra, {...})
+    return wrapper(engine, hook_type, callback, start_addr, end_addr, user_extra, extra_arguments)
 end
 
 --- Information about the coprocessor, used by ARM64 instruction hooks.

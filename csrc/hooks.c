@@ -26,12 +26,15 @@
 #include <unicorn/unicorn.h>
 
 UL_RETURNS_POINTER
-static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
+static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uc_hook_type *restrict hook_type,
                                     uint64_t *restrict start_address,
                                     uint64_t *restrict end_address);
 UL_RETURNS_POINTER
-static ULHook *helper_create_generic_hook(lua_State *L, void *callback);
+static ULHook *helper_create_generic_hook(lua_State *L, const char *human_readable,
+                                          void *callback);
+
+static int helper_create_generic_code_hook(lua_State *L, void *callback);
 
 static void push_callback_to_lua(const ULHook *hook);
 
@@ -63,8 +66,8 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
 #define define_hook_wrapper_function(slug)                                               \
     int ul_create_##slug##_hook(lua_State *L)                                            \
     {                                                                                    \
-        ULHook *hook =                                                                   \
-            helper_create_generic_hook(L, (void *)ulinternal_hook_callback__##slug);     \
+        ULHook *hook = helper_create_generic_hook(                                       \
+            L, #slug, (void *)ulinternal_hook_callback__##slug);                         \
         lua_pushlightuserdata(L, hook);                                                  \
         return 1;                                                                        \
     }
@@ -72,10 +75,7 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
 define_hook_wrapper_function(interrupt);
 define_hook_wrapper_function(memory_access);
 define_hook_wrapper_function(invalid_mem_access);
-define_hook_wrapper_function(port_in);
-define_hook_wrapper_function(port_out);
 define_hook_wrapper_function(generic_no_arguments);
-define_hook_wrapper_function(code);
 
 #pragma GCC diagnostic pop
 
@@ -96,23 +96,40 @@ int ul_create_cpuid_hook(lua_State *L)
 
 int ul_create_edge_generated_hook(lua_State *L)
 {
-#if UC_VERSION_MAJOR < 2
+#ifndef UC_HOOK_EDGE_GENERATED
     ulinternal_crash_unsupported_operation(L);
 #else
     ulinternal_crash_not_implemented(L);
 #endif
+}
+
+int ul_create_code_hook(lua_State *L)
+{
+    return helper_create_generic_code_hook(L, ulinternal_hook_callback__code);
+}
+
+int ul_create_port_in_hook(lua_State *L)
+{
+    lua_pushinteger(L, (lua_Integer)UC_X86_INS_IN);
+    return helper_create_generic_code_hook(L, ulinternal_hook_callback__port_in);
+}
+
+int ul_create_port_out_hook(lua_State *L)
+{
+    lua_pushinteger(L, (lua_Integer)UC_X86_INS_OUT);
+    return helper_create_generic_code_hook(L, ulinternal_hook_callback__port_out);
 }
 
 int ul_create_tcg_opcode_hook(lua_State *L)
 {
-#if UC_VERSION_MAJOR < 2
+#ifndef UC_HOOK_TCG_OPCODE
     ulinternal_crash_unsupported_operation(L);
 #else
     ulinternal_crash_not_implemented(L);
 #endif
 }
 
-static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
+static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uc_hook_type *restrict hook_type,
                                     uint64_t *restrict start_address,
                                     uint64_t *restrict end_address)
@@ -125,6 +142,7 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
     }
 
     hook->L = L;
+    hook->hook_handle = (uc_hook)0;
     *engine = (uc_engine *)lua_topointer(L, 1);
     *hook_type = (uc_hook_type)lua_tointeger(L, 2);
     *start_address = (uint64_t)lua_tointeger(L, 4);
@@ -138,7 +156,8 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine *restrict *engine,
     return hook;
 }
 
-ULHook *helper_create_generic_hook(lua_State *L, void *callback)
+ULHook *helper_create_generic_hook(lua_State *L, const char *human_readable,
+                                   void *callback)
 {
     uc_engine *engine;
     uint64_t start_address, end_address;
@@ -155,12 +174,39 @@ ULHook *helper_create_generic_hook(lua_State *L, void *callback)
         free(hook);
         ulinternal_crash_if_failed(
             L, error,
-            "Failed to create generic hook of type %ld from address 0x%08" PRIX64
+            "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
             " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
-            (long)hook_type, start_address, end_address);
+            (long)hook_type, human_readable, start_address, end_address);
     }
 
     return hook;
+}
+
+static int helper_create_generic_code_hook(lua_State *L, void *callback)
+{
+    uc_engine *engine;
+    uint64_t start_address, end_address;
+    uc_hook_type hook_type;
+
+    ULHook *hook =
+        get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
+
+    int opcode = lua_tointeger(L, -1);
+    uc_err error = uc_hook_add(engine, &hook->hook_handle, hook_type, callback, hook,
+                               start_address, end_address, opcode);
+
+    if (error != UC_ERR_OK)
+    {
+        free(hook);
+        ulinternal_crash_if_failed(
+            L, error,
+            "Failed to create code hook for instruction ID %d from address 0x%08" PRIX64
+            " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
+            opcode, start_address, end_address);
+    }
+
+    lua_pushlightuserdata(L, hook);
+    return 1;
 }
 
 int ul_hook_del(lua_State *L)
@@ -255,6 +301,7 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
                    lua_typename(hook->L, -1));
         UL_UNREACHABLE_MARKER;
     }
+
     int return_value = lua_toboolean(hook->L, -1);
     lua_pop(hook->L, 1);
     return return_value != 0;
