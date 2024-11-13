@@ -212,6 +212,9 @@ int ul_hook_del(lua_State *L)
      * protected call, the user may want to try again later. */
     ulinternal_crash_if_failed(L, error, "Failed to unset hook.");
 
+    /* Release the callback. */
+    luaL_unref(L, LUA_REGISTRYINDEX, hook->callback_ref);
+
     /* Even though we're freeing the memory, accessing that address might still be valid
      * as far as the OS is concerned. We mark the callback field with an impossible value
      * in order to give ourselves a chance at catching a double free. */
