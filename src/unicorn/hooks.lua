@@ -192,16 +192,18 @@ if uc_const.UC_HOOK_EDGE_GENERATED ~= nil then
 end
 
 
-local INSTRUCTION_HOOK_WRAPPERS = {
-    [x86_const.UC_X86_INS_CPUID] = create_cpuid_hook;
-    [x86_const.UC_X86_INS_IN] = create_port_in_hook;
-    [x86_const.UC_X86_INS_OUT] = create_port_out_hook;
-    [x86_const.UC_X86_INS_SYSCALL] = create_generic_hook_with_no_arguments;
-    [x86_const.UC_X86_INS_SYSENTER] = create_generic_hook_with_no_arguments;
-}
+local INSTRUCTION_HOOK_WRAPPERS = {}
+
+if have_x86 then
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_CPUID] = create_cpuid_hook
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_IN] = create_port_in_hook
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_OUT] = create_port_out_hook
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSCALL] = create_generic_hook_with_no_arguments
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSENTER] = create_generic_hook_with_no_arguments
+end
 
 -- These were all added at the same time in Unicorn 2.0
-if arm64_const.UC_ARM64_INS_MRS ~= nil then
+if have_arm64 and arm64_const.UC_ARM64_INS_MRS ~= nil then
     INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_MRS] = create_arm64_sys_hook
     INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_MSR] = create_arm64_sys_hook
     INSTRUCTION_HOOK_WRAPPERS[arm64_const.UC_ARM64_INS_SYSL] = create_arm64_sys_hook
