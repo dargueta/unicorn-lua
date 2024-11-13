@@ -16,12 +16,10 @@
 
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
-#include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unicorn/unicorn.h>
 
@@ -30,11 +28,11 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uc_hook_type *restrict hook_type,
                                     uint64_t *restrict start_address,
                                     uint64_t *restrict end_address);
-UL_RETURNS_POINTER
-static ULHook *helper_create_generic_hook(lua_State *L, const char *human_readable,
+
+static void helper_create_generic_hook(lua_State *L, const char *human_readable,
                                           void *callback);
 
-static int helper_create_generic_code_hook(lua_State *L, void *callback);
+static void helper_create_generic_code_hook(lua_State *L, void *callback);
 
 static void push_callback_to_lua(const ULHook *hook);
 
@@ -63,13 +61,12 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
-#define define_hook_wrapper_function(slug)                                               \
-    int ul_create_##slug##_hook(lua_State *L)                                            \
-    {                                                                                    \
-        ULHook *hook = helper_create_generic_hook(                                       \
-            L, #slug, (void *)ulinternal_hook_callback__##slug);                         \
-        lua_pushlightuserdata(L, hook);                                                  \
-        return 1;                                                                        \
+#define define_hook_wrapper_function(slug)                                    \
+    int ul_create_##slug##_hook(lua_State *L)                                 \
+    {                                                                         \
+        helper_create_generic_hook(L, #slug,                                  \
+                                   (void *)ulinternal_hook_callback__##slug); \
+        return 1;                                                             \
     }
 
 define_hook_wrapper_function(interrupt);
@@ -105,19 +102,22 @@ int ul_create_edge_generated_hook(lua_State *L)
 
 int ul_create_code_hook(lua_State *L)
 {
-    return helper_create_generic_code_hook(L, ulinternal_hook_callback__code);
+    helper_create_generic_code_hook(L, ulinternal_hook_callback__code);
+    return 1;
 }
 
 int ul_create_port_in_hook(lua_State *L)
 {
     lua_pushinteger(L, (lua_Integer)UC_X86_INS_IN);
-    return helper_create_generic_code_hook(L, ulinternal_hook_callback__port_in);
+    helper_create_generic_code_hook(L, ulinternal_hook_callback__port_in);
+    return 1;
 }
 
 int ul_create_port_out_hook(lua_State *L)
 {
     lua_pushinteger(L, (lua_Integer)UC_X86_INS_OUT);
-    return helper_create_generic_code_hook(L, ulinternal_hook_callback__port_out);
+    helper_create_generic_code_hook(L, ulinternal_hook_callback__port_out);
+    return 1;
 }
 
 int ul_create_tcg_opcode_hook(lua_State *L)
@@ -134,12 +134,14 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uint64_t *restrict start_address,
                                     uint64_t *restrict end_address)
 {
-    ULHook *hook = malloc(sizeof(*hook));
-    if (hook == NULL)
-    {
-        luaL_error(L, "Failed to allocate memory for a new hook: %s", strerror(errno));
-        UL_UNREACHABLE_MARKER;
-    }
+    /* We could allocate the memory ourselves with malloc() and pass light userdata back
+     * to the caller instead, but then we would have to do our own memory management. If
+     * testing shows an adverse performance impact then we can change this. */
+#if LUA_VERSION_NUM < 504
+    ULHook *hook = lua_newuserdata(L, sizeof(*hook));
+#else
+    ULHook *hook = lua_newuserdatauv(L, sizeof(*hook), 0);
+#endif
 
     hook->L = L;
     hook->hook_handle = (uc_hook)0;
@@ -149,15 +151,15 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
     *end_address = (uint64_t)lua_tointeger(L, 5);
 
     /* The user's callback function is in stack position 3. To be able to call it later,
-     * we save a strong reference to it in the registry. This ensures the function will
-     * always exist when the hook is triggered. */
+     * we save a strong reference to it in the C registry. Ideally we would save it in the
+     * userdata's uservalue slot, but when Unicorn calls our hook we won't have access to
+     * that userdata. */
     lua_pushvalue(L, 3);
     hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     return hook;
 }
 
-ULHook *helper_create_generic_hook(lua_State *L, const char *human_readable,
-                                   void *callback)
+void helper_create_generic_hook(lua_State *L, const char *human_readable, void *callback)
 {
     uc_engine *engine;
     uint64_t start_address, end_address;
@@ -169,20 +171,14 @@ ULHook *helper_create_generic_hook(lua_State *L, const char *human_readable,
     uc_err error = uc_hook_add(engine, &hook->hook_handle, hook_type, callback, hook,
                                start_address, end_address);
 
-    if (error != UC_ERR_OK)
-    {
-        free(hook);
-        ulinternal_crash_if_failed(
-            L, error,
-            "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
-            " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
-            (long)hook_type, human_readable, start_address, end_address);
-    }
-
-    return hook;
+    ulinternal_crash_if_failed(
+        L, error,
+        "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
+        " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
+        (long)hook_type, human_readable, start_address, end_address);
 }
 
-static int helper_create_generic_code_hook(lua_State *L, void *callback)
+static void helper_create_generic_code_hook(lua_State *L, void *callback)
 {
     uc_engine *engine;
     uint64_t start_address, end_address;
@@ -191,45 +187,36 @@ static int helper_create_generic_code_hook(lua_State *L, void *callback)
     ULHook *hook =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
 
-    int opcode = lua_tointeger(L, -1);
+    int opcode = lua_tointeger(L, 6);
     uc_err error = uc_hook_add(engine, &hook->hook_handle, hook_type, callback, hook,
                                start_address, end_address, opcode);
 
-    if (error != UC_ERR_OK)
-    {
-        free(hook);
-        ulinternal_crash_if_failed(
-            L, error,
-            "Failed to create code hook for instruction ID %d from address 0x%08" PRIX64
-            " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
-            opcode, start_address, end_address);
-    }
-
-    lua_pushlightuserdata(L, hook);
-    return 1;
+    ulinternal_crash_if_failed(
+        L, error,
+        "Failed to create code hook for instruction ID %d from address 0x%08" PRIX64
+        " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
+        opcode, start_address, end_address);
 }
 
 int ul_hook_del(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
-    ULHook *hook = (ULHook *)lua_topointer(L, 2);
+    ULHook *hook = (ULHook *)lua_touserdata(L, 2);
 
-    if (hook->callback_ref == LUA_NOREF)
+    if (hook->L == NULL || hook->callback_ref == LUA_NOREF)
         ulinternal_crash(L, "Detected attempt to remove same hook twice.");
 
     uc_err error = uc_hook_del(engine, hook->hook_handle);
 
-    /* We're deliberately not deallocating `hook` yet. If this function fails inside a
+    /* We're deliberately not destroying `hook` yet. If this function fails inside a
      * protected call, the user may want to try again later. */
     ulinternal_crash_if_failed(L, error, "Failed to unset hook.");
 
-    luaL_unref(L, LUA_REGISTRYINDEX, hook->callback_ref);
-
     /* Even though we're freeing the memory, accessing that address might still be valid
      * as far as the OS is concerned. We mark the callback field with an impossible value
-     * in order to give us a chance at catching a double free. */
+     * in order to give ourselves a chance at catching a double free. */
+    hook->L = NULL;
     hook->callback_ref = LUA_NOREF;
-    free(hook);
     return 0;
 }
 
@@ -296,8 +283,8 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
     if (lua_type(hook->L, -1) != LUA_TBOOLEAN)
     {
         luaL_error(hook->L,
-                   "Error: Handler for invalid memory accesses must return a boolean, "
-                   "got a %s instead.",
+                   "Error: Handler for invalid memory accesses must return a boolean,"
+                   " got a %s instead.",
                    lua_typename(hook->L, -1));
         UL_UNREACHABLE_MARKER;
     }

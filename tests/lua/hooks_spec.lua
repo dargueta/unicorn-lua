@@ -18,6 +18,7 @@ local unicorn = require 'unicorn'
 local uc_const = require 'unicorn.unicorn_const'
 local x86 = require 'unicorn.x86_const'
 local pl_pretty = require "pl.pretty"
+local pl_tablex = require "pl.tablex"
 local pl_utils = require "pl.utils"
 
 
@@ -52,7 +53,7 @@ describe('Hook tests', function ()
         assert.are.equal(uc_const.UC_MEM_READ_AFTER, access_type)
         assert.are.equal(0x12345, address)
         assert.are.equal(4, size)
-        assert.are.equal(0, value)
+        assert.are.equal(0xabababab, value)
         assert.are.equals(nil, userdata)
 
         engine:emu_stop()
@@ -60,13 +61,19 @@ describe('Hook tests', function ()
 
     local handle = uc:hook_add(uc_const.UC_HOOK_MEM_READ_AFTER, callback, 0, 2^20)
     assert.not_nil(handle)
+    -- Ensure the hook has been recorded in the engine's internal table.
+    assert.are.equal(1, pl_tablex.size(uc.hooks_))
 
     -- mov eax, DWORD [0x12345]
     uc:mem_write(0, '\161\069\035\001\000')
-    uc:mem_write(0x12340, string.rep('\000', 64))
+    uc:mem_write(0x12340, string.rep('\171', 64))
 
     uc:emu_start(0, 2^20, 0, 1)
     assert.spy(callback).was_called()
+
+    uc:hook_del(handle)
+    -- Ensure the hook has been removed from the engine's internal table.
+    assert.are.equal(0, pl_tablex.size(uc.hooks_))
   end)
 
   it('[x86] Catch port read', function ()
@@ -104,8 +111,13 @@ describe('Hook tests', function ()
     uc:mem_map(0, 2^20)
 
     local callback = spy.new(
-      function (engine, intno)
+      function (...)
+        local argv = {...}
+        assert_argument_count(argv, 2)
+
+        local engine, intno, userdata = pl_utils.unpack(argv)
         assert.are.equals(uc, engine)
+        assert.are.equals(nil, userdata)
         assert.are.equals(0xff, intno)
         assert.are.equals(0x55aa, uc:reg_read(x86.UC_X86_REG_AX))
         uc:reg_write(x86.UC_X86_REG_AX, 0xaa55)
@@ -129,12 +141,16 @@ describe('Hook tests', function ()
 
     local register_id = x86.UC_X86_REG_ES
     local callback = spy.new(
-      function (engine, intno, user_data)
+      function (...)
+        local argv = {...}
+        assert_argument_count(argv, 3)
+
+        local engine, intno, userdata = pl_utils.unpack(argv)
         assert.are.equals(uc, engine)
         assert.are.equals(0xff, intno)
-        assert.are.equals(register_id, user_data)
-        assert.are.equals(0xdead, uc:reg_read(user_data))
-        uc:reg_write(user_data, 0xf00d)
+        assert.are.equals(register_id, userdata)
+        assert.are.equals(0xdead, uc:reg_read(userdata))
+        uc:reg_write(userdata, 0xf00d)
       end)
 
     uc:hook_add(uc_const.UC_HOOK_INTR, callback, nil, nil, register_id)
@@ -155,12 +171,16 @@ describe('Hook tests', function ()
 
     local info = {x86.UC_X86_REG_ES}
     local callback = spy.new(
-      function (engine, intno, user_data)
+      function (...)
+        local argv = {...}
+        assert_argument_count(argv, 3)
+
+        local engine, intno, userdata = pl_utils.unpack(argv)
         assert.are.equals(uc, engine)
         assert.are.equals(0xff, intno)
-        assert.are.equals(info, user_data)
-        assert.are.equals(0xdead, uc:reg_read(user_data[1]))
-        uc:reg_write(user_data[1], 0xf00d)
+        assert.are.equals(info, userdata)
+        assert.are.equals(0xdead, uc:reg_read(userdata[1]))
+        uc:reg_write(userdata[1], 0xf00d)
       end)
 
     uc:hook_add(uc_const.UC_HOOK_INTR, callback, nil, nil, info)

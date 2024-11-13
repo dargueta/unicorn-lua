@@ -76,29 +76,44 @@ local function create_hook_creator_by_name(name)
             hook_type,
             wrap_callback(callback, engine, userdata),
             start_addr,
-            end_addr,
-            userdata
+            end_addr
         )
     end
 end
 
 
-local function create_code_hook(
-    engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args
-)
-    local instruction_id = remaining_args[1]
-    if instruction_id == nil then
-        error("Can't create instruction hook: no opcode was passed to hook_add().")
-    end
-
-    return uc_c.create_code_hook(
-        engine,
-        hook_type,
-        wrap_callback(callback, engine, userdata),
-        start_addr or 0,
-        end_addr or 0,
-        instruction_id
+local function create_code_hook_creator_by_name(name)
+    return function (
+        engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args
     )
+        local instruction_id = remaining_args[1]
+        if instruction_id == nil then
+            error("Can't create instruction hook: no opcode was passed to hook_add().")
+        end
+
+        -- Argument preparation is the same as for regular code hooks.
+        if end_addr == nil then
+            if start_addr == nil then
+                start_addr = 1
+                end_addr = 0
+            else
+                end_addr = -1
+            end
+        end
+
+        if start_addr == nil then
+            start_addr = 0
+        end
+
+        return uc_c[name](
+            engine,
+            hook_type,
+            wrap_callback(callback, engine, userdata),
+            start_addr,
+            end_addr,
+            instruction_id
+        )
+    end
 end
 
 
@@ -136,8 +151,9 @@ end
 local create_interrupt_hook = create_hook_creator_by_name("create_interrupt_hook")
 local create_memory_access_hook = create_hook_creator_by_name("create_memory_access_hook")
 local create_invalid_mem_access_hook = create_hook_creator_by_name("create_invalid_mem_access_hook")
-local create_port_in_hook = create_hook_creator_by_name("create_port_in_hook")
-local create_port_out_hook = create_hook_creator_by_name("create_port_out_hook")
+local create_code_hook = create_code_hook_creator_by_name("create_code_hook")
+local create_port_in_hook = create_code_hook_creator_by_name("create_port_in_hook")
+local create_port_out_hook = create_code_hook_creator_by_name("create_port_out_hook")
 local create_arm64_sys_hook = create_hook_creator_by_name("create_arm64_sys_hook")
 local create_invalid_instruction_hook = create_hook_creator_by_name("create_invalid_instruction_hook")
 local create_cpuid_hook = create_hook_creator_by_name("create_cpuid_hook")
