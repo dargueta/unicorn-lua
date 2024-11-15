@@ -71,6 +71,11 @@ function M.wrap_handle_(handle)
         -- We still need this table because if there are active contexts lying around when
         -- the engine is closed, we need to release those as well.
         contexts_ = setmetatable({}, {__mode = "kv"}),
+
+        -- Hooks maintain strong references to their callbacks. When an engine is closed,
+        -- we need to delete the strong references manually to release any remaining
+        -- callbacks.
+        -- TODO (dargueta): Keep strong references to callbacks here, not in C.
         hooks_ = {},
     }
 
@@ -111,6 +116,9 @@ function Engine:close()
     end
     self.contexts_ = nil
 
+    -- While the Unicorn library doesn't require us to remove hooks before closing an
+    -- engine, because hooks keep strong references to their callbacks we need to do that
+    -- anyway to prevent a resource leak.
     for hook_handle in pairs(self.hooks_) do
         uc_c.hook_del(self.handle_, hook_handle)
     end
