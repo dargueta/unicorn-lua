@@ -1,5 +1,6 @@
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
+#include <errno.h>
 #include <inttypes.h>
 #include <lauxlib.h>
 #include <lua.h>
@@ -29,7 +30,7 @@ int ul_reg_write_as(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     int register_id = (int)luaL_checkinteger(L, 2);
-    struct Register reg;
+    struct ULRegister reg;
 
     register__from_lua(&reg, L, 3, 4);
 
@@ -81,7 +82,7 @@ int ul_reg_read_as(lua_State *L)
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     int register_id = (int)luaL_checkinteger(L, 2);
 
-    struct Register reg;
+    struct ULRegister reg;
     reg.kind = (enum RegisterDataType)luaL_checkinteger(L, 3);
 
     if (register_id == UC_X86_REG_MSR)
@@ -135,56 +136,78 @@ int ul_reg_write_batch(lua_State *L)
     return 0;
 }
 
-static void prepare_batch_buffers(size_t n_registers, register_buffer_type **values,
-                                  void ***value_pointers)
+static void prepare_batch_buffers(lua_State *L, size_t n_registers,
+                                  register_buffer_type **values, void ***value_pointers)
 {
-    *values = calloc(sizeof(register_buffer_type), n_registers);
-    *value_pointers = malloc(n_registers * sizeof(void *));
+#if LUA_VERSION_NUM >= 504
+    *values = lua_newuserdatauv(L, sizeof(register_buffer_type) * n_registers, 0);
+    *value_pointers = lua_newuserdatauv(L, n_registers * sizeof(void *), 0);
+#else
+    *values = lua_newuserdata(L, n_registers * sizeof(register_buffer_type));
+    *value_pointers = lua_newuserdata(L, n_registers * sizeof(void *));
+#endif
 
+    memset(*values, 0, n_registers * sizeof(register_buffer_type));
     for (size_t i = 0; i < n_registers; ++i)
         (*value_pointers)[i] = &(*values)[i];
 }
 
-#if 0
 int ul_reg_read_batch(lua_State *L)
 {
-    uc_engine *engine = ul_toengine(L, 1);
-    auto n_registers = static_cast<size_t>(lua_gettop(L)) - 1;
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    size_t n_registers = (size_t)lua_gettop(L) - 1;
 
-    std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<register_buffer_type[]> values;
-    std::unique_ptr<void *[]> value_pointers;
+    if (n_registers == 0)
+        return 0;
 
-    prepare_batch_buffers(n_registers, values, value_pointers);
+#if LUA_VERSION_NUM >= 504
+    int *register_ids = lua_newuserdatauv(L, n_registers * sizeof(*register_ids), 0);
+#else
+    int *register_ids = lua_newuserdata(L, n_registers * sizeof(*register_ids));
+#endif
+
+    register_buffer_type *values;
+    void **value_pointers;
+
+    prepare_batch_buffers(L, n_registers, &values, &value_pointers);
+
     for (size_t i = 0; i < n_registers; ++i)
-        register_ids[i] = static_cast<int>(lua_tointeger(L, static_cast<int>(i) + 2));
+        register_ids[i] = (int)lua_tointeger(L, (int)i + 2);
 
-    uc_err error = uc_reg_read_batch(engine, register_ids.get(), value_pointers.get(),
-                                     static_cast<int>(n_registers));
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    uc_err error =
+        uc_reg_read_batch(engine, register_ids, value_pointers, (int)n_registers);
+    ulinternal_crash_if_failed(L, error, "Failed to read %zu registers.", n_registers);
 
     for (size_t i = 0; i < n_registers; ++i)
-    {
-        lua_pushinteger(L, *reinterpret_cast<lua_Integer *>(values[i]));
-    }
-    return static_cast<int>(n_registers);
+        lua_pushinteger(L, *(lua_Integer *)values[i]);
+
+    return (int)n_registers;
 }
 
 int ul_reg_read_batch_as(lua_State *L)
 {
-    uc_engine *engine = ul_toengine(L, 1);
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     size_t n_registers = count_table_elements(L, 2);
 
-    std::unique_ptr<int[]> register_ids(new int[n_registers]);
-    std::unique_ptr<int[]> value_types(new int[n_registers]);
-    std::unique_ptr<register_buffer_type[]> values;
-    std::unique_ptr<void *[]> value_pointers;
+    if (n_registers == 0)
+        return 0;
 
-    prepare_batch_buffers(n_registers, values, value_pointers);
+#if LUA_VERSION_NUM >= 504
+    int *register_ids =
+        (int *)lua_newuserdatauv(L, n_registers * sizeof(*register_ids), 0);
+    int *value_types = (int *)lua_newuserdatauv(L, n_registers * sizeof(*value_types), 0);
+#else
+    int *register_ids = (int *)lua_newuserdata(L, n_registers * sizeof(*register_ids));
+    int *value_types = (int *)lua_newuserdata(L, n_registers * sizeof(*value_types));
+#endif
 
-    // Iterate through the second argument -- a table mapping register IDs to
-    // the types we want them back as.
+    register_buffer_type *values;
+    void **value_pointers;
+
+    prepare_batch_buffers(L, n_registers, &values, &value_pointers);
+
+    // Iterate through the second argument -- a table mapping register IDs to the types
+    // we want them back as.
     lua_pushnil(L);
     for (size_t i = 0; lua_next(L, 2) != 0; ++i)
     {
@@ -193,37 +216,29 @@ int ul_reg_read_batch_as(lua_State *L)
         lua_pop(L, 1);
     }
 
-    uc_err error = uc_reg_read_batch(engine, register_ids.get(), value_pointers.get(),
-                                     static_cast<int>(n_registers));
-    if (error != UC_ERR_OK)
-        ul_crash_on_error(L, error);
+    uc_err error =
+        uc_reg_read_batch(engine, register_ids, value_pointers, (int)n_registers);
+    ulinternal_crash_if_failed(
+        L, error, "Failed to read %zu registers with alternate types.", n_registers);
 
-    // Create the table we're going to return the register values in. The result
-    // is a key-value mapping where the keys are the register IDs and the values
-    // are the typecasted values read from the registers.
-    lua_createtable(L, 0, static_cast<int>(n_registers));
+    /* Create the table we're going to return the register values in. The result is a
+     * key-value mapping where the keys are the register IDs and the values are the
+     * typecasted values read from the registers. */
+    lua_createtable(L, 0, (int)n_registers);
     for (size_t i = 0; i < n_registers; ++i)
     {
         // Key: register ID
         lua_pushinteger(L, register_ids[i]);
 
         // Value: Deserialized register
-        auto register_object =
-            Register(value_pointers[i], static_cast<RegisterDataType>(value_types[i]));
-        register_object.push_to_lua(L);
-        lua_settable(L, -3);
+        struct ULRegister register_object = {.kind =
+                                                 (enum RegisterDataType)value_types[i]};
+        memcpy(&register_object.data, value_pointers[i], sizeof(register_object.data));
+        register__push_to_lua(&register_object, L);
+
+        // Set k-v pair.
+        lua_rawset(L, -3);
     }
 
     return 1;
 }
-#else
-int ul_reg_read_batch(lua_State *L)
-{
-    ulinternal_crash_not_implemented(L);
-}
-
-int ul_reg_read_batch_as(lua_State *L)
-{
-    ulinternal_crash_not_implemented(L);
-}
-#endif

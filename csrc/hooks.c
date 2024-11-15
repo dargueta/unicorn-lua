@@ -30,7 +30,7 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uint64_t *restrict end_address);
 
 static void helper_create_generic_hook(lua_State *L, const char *human_readable,
-                                          void *callback);
+                                       void *callback);
 
 static void helper_create_generic_code_hook(lua_State *L, void *callback);
 
@@ -61,20 +61,17 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
-#define define_hook_wrapper_function(slug)                                    \
-    int ul_create_##slug##_hook(lua_State *L)                                 \
-    {                                                                         \
-        helper_create_generic_hook(L, #slug,                                  \
-                                   (void *)ulinternal_hook_callback__##slug); \
-        return 1;                                                             \
+#define define_hook_wrapper_function(slug)                                               \
+    int ul_create_##slug##_hook(lua_State *L)                                            \
+    {                                                                                    \
+        helper_create_generic_hook(L, #slug, (void *)ulinternal_hook_callback__##slug);  \
+        return 1;                                                                        \
     }
 
 define_hook_wrapper_function(interrupt);
 define_hook_wrapper_function(memory_access);
 define_hook_wrapper_function(invalid_mem_access);
 define_hook_wrapper_function(generic_no_arguments);
-
-#pragma GCC diagnostic pop
 
 int ul_create_arm64_sys_hook(lua_State *L)
 {
@@ -128,6 +125,8 @@ int ul_create_tcg_opcode_hook(lua_State *L)
     ulinternal_crash_not_implemented(L);
 #endif
 }
+
+#pragma GCC diagnostic pop
 
 static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uc_hook_type *restrict hook_type,

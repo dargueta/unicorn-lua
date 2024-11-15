@@ -100,7 +100,7 @@ void float_array_$(conf.count)xf$(conf.bits)_to_table(lua_State *L, uclua_float$
 ! end
 
 
-void register__push_to_lua(const struct Register *reg, lua_State *L) {
+void register__push_to_lua(const struct ULRegister *reg, lua_State *L) {
     switch (reg->kind) {
 ! for _, bits in ipairs({8, 16, 32, 64}) do
         case UL_REG_TYPE_INT$(bits):
@@ -141,7 +141,7 @@ void register__push_to_lua(const struct Register *reg, lua_State *L) {
 }
 
 
-void register__from_lua(struct Register *reg, lua_State *L, int value_index, int kind_index) {
+void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index, int kind_index) {
     int i;
     enum RegisterDataType kind = (enum RegisterDataType)lua_tointeger(L, kind_index);
     reg->kind = kind;

@@ -77,7 +77,7 @@ typedef __float128 uclua_float80;
  */
 typedef uint8_t register_buffer_type[64];
 
-struct Register
+struct ULRegister
 {
     register_buffer_type data;
     enum RegisterDataType kind;
@@ -137,7 +137,7 @@ lua_Number read_float80(const uint8_t *data);
 void write_float80(lua_Number value, uint8_t *buffer);
 
 const char *register__type_id_to_slug(enum RegisterDataType kind);
-void register__push_to_lua(const struct Register *reg, lua_State *L);
-void register__from_lua(struct Register *reg, lua_State *L, int value_index,
+void register__push_to_lua(const struct ULRegister *reg, lua_State *L);
+void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index,
                         int kind_index);
 const char *register__kind_as_human_readable(enum RegisterDataType kind);
