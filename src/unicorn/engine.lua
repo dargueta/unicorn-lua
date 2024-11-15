@@ -332,8 +332,8 @@ function Engine:reg_read_as(register, type_id)
     return uc_c.reg_read_as(self.handle_, register, type_id)
 end
 
-function Engine:reg_read_batch(registers)
-    return uc_c.reg_read_batch(self.handle_, registers)
+function Engine:reg_read_batch(...)
+    return uc_c.reg_read_batch(self.handle_, ...)
 end
 
 function Engine:reg_read_batch_as(registers)
