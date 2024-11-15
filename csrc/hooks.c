@@ -136,10 +136,10 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
     /* We could allocate the memory ourselves with malloc() and pass light userdata back
      * to the caller instead, but then we would have to do our own memory management. If
      * testing shows an adverse performance impact then we can change this. */
-#if LUA_VERSION_NUM < 504
-    ULHook *hook = lua_newuserdata(L, sizeof(*hook));
-#else
+#if LUA_VERSION_NUM >= 504
     ULHook *hook = lua_newuserdatauv(L, sizeof(*hook), 0);
+#else
+    ULHook *hook = lua_newuserdata(L, sizeof(*hook));
 #endif
 
     hook->L = L;
@@ -164,11 +164,11 @@ void helper_create_generic_hook(lua_State *L, const char *human_readable, void *
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
-    ULHook *hook =
+    ULHook *hook_data =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
 
-    uc_err error = uc_hook_add(engine, &hook->hook_handle, hook_type, callback, hook,
-                               start_address, end_address);
+    uc_err error = uc_hook_add(engine, &hook_data->hook_handle, hook_type, callback,
+                               hook_data, start_address, end_address);
 
     ulinternal_crash_if_failed(
         L, error,
@@ -183,12 +183,12 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
-    ULHook *hook =
+    ULHook *hook_data =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
 
     int opcode = lua_tointeger(L, 6);
-    uc_err error = uc_hook_add(engine, &hook->hook_handle, hook_type, callback, hook,
-                               start_address, end_address, opcode);
+    uc_err error = uc_hook_add(engine, &hook_data->hook_handle, hook_type, callback,
+                               hook_data, start_address, end_address, opcode);
 
     ulinternal_crash_if_failed(
         L, error,
