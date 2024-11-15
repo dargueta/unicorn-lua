@@ -106,7 +106,7 @@ local function create_code_hook_creator_by_name(name)
         end
 
         return uc_c[name](
-            engine,
+            engine.handle_,
             hook_type,
             wrap_callback(callback, engine, userdata),
             start_addr,
@@ -137,7 +137,7 @@ local function create_tcg_opcode_hook(
     end
 
     return uc_c.create_tcg_opcode_hook(
-        engine,
+        engine.handle_,
         hook_type,
         wrap_callback(callback, engine, userdata),
         start_addr,

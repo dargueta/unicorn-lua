@@ -16,6 +16,7 @@
 
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
+#include <assert.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
@@ -105,14 +106,12 @@ int ul_create_code_hook(lua_State *L)
 
 int ul_create_port_in_hook(lua_State *L)
 {
-    lua_pushinteger(L, (lua_Integer)UC_X86_INS_IN);
     helper_create_generic_code_hook(L, ulinternal_hook_callback__port_in);
     return 1;
 }
 
 int ul_create_port_out_hook(lua_State *L)
 {
-    lua_pushinteger(L, (lua_Integer)UC_X86_INS_OUT);
     helper_create_generic_code_hook(L, ulinternal_hook_callback__port_out);
     return 1;
 }
@@ -155,6 +154,8 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
      * that userdata. */
     lua_pushvalue(L, 3);
     hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    assert(*engine != NULL);
     return hook;
 }
 
@@ -163,6 +164,8 @@ void helper_create_generic_hook(lua_State *L, const char *human_readable, void *
     uc_engine *engine;
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
+
+    assert(lua_gettop(L) == 5);
 
     ULHook *hook_data =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
@@ -186,6 +189,15 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
     ULHook *hook_data =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
 
+    /* FIXME (dargueta): If Unicorn was compiled with packed enums, this could break.
+     * TL;DR we're assuming that an enum is an integer, but if packed enums are enabled
+     * when compiling, they could be smaller.
+     *
+     * Packing enums by default is discouraged in the GCC documentation, and it would
+     * require explicitly passing in this flag.
+     *
+     * https://stackoverflow.com/a/54527229
+     */
     int opcode = lua_tointeger(L, 6);
     uc_err error = uc_hook_add(engine, &hook_data->hook_handle, hook_type, callback,
                                hook_data, start_address, end_address, opcode);
@@ -201,6 +213,9 @@ int ul_hook_del(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     ULHook *hook = (ULHook *)lua_touserdata(L, 2);
+
+    assert(engine != NULL);
+    assert(hook != NULL);
 
     if (hook->L == NULL || hook->callback_ref == LUA_NOREF)
         ulinternal_crash(L, "Detected attempt to remove same hook twice.");
@@ -237,6 +252,7 @@ static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
 {
     (void)engine;
     ULHook *hook = (ULHook *)userdata;
+
     push_callback_to_lua(hook);
     lua_call(hook->L, 0, 0);
 }
