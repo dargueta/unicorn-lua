@@ -13,7 +13,7 @@ return {
     },
     default = {
         ["exclude-tags"] = exclude,
-        --shuffle = true,
+        shuffle = true,
         ROOT = { "./tests/lua" },
         verbose = true,
     }
