@@ -9,10 +9,11 @@ end
 
 return {
     _all = {
-        exclude_tags = exclude
+        ["exclude-tags"] = exclude,
     },
     default = {
-        shuffle = true,
+        ["exclude-tags"] = exclude,
+        --shuffle = true,
         ROOT = { "./tests/lua" },
         verbose = true,
     }
