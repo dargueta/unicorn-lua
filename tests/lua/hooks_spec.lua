@@ -74,6 +74,7 @@ describe('Hook tests', function ()
     uc:hook_del(handle)
     -- Ensure the hook has been removed from the engine's internal table.
     assert.are.equal(0, pl_tablex.size(uc.hooks_))
+      uc:close()
   end)
 
   it('[x86] Catch port read', function ()
@@ -104,6 +105,7 @@ describe('Hook tests', function ()
 
     assert.are.equals(0xdeadbeef, uc:reg_read(x86.UC_X86_REG_EAX))
     assert.spy(callback).was_called()
+      uc:close()
   end)
 
   it('[x86] Handle interrupt call', function ()
@@ -133,6 +135,7 @@ describe('Hook tests', function ()
 
     assert.spy(callback).was_called()
     assert.are.equals(0xaa55, uc:reg_read(x86.UC_X86_REG_AX), 'AX not written to')
+      uc:close()
   end)
 
   it('[x86] Passing scalar user data', function ()
@@ -163,6 +166,7 @@ describe('Hook tests', function ()
 
     assert.spy(callback).was_called()
     assert.are.equals(0xf00d, uc:reg_read(register_id), 'Register not written to')
+      uc:close()
   end)
 
   it('[x86] Passing tables as user data', function ()
@@ -193,5 +197,6 @@ describe('Hook tests', function ()
 
     assert.spy(callback).was_called()
     assert.are.equals(0xf00d, uc:reg_read(info[1]), 'Register not written to')
+      uc:close()
   end)
 end)

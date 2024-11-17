@@ -23,7 +23,6 @@ typedef struct
 {
     lua_State *L;
     uc_hook hook_handle;
-    int callback_ref;
 } ULHook;
 
 int ul_hook_del(lua_State *L);
@@ -39,3 +38,4 @@ int ul_create_generic_no_arguments_hook(lua_State *L);
 int ul_create_code_hook(lua_State *L);
 int ul_create_edge_generated_hook(lua_State *L);
 int ul_create_tcg_opcode_hook(lua_State *L);
+int ul_release_hook_callbacks(lua_State *L);

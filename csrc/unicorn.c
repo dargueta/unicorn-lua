@@ -227,6 +227,7 @@ static const luaL_Reg kFunctions[] = {
     {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
     {"ctl_set_exits", ul_ctl_set_exits},
     {"ctl_set_page_size", ul_ctl_set_page_size},
+    {"helper_release_hook_callbacks", ul_release_hook_callbacks},
     {NULL, NULL}};
 
 LUA_API

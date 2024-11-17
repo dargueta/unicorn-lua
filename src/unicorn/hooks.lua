@@ -67,15 +67,11 @@ local function create_hook_creator_by_name(name)
             end
         end
 
-        if start_addr == nil then
-            start_addr = 0
-        end
-
         return uc_c[name](
             engine.handle_,
             hook_type,
             wrap_callback(callback, engine, userdata),
-            start_addr,
+            start_addr or 0,
             end_addr
         )
     end
@@ -101,15 +97,11 @@ local function create_code_hook_creator_by_name(name)
             end
         end
 
-        if start_addr == nil then
-            start_addr = 0
-        end
-
         return uc_c[name](
             engine.handle_,
             hook_type,
             wrap_callback(callback, engine, userdata),
-            start_addr,
+            start_addr or 0,
             end_addr,
             instruction_id
         )
@@ -140,7 +132,7 @@ local function create_tcg_opcode_hook(
         engine.handle_,
         hook_type,
         wrap_callback(callback, engine, userdata),
-        start_addr,
+        start_addr or 0,
         end_addr,
         opcode,
         flags
@@ -248,18 +240,19 @@ function M.create_hook(
     user_extra,
     ...
 )
-    local wrapper
+    local constructor
     local extra_arguments = {...}
 
     if hook_type == uc_const.UC_HOOK_INSN then
         local instruction_id = extra_arguments[1]
-        wrapper = INSTRUCTION_HOOK_WRAPPERS[instruction_id] or create_code_hook
+        constructor = INSTRUCTION_HOOK_WRAPPERS[instruction_id] or create_code_hook
     else
-        wrapper = DEFAULT_HOOK_WRAPPERS[hook_type]
+        constructor = DEFAULT_HOOK_WRAPPERS[hook_type]
             or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
-    return wrapper(engine, hook_type, callback, start_addr, end_addr, user_extra, extra_arguments)
+    return constructor(
+        engine, hook_type, callback, start_addr, end_addr, user_extra, extra_arguments)
 end
 
 --- Information about the coprocessor, used by ARM64 instruction hooks.

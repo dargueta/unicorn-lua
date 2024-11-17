@@ -17,6 +17,7 @@
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
 #include <assert.h>
+#include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
@@ -132,9 +133,6 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
                                     uint64_t *restrict start_address,
                                     uint64_t *restrict end_address)
 {
-    /* We could allocate the memory ourselves with malloc() and pass light userdata back
-     * to the caller instead, but then we would have to do our own memory management. If
-     * testing shows an adverse performance impact then we can change this. */
 #if LUA_VERSION_NUM >= 504
     ULHook *hook = lua_newuserdatauv(L, sizeof(*hook), 0);
 #else
@@ -150,10 +148,11 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
 
     /* The user's callback function is in stack position 3. To be able to call it later,
      * we save a strong reference to it in the C registry. Ideally we would save it in the
-     * userdata's uservalue slot, but when Unicorn calls our hook we won't have access to
-     * that userdata. */
+     * engine, but unfortunately there's weird behavior going on with a double free and
+     * this is what works. */
+    lua_pushlightuserdata(L, hook);
     lua_pushvalue(L, 3);
-    hook->callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    lua_settable(L, LUA_REGISTRYINDEX);
 
     assert(*engine != NULL);
     return hook;
@@ -186,6 +185,8 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
+    assert(lua_gettop(L) == 6);
+
     ULHook *hook_data =
         get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
 
@@ -211,14 +212,37 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
 
 int ul_hook_del(lua_State *L)
 {
+    assert(lua_gettop(L) == 2);
+
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     ULHook *hook = (ULHook *)lua_touserdata(L, 2);
 
-    assert(engine != NULL);
-    assert(hook != NULL);
+    luaL_argcheck(L, lua_type(L, 1) == LUA_TLIGHTUSERDATA, 1,
+                  "Argument doesn't appear to be an Engine.");
+    luaL_argcheck(L, lua_type(L, 2) == LUA_TUSERDATA, 2,
+                  "Argument doesn't appear to be a hook handle.");
+    luaL_argcheck(L, hook->L != NULL, 2,
+                  "Detected possible attempt to remove the same hook twice: Lua state"
+                  " reference in the hook is null.");
+    luaL_argcheck(L, hook->hook_handle != (uc_hook)0, 2,
+                  "Detected possible attempt to remove the same hook twice: Internal"
+                  " hook handle is null.");
 
-    if (hook->L == NULL || hook->callback_ref == LUA_NOREF)
-        ulinternal_crash(L, "Detected attempt to remove same hook twice.");
+    /* Try to retrieve the callback assigned to this hook. */
+    int type_of_callback;
+
+    lua_pushlightuserdata(L, hook);
+#if LUA_VERSION_NUM >= 503
+    type_of_callback = lua_gettable(L, LUA_REGISTRYINDEX);
+#else
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    type_of_callback = lua_type(L, -1);
+#endif
+    lua_pop(L, 1);
+    luaL_argcheck(
+        L, type_of_callback != LUA_TNIL, 2,
+        "No callback was found for this hook. Either this argument isn't actually a hook,"
+        " or the library has a bug in how the callback gets retrieved.");
 
     uc_err error = uc_hook_del(engine, hook->hook_handle);
 
@@ -227,24 +251,50 @@ int ul_hook_del(lua_State *L)
     ulinternal_crash_if_failed(L, error, "Failed to unset hook.");
 
     /* Release the callback. */
-    luaL_unref(L, LUA_REGISTRYINDEX, hook->callback_ref);
+    lua_pushlightuserdata(L, hook);
+    lua_pushnil(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
 
-    /* Even though we're freeing the memory, accessing that address might still be valid
-     * as far as the OS is concerned. We mark the callback field with an impossible value
-     * in order to give ourselves a chance at catching a double free. */
+    /* Corrupt the hook data. If Lua tries calling this function again and the memory that
+     * `hook` points to is still valid, we'll catch the problem and throw an error instead
+     * of segfaulting. */
     hook->L = NULL;
-    hook->callback_ref = LUA_NOREF;
+    hook->hook_handle = (uc_hook)0;
     return 0;
+}
+
+int ul_release_hook_callbacks(lua_State *L)
+{
+    int total_arguments = lua_gettop(L);
+
+    for (int i = 1; i <= total_arguments; i++)
+    {
+        void *hook = (void *)lua_touserdata(L, i);
+        lua_pushlightuserdata(L, hook);
+        lua_pushnil(L);
+        lua_settable(L, LUA_REGISTRYINDEX);
+    }
+
+    /* Return the total number of callbacks (possibly) deallocated. */
+    lua_pushinteger(L, total_arguments);
+    return 1;
 }
 
 static void push_callback_to_lua(const ULHook *hook)
 {
-#if LUA_VERSION_NUM >= 503
-    lua_geti(hook->L, LUA_REGISTRYINDEX, hook->callback_ref);
-#else
-    lua_pushinteger(hook->L, hook->callback_ref);
+    assert(hook->L != NULL);
+
+    /* Retrieve the callback from the registry using this hook's metadata as the key. */
+    lua_pushlightuserdata(hook->L, (void *)hook);
     lua_gettable(hook->L, LUA_REGISTRYINDEX);
-#endif
+
+    if (lua_isnil(hook->L, -1))
+    {
+        ulinternal_crash(
+            hook->L,
+            "No callback function was found for hook %p. This likely means it's been"
+            " deleted already using Engine:hook_del().", hook);
+    }
 }
 
 static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
