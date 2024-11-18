@@ -35,6 +35,7 @@ describe('Context tests', function ()
 
         uc:context_restore(context)
         assert.are.equals(123456, uc:reg_read(x86.UC_X86_REG_EAX))
+        uc:close()
     end)
 
     it('Do *not* crash if we try freeing a context twice', function ()
@@ -42,6 +43,7 @@ describe('Context tests', function ()
         local context = uc:context_save()
         context:free()
         context:free()
+        uc:close()
     end)
 end)
 ]]

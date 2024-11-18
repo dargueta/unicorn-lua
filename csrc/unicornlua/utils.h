@@ -91,11 +91,11 @@ void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
  * Get the total number of items in the table, both in the array and mapping parts.
  *
  * `luaL_len()` only returns the number of entries in the array part of a table, so this
- * so this function iterates through both. */
+ * function iterates through the keys as well. */
 size_t count_table_elements(lua_State *L, int table_index);
 
-// Define a cross-platform marker for telling the compiler we're deliberately
-// falling through to the next case in a switch statement.
+/* Define a cross-platform marker for telling the compiler we're deliberately falling
+ * through to the next case in a switch statement. */
 #if __STDC_VERSION__ >= 201603L
 #    define UL_FALLTHROUGH_MARKER [[fallthrough]]
 #elif defined(__GNUC__)
@@ -105,7 +105,7 @@ size_t count_table_elements(lua_State *L, int table_index);
 #    define UL_FALLTHROUGH_MARKER
 #endif
 
-#if defined(__GNUC__) // GCC, Clang, ICC
+#if defined(__GNUC__) /* GCC, Clang, ICC */
 #    define UL_UNREACHABLE_MARKER __builtin_unreachable()
 #elif defined(_MSC_VER) // MSVC
 #    define UL_UNREACHABLE_MARKER __assume(false)

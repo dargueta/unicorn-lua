@@ -103,6 +103,20 @@ size_t count_table_elements(lua_State *L, int table_index)
     lua_pushnil(L);
     for (count = 0; lua_next(L, table_index) != 0; ++count)
         lua_pop(L, 1);
+
+#if LUA_VERSION_NUM >= 502
+    count += (size_t)luaL_len(L, table_index);
+#else
+    for (int i = 0;; i++, count++)
+    {
+        lua_pushinteger(L, i);
+        lua_rawget(L, table_index);
+        if (lua_isnil(L, -1))
+            break;
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+#endif
     return count;
 }
 
@@ -227,7 +241,7 @@ static const luaL_Reg kFunctions[] = {
     {"ctl_set_cpu_model", ul_ctl_set_cpu_model},
     {"ctl_set_exits", ul_ctl_set_exits},
     {"ctl_set_page_size", ul_ctl_set_page_size},
-    {"helper_release_hook_callbacks", ul_release_hook_callbacks},
+    {"ulinternal_release_hook_callbacks", ul_release_hook_callbacks},
     {NULL, NULL}};
 
 LUA_API

@@ -116,19 +116,19 @@ function Engine:close()
     end
     self.contexts_ = nil
 
+    uc_c.close(self.handle_)
+
     -- While the Unicorn library doesn't require us to remove hooks before closing an
     -- engine, because hooks keep strong references to their callbacks we need to at least
     -- release the callbacks.
-    if _G.unpack then
-        -- Lua <=5.2
-        uc_c.helper_release_hook_callbacks(unpack(self.hooks_))
+    if table.unpack then
+        -- Lua >=5.3
+        uc_c.ulinternal_release_hook_callbacks(table.unpack(self.hooks_))
     else
-        -- Lua 5.3+
-        uc_c.helper_release_hook_callbacks(table.unpack(self.hooks_))
+        -- Lua <= 5.2
+        uc_c.ulinternal_release_hook_callbacks(unpack(self.hooks_))
     end
     self.hooks_ = nil
-
-    uc_c.close(self.handle_)
 
     -- We need to delete the handle so that when the garbage collector runs, we don't try
     -- closing an already deallocated engine.
@@ -188,6 +188,9 @@ function Engine:emu_start(start_addr, end_addr, timeout, n_instructions)
 end
 
 --- Pause emulation.
+---
+--- @see emu_start
+--- @usage engine:emu_stop()
 function Engine:emu_stop()
     uc_c.emu_stop(self.handle_)
     self.is_running_ = false

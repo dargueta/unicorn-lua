@@ -48,5 +48,6 @@ describe('[x86] Basic register read/write', function ()
     -- make sure we got the right values
     assert.are.equals(0x1235, r_ecx)
     assert.are.equals(0x788f, r_edx)
+    mu:close()
   end)
 end)

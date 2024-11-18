@@ -17,7 +17,6 @@
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
 #include <assert.h>
-#include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
@@ -25,18 +24,19 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
-UL_RETURNS_POINTER
-static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
-                                    uc_hook_type *restrict hook_type,
-                                    uint64_t *restrict start_address,
-                                    uint64_t *restrict end_address);
+static const uc_hook DEAD_HOOK_SENTINEL = (uc_hook)0xc0ffee11;
+
+static void get_common_arguments(lua_State *L, ULHookState *restrict hook,
+                                 uc_engine **engine, uc_hook_type *restrict hook_type,
+                                 uint64_t *restrict start_address,
+                                 uint64_t *restrict end_address);
 
 static void helper_create_generic_hook(lua_State *L, const char *human_readable,
                                        void *callback);
 
 static void helper_create_generic_code_hook(lua_State *L, void *callback);
 
-static void push_callback_to_lua(const ULHook *hook);
+static void push_callback_to_lua(const ULHookState *hook);
 
 static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
                                                            void *userdata);
@@ -128,17 +128,11 @@ int ul_create_tcg_opcode_hook(lua_State *L)
 
 #pragma GCC diagnostic pop
 
-static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
-                                    uc_hook_type *restrict hook_type,
-                                    uint64_t *restrict start_address,
-                                    uint64_t *restrict end_address)
+void get_common_arguments(lua_State *L, ULHookState *hook, uc_engine **engine,
+                          uc_hook_type *restrict hook_type,
+                          uint64_t *restrict start_address,
+                          uint64_t *restrict end_address)
 {
-#if LUA_VERSION_NUM >= 504
-    ULHook *hook = lua_newuserdatauv(L, sizeof(*hook), 0);
-#else
-    ULHook *hook = lua_newuserdata(L, sizeof(*hook));
-#endif
-
     hook->L = L;
     hook->hook_handle = (uc_hook)0;
     *engine = (uc_engine *)lua_topointer(L, 1);
@@ -153,9 +147,6 @@ static ULHook *get_common_arguments(lua_State *L, uc_engine **engine,
     lua_pushlightuserdata(L, hook);
     lua_pushvalue(L, 3);
     lua_settable(L, LUA_REGISTRYINDEX);
-
-    assert(*engine != NULL);
-    return hook;
 }
 
 void helper_create_generic_hook(lua_State *L, const char *human_readable, void *callback)
@@ -164,13 +155,15 @@ void helper_create_generic_hook(lua_State *L, const char *human_readable, void *
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
-    assert(lua_gettop(L) == 5);
+    ULHookState *hook_state = malloc(sizeof(*hook_state));
+    assert(hook_state != NULL);
+    lua_pushlightuserdata(L, (void *)hook_state);
 
-    ULHook *hook_data =
-        get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
+    get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
+                         &end_address);
 
-    uc_err error = uc_hook_add(engine, &hook_data->hook_handle, hook_type, callback,
-                               hook_data, start_address, end_address);
+    uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type, callback,
+                               hook_state, start_address, end_address);
 
     ulinternal_crash_if_failed(
         L, error,
@@ -187,12 +180,16 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
 
     assert(lua_gettop(L) == 6);
 
-    ULHook *hook_data =
-        get_common_arguments(L, &engine, &hook_type, &start_address, &end_address);
+    ULHookState *hook_state = malloc(sizeof(*hook_state));
+    assert(hook_state != NULL);
+    lua_pushlightuserdata(L, (void *)hook_state);
+
+    get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
+                         &end_address);
 
     /* FIXME (dargueta): If Unicorn was compiled with packed enums, this could break.
      * TL;DR we're assuming that an enum is an integer, but if packed enums are enabled
-     * when compiling, they could be smaller.
+     * when compiling, the underlying type could be smaller (short or char).
      *
      * Packing enums by default is discouraged in the GCC documentation, and it would
      * require explicitly passing in this flag.
@@ -200,8 +197,11 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
      * https://stackoverflow.com/a/54527229
      */
     int opcode = lua_tointeger(L, 6);
-    uc_err error = uc_hook_add(engine, &hook_data->hook_handle, hook_type, callback,
-                               hook_data, start_address, end_address, opcode);
+    uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type, callback,
+                               hook_state, start_address, end_address, opcode);
+
+    if (error != UC_ERR_OK)
+        free(hook_state);
 
     ulinternal_crash_if_failed(
         L, error,
@@ -212,23 +212,19 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
 
 int ul_hook_del(lua_State *L)
 {
-    assert(lua_gettop(L) == 2);
-
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
-    ULHook *hook = (ULHook *)lua_touserdata(L, 2);
+    ULHookState *hook = (ULHookState *)lua_topointer(L, 2);
 
-    luaL_argcheck(L, lua_type(L, 1) == LUA_TLIGHTUSERDATA, 1,
-                  "Argument doesn't appear to be an Engine.");
-    luaL_argcheck(L, lua_type(L, 2) == LUA_TUSERDATA, 2,
-                  "Argument doesn't appear to be a hook handle.");
     luaL_argcheck(L, hook->L != NULL, 2,
                   "Detected possible attempt to remove the same hook twice: Lua state"
                   " reference in the hook is null.");
-    luaL_argcheck(L, hook->hook_handle != (uc_hook)0, 2,
+    luaL_argcheck(L, hook->hook_handle != DEAD_HOOK_SENTINEL, 2,
                   "Detected possible attempt to remove the same hook twice: Internal"
                   " hook handle is null.");
 
-    /* Try to retrieve the callback assigned to this hook. */
+    /* Try to retrieve the callback assigned to this hook. All we're doing is seeing if
+     * the callback still exists in the registry. If it doesn't, something removed it
+     * already. */
     int type_of_callback;
 
     lua_pushlightuserdata(L, hook);
@@ -259,7 +255,8 @@ int ul_hook_del(lua_State *L)
      * `hook` points to is still valid, we'll catch the problem and throw an error instead
      * of segfaulting. */
     hook->L = NULL;
-    hook->hook_handle = (uc_hook)0;
+    hook->hook_handle = DEAD_HOOK_SENTINEL;
+    free(hook);
     return 0;
 }
 
@@ -269,10 +266,13 @@ int ul_release_hook_callbacks(lua_State *L)
 
     for (int i = 1; i <= total_arguments; i++)
     {
-        void *hook = (void *)lua_touserdata(L, i);
-        lua_pushlightuserdata(L, hook);
+        lua_pushvalue(L, i);
         lua_pushnil(L);
         lua_settable(L, LUA_REGISTRYINDEX);
+
+        ULHookState *hook = (ULHookState *)lua_topointer(L, i);
+        if (hook)
+            free(hook);
     }
 
     /* Return the total number of callbacks (possibly) deallocated. */
@@ -280,10 +280,8 @@ int ul_release_hook_callbacks(lua_State *L)
     return 1;
 }
 
-static void push_callback_to_lua(const ULHook *hook)
+static void push_callback_to_lua(const ULHookState *hook)
 {
-    assert(hook->L != NULL);
-
     /* Retrieve the callback from the registry using this hook's metadata as the key. */
     lua_pushlightuserdata(hook->L, (void *)hook);
     lua_gettable(hook->L, LUA_REGISTRYINDEX);
@@ -293,7 +291,8 @@ static void push_callback_to_lua(const ULHook *hook)
         ulinternal_crash(
             hook->L,
             "No callback function was found for hook %p. This likely means it's been"
-            " deleted already using Engine:hook_del().", hook);
+            " deleted already using Engine:hook_del().",
+            (void *)hook);
     }
 }
 
@@ -301,7 +300,7 @@ static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
                                                            void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_call(hook->L, 0, 0);
@@ -311,7 +310,7 @@ static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intn
                                                 void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)intno);
@@ -323,7 +322,7 @@ static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_ty
                                                     int64_t value, void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)type);
@@ -339,7 +338,7 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
                                                          int64_t value, void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)type);
@@ -366,7 +365,7 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
                                                   int size, void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)port);
@@ -382,7 +381,7 @@ static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port,
                                                uint32_t value, void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)port);
@@ -395,7 +394,7 @@ static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
                                            uint32_t size, void *userdata)
 {
     (void)engine;
-    ULHook *hook = (ULHook *)userdata;
+    ULHookState *hook = (ULHookState *)userdata;
 
     push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)address);

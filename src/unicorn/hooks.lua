@@ -29,49 +29,26 @@ if not have_arm64 then arm64_const = {} end
 if not have_x86 then x86_const = {} end
 
 
-local function wrap_callback(callback, engine, userdata)
-    if _G.unpack == nil then
-        -- Lua 5.2+
-        return function (...)
-            local arguments = {...}
-            table.insert(arguments, 1, engine)
-            table.insert(arguments, userdata)
-            return callback(table.unpack(arguments))
-        end
-    end
 
-    -- Lua 5.1
+local function wrap_hook_callback(callback, engine, userdata)
+    local unpacker = table.unpack or _G.unpack
+
     return function (...)
         local arguments = {...}
         table.insert(arguments, 1, engine)
         table.insert(arguments, userdata)
-        return callback(unpack(arguments))
+        return callback(unpacker(arguments))
     end
 end
 
 
 local function create_hook_creator_by_name(name)
-    return function (engine, hook_type, callback, start_addr, end_addr, userdata)
-        if end_addr == nil then
-            if start_addr == nil then
-                -- If neither a starting nor ending address is given, the caller wants
-                -- this to apply to all of memory. Unicorn uses start_addr > end_addr to
-                -- signal this intent.
-                start_addr = 1
-                end_addr = 0
-            else
-                -- No ending address is given, assume top of memory. We use -1 because
-                -- that has all bits set to 1. When interpreted as an unsigned integer,
-                -- it's the highest unsigned value.
-                end_addr = -1
-            end
-        end
-
+    return function (engine, hook_type, callback, start_addr, end_addr)
         return uc_c[name](
             engine.handle_,
             hook_type,
-            wrap_callback(callback, engine, userdata),
-            start_addr or 0,
+            callback,
+            start_addr,
             end_addr
         )
     end
@@ -80,27 +57,17 @@ end
 
 local function create_code_hook_creator_by_name(name)
     return function (
-        engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args
+        engine, hook_type, callback, start_addr, end_addr, remaining_args
     )
         local instruction_id = remaining_args[1]
         if instruction_id == nil then
             error("Can't create instruction hook: no opcode was passed to hook_add().")
         end
 
-        -- Argument preparation is the same as for regular code hooks.
-        if end_addr == nil then
-            if start_addr == nil then
-                start_addr = 1
-                end_addr = 0
-            else
-                end_addr = -1
-            end
-        end
-
         return uc_c[name](
             engine.handle_,
             hook_type,
-            wrap_callback(callback, engine, userdata),
+            callback,
             start_addr or 0,
             end_addr,
             instruction_id
@@ -116,7 +83,6 @@ local function create_tcg_opcode_hook(
     callback,
     start_addr,
     end_addr,
-    userdata,
     remaining_args
 )
     local opcode, flags = (table.unpack or _G.unpack)(remaining_args, 1, 2)
@@ -131,8 +97,8 @@ local function create_tcg_opcode_hook(
     return uc_c.create_tcg_opcode_hook(
         engine.handle_,
         hook_type,
-        wrap_callback(callback, engine, userdata),
-        start_addr or 0,
+        callback,
+        start_addr,
         end_addr,
         opcode,
         flags
@@ -251,8 +217,25 @@ function M.create_hook(
             or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
+    callback = wrap_hook_callback(callback, engine, user_extra)
+
+    if end_addr == nil then
+        if start_addr == nil then
+            -- If neither a starting nor ending address is given, the caller wants this to
+            -- apply to all of memory. Unicorn uses start_addr > end_addr to signal this
+            -- intent.
+            start_addr = 1
+            end_addr = 0
+        else
+            -- No ending address is given, assume top of memory. We use -1 because that
+            -- has all bits set to 1. When interpreted as an unsigned integer, it's the
+            -- highest unsigned value (on most platforms).
+            end_addr = -1
+        end
+    end
+
     return constructor(
-        engine, hook_type, callback, start_addr, end_addr, user_extra, extra_arguments)
+        engine, hook_type, callback, start_addr or 0, end_addr, extra_arguments)
 end
 
 --- Information about the coprocessor, used by ARM64 instruction hooks.

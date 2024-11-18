@@ -23,7 +23,7 @@ typedef struct
 {
     lua_State *L;
     uc_hook hook_handle;
-} ULHook;
+} ULHookState;
 
 int ul_hook_del(lua_State *L);
 int ul_create_interrupt_hook(lua_State *L);

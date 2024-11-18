@@ -32,7 +32,16 @@ int ul_errno(lua_State *L)
 
 int ul_emu_start(lua_State *L)
 {
+    luaL_argcheck(L, lua_type(L, 1) == LUA_TLIGHTUSERDATA, 1, "Engine is wrong type");
+    luaL_argcheck(L, lua_type(L, 2) == LUA_TNUMBER, 2, "Start address is wrong type");
+    luaL_argcheck(L, lua_type(L, 3) == LUA_TNUMBER, 3, "End address is wrong type");
+    luaL_argcheck(L, lua_type(L, 4) == LUA_TNUMBER, 4, "Timeout is wrong type");
+    luaL_argcheck(L, lua_type(L, 5) == LUA_TNUMBER, 5,
+                  "Max # instructions is wrong type");
+
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    luaL_argcheck(L, engine != NULL, 1, "Engine is null -- deallocated?");
+
     uint64_t start = (uint64_t)lua_tointeger(L, 2);
     uint64_t stop = (uint64_t)lua_tointeger(L, 3);
     uint64_t timeout = (uint64_t)lua_tointeger(L, 4);
