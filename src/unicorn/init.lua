@@ -25,7 +25,7 @@ local M = {
     ---
     --- To get the version of the Unicorn C library this binding wraps around, see
     --- @{unicorn.version}.
-    LUA_LIBRARY_VERSION = {2, 2, 2};
+    LUA_LIBRARY_VERSION = {2, 3, 0};
 
     --- Determine if `architecture` is supported by the underlying Unicorn library.
     ---

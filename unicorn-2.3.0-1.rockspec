@@ -1,10 +1,10 @@
 rockspec_format = "3.0"
 package = "unicorn"
-version = "2.2.2-1"
+version = "2.3.0-1"
 
 source = {
     url = "git+ssh://git@github.com/dargueta/unicorn-lua.git",
-    tag = "v2.2.2"
+    tag = "v2.3.0"
 }
 
 description = {
