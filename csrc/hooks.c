@@ -16,7 +16,6 @@
 
 #include "unicornlua/hooks.h"
 #include "unicornlua/utils.h"
-#include <assert.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
@@ -24,9 +23,7 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
-static const uc_hook DEAD_HOOK_SENTINEL = (uc_hook)0xc0ffee11;
-
-static void get_common_arguments(lua_State *L, ULHookState *restrict hook,
+static void get_common_arguments(lua_State *restrict L, ULHookState *restrict hook,
                                  uc_engine **engine, uc_hook_type *restrict hook_type,
                                  uint64_t *restrict start_address,
                                  uint64_t *restrict end_address);
@@ -80,11 +77,6 @@ int ul_create_arm64_sys_hook(lua_State *L)
     ulinternal_crash_not_implemented(L);
 }
 
-int ul_create_invalid_instruction_hook(lua_State *L)
-{
-    ulinternal_crash_not_implemented(L);
-}
-
 int ul_create_cpuid_hook(lua_State *L)
 {
     ulinternal_crash_not_implemented(L);
@@ -128,10 +120,10 @@ int ul_create_tcg_opcode_hook(lua_State *L)
 
 #pragma GCC diagnostic pop
 
-void get_common_arguments(lua_State *L, ULHookState *hook, uc_engine **engine,
-                          uc_hook_type *restrict hook_type,
-                          uint64_t *restrict start_address,
-                          uint64_t *restrict end_address)
+static void get_common_arguments(lua_State *restrict L, ULHookState *restrict hook,
+                                 uc_engine **engine, uc_hook_type *restrict hook_type,
+                                 uint64_t *restrict start_address,
+                                 uint64_t *restrict end_address)
 {
     hook->L = L;
     hook->hook_handle = (uc_hook)0;
@@ -155,10 +147,11 @@ void helper_create_generic_hook(lua_State *L, const char *human_readable, void *
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
-    ULHookState *hook_state = malloc(sizeof(*hook_state));
-    assert(hook_state != NULL);
-    lua_pushlightuserdata(L, (void *)hook_state);
-
+#if LUA_VERSION_NUM >= 504
+    ULHookState *hook_state = (ULHookState *)lua_newuserdatauv(L, sizeof(*hook_state), 0);
+#else
+    ULHookState *hook_state = (ULHookState *)lua_newuserdata(L, sizeof(*hook_state));
+#endif
     get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
                          &end_address);
 
@@ -178,11 +171,11 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
     uint64_t start_address, end_address;
     uc_hook_type hook_type;
 
-    assert(lua_gettop(L) == 6);
-
-    ULHookState *hook_state = malloc(sizeof(*hook_state));
-    assert(hook_state != NULL);
-    lua_pushlightuserdata(L, (void *)hook_state);
+#if LUA_VERSION_NUM >= 504
+    ULHookState *hook_state = (ULHookState *)lua_newuserdatauv(L, sizeof(*hook_state), 0);
+#else
+    ULHookState *hook_state = (ULHookState *)lua_newuserdata(L, sizeof(*hook_state));
+#endif
 
     get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
                          &end_address);
@@ -200,9 +193,6 @@ static void helper_create_generic_code_hook(lua_State *L, void *callback)
     uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type, callback,
                                hook_state, start_address, end_address, opcode);
 
-    if (error != UC_ERR_OK)
-        free(hook_state);
-
     ulinternal_crash_if_failed(
         L, error,
         "Failed to create code hook for instruction ID %d from address 0x%08" PRIX64
@@ -216,12 +206,7 @@ int ul_hook_del(lua_State *L)
     ULHookState *hook = (ULHookState *)lua_topointer(L, 2);
 
     luaL_argcheck(L, hook->L != NULL, 2,
-                  "Detected possible attempt to remove the same hook twice: Lua state"
-                  " reference in the hook is null.");
-    luaL_argcheck(L, hook->hook_handle != DEAD_HOOK_SENTINEL, 2,
-                  "Detected possible attempt to remove the same hook twice: Internal"
-                  " hook handle is null.");
-
+                  "Detected possible attempt to remove the same hook twice.");
     /* Try to retrieve the callback assigned to this hook. All we're doing is seeing if
      * the callback still exists in the registry. If it doesn't, something removed it
      * already. */
@@ -255,8 +240,6 @@ int ul_hook_del(lua_State *L)
      * `hook` points to is still valid, we'll catch the problem and throw an error instead
      * of segfaulting. */
     hook->L = NULL;
-    hook->hook_handle = DEAD_HOOK_SENTINEL;
-    free(hook);
     return 0;
 }
 
@@ -266,13 +249,10 @@ int ul_release_hook_callbacks(lua_State *L)
 
     for (int i = 1; i <= total_arguments; i++)
     {
-        lua_pushvalue(L, i);
+        void *ud = lua_touserdata(L, i);
+        lua_pushlightuserdata(L, ud);
         lua_pushnil(L);
         lua_settable(L, LUA_REGISTRYINDEX);
-
-        ULHookState *hook = (ULHookState *)lua_topointer(L, i);
-        if (hook)
-            free(hook);
     }
 
     /* Return the total number of callbacks (possibly) deallocated. */

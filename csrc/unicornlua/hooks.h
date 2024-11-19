@@ -32,7 +32,6 @@ int ul_create_invalid_mem_access_hook(lua_State *L);
 int ul_create_port_in_hook(lua_State *L);
 int ul_create_port_out_hook(lua_State *L);
 int ul_create_arm64_sys_hook(lua_State *L);
-int ul_create_invalid_instruction_hook(lua_State *L);
 int ul_create_cpuid_hook(lua_State *L);
 int ul_create_generic_no_arguments_hook(lua_State *L);
 int ul_create_code_hook(lua_State *L);

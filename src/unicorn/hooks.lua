@@ -113,16 +113,15 @@ local create_code_hook = create_code_hook_creator_by_name("create_code_hook")
 local create_port_in_hook = create_code_hook_creator_by_name("create_port_in_hook")
 local create_port_out_hook = create_code_hook_creator_by_name("create_port_out_hook")
 local create_arm64_sys_hook = create_hook_creator_by_name("create_arm64_sys_hook")
-local create_invalid_instruction_hook = create_hook_creator_by_name("create_invalid_instruction_hook")
 local create_cpuid_hook = create_hook_creator_by_name("create_cpuid_hook")
-local create_generic_hook_with_no_arguments = create_hook_creator_by_name("create_generic_hook_with_no_arguments")
+local create_generic_no_arguments_hook = create_hook_creator_by_name("create_generic_no_arguments_hook")
 local create_edge_generated_hook = create_hook_creator_by_name("create_edge_generated_hook")
 
 
 local DEFAULT_HOOK_WRAPPERS = {
     [uc_const.UC_HOOK_BLOCK] = create_code_hook;
     [uc_const.UC_HOOK_CODE] = create_code_hook;
-    [uc_const.UC_HOOK_INSN_INVALID] = create_invalid_instruction_hook;
+    [uc_const.UC_HOOK_INSN_INVALID] = create_generic_no_arguments_hook;
     [uc_const.UC_HOOK_INTR] = create_interrupt_hook;
     [uc_const.UC_HOOK_MEM_FETCH] = create_memory_access_hook;
     [uc_const.UC_HOOK_MEM_FETCH_INVALID] = create_invalid_mem_access_hook;
@@ -156,8 +155,8 @@ if have_x86 then
     INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_CPUID] = create_cpuid_hook
     INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_IN] = create_port_in_hook
     INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_OUT] = create_port_out_hook
-    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSCALL] = create_generic_hook_with_no_arguments
-    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSENTER] = create_generic_hook_with_no_arguments
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSCALL] = create_generic_no_arguments_hook
+    INSTRUCTION_HOOK_WRAPPERS[x86_const.UC_X86_INS_SYSENTER] = create_generic_no_arguments_hook
 end
 
 -- These were all added at the same time in Unicorn 2.0
