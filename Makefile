@@ -27,18 +27,6 @@ LUA_VERSION = $(shell $(LUA) -e 'print(_VERSION:sub(5))')
 
 ################################################################################
 
-IS_LUAJIT = $(shell $(LUA) -e 'if _G.jit ~= nil then print(1) else print(0) end')
-ifeq ($(IS_LUAJIT),1)
-    # LuaJIT
-    LUAJIT_VERSION = $(shell \
-        $(LUA) -e 'print(string.format("%d.%d", jit.version_num / 10000, (jit.version_num / 100) % 100))' \
-    )
-    FALLBACK_LUA_INCDIR = $(LUA_DIR)/include/luajit-$(LUAJIT_VERSION)
-else
-    # Regular Lua
-    FALLBACK_LUA_INCDIR = $(LUA_DIR)/include
-endif
-
 # Because Unicorn can be customized to exclude architectures, not all of these may be
 # supported by the C library. Missing architectures are automatically detected and excluded
 # at build time.
@@ -73,7 +61,6 @@ LIBRARY_DIRECTORIES = $(strip $(UNICORN_LIBDIR) $(PTHREAD_LIBDIR))
 HEADER_DIRECTORIES = $(strip \
 	$(SOURCE_DIR) \
     $(LUA_INCDIR) \
-    $(FALLBACK_LUA_INCDIR) \
     $(UNICORN_INCDIR) \
     /usr/local/include \
     /usr/include/lua$(LUA_VERSION) \
