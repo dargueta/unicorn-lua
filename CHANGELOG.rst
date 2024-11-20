@@ -4,6 +4,10 @@ Changes
 2.3.0
 -----
 
+The library has been completely rewritten in a mixture of C and Lua, rather than
+entirely in C++. This has allowed some drastic simplifications, such as removing
+a complex weak table retaining engines for hooks.
+
 New Features
 ~~~~~~~~~~~~
 
@@ -21,9 +25,12 @@ Bugs
 Other Changes
 ~~~~~~~~~~~~~
 
-The library has been completely rewritten in a mixture of C and Lua, rather than
-entirely in C++. This has allowed some drastic simplifications, such as removing
-a complex weak table retaining engines for hooks.
+* Use the `USER_CFLAGS` environment variable to pass in custom compiler flags,
+  instead of `USER_CXX_FLAGS`.
+* The Makefile no longer overrides ``LD_LIBRARY_PATH`` or ``DYLD_FALLBACK_LIBRARY_PATH``,
+  environment variables, as the user may have installed Unicorn in a different
+  location than the default. The user is now responsible for setting these. This
+  shouldn't affect anyone, as those need to be set anyway to find Unicorn.
 
 2.2.1 (2024-05-10)
 ------------------
