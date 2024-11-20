@@ -14,13 +14,14 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-lapp = require "pl.lapp"
-pl_file = require "pl.file"
-pl_lexer = require "pl.lexer"
-pl_path = require "pl.path"
-pl_pretty = require "pl.pretty"
-pl_stringx = require "pl.stringx"
-pl_utils = require "pl.utils"
+local lapp = require "pl.lapp"
+local pl_file = require "pl.file"
+local pl_lexer = require "pl.lexer"
+local pl_path = require "pl.path"
+local pl_pretty = require "pl.pretty"
+local pl_stringx = require "pl.stringx"
+local pl_utils = require "pl.utils"
+local pl_tablex = require "pl.tablex"
 
 pl_stringx.import()
 
@@ -117,20 +118,19 @@ end
 
 
 function maybe_extract_preprocessor(text)
-    local parts = text:split()
-    -- We know the first part is "#define". After that come the identifier and
-    -- whatever the expansion of the macro is, if applicable.
-    local directive = parts[1]
-    local macro_name = parts[2]
-    local macro_text = parts[3]
+    if not text:startswith("#define UC_") then
+        return {}
+    end
 
-    if directive == "#define"
-        and macro_name:startswith("UC_")
-        and not macro_name:find("%(")    -- Ignore function macros
-        and macro_text ~= nil
-        and macro_text ~= ""
+    local parts = text:split()
+    -- We know the first part is "#define". After that come the macro name, and all
+    -- remaining parts (3 onward) are the expansion of the macro.
+    local macro_name = parts[2]
+    local macro_text = pl_stringx.join(" ", pl_tablex.sub(parts, 3))
+
+    -- If the macro name contains ( then it's a function macro.
+    if macro_text ~= "" and not macro_name:find("%(")
     then
-        -- FIXME (dargueta): Ensure that `macro_text` can be evaluated as an integer
         return {[macro_name] = macro_text}
     end
     return {}
