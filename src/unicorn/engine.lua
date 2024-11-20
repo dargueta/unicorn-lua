@@ -55,6 +55,24 @@ local EngineMeta_ = {__index = Engine}
 local MemoryRegion = setmetatable({}, {__setindex = function () end})
 
 
+--- A structure representing a QEMU translation block in memory.
+---
+--- QEMU contains a JIT that breaks down instruction memory into one or more blocks,
+--- called "translation blocks". It translates the guest instruction set into native
+--- instructions that are stored in these translation blocks.
+---
+--- Someone should check me on this. I'm guessing the meaning of the fields based on QEMU
+--- documentation.
+---
+--- @type TranslationBlock
+--- @field int pc  The simulated program counter within this block.
+--- @field int icount  The number of instructions in the block.
+--- @field int size  The size of the block, in bytes.
+--- @see Engine:ctl_request_cache
+--- @see https://www.qemu.org/docs/master/devel/tcg.html
+local TranslationBlock = setmetatable({}, {__setindex = function () end})
+
+
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
@@ -406,7 +424,7 @@ function Engine:ctl_get_cpu_model()
 end
 
 function Engine:ctl_get_exits()
-    error("Not implemented yet")
+    return uc_c.ctl_get_exits(self.handle_)
 end
 
 function Engine:ctl_get_exits_cnt()
@@ -418,7 +436,7 @@ function Engine:ctl_get_mode()
 end
 
 function Engine:ctl_get_page_size()
-    error("Not implemented yet")
+    return uc_c:ctl_get_page_size(self.handle_)
 end
 
 function Engine:ctl_get_timeout()
@@ -426,11 +444,17 @@ function Engine:ctl_get_timeout()
 end
 
 function Engine:ctl_remove_cache()
-    error("Not implemented yet")
+    return uc_c.ctl_remove_cache(self.handle_)
 end
 
-function Engine:ctl_request_cache()
-    error("Not implemented yet")
+--- Get information about the QEMU translation block for a specific address.
+---
+--- @tparam int address  The address in guest memory to get the corresponding translation
+--- block for.
+---
+--- @treturn TranslationBlock  Information about the translation block.
+function Engine:ctl_request_cache(address)
+    return uc_c.ctl_request_cache(self.handle_, address)
 end
 
 function Engine:ctl_set_cpu_model()

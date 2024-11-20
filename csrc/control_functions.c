@@ -1,6 +1,7 @@
 #include "unicornlua/control_functions.h"
 #include "unicornlua/utils.h"
 #include <errno.h>
+#include <inttypes.h>
 #include <lua.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -50,6 +51,24 @@ int ul_ctl_set_exits(lua_State *L)
 
 int ul_ctl_request_cache(lua_State *L)
 {
-    ulinternal_crash_not_implemented(L);
+    uc_tb translation_block;
+
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    uint64_t address = (uint64_t)luaL_checkinteger(L, 2);
+
+    uc_err error = uc_ctl_request_cache(engine, address, &translation_block);
+    ulinternal_crash_if_failed(
+        L, error, "Failed to get translation block at address 0x%08" PRIX64, address);
+
+    /* Create a table representing this struct. */
+    lua_createtable(L, 0, 3);
+    lua_pushinteger(L, (lua_Integer)translation_block.pc);
+    lua_setfield(L, -2, "pc");
+    lua_pushinteger(L, (lua_Integer)translation_block.icount);
+    lua_setfield(L, -2, "icount");
+    lua_pushinteger(L, (lua_Integer)translation_block.size);
+    lua_setfield(L, -2, "size");
+
+    return 1;
 }
 #endif
