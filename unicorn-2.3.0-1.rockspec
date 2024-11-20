@@ -54,11 +54,10 @@ build = {
         LD = "$(LD)",
         LIBFLAG = "$(LIBFLAG)",
         LUA_DIR = "$(LUA_DIR)",
-        LUA_INCDIR="$(LUA_INCDIR)",
+        LUA_INCDIR = "$(LUA_INCDIR)",
         UNICORN_INCDIR = "$(UNICORN_INCDIR)",
         UNICORN_LIBDIR = "$(UNICORN_LIBDIR)",
         PTHREAD_LIBDIR = "$(PTHREAD_LIBDIR)",
-        LUALIB = "$(LUALIB)",
     },
     install_target = "__install",
     install_variables = {
