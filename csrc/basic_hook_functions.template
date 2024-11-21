@@ -1,3 +1,7 @@
+/*
+$(copyright_notice)
+*/
+
 #include "unicornlua/hooks.h"
 #include <lua.h>
 #include <stdint.h>

@@ -1,9 +1,13 @@
+/*
+$(copyright_notice)
+*/
+
 #include "unicornlua/register_types.h"
 #include <unicorn/unicorn.h>
 #include <stdio.h>
 
 int main() {
-! for _, line in ipairs(copyright_notice) do
+! for _, line in ipairs(copyright_notice:splitlines()) do
     printf("-- $(line)\n");
 ! end
     printf(

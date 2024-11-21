@@ -90,7 +90,7 @@ function main()
         string = string,
         stringx = stringx,
         tablex = tablex,
-        copyright_notice = COPYRIGHT_NOTICE:splitlines(),
+        copyright_notice = COPYRIGHT_NOTICE,
     }
 
     for _, file_path in ipairs(args.value_files) do

@@ -1,3 +1,7 @@
+/*
+$(copyright_notice)
+*/
+
 #include <stdio.h>
 #include <unicorn/unicorn.h>
 ! if tablex.size(constants) > 0 then
@@ -7,7 +11,7 @@
 int main(void)
 {
     puts(
-! for _, line in ipairs(copyright_notice) do
+! for _, line in ipairs(copyright_notice:splitlines()) do
         "-- $(line)\n" \
 ! end
         "\n--- Constants exported by \"$(source_basename)\".\n"

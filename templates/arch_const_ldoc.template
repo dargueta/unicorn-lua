@@ -1,6 +1,6 @@
-! for _, line in ipairs(copyright_notice) do
--- $(line)
-! end
+--[[
+$(copyright_notice)
+]]
 
 --- Constants exported by "$(source_basename)".
 --- @module $(source_stem)_const
