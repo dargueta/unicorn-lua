@@ -19,6 +19,8 @@ csrc/cpp_test
 csrc/basic_control_functions.c
 csrc/registers.c
 csrc/registers_const.c
+csrc/basic_hook_functions.c
+csrc/unicornlua/basic_hook_functions.h
 csrc/unicornlua/register_types.h
 
 # Other garbage

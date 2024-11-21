@@ -15,6 +15,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "unicornlua/hooks.h"
+#include "unicornlua/basic_hook_functions.h"
 #include "unicornlua/utils.h"
 #include <lauxlib.h>
 #include <lua.h>
@@ -28,20 +29,6 @@ static void get_common_arguments(lua_State *restrict L, ULHookState *restrict ho
                                  uint64_t *restrict start_address,
                                  uint64_t *restrict end_address);
 
-static void helper_create_generic_hook(lua_State *L, const char *human_readable,
-                                       void *callback);
-
-static void helper_create_generic_code_hook(lua_State *L, void *callback);
-
-static void push_callback_to_lua(const ULHookState *hook);
-
-static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
-                                                           void *userdata);
-static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
-                                                void *userdata);
-static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
-                                                    uint64_t address, int size,
-                                                    int64_t value, void *userdata);
 static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
                                                          uc_mem_type type,
                                                          uint64_t address, int size,
@@ -49,28 +36,12 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
 
 static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
                                                   int size, void *userdata);
-static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port, int size,
-                                               uint32_t value, void *userdata);
-static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
-                                           uint32_t size, void *userdata);
 
 /* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
  * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
  * that the compiler doesn't blow up. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-
-#define define_hook_wrapper_function(slug)                                               \
-    int ul_create_##slug##_hook(lua_State *L)                                            \
-    {                                                                                    \
-        helper_create_generic_hook(L, #slug, (void *)ulinternal_hook_callback__##slug);  \
-        return 1;                                                                        \
-    }
-
-define_hook_wrapper_function(interrupt);
-define_hook_wrapper_function(memory_access);
-define_hook_wrapper_function(invalid_mem_access);
-define_hook_wrapper_function(generic_no_arguments);
 
 int ul_create_arm64_sys_hook(lua_State *L)
 {
@@ -91,21 +62,37 @@ int ul_create_edge_generated_hook(lua_State *L)
 #endif
 }
 
-int ul_create_code_hook(lua_State *L)
+int ul_create_invalid_mem_access_hook(lua_State *L)
 {
-    helper_create_generic_code_hook(L, ulinternal_hook_callback__code);
+    ulinternal_helper_create_generic_hook(
+        L, "invalid_mem_access", (void *)ulinternal_hook_callback__invalid_mem_access);
     return 1;
 }
 
 int ul_create_port_in_hook(lua_State *L)
 {
-    helper_create_generic_code_hook(L, ulinternal_hook_callback__port_in);
-    return 1;
-}
+    uc_engine *engine;
+    uint64_t start_address, end_address;
+    uc_hook_type hook_type;
 
-int ul_create_port_out_hook(lua_State *L)
-{
-    helper_create_generic_code_hook(L, ulinternal_hook_callback__port_out);
+#if LUA_VERSION_NUM >= 504
+    ULHookState *hook_state = (ULHookState *)lua_newuserdatauv(L, sizeof(*hook_state), 0);
+#else
+    ULHookState *hook_state = (ULHookState *)lua_newuserdata(L, sizeof(*hook_state));
+#endif
+
+    get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
+                         &end_address);
+
+    uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type,
+                               ulinternal_hook_callback__port_in, hook_state,
+                               start_address, end_address, UC_X86_INS_IN);
+
+    ulinternal_crash_if_failed(
+        L, error,
+        "Failed to create code hook for x86 instruction `in` from address 0x%08" PRIX64
+        " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
+        start_address, end_address);
     return 1;
 }
 
@@ -141,7 +128,8 @@ static void get_common_arguments(lua_State *restrict L, ULHookState *restrict ho
     lua_settable(L, LUA_REGISTRYINDEX);
 }
 
-void helper_create_generic_hook(lua_State *L, const char *human_readable, void *callback)
+void ulinternal_helper_create_generic_hook(lua_State *L, const char *human_readable,
+                                           void *callback)
 {
     uc_engine *engine;
     uint64_t start_address, end_address;
@@ -163,41 +151,6 @@ void helper_create_generic_hook(lua_State *L, const char *human_readable, void *
         "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
         " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
         (long)hook_type, human_readable, start_address, end_address);
-}
-
-static void helper_create_generic_code_hook(lua_State *L, void *callback)
-{
-    uc_engine *engine;
-    uint64_t start_address, end_address;
-    uc_hook_type hook_type;
-
-#if LUA_VERSION_NUM >= 504
-    ULHookState *hook_state = (ULHookState *)lua_newuserdatauv(L, sizeof(*hook_state), 0);
-#else
-    ULHookState *hook_state = (ULHookState *)lua_newuserdata(L, sizeof(*hook_state));
-#endif
-
-    get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
-                         &end_address);
-
-    /* FIXME (dargueta): If Unicorn was compiled with packed enums, this could break.
-     * TL;DR we're assuming that an enum is an integer, but if packed enums are enabled
-     * when compiling, the underlying type could be smaller (short or char).
-     *
-     * Packing enums by default is discouraged in the GCC documentation, and it would
-     * require explicitly passing in this flag.
-     *
-     * https://stackoverflow.com/a/54527229
-     */
-    int opcode = lua_tointeger(L, 6);
-    uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type, callback,
-                               hook_state, start_address, end_address, opcode);
-
-    ulinternal_crash_if_failed(
-        L, error,
-        "Failed to create code hook for instruction ID %d from address 0x%08" PRIX64
-        " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
-        opcode, start_address, end_address);
 }
 
 int ul_hook_del(lua_State *L)
@@ -260,7 +213,7 @@ int ul_release_hook_callbacks(lua_State *L)
     return 1;
 }
 
-static void push_callback_to_lua(const ULHookState *hook)
+void ulinternal_push_callback_to_lua(const ULHookState *hook)
 {
     /* Retrieve the callback from the registry using this hook's metadata as the key. */
     lua_pushlightuserdata(hook->L, (void *)hook);
@@ -276,42 +229,6 @@ static void push_callback_to_lua(const ULHookState *hook)
     }
 }
 
-static void ulinternal_hook_callback__generic_no_arguments(uc_engine *engine,
-                                                           void *userdata)
-{
-    (void)engine;
-    ULHookState *hook = (ULHookState *)userdata;
-
-    push_callback_to_lua(hook);
-    lua_call(hook->L, 0, 0);
-}
-
-static void ulinternal_hook_callback__interrupt(uc_engine *engine, uint32_t intno,
-                                                void *userdata)
-{
-    (void)engine;
-    ULHookState *hook = (ULHookState *)userdata;
-
-    push_callback_to_lua(hook);
-    lua_pushinteger(hook->L, (lua_Integer)intno);
-    lua_call(hook->L, 1, 0);
-}
-
-static void ulinternal_hook_callback__memory_access(uc_engine *engine, uc_mem_type type,
-                                                    uint64_t address, int size,
-                                                    int64_t value, void *userdata)
-{
-    (void)engine;
-    ULHookState *hook = (ULHookState *)userdata;
-
-    push_callback_to_lua(hook);
-    lua_pushinteger(hook->L, (lua_Integer)type);
-    lua_pushinteger(hook->L, (lua_Integer)address);
-    lua_pushinteger(hook->L, (lua_Integer)size);
-    lua_pushinteger(hook->L, (lua_Integer)value);
-    lua_call(hook->L, 4, 0);
-}
-
 static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
                                                          uc_mem_type type,
                                                          uint64_t address, int size,
@@ -320,10 +237,13 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
     (void)engine;
     ULHookState *hook = (ULHookState *)userdata;
 
-    push_callback_to_lua(hook);
+    ulinternal_push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)type);
     lua_pushinteger(hook->L, (lua_Integer)address);
     lua_pushinteger(hook->L, (lua_Integer)size);
+    /* TODO(dargueta): If type == UC_HOOK_MEM_READ_INVALID then pass `nil` for `value`.
+     * While one shouldn't be using `value` on a read to begin with, I'll treat this as
+     * backwards-incompatible, and hold off on making the change until v3.0. */
     lua_pushinteger(hook->L, (lua_Integer)value);
     lua_call(hook->L, 4, 1);
 
@@ -347,7 +267,7 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     (void)engine;
     ULHookState *hook = (ULHookState *)userdata;
 
-    push_callback_to_lua(hook);
+    ulinternal_push_callback_to_lua(hook);
     lua_pushinteger(hook->L, (lua_Integer)port);
     lua_pushinteger(hook->L, (lua_Integer)size);
     lua_call(hook->L, 2, 1);
@@ -355,29 +275,4 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     uint32_t return_value = (uint32_t)luaL_checkinteger(hook->L, -1);
     lua_pop(hook->L, 1);
     return return_value;
-}
-
-static void ulinternal_hook_callback__port_out(uc_engine *engine, uint32_t port, int size,
-                                               uint32_t value, void *userdata)
-{
-    (void)engine;
-    ULHookState *hook = (ULHookState *)userdata;
-
-    push_callback_to_lua(hook);
-    lua_pushinteger(hook->L, (lua_Integer)port);
-    lua_pushinteger(hook->L, (lua_Integer)size);
-    lua_pushinteger(hook->L, (lua_Integer)value);
-    lua_call(hook->L, 3, 0);
-}
-
-static void ulinternal_hook_callback__code(uc_engine *engine, uint64_t address,
-                                           uint32_t size, void *userdata)
-{
-    (void)engine;
-    ULHookState *hook = (ULHookState *)userdata;
-
-    push_callback_to_lua(hook);
-    lua_pushinteger(hook->L, (lua_Integer)address);
-    lua_pushinteger(hook->L, (lua_Integer)size);
-    lua_call(hook->L, 2, 0);
 }
