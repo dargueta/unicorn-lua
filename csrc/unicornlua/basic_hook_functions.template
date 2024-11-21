@@ -22,7 +22,6 @@
 
 
 ! for hook_name, hook_definition in pairs(basic_hook_functions) do
-    UNICORN_EXPORT
     void ulinternal_hook_callback__$(hook_name)(
         uc_engine *engine,
 !       for _, argument_definition in ipairs(hook_definition.arguments) do
@@ -30,4 +29,5 @@
 !       end
         void *userdata
     );
+    LUA_API int ul_create_$(hook_name)_hook(lua_State *L);
 ! end

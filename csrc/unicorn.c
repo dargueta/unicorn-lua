@@ -24,6 +24,7 @@
  * @module unicorn_c_
  */
 
+#include "unicornlua/basic_hook_functions.h"
 #include "unicornlua/control_functions.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/hooks.h"
