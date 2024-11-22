@@ -17,8 +17,8 @@ $(copyright_notice)
 ! for hook_name, hook_definition in pairs(basic_hook_functions) do
     void ulinternal_hook_callback__$(hook_name)(
         uc_engine *engine,
-!       for _, argument_definition in ipairs(hook_definition.arguments) do
-            $(argument_definition.type) $(argument_definition.name),
+!       for i, argument_type in ipairs(hook_definition.arguments) do
+            $(argument_type) arg_$(i),
 !       end
         void *userdata
     )
@@ -27,8 +27,8 @@ $(copyright_notice)
         ULHookState *hook = (ULHookState *)userdata;
 
         ulinternal_push_callback_to_lua(hook);
-!       for _, argument_definition in ipairs(hook_definition.arguments) do
-            lua_pushinteger(hook->L, (lua_Integer)$(argument_definition.name));
+!       for i = 1, #hook_definition.arguments do
+            lua_pushinteger(hook->L, (lua_Integer)arg_$(i));
 !       end
         lua_call(hook->L, $(#hook_definition.arguments), 0);
     }

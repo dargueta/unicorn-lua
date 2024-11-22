@@ -11,11 +11,11 @@ $(copyright_notice)
 
 ! for hook_name, hook_definition in pairs(basic_hook_functions) do
     void ulinternal_hook_callback__$(hook_name)(
-        uc_engine *engine,
-!       for _, argument_definition in ipairs(hook_definition.arguments) do
-            $(argument_definition.type) $(argument_definition.name),
+        uc_engine *,
+!       for _, argument_type in ipairs(hook_definition.arguments) do
+            $(argument_type),
 !       end
-        void *userdata
+        void *
     );
     LUA_API int ul_create_$(hook_name)_hook(lua_State *L);
 ! end
