@@ -30,6 +30,34 @@
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
 
+#if __STDC_VERSION__ >= 202311L
+#    define UL_FALLTHROUGH_MARKER [[fallthrough]]
+#    define UL_RETURNS_POINTER [[nodiscard]]
+#    define UL_UNREACHABLE_MARKER unreachable()
+#    define UL_PUBLIC_API
+#    define UL_PRIVATE
+#elif defined(__GNUC__)
+// GCC, Clang, ICC
+#    define UL_FALLTHROUGH_MARKER __attribute__((fallthrough))
+#    define UL_RETURNS_POINTER __attribute__((returns_nonnull, warn_unused_result))
+#    define UL_UNREACHABLE_MARKER __builtin_unreachable()
+#    define UL_PUBLIC_API __attribute__((visibility("default")))
+#    define UL_PRIVATE __attribute__((visibility("internal")))
+#elif defined(_MSC_VER)
+// Microsoft Visual Studio
+#    define UL_FALLTHROUGH_MARKER
+#    define UL_RETURNS_POINTER _Must_inspect_result_
+#    define UL_UNREACHABLE_MARKER __assume(false)
+#    define UL_PUBLIC_API __declspec(dllexport)
+#    define UL_PRIVATE
+#else
+#    define UL_FALLTHROUGH_MARKER
+#    define UL_RETURNS_POINTER
+#    define UL_UNREACHABLE_MARKER
+#    define UL_PUBLIC_API
+#    define UL_PRIVATE
+#endif
+
 /**
  * Use snprintf to build a string and push it onto the Lua stack.
  *
@@ -44,12 +72,12 @@
  * @param argv  An initialized varargs list pointing to the first argument of the format
  *              string.
  */
-void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format,
-                          va_list argv);
+UL_PRIVATE void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format,
+                                     va_list argv);
 
-_Noreturn int ulinternal_crash_not_implemented(lua_State *L);
+UL_PRIVATE _Noreturn int ulinternal_crash_not_implemented(lua_State *L);
 
-_Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
+UL_PRIVATE _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
 
 /**
  * Call `luaL_error` if and only if @a error is not @ref UC_ERR_OK.
@@ -61,7 +89,8 @@ _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
 #ifdef __GNUC__
 __attribute__((format(printf, 3, 4)))
 #endif
-void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
+UL_PRIVATE void
+ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
 
 /**
  * Call `luaL_error` with a string created using the C standard sprintf().
@@ -76,49 +105,12 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, .
 #ifdef __GNUC__
 __attribute__((format(printf, 2, 3)))
 #endif
-_Noreturn void
+UL_PRIVATE _Noreturn void
 ulinternal_crash(lua_State *L, const char *format, ...);
-
-struct NamedIntConst
-{
-    const char *name;
-    lua_Integer value;
-};
-
-void load_int_constants(lua_State *L, const struct NamedIntConst *constants);
 
 /**
  * Get the total number of items in the table, both in the array and mapping parts.
  *
  * `luaL_len()` only returns the number of entries in the array part of a table, so this
  * function iterates through the keys as well. */
-size_t count_table_elements(lua_State *L, int table_index);
-
-/* Define a cross-platform marker for telling the compiler we're deliberately falling
- * through to the next case in a switch statement. */
-#if __STDC_VERSION__ >= 201603L
-#    define UL_FALLTHROUGH_MARKER [[fallthrough]]
-#elif defined(__GNUC__)
-#    define UL_FALLTHROUGH_MARKER __attribute__((fallthrough))
-#else
-// MSVC
-#    define UL_FALLTHROUGH_MARKER
-#endif
-
-#if defined(__GNUC__) /* GCC, Clang, ICC */
-#    define UL_UNREACHABLE_MARKER __builtin_unreachable()
-#elif defined(_MSC_VER) // MSVC
-#    define UL_UNREACHABLE_MARKER __assume(false)
-#else
-#    define UL_UNREACHABLE_MARKER
-#endif
-
-#if __STDC_VERSION__ >= 202311L
-#    define UL_RETURNS_POINTER [[nodiscard]]
-#elif defined(__GNUC__)
-#    define UL_RETURNS_POINTER __attribute__((returns_nonnull, warn_unused_result))
-#elif defined(_MSC_VER)
-#    define UL_RETURNS_POINTER _Must_inspect_result_
-#else
-#    define UL_RETURNS_POINTER
-#endif
+UL_PRIVATE size_t count_table_elements(lua_State *L, int table_index);
