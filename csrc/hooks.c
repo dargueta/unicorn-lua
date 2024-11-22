@@ -115,9 +115,9 @@ static void get_common_arguments(lua_State *restrict L, ULHookState *restrict ho
     hook->L = L;
     hook->hook_handle = (uc_hook)0;
     *engine = (uc_engine *)lua_topointer(L, 1);
-    *hook_type = (uc_hook_type)lua_tointeger(L, 2);
-    *start_address = (uint64_t)lua_tointeger(L, 4);
-    *end_address = (uint64_t)lua_tointeger(L, 5);
+    *hook_type = (uc_hook_type)luaL_checkinteger(L, 2);
+    *start_address = (uint64_t)luaL_checkinteger(L, 4);
+    *end_address = (uint64_t)luaL_checkinteger(L, 5);
 
     /* The user's callback function is in stack position 3. To be able to call it later,
      * we save a strong reference to it in the C registry. Ideally we would save it in the
