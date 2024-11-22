@@ -107,16 +107,32 @@ int ul_reg_write_batch(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
 
-    /* Second argument will be a table with key-value pairs, the keys being the registers
-     * to write to, and the values being the values to write to these registers. */
+    // Second argument will be a table with key-value pairs, the keys being the registers
+    // to write to, and the values being the values to write to these registers.
     size_t n_registers = count_table_elements(L, 2);
 
-    int *register_ids = malloc(sizeof(*register_ids) * n_registers);
-    int_least64_t *values = malloc(sizeof(*values) * n_registers);
-    void **p_values = malloc(sizeof(*p_values) * n_registers);
+    int *register_ids;
+    int_least64_t *values;
+    void **p_values;
 
-    /* Iterate through the register/value pairs and put them in the corresponding array
-     * positions. */
+    // Because allocating multiple arrays and freeing on errors is annoying, and also to
+    // reduce fragmentation, it's more efficient(?) to allocate all necessary memory at
+    // once and do some pointer arithmetic to set up the array pointers where we need
+    // them.
+    // To use a metaphor: instead of getting chairs one at a time for each person at a
+    // table, here we're using a single bench to seat everyone at once.
+    char *arena = (char *)malloc(
+        n_registers * (sizeof(*register_ids) + sizeof(*values) + sizeof(*p_values)));
+
+    if (arena == NULL)
+        ulinternal_crash(L, "Failed to allocate enough memory to bulk write registers.");
+
+    register_ids = (int *)arena;
+    values = (int_least64_t *)(arena + (sizeof(*register_ids) * n_registers));
+    p_values = (void **)((char *)values + (sizeof(*values) * n_registers));
+
+    // Iterate through the register/value pairs and put them in the corresponding array
+    // positions.
     lua_pushnil(L);
     for (size_t i = 0; lua_next(L, 2) != 0; ++i)
     {
@@ -127,9 +143,7 @@ int ul_reg_write_batch(lua_State *L)
     }
 
     uc_err error = uc_reg_write_batch(engine, register_ids, p_values, (int)n_registers);
-    free(register_ids);
-    free(values);
-    free(p_values);
+    free(arena);
 
     ulinternal_crash_if_failed(L, error, "Failed to write %d registers at once.",
                                (int)n_registers);
