@@ -1,6 +1,6 @@
+#include "unicornlua/register_types.h"
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
-#include <errno.h>
 #include <inttypes.h>
 #include <lauxlib.h>
 #include <lua.h>
@@ -55,10 +55,10 @@ int ul_reg_read(lua_State *L)
         if (lua_gettop(L) < 3)
         {
             lua_pushstring(
-                L, "Reading an x86 model-specific register (MSR) requires"
-                   " an additional argument identifying the register to read. You"
-                   " can find a list of these in the \"Intel 64 and IA-32 Software"
-                   " Developer's Manual\", available as PDFs from their website.");
+                L, "Reading an x86 model-specific register (MSR) requires an additional"
+                   " argument identifying the register to read. You can find a list of"
+                   " these in the \"Intel 64 and IA-32 Software Developer's Manual\","
+                   " available as PDFs from their website.");
             lua_error(L);
             UL_UNREACHABLE_MARKER;
         }
@@ -233,7 +233,8 @@ int ul_reg_read_batch_as(lua_State *L)
         // Value: Deserialized register
         struct ULRegister register_object = {.kind =
                                                  (enum RegisterDataType)value_types[i]};
-        memcpy(&register_object.data, value_pointers[i], sizeof(register_object.data));
+        memcpy(&register_object.data, value_pointers[i],
+               register__size_for_register_kind(register_object.kind));
         register__push_to_lua(&register_object, L);
 
         // Set k-v pair.

@@ -140,4 +140,4 @@ const char *register__type_id_to_slug(enum RegisterDataType kind);
 void register__push_to_lua(const struct ULRegister *reg, lua_State *L);
 void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index,
                         int kind_index);
-const char *register__kind_as_human_readable(enum RegisterDataType kind);
+size_t register__size_for_register_kind(enum RegisterDataType kind);
