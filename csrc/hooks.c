@@ -24,6 +24,8 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
+/// @submodule unicorn_c_
+
 static void get_common_arguments(lua_State *restrict L, ULHookState *restrict hook,
                                  uc_engine **engine, uc_hook_type *restrict hook_type,
                                  uint64_t *restrict start_address,

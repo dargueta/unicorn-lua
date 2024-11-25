@@ -7,6 +7,8 @@ $(copyright_notice)
 #include <stdint.h>
 #include <unicorn/unicorn.h>
 
+/// @submodule unicorn_c_
+
 /* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
  * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
  * that the compiler doesn't blow up. */

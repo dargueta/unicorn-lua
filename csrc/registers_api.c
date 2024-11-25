@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
+/// @submodule unicorn_c_
+
 int ul_reg_write(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);

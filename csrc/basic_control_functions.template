@@ -2,11 +2,8 @@
 $(copyright_notice)
 */
 
-/***
-Implements engine control functions added in Unicorn 2.0.
-
-@submodule unicorn_c_
-*/
+/// Implementation of simple control functions.
+/// @submodule unicorn_c_
 
 #include "unicornlua/integer_conversions.h"
 #include "unicornlua/utils.h"

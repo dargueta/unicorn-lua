@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
+/// @submodule unicorn_c_
+
 #if UC_VERSION_MAJOR >= 2
 int ul_ctl_get_exits(lua_State *L)
 {
