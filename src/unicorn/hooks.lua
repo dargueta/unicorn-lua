@@ -14,9 +14,12 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
---[[--
-@module hooks
-]]
+--- Helpers for creating event hooks.
+---
+--- Most users won't need to use this module directly. Use @{engine.Engine:hook_add}
+--- instead.
+---
+--- @module hooks
 
 local M = {}
 

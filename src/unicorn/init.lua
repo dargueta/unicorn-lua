@@ -15,17 +15,22 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 --- The main module for the Unicorn CPU Emulator.
+---
+--- @author Diego Argueta
+--- @copyright 2017-2024 Diego Argueta
+--- @license GPL-2
+--- @release 2.3.0
 --- @module unicorn
 
 local uc_c = require("unicorn_c_")
 local uc_engine = require("unicorn.engine")
 
 local M = {
-    --- The major, minor, and patch numbers of this Lua library's version.
-    ---
-    --- To get the version of the Unicorn C library this binding wraps around, see
-    --- @{unicorn.version}.
-    LUA_LIBRARY_VERSION = {2, 3, 0};
+    -- The major, minor, and patch numbers of this Lua library's version.
+    --
+    -- To get the version of the Unicorn C library this binding wraps around, see
+    -- @{unicorn.version}.
+    LUA_LIBRARY_VERSION = {2, 3, 0},
 
     --- Determine if `architecture` is supported by the underlying Unicorn library.
     ---
