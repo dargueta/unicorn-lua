@@ -14,7 +14,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-/**
+/***
  * `unicorn_c_` is a very very thin wrapper around the C library.
  *
  * Users are discouraged from using it directly, as it makes no provisions for garbage
@@ -196,6 +196,7 @@ int ul_strerror(lua_State *L)
 }
 
 static const luaL_Reg kFunctions[] = {
+    {"bitwise_and", ul_bitwise_and},
     {"close", ul_close},
     {"create_arm64_sys_hook", ul_create_arm64_sys_hook},
     {"create_code_hook", ul_create_code_hook},

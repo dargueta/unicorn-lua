@@ -19,6 +19,8 @@
 #include <lua.h>
 #include <unicorn/unicorn.h>
 
+int ul_bitwise_and(lua_State *L);
+
 int ul_errno(lua_State *L);
 
 int ul_emu_start(lua_State *L);

@@ -38,40 +38,24 @@ local unicorn_const = require("unicorn.unicorn_const")
 --- @type Engine
 local Engine = {}
 
-local M = {
-    Engine = Engine
+local EngineMeta_ = {
+    __index = Engine,
+    __close = function(self)
+        -- Only close the engine if it hasn't been closed already. We want to allow double-
+        -- closing here because the user may want to explicitly close an engine on some
+        -- control paths, but let Lua automatically close it on others.
+        if self.handle_ ~= nil then
+            self:close()
+        end
+    end
 }
 
-local EngineMeta_ = {__index = Engine}
+-- The garbage collection process is exactly the same as closing the engine, so we might
+-- as well reuse that function.
+EngineMeta_.__gc = EngineMeta_.__close
 
 
---- A structure representing a block of emulated memory mapped into the engine.
----
---- @type MemoryRegion
---- @field int begins  The base address of this block of memory.
---- @field int ends  The last valid address in this block of memory.
---- @field int perms Permission flags.
---- @see Engine:mem_regions
-local MemoryRegion = setmetatable({}, {__setindex = function () end})
-
-
---- A structure representing a QEMU translation block in memory.
----
---- QEMU contains a JIT that breaks down instruction memory into one or more blocks,
---- called "translation blocks". It translates the guest instruction set into native
---- instructions that are stored in these translation blocks.
----
---- Someone should check me on this. I'm guessing the meaning of the fields based on QEMU
---- documentation.
----
---- @type TranslationBlock
---- @field int pc  The simulated program counter within this block.
---- @field int icount  The number of instructions in the block.
---- @field int size  The size of the block, in bytes.
---- @see Engine:ctl_request_cache
---- @see https://www.qemu.org/docs/master/devel/tcg.html
-local TranslationBlock = setmetatable({}, {__setindex = function () end})
-
+local M = { Engine = Engine }
 
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
@@ -100,20 +84,6 @@ function M.wrap_handle_(handle)
     return setmetatable(instance, EngineMeta_)
 end
 
-function EngineMeta_:__close()
-    -- Only close the engine if it hasn't been closed already. We want to allow double-
-    -- closing here because the user may want to explicitly close an engine on some
-    -- control paths, but let Lua automatically close it on others.
-    if self.handle_ ~= nil then
-        self:close()
-    end
-end
-
-function EngineMeta_:__gc()
-    if self.handle_ ~= nil then
-        self:close()
-    end
-end
 
 --- Stop the emulator engine and free all resources.
 ---
@@ -226,7 +196,7 @@ end
 --- The return value is a handle used to keep track of the hook. Unlike contexts, hooks
 --- are not removed if the handle is garbage collected.
 ---
---- @tparam int kind  The type of hook to create. The constants are in @{unicorn_const}
+--- @tparam int hook_type  The type of hook to create. The constants are in @{unicorn_const}
 --- and begin with `UC_HOOK_`.
 --- @tparam function callback  The function to call when the hook is triggered. The
 --- arguments passed to the callback depend on the type of hook.
@@ -309,9 +279,15 @@ end
 
 --- Get an enumeration of all memory regions mapped into the engine.
 ---
---- @treturn {MemoryRegion}
+--- @treturn {MemoryRegion, ...}  An array of each memory region. Order is not guaranteed.
 function Engine:mem_regions()
-    return uc_c.mem_regions(self.handle_)
+    local regions = uc_c.mem_regions(self.handle_)
+    local meta = {__index = M.MemoryRegion}
+
+    for _, region in ipairs(regions) do
+        setmetatable(region, meta)
+    end
+    return regions
 end
 
 --- Unmap a region of emulated RAM from the engine.
@@ -468,5 +444,73 @@ end
 function Engine:ctl_set_page_size()
     error("Not implemented yet")
 end
+
+
+--- A structure representing a block of emulated memory mapped into the engine.
+---
+--- @type MemoryRegion
+--- @see Engine:mem_regions
+M.MemoryRegion = {
+    --- @field begins  The base address of this block of memory.
+
+    --- @field ends  The last valid address in this block of memory.
+
+    --- @field perms Permission flags.
+}
+
+
+--- Determine if the memory can be read from.
+--- @treturn bool  `true` if this block of memory is readable, `false` otherwise.
+ function M.MemoryRegion:can_read()
+    return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_READ) ~= 0
+end
+
+--- Determine if the memory can be written to.
+--- @treturn bool  `true` if this block of memory is writable, `false` otherwise.
+ function M.MemoryRegion:can_write()
+    return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_WRITE) ~= 0
+end
+
+--- Determine if the memory can be both read from and written to.
+--- @treturn bool  `true` if this block of memory is both readable and writable,
+--- `false` otherwise.
+ function M.MemoryRegion:can_readwrite()
+    local mask = unicorn_const.UC_PROT_READ + unicorn_const.UC_PROT_WRITE
+    return uc_c.bitwise_and(self.perms, mask) == mask
+end
+
+--- Determine if the memory can be read from.
+--- @treturn bool  `true` if this block of memory is executable, `false` otherwise.
+function M.MemoryRegion:can_exec()
+    return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_EXEC) ~= 0
+end
+
+--- Determine if the memory has read, write, and execute permissions.
+--- @treturn bool  `true` if this block of memory is readable, writable, and executable;
+--- `false` otherwise.
+function M.MemoryRegion:can_all()
+    return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_ALL) == unicorn_const.UC_PROT_ALL
+end
+
+
+--- A structure representing a QEMU translation block in memory.
+---
+--- QEMU contains a JIT that breaks down instruction memory into one or more blocks,
+--- called "translation blocks". It translates the guest instruction set into host-native
+--- instructions that are stored in these translation blocks.
+---
+--- Someone should check me on this. I'm guessing the meaning of the fields based on QEMU
+--- documentation.
+---
+--- @type TranslationBlock
+--- @see Engine:ctl_request_cache
+--- @see https://www.qemu.org/docs/master/devel/tcg.html
+M.TranslationBlock = {
+    --- @field pc  The simulated program counter within this block.
+
+    --- @field icount  The number of instructions in the block.
+
+    --- @field size  The size of the block, in bytes.
+}
 
 return M

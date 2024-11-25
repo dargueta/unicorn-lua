@@ -23,6 +23,18 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
+/// @submodule unicorn_c_
+
+
+int ul_bitwise_and(lua_State *L)
+{
+    uint64_t left = luaL_checkinteger(L, 1);
+    uint64_t right = luaL_checkinteger(L, 2);
+
+    lua_pushinteger(L,(lua_Integer)(left & right));
+    return 1;
+}
+
 int ul_errno(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
