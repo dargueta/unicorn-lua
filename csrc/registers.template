@@ -203,7 +203,7 @@ static const char *kRegisterDataTypeSlugs[] = {
     "int$(conf.bits) array, count $(conf.count)",
 ! end
 ! for _, conf in ipairs(float_arrays) do
-    "UL_REG_TYPE_FLOAT$(conf.bits) array, count (conf.count)",
+    "float$(conf.bits) array, count $(conf.count)",
 ! end
     "float80"
 };
