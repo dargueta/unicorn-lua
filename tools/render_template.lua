@@ -14,15 +14,14 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-lapp = require "pl.lapp"
-stringx = require "pl.stringx"
-tablex = require "pl.tablex"
-template = require "pl.template"
-utils = require "pl.utils"
+local lapp = require "pl.lapp"
+local stringx = require "pl.stringx"
+local tablex = require "pl.tablex"
+local template = require "pl.template"
+local utils = require "pl.utils"
 
 
-COPYRIGHT_NOTICE = [[
-Copyright (C) 2017-2024 by Diego Argueta
+local COPYRIGHT_NOTICE = [[Copyright (C) 2017-2024 by Diego Argueta
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -36,8 +35,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-]]
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.]]
 
 
 USAGE = [[
@@ -115,10 +113,9 @@ function main()
     environment._inline_escape = string.sub(args.inline_escape, 1, 1)
     environment._brackets = string.sub(args.inline_escape, 2, 3)
     environment._parent = {ipairs = ipairs, pairs = pairs}
-    environment._chunk_name = "template"
+    environment._chunk_name = args.template
 
     local rendered_text, err, _compiled = template.substitute(template_text, environment)
-
     if err then
         utils.quit(1, "Error rendering template: %s", err)
     end
