@@ -50,31 +50,25 @@ size_t register__size_for_register_kind(enum RegisterDataType kind) {
 }
 
 ! for _, conf in ipairs(int_arrays) do
-void integer_array_$(conf.count)xi$(conf.bits)_to_table(lua_State *L, int$(conf.bits)_t *array)
+void integer_array_$(conf.count)xi$(conf.bits)_to_table(lua_State * restrict L, const int$(conf.bits)_t * restrict array)
 {
-    int i;
-
     lua_createtable(L, $(conf.count), 0);
-    for (i = 0; i < $(conf.count); i++)
+    for (int i = 0; i < $(conf.count); i++)
     {
-        lua_pushinteger(L, i + 1);
         lua_pushinteger(L, (lua_Integer)array[i]);
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i + 1);
     }
 }
 ! end
 
 ! for _, conf in ipairs(float_arrays) do
-void float_array_$(conf.count)xf$(conf.bits)_to_table(lua_State *L, uclua_float$(conf.bits) *array)
+void float_array_$(conf.count)xf$(conf.bits)_to_table(lua_State * restrict L, const uclua_float$(conf.bits) * restrict array)
 {
-    int i;
-
     lua_createtable(L, $(conf.count), 0);
-    for (i = 0; i < $(conf.count); i++)
+    for (int i = 0; i < $(conf.count); i++)
     {
-        lua_pushinteger(L, i + 1);
         lua_pushnumber(L, (lua_Integer)array[i]);
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i + 1);
     }
 }
 ! end
@@ -181,7 +175,7 @@ void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index, i
         default:
             luaL_error(
                 L,
-                "Invalid type ID for register. Expected > %d and < %d but got %d.",
+                "Invalid type ID for register. Expected %d < ID < %d, got ID=%d.",
                 UL_REG_TYPE_UNKNOWN,
                 ULINTERNAL_REG_TYPE_MAX,
                 kind

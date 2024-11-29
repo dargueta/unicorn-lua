@@ -32,14 +32,8 @@ int ul_ctl_get_exits(lua_State *L)
     lua_createtable(L, (int)n_exits, 0);
     for (size_t i = 0; i < n_exits; i++)
     {
-#    if LUA_VERSION_NUM >= 502
         lua_pushinteger(L, (lua_Integer)exits[i]);
         lua_rawseti(L, (int)(i + 1), -2);
-#    else
-        lua_pushinteger(L, (lua_Integer)(i + 1));
-        lua_pushinteger(L, (lua_Integer)exits[i]);
-        lua_rawset(L, -3);
-#    endif
     }
 
     free(exits);

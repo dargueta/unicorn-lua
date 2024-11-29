@@ -35,8 +35,6 @@ $(copyright_notice)
         lua_call(hook->L, $(#hook_definition.arguments), 0);
     }
 
-
-LUA_API
 int ul_create_$(hook_name)_hook(lua_State *L)
 {
     ulinternal_helper_create_generic_hook(L, "$(hook_name)", (void *)ulinternal_hook_callback__$(hook_name));

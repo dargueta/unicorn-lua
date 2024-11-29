@@ -139,8 +139,6 @@ int ul_mem_regions(lua_State *L)
     lua_createtable(L, (int)n_regions, 0);
     for (uint32_t i = 0; i < n_regions; i++)
     {
-        lua_pushinteger(L, (int)(i + 1));
-
         lua_createtable(L, 0, 3);
         lua_pushinteger(L, (lua_Integer)regions[i].begin);
         lua_setfield(L, -2, "begins");
@@ -151,7 +149,7 @@ int ul_mem_regions(lua_State *L)
         lua_pushinteger(L, (lua_Integer)regions[i].perms);
         lua_setfield(L, -2, "perms");
 
-        lua_rawset(L, -3);
+        lua_rawseti(L, -2, (int)(i + 1));
     }
 
     uc_free(regions);
