@@ -55,13 +55,11 @@ local EngineMeta_ = {
 EngineMeta_.__gc = EngineMeta_.__close
 
 
-local M = { Engine = Engine }
-
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn Engine  A class instance wrapping the handle.
-function M.wrap_handle_(handle)
+function wrap_handle_(handle)
     local instance = {
         is_running_ = false,
         handle_ = handle,
@@ -282,7 +280,7 @@ end
 --- @treturn {MemoryRegion, ...}  An array of each memory region. Order is not guaranteed.
 function Engine:mem_regions()
     local regions = uc_c.mem_regions(self.handle_)
-    local meta = {__index = M.MemoryRegion}
+    local meta = {__index = MemoryRegion}
 
     for _, region in ipairs(regions) do
         setmetatable(region, meta)
@@ -450,7 +448,7 @@ end
 ---
 --- @type MemoryRegion
 --- @see Engine:mem_regions
-M.MemoryRegion = {
+local MemoryRegion = {
     --- @field begins  The base address of this block of memory.
 
     --- @field ends  The last valid address in this block of memory.
@@ -461,34 +459,34 @@ M.MemoryRegion = {
 
 --- Determine if the memory can be read from.
 --- @treturn bool  `true` if this block of memory is readable, `false` otherwise.
- function M.MemoryRegion:can_read()
+ function MemoryRegion:can_read()
     return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_READ) ~= 0
 end
 
 --- Determine if the memory can be written to.
 --- @treturn bool  `true` if this block of memory is writable, `false` otherwise.
- function M.MemoryRegion:can_write()
+ function MemoryRegion:can_write()
     return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_WRITE) ~= 0
 end
 
 --- Determine if the memory can be both read from and written to.
 --- @treturn bool  `true` if this block of memory is both readable and writable,
 --- `false` otherwise.
- function M.MemoryRegion:can_readwrite()
+ function MemoryRegion:can_readwrite()
     local mask = unicorn_const.UC_PROT_READ + unicorn_const.UC_PROT_WRITE
     return uc_c.bitwise_and(self.perms, mask) == mask
 end
 
 --- Determine if the memory can be read from.
 --- @treturn bool  `true` if this block of memory is executable, `false` otherwise.
-function M.MemoryRegion:can_exec()
+function MemoryRegion:can_exec()
     return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_EXEC) ~= 0
 end
 
 --- Determine if the memory has read, write, and execute permissions.
 --- @treturn bool  `true` if this block of memory is readable, writable, and executable;
 --- `false` otherwise.
-function M.MemoryRegion:can_all()
+function MemoryRegion:can_all()
     return uc_c.bitwise_and(self.perms, unicorn_const.UC_PROT_ALL) == unicorn_const.UC_PROT_ALL
 end
 
@@ -505,7 +503,7 @@ end
 --- @type TranslationBlock
 --- @see Engine:ctl_request_cache
 --- @see https://www.qemu.org/docs/master/devel/tcg.html
-M.TranslationBlock = {
+local TranslationBlock = {
     --- @field pc  The simulated program counter within this block.
 
     --- @field icount  The number of instructions in the block.
@@ -513,4 +511,11 @@ M.TranslationBlock = {
     --- @field size  The size of the block, in bytes.
 }
 
-return M
+
+--- @exports
+return {
+    Engine = Engine,
+    wrap_handle_ = wrap_handle_,
+    MemoryRegion = MemoryRegion,
+    TranslationBlock = TranslationBlock,
+}
