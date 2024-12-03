@@ -312,20 +312,24 @@ function Engine:query(query_flag)
     return uc_c.query(self.handle_, query_flag)
 end
 
---- Read the current value of a CPU register from the engine.
+--- Read the current value of a CPU register as a signed integer.
 ---
 --- @tparam int register  An architecture-specific enum value indicating the register to
 --- read. These are found in the const module for the relevant architecture, and are
 --- always of the form `UC_<arch>_REG_<reg name>`. For example, @{ppc_const.UC_PPC_REG_CR5}
 --- would read the CR5 register from a PowerPC engine. Passing a constant from the wrong
 --- architecture has undefined behavior.
+--- @tparam[opt] int x86_msr_id  If `register` is @{x86_const.UC_X86_REG_MSR}, this must
+--- be the ID of the model-specific CPU register to read. Lists of these register IDs can
+--- be found in "Intel 64 and IA-32 Software Developer's Manual", available on Intel's
+--- website.
 ---
 --- @treturn int  The register's value.
-function Engine:reg_read(register)
-    return uc_c.reg_read(self.handle_, register)
+function Engine:reg_read(register, x86_msr_id)
+    return uc_c.reg_read(self.handle_, register, x86_msr_id)
 end
 
---- Read the current value of a CPU register as something other than an a plain integer.
+--- Read the current value of a CPU register as something other than an integer.
 ---
 --- This is primarily useful for SIMD instructions, where a single register can be
 --- interpreted as (for example) an array of two 64-bit integers, four 32-bit integers,
@@ -347,40 +351,52 @@ function Engine:reg_read_batch_as(registers)
     return uc_c.reg_read_batch_as(self.handle_, registers)
 end
 
---- Set the current value of a CPU register in the engine.
+--- Set the current value of a CPU register to an integer value.
 ---
 --- @tparam int register  An architecture-specific enum value indicating the register to
 --- write to. The meaning is the same as in @{Engine:reg_read}.
---- @tparam number value  The value to write to the register.
+--- @tparam int value  The value to write to the register.
 function Engine:reg_write(register, value)
     return uc_c.reg_write(self.handle_, register, value)
 end
 
---- Write an array of values to a register.
+--- Write a value to a register as anything other than a single integer.
 ---
---- This is the converse of @{Engine:reg_read_as}, and lets you set a register using an
---- array of (for example) eight 16-bit integers. While especially useful for SIMD
---- registers, any register can be written to with this method. For example, you can set
---- AX using two eight-bit values instead of having to compute `(AH << 8) | AL` manually.
+--- This is the converse of @{Engine:reg_read_as}, and lets you set a non-integer-valued
+--- register (like STx) or SIMD register (e.g. XMM0 to an array of eight 16-bit integers).
+---
+--- While especially useful for SIMD registers, any register can be written to with this
+--- method. For example, you can set AX using two eight-bit values instead of having to
+--- compute `(AH << 8) | AL` manually.
+---
+--- @tparam int register  An architecture-specific enum value indicating the register to
+--- write to. The meaning is the same as in @{Engine:reg_read}.
+--- @param value  The value to write to the register.
+--- @tparam int as_type  An enum value indicating how to reinterpret the register. These
+--- can be found in @{registers_const}.
 function Engine:reg_write_as(register, value, as_type)
     return uc_c.reg_write_as(self.handle_, register, value, as_type)
 end
 
 --- Set the value of multiple CPU registers at once.
 ---
---- This should only be used when setting a register to an integer or floating-point
---- value. To set multiple registers to non-scalar values (e.g. setting XMM0 to an array
---- of 8-bit ints) you must call @{Engine:reg_write_as} individually.
+--- This should only be used when setting the value of integer registers. To set multiple
+--- registers to non-integer values (e.g. setting ST0, or XMM0 as an array of 8-bit ints)
+--- you must call @{Engine:reg_write_as} individually.
 ---
---- @param registers A table mapping register IDs to numeric values to assign them.
+--- @param registers A table mapping register IDs to the values to assign them.
 function Engine:reg_write_batch(registers)
     return uc_c.reg_write_batch(self.handle_, registers)
 end
 
+--- Disable setting multiple exit points (addresses that halt the engine if executed).
 function Engine:ctl_exits_disable()
     return uc_c.ctl_exits_disable(self.handle_)
 end
 
+--- Enable setting multiple exit points (addresses that halt the engine if executed).
+---
+--- This must be called before @{Engine:emu_start}.
 function Engine:ctl_exits_enable()
     return uc_c.ctl_exits_enable(self.handle_)
 end
@@ -389,6 +405,8 @@ function Engine:ctl_flush_tlb()
     return uc_c.ctl_flush_tlb(self.handle_)
 end
 
+--- Get the architecture ID of the engine.
+--- @treturn int  The architecture ID, e.g. @{unicorn_const.UC_ARCH_S390X}.
 function Engine:ctl_get_arch()
     return uc_c.ctl_get_arch(self.handle_)
 end
@@ -397,6 +415,11 @@ function Engine:ctl_get_cpu_model()
     return uc_c.ctl_get_cpu_model(self.handle_)
 end
 
+--- Get a list of all the addresses that halt the engine if executed.
+---
+--- @treturn {int, ...}  The addresses of all exit points.
+--- @see Engine:ctl_exits_enable
+--- @see Engine:ctl_set_exits
 function Engine:ctl_get_exits()
     return uc_c.ctl_get_exits(self.handle_)
 end
@@ -405,10 +428,15 @@ function Engine:ctl_get_exits_cnt()
     return uc_c.ctl_get_exits_cnt(self.handle_)
 end
 
+--- Get the mode flags the engine was created with.
+--- @treturn int  The mode flags.
 function Engine:ctl_get_mode()
     return uc_c.ctl_get_mode(self.handle_)
 end
 
+--- Get the size of a memory page.
+---
+--- @treturn int  The size of a memory page, in bytes.
 function Engine:ctl_get_page_size()
     return uc_c:ctl_get_page_size(self.handle_)
 end
@@ -431,16 +459,28 @@ function Engine:ctl_request_cache(address)
     return uc_c.ctl_request_cache(self.handle_, address)
 end
 
-function Engine:ctl_set_cpu_model()
-    error("Not implemented yet")
+--- Set the CPU model of the engine.
+---
+--- This must be called immediately after creating the engine.
+function Engine:ctl_set_cpu_model(model)
+    return uc_c.ctl_set_cpu_model(self.handle_, model)
 end
 
-function Engine:ctl_set_exits()
-    error("Not implemented yet")
+--- Set multiple addresses that will halt the engine if executed.
+---
+--- @tparam {int, ...}  An array of addresses that will cause emulation to stop if
+--- executed.
+---
+--- @see Engine:ctl_exits_enable
+--- @see Engine:ctl_get_exits
+function Engine:ctl_set_exits(addresses)
+    return uc_c.ctl_set_exits(self.handle_, addresses)
 end
 
-function Engine:ctl_set_page_size()
-    error("Not implemented yet")
+--- Set the size of a memory page.
+--- @tparam int  page_size  The size of a memory page.
+function Engine:ctl_set_page_size(page_size)
+    return uc_c.ctl_set_page_size(self.handle_, page_size)
 end
 
 
