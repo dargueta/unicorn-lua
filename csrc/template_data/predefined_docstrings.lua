@@ -105,9 +105,7 @@ will be set to one of these constants to indicate the event that triggered the h
             title = "Engine Control Functions.",
             description = [[
 These codes are used with the ctl_* family of @{engine.Engine} methods. For the most part
-you won't need these, as they're separated out into their own methods. You can use them
-with @{Engine:do_ctl} to run a control function using only the code instead of invoking a
-named method.]],
+you won't need these, as they're separated out into their own methods.]],
             pattern = "UC_CTL_",
         },
         {
