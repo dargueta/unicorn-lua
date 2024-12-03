@@ -10,6 +10,38 @@
 
 /// @submodule unicorn_c_
 
+/**
+ * Get the total number of items in the table, both in the array and mapping parts.
+ *
+ * `luaL_len()` only returns the number of entries in the array part of a table, so this
+ * function iterates through the keys as well.
+ */
+static size_t count_table_elements(lua_State *L, int table_index)
+{
+    size_t count;
+
+    // Count the number of keys in the map portion of the table.
+    lua_pushnil(L);
+    for (count = 0; lua_next(L, table_index) != 0; ++count)
+        lua_pop(L, 1);
+
+        // Count the number of keys in the aray portion of the table.
+#if LUA_VERSION_NUM >= 502
+    count += (size_t)luaL_len(L, table_index);
+#else
+    for (int i = 0;; i++, count++)
+    {
+        lua_pushinteger(L, i);
+        lua_rawget(L, table_index);
+        if (lua_isnil(L, -1))
+            break;
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+#endif
+    return count;
+}
+
 int ul_reg_write(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);

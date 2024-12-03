@@ -107,10 +107,3 @@ __attribute__((format(printf, 2, 3)))
 #endif
 UL_PRIVATE _Noreturn void
 ulinternal_crash(lua_State *L, const char *format, ...);
-
-/**
- * Get the total number of items in the table, both in the array and mapping parts.
- *
- * `luaL_len()` only returns the number of entries in the array part of a table, so this
- * function iterates through the keys as well. */
-UL_PRIVATE size_t count_table_elements(lua_State *L, int table_index);

@@ -17,6 +17,7 @@
 #include "unicornlua/utils.h"
 #include <errno.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,13 +26,12 @@
 
 /// @submodule unicorn_c_
 
-
 int ul_bitwise_and(lua_State *L)
 {
     uint64_t left = luaL_checkinteger(L, 1);
     uint64_t right = luaL_checkinteger(L, 2);
 
-    lua_pushinteger(L,(lua_Integer)(left & right));
+    lua_pushinteger(L, (lua_Integer)(left & right));
     return 1;
 }
 
