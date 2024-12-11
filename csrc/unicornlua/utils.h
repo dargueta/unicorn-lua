@@ -30,30 +30,33 @@
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
 
+#ifdef __GNUC__
+#    define GNU_ATTRIBUTE(x) __attribute__((x))
+#else
+#    define GNU_ATTRIBUTE(x)
+#endif
+
 #if __STDC_VERSION__ >= 202311L
 #    define UL_FALLTHROUGH_MARKER [[fallthrough]]
-#    define UL_RETURNS_POINTER [[nodiscard]]
 #    define UL_UNREACHABLE_MARKER unreachable()
-#    define UL_PUBLIC_API
-#    define UL_PRIVATE
 #elif defined(__GNUC__)
 // GCC, Clang, ICC
-#    define UL_FALLTHROUGH_MARKER __attribute__((fallthrough))
-#    define UL_RETURNS_POINTER __attribute__((returns_nonnull, warn_unused_result))
+#    define UL_FALLTHROUGH_MARKER GNU_ATTRIBUTE(fallthrough)
 #    define UL_UNREACHABLE_MARKER __builtin_unreachable()
-#    define UL_PUBLIC_API __attribute__((visibility("default")))
-#    define UL_PRIVATE __attribute__((visibility("internal")))
+#    define UL_PUBLIC_API GNU_ATTRIBUTE(visibility("default"))
+#    define UL_PRIVATE GNU_ATTRIBUTE(visibility("internal"))
 #elif defined(_MSC_VER)
 // Microsoft Visual Studio
 #    define UL_FALLTHROUGH_MARKER
-#    define UL_RETURNS_POINTER _Must_inspect_result_
 #    define UL_UNREACHABLE_MARKER __assume(false)
 #    define UL_PUBLIC_API __declspec(dllexport)
 #    define UL_PRIVATE
 #else
 #    define UL_FALLTHROUGH_MARKER
-#    define UL_RETURNS_POINTER
 #    define UL_UNREACHABLE_MARKER
+#endif
+
+#ifndef UL_PUBLIC_API
 #    define UL_PUBLIC_API
 #    define UL_PRIVATE
 #endif
@@ -75,8 +78,23 @@
 UL_PRIVATE void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format,
                                      va_list argv);
 
+/**
+ * Crash Lua with an error message explaining the operation isn't implemented in Lua.
+ *
+ * If this is ever called, it should be considered a bug.
+ *
+ * @param L  A pointer to the Lua state.
+ */
 UL_PRIVATE _Noreturn int ulinternal_crash_not_implemented(lua_State *L);
 
+/**
+ * Crash Lua with an error message explaining the operation isn't supported by Unicorn.
+ *
+ * This is only called if this binding is compiled against a version of Unicorn that
+ * doesn't support some feature that appears in later versions of the library.
+ *
+ * @param L  A pointer to the Lua state.
+ */
 UL_PRIVATE _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
 
 /**
@@ -84,13 +102,15 @@ UL_PRIVATE _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
  *
  * @param L         A pointer to the current Lua state.
  * @param error     A unicorn error code.
- * @param context   Extra information to include as the first part of the error message.
+ * @param format
+ *      The format string for the error message. This uses sprintf(), not Lua's formatter,
+ *      so the full standard library's capabilities can be used. The final error message
+ *      is truncated to @ref UL_MAX_ERROR_MESSAGE_LENGTH characters.
+ * @param ...
  */
-#ifdef __GNUC__
-__attribute__((format(printf, 3, 4)))
-#endif
-UL_PRIVATE void
-ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
+GNU_ATTRIBUTE(format(printf, 3, 4))
+UL_PRIVATE void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format,
+                                           ...);
 
 /**
  * Call `luaL_error` with a string created using the C standard sprintf().
@@ -102,8 +122,5 @@ ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
  *      is truncated to @ref UL_MAX_ERROR_MESSAGE_LENGTH characters.
  * @param ...
  */
-#ifdef __GNUC__
-__attribute__((format(printf, 2, 3)))
-#endif
-UL_PRIVATE _Noreturn void
-ulinternal_crash(lua_State *L, const char *format, ...);
+GNU_ATTRIBUTE(format(printf, 2, 3))
+UL_PRIVATE _Noreturn void ulinternal_crash(lua_State *L, const char *format, ...);
