@@ -29,10 +29,10 @@ static size_t count_table_elements(lua_State *L, int table_index)
 #if LUA_VERSION_NUM >= 502
     count += (size_t)luaL_len(L, table_index);
 #else
-    for (int i = 0;; i++, count++)
+    for (int i = 1;; i++, count++)
     {
         lua_pushinteger(L, i);
-        lua_rawget(L, table_index);
+        lua_gettable(L, table_index);
         if (lua_isnil(L, -1))
             break;
         lua_pop(L, 1);
