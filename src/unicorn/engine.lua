@@ -142,10 +142,10 @@ function Engine:context_save(context)
         return context
     end
 
-    local raw_context_handle = uc_c.context_save(engine.handle_, nil)
+    local raw_context_handle = uc_c.context_save(self.handle_, nil)
     local wrapped_handle = uc_context.wrap_handle_(self, raw_context_handle)
 
-    self.contexts_[#self.contexts_] = wrapped_handle
+    self.contexts_[#self.contexts_ + 1] = wrapped_handle
     return wrapped_handle
 end
 
