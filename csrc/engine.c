@@ -55,7 +55,7 @@ int ul_emu_start(lua_State *L)
     uc_err error = uc_emu_start(engine, start, stop, timeout, n_instructions);
     ulinternal_crash_if_failed(L, error,
                                "Failed to start emulator with start=0x%08" PRIX64 ", end="
-                               "0x%08" PRIX64 ", timeout=%" PRId64 "us (0 = infinity),"
+                               "0x%08" PRIX64 ", timeout=%" PRIu64 "us (0 = infinity),"
                                " max instructions=%zu (0 = infinity)",
                                start, stop, timeout, n_instructions);
     return 0;
