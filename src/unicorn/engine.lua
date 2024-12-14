@@ -138,7 +138,7 @@ end
 --- @see context_restore
 function Engine:context_save(context)
     if context ~= nil then
-        context.handle_ = uc_c.context_save(self.handle_, context.handle_)
+        context.handle_ = uc_c.context_save_reuse_existing(self.handle_, context.handle_)
         return context
     end
 
