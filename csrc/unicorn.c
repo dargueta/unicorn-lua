@@ -25,6 +25,7 @@
  */
 
 #include "unicornlua/basic_hook_functions.h"
+#include "unicornlua/context.h"
 #include "unicornlua/control_functions.h"
 #include "unicornlua/engine.h"
 #include "unicornlua/hooks.h"
@@ -109,6 +110,10 @@ int ul_strerror(lua_State *L)
 
 static const luaL_Reg kFunctions[] = {
     {"bitwise_and", ul_bitwise_and},
+    {"context_save", ul_context_save},
+    {"context_save_reuse_existing", ul_context_save_reuse_existing},
+    {"context_restore",ul_context_restore},
+    {"context_free",ul_context_free},
     {"close", ul_close},
     {"create_arm64_sys_hook", ul_create_arm64_sys_hook},
     {"create_code_hook", ul_create_code_hook},

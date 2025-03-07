@@ -97,8 +97,13 @@ function Engine:close()
         self:emu_stop()
     end
 
-    for context in pairs(self.contexts_) do
-        context:free()
+    for _, context in pairs(self.contexts_) do
+        -- If a context is freed, the wrapper object will still remain in this table until
+        -- the next collection cycle. Thus, we need to check to see if the handle is nil
+        -- before attempting to free it.
+        if context.handle_ ~= nil then
+            context:free()
+        end
     end
     self.contexts_ = nil
 
@@ -145,7 +150,7 @@ function Engine:context_save(context)
     local raw_context_handle = uc_c.context_save(self.handle_, nil)
     local wrapped_handle = uc_context.wrap_handle_(self, raw_context_handle)
 
-    self.contexts_[#self.contexts_ + 1] = wrapped_handle
+    self.contexts_[wrapped_handle] = wrapped_handle
     return wrapped_handle
 end
 

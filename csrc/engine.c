@@ -64,8 +64,9 @@ int ul_emu_start(lua_State *L)
 int ul_emu_stop(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
-    uc_err error = uc_emu_stop(engine);
+    luaL_argcheck(L, engine != NULL, 1, "Engine is null. Was this closed already?");
 
+    uc_err error = uc_emu_stop(engine);
     ulinternal_crash_if_failed(L, error, "Failed to halt emulation.");
     return 0;
 }
