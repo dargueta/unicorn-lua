@@ -30,3 +30,4 @@ venv/
 .luaenv*/
 pyproject.toml
 poetry.lock
+.envrc
