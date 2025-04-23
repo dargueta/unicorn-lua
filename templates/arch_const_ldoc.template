@@ -1,0 +1,59 @@
+--[[
+$(copyright_notice)
+]]
+
+--- Constants exported by "$(source_basename)".
+--- @module $(source_stem)_const
+
+! fields_seen = {}
+! predef_docs = docstrings[source_stem] or {}
+! predef_sections = sections[source_stem] or {}
+
+! for _, section in ipairs(predef_sections) do
+--[[--
+$(section.title)
+
+$(section.description or "")
+
+@section $(section.slug)
+]]
+
+!     for name, text in tablex.sort(constants) do
+!         if (name:lfind(section.pattern) ~= nil) and (fields_seen[name] == nil) then
+!             fields_seen[name] = true
+!             if name:endswith("_ENDING") then
+!                 doc = "All valid IDs have a value less than this."
+!             elseif name:endswith("_INVALID") then
+!                 doc = "An explicit invalid ID, used as a sentinel value."
+!             else
+!                 doc = predef_docs[name] or "`" .. name .. "`"
+!             end
+--[[-- $(doc)
+
+@field $(name)
+]]
+$(name) = "dummy value"
+
+!         end
+!     end
+! end
+
+! if #predef_sections > 0 then
+--- @section end
+! end
+
+! for name, _ in tablex.sort(constants) do
+!     if fields_seen[name] == nil then
+!         if name:endswith("_REG_ENDING") then
+!             doc = "All valid IDs have a value less than this."
+!         elseif name:endswith("_INVALID") then
+!             doc = "An explicit invalid ID, used as a sentinel value."
+!         else
+!             doc = predef_docs[name] or "`" .. name .. "`"
+!         end
+--[[-- $(doc)
+
+@field $(name)
+]]
+!     end
+! end

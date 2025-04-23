@@ -1,0 +1,20 @@
+local version_number = _VERSION:sub(5)
+local exclude = {}
+
+-- Disable 64-bit integer tests for Lua <5.3
+if version_number == "5.1" or version_number == "5.2" then
+    exclude = { "int64only" }
+end
+
+
+return {
+    _all = {
+        ["exclude-tags"] = exclude,
+    },
+    default = {
+        ["exclude-tags"] = exclude,
+        shuffle = true,
+        ROOT = { "./tests/lua" },
+        verbose = true,
+    }
+}

@@ -1,150 +1,211 @@
-// Copyright (C) 2017-2024 by Diego Argueta
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along
-// with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+/*
+$(copyright_notice)
+*/
 
-#include <cstdint>
+/// @submodule unicorn_c_
 
-#include "unicornlua/errors.hpp"
-#include "unicornlua/lua.hpp"
-#include "unicornlua/registers.hpp"
-#include "unicornlua/register_template_functions.hpp"
+#include "unicornlua/register_types.h"
+#include "unicornlua/registers.h"
+#include "unicornlua/utils.h"
+#include <lua.h>
+#include <lauxlib.h>
+#include <stdint.h>
 
 
-@ for _, bits in ipairs({8, 16, 32, 64}) do
-int$(bits)_t Register::as_int$(bits)() const noexcept {
-    return *reinterpret_cast<const int$(bits)_t *>(data_);
-}
-@ end
+! for _, bits in ipairs({8, 16, 32, 64}) do
+#define register__as_int$(bits)(ptr) (*((const int$(bits)_t *)(ptr)))
+! end
 
-@ for _, bits in ipairs({32, 64}) do
-uclua_float$(bits) Register::as_float$(bits)() const noexcept {
-    return *reinterpret_cast<const uclua_float$(bits) *>(data_);
-}
-@ end
+! for _, bits in ipairs({32, 64}) do
+#define register__as_float$(bits)(ptr)  (*((const uclua_float$(bits) *)(ptr)))
+! end
 
-@ for _, conf in ipairs(int_arrays) do
-std::array<int$(conf.bits)_t, $(conf.count)> Register::as_$(conf.count)xi$(conf.bits)() const {
-    return array_cast<int$(conf.bits)_t, $(conf.count)>();
-}
-@ end
+! for _, conf in ipairs(int_arrays) do
+#define register__as_$(conf.count)xi$(conf.bits)(ptr)  ((int$(conf.bits)_t *)(ptr))
+! end
 
-@ for _, conf in ipairs(float_arrays) do
-std::array<uclua_float$(conf.bits), $(conf.count)> Register::as_$(conf.count)xf$(conf.bits)() const {
-    return array_cast<uclua_float$(conf.bits), $(conf.count)>();
-}
-@ end
-
-uclua_float80 Register::as_float80() const {
-    throw LuaBindingError(
-        "Error: Writing 80-bit floating-point numbers is currently not supported."
-    );
-    //return read_float80(data_);
-}
+! for _, conf in ipairs(float_arrays) do
+#define register__as_$(conf.count)xf$(conf.bits)(ptr)  ((uclua_float$(conf.bits) *)(ptr))
+! end
 
 
-size_t Register::size_for_register_kind(RegisterDataType kind) {
+size_t register__size_for_register_kind(enum RegisterDataType kind) {
     switch (kind) {
-@ for _, bits in ipairs({8, 16, 32, 64}) do
+! for _, bits in ipairs({8, 16, 32, 64}) do
         case UL_REG_TYPE_INT$(bits): return $(string.format("%d", bits / 8));
-@ end
-@ for _, bits in ipairs({32, 64, 80}) do
+! end
+! for _, bits in ipairs({32, 64, 80}) do
         case UL_REG_TYPE_FLOAT$(bits): return $(string.format("%d", bits / 8));
-@ end
-@ for _, conf in ipairs(int_arrays) do
+! end
+! for _, conf in ipairs(int_arrays) do
         case UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count): return $(string.format("%d", conf.bits * conf.count / 8));
-@ end
-@ for _, conf in ipairs(float_arrays) do
+! end
+! for _, conf in ipairs(float_arrays) do
         case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count): return $(string.format("%d", conf.bits * conf.count / 8));
-@ end
+! end
         case UL_REG_TYPE_UNKNOWN:
-            throw LuaBindingError("Can't determine size of register type \"UNKNOWN\"");
         default:
-            throw std::invalid_argument("Invalid register type.");
+            return 0;
     }
 }
 
-void Register::push_to_lua(lua_State *L) const {
-    switch (kind_) {
-@ for _, bits in ipairs({8, 16, 32, 64}) do
+! for _, conf in ipairs(int_arrays) do
+void integer_array_$(conf.count)xi$(conf.bits)_to_table(lua_State * restrict L, const int$(conf.bits)_t * restrict array)
+{
+    lua_createtable(L, $(conf.count), 0);
+    for (int i = 0; i < $(conf.count); i++)
+    {
+        lua_pushinteger(L, (lua_Integer)array[i]);
+        lua_rawseti(L, -2, i + 1);
+    }
+}
+! end
+
+! for _, conf in ipairs(float_arrays) do
+void float_array_$(conf.count)xf$(conf.bits)_to_table(lua_State * restrict L, const uclua_float$(conf.bits) * restrict array)
+{
+    lua_createtable(L, $(conf.count), 0);
+    for (int i = 0; i < $(conf.count); i++)
+    {
+        lua_pushnumber(L, (lua_Integer)array[i]);
+        lua_rawseti(L, -2, i + 1);
+    }
+}
+! end
+
+
+void register__push_to_lua(const struct ULRegister *reg, lua_State *L) {
+    switch (reg->kind) {
+! for _, bits in ipairs({8, 16, 32, 64}) do
         case UL_REG_TYPE_INT$(bits):
-            lua_pushinteger(L, as_int$(bits)());
+            lua_pushinteger(L, register__as_int$(bits)(reg->data));
             break;
-@ end
-@ for _, bits in ipairs({32, 64, 80}) do
+! end
+! -- TODO: Add 80 to this list once we add support for 80-bit floats.
+! for _, bits in ipairs({32, 64}) do
         case UL_REG_TYPE_FLOAT$(bits):
-            lua_pushnumber(L, as_float$(bits)());
+            lua_pushnumber(L, register__as_float$(bits)(reg->data));
             break;
-@ end
-@ for _, conf in ipairs(int_arrays) do
+! end
+        case UL_REG_TYPE_FLOAT80:
+            luaL_error(
+                L,
+                "Error: Writing 80-bit floating-point numbers is currently not supported."
+                " See <https://github.com/dargueta/unicorn-lua/issues/15>."
+            );
+            UL_UNREACHABLE_MARKER;
+            break;
+! for _, conf in ipairs(int_arrays) do
         case UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count):
-            integer_array_to_table(L, as_$(conf.count)xi$(conf.bits)());
+            integer_array_$(conf.count)xi$(conf.bits)_to_table(L, register__as_$(conf.count)xi$(conf.bits)(reg->data));
             break;
-@ end
-@ for _, conf in ipairs(float_arrays) do
+! end
+! for _, conf in ipairs(float_arrays) do
         case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count):
-            float_array_to_table(L, as_$(conf.count)xf$(conf.bits)());
+            float_array_$(conf.count)xf$(conf.bits)_to_table(L, register__as_$(conf.count)xf$(conf.bits)(reg->data));
             break;
-@ end
+! end
         case UL_REG_TYPE_UNKNOWN:
         default:
-            throw LuaBindingError("Register is uninitialized or has no known type.");
+            luaL_error(
+                L,
+                "Can't return register of unknown type %d to Lua.",
+                reg->kind
+            );
+            UL_UNREACHABLE_MARKER;
     }
 }
 
 
-Register Register::from_lua(lua_State *L, int value_index, int kind_index) {
+void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index, int kind_index) {
     int i;
-    register_buffer_type buffer;
-    auto kind = static_cast<RegisterDataType>(lua_tointeger(L, kind_index));
+    enum RegisterDataType kind = (enum RegisterDataType)luaL_checkinteger(L, kind_index);
+    reg->kind = kind;
 
     switch (kind) {
-@ for _, bits in ipairs({8, 16, 32, 64}) do
+! for _, bits in ipairs({8, 16, 32, 64}) do
         case UL_REG_TYPE_INT$(bits):
-            write_lua_integer<int$(bits)_t>(L, value_index, buffer);
+            *((int$(bits)_t *)reg->data) = (int$(bits)_t)luaL_checkinteger(L, value_index);
             break;
-@ end
-@ for _, bits in ipairs({32, 64}) do
+! end
+! for _, bits in ipairs({32, 64}) do
         case UL_REG_TYPE_FLOAT$(bits):
-            *reinterpret_cast<uclua_float$(bits) *>(buffer) =
-                static_cast<uclua_float$(bits)>(lua_tonumber(L, value_index));
+            *((uclua_float$(bits) *)reg->data) =
+                (uclua_float$(bits))luaL_checknumber(L, value_index);
             break;
-@ end
-@ for _, conf in ipairs(int_arrays) do
+! end
+! for _, conf in ipairs(int_arrays) do
         case UL_REG_TYPE_INT$(conf.bits)_ARRAY_$(conf.count):
-            write_lua_integer_array<int$(conf.bits)_t>(L, value_index, $(conf.count), buffer);
-            break;
-@ end
-@ for _, conf in ipairs(float_arrays) do
-        case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count):
             for (i = 0; i < $(conf.count); ++i) {
+#if LUA_VERSION_NUM >= 503
                 lua_geti(L, value_index, i + 1);
-                reinterpret_cast<uclua_float$(conf.bits) *>(buffer)[i] =
-                    static_cast<uclua_float$(conf.bits)>(lua_tonumber(L, -1));
+#else
+                lua_pushinteger(L, i + 1);
+                lua_gettable(L, value_index);
+#endif
+                ((int$(conf.bits)_t *)reg->data)[i] =
+                    (int$(conf.bits)_t)lua_tointeger(L, -1);
                 lua_pop(L, 1);
             }
             break;
-@ end
+! end
+! for _, conf in ipairs(float_arrays) do
+        case UL_REG_TYPE_FLOAT$(conf.bits)_ARRAY_$(conf.count):
+            for (i = 0; i < $(conf.count); ++i) {
+#if LUA_VERSION_NUM >= 503
+                lua_geti(L, value_index, i + 1);
+#else
+                lua_pushinteger(L, i + 1);
+                lua_gettable(L, value_index);
+#endif
+                ((uclua_float$(conf.bits) *)reg->data)[i] =
+                    (uclua_float$(conf.bits))lua_tonumber(L, -1);
+                lua_pop(L, 1);
+            }
+            break;
+! end
         case UL_REG_TYPE_FLOAT80:
-            throw LuaBindingError(
-                "Error: Reading 80-bit floating-point numbers is currently not"
-                " supported."
+            luaL_error(
+                L,
+                "Error: Reading 80-bit floating-point numbers is currently not supported."
+                " See <https://github.com/dargueta/unicorn-lua/issues/15>."
             );
+            UL_UNREACHABLE_MARKER;
         case UL_REG_TYPE_UNKNOWN:
         default:
-            throw LuaBindingError("Invalid register type ID.");
+            luaL_error(
+                L,
+                "Invalid type ID for register. Expected %d < ID < %d, got ID=%d.",
+                UL_REG_TYPE_UNKNOWN,
+                ULINTERNAL_REG_TYPE_MAX,
+                kind
+            );
+            UL_UNREACHABLE_MARKER;
     }
+}
 
-    return {buffer, kind};
+! -- NOTE: This *MUST* be kept in the same order as in register_types.template!
+static const char *kRegisterDataTypeSlugs[] = {
+    "(unknown)",
+! for _, bits in ipairs({8, 16, 32, 64}) do
+    "int$(bits)",
+! end
+! for _, bits in ipairs({32, 64}) do
+    "float$(bits)",
+! end
+! for _, conf in ipairs(int_arrays) do
+    "int$(conf.bits) array, count $(conf.count)",
+! end
+! for _, conf in ipairs(float_arrays) do
+    "float$(conf.bits) array, count $(conf.count)",
+! end
+    "float80"
+};
+
+
+const char *register__type_id_to_slug(enum RegisterDataType kind)
+{
+    if (kind >= UL_REG_TYPE_UNKNOWN && kind < ULINTERNAL_REG_TYPE_MAX)
+        return kRegisterDataTypeSlugs[kind];
+    return "(invalid value)";
 }

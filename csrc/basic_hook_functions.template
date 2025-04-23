@@ -1,0 +1,46 @@
+/*
+$(copyright_notice)
+*/
+
+#include "unicornlua/hooks.h"
+#include <lua.h>
+#include <stdint.h>
+#include <unicorn/unicorn.h>
+
+/// @submodule unicorn_c_
+
+/* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
+ * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
+ * that the compiler doesn't blow up. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
+
+! for hook_name, hook_definition in pairs(basic_hook_functions) do
+    void ulinternal_hook_callback__$(hook_name)(
+        uc_engine *engine,
+!       for i, argument_type in ipairs(hook_definition.arguments) do
+            $(argument_type) arg_$(i),
+!       end
+        void *userdata
+    )
+    {
+        (void)engine;
+        ULHookState *hook = (ULHookState *)userdata;
+
+        ulinternal_push_callback_to_lua(hook);
+!       for i = 1, #hook_definition.arguments do
+            lua_pushinteger(hook->L, (lua_Integer)arg_$(i));
+!       end
+        lua_call(hook->L, $(#hook_definition.arguments), 0);
+    }
+
+int ul_create_$(hook_name)_hook(lua_State *L)
+{
+    ulinternal_helper_create_generic_hook(L, "$(hook_name)", (void *)ulinternal_hook_callback__$(hook_name));
+    return 1;
+}
+
+! end
+
+#pragma GCC diagnostic pop

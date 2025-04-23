@@ -4,8 +4,57 @@ Changes
 2.3.0
 -----
 
-Update documentation to indicate Unicorn 1.x never claimed support for Apple
-silicon
+The library has been completely rewritten in a mixture of C and Lua, rather than
+entirely in C++. This has allowed some drastic simplifications, such as removing
+the need to maintain a table in C that maps callbacks to hooks via weak references
+to engines.
+
+Yes, my decisions were that brilliant. Debugging was a nightmare.
+
+New Features
+~~~~~~~~~~~~
+
+* Official support for Unicorn 2.1.x.
+* Documentation for the Lua API is now available.
+* The memory regions returned from ``Engine:mem_regions()`` now have several
+  methods that simplify permissions checking. These all return a boolean
+  indicating if the condition is true.
+
+  * ``can_read()``
+  * ``can_write()``
+  * ``can_readwrite()``
+  * ``can_exec()``
+  * ``can_all()``
+
+* When a ``reg_read_as`` or ``reg_write_as`` fail, the type attempted to cast to is
+  now shown in the error message (e.g. "int32 array, count 8"). This simplifies
+  tracking down the exact read or write that failed.
+
+Bugs
+~~~~
+
+* Update documentation to indicate Unicorn 1.x never claimed support for Apple
+  silicon.
+* Macros with a line continuation that contained parentheses weren't detected,
+  so some constants like ``UC_HOOK_MEM_READ_INVALID`` were unavailable.
+
+Other Changes
+~~~~~~~~~~~~~
+
+* Internal functions are now marked as such, and API functions are now explicitly
+  exported. This is in preparation for adding Windows support.
+* Most hook functions are now templatized to reduce redundant code.
+
+For Custom Builds
+*****************
+
+* Use the ``USER_CFLAGS`` environment variable to pass in custom compiler flags,
+  instead of ``USER_CXX_FLAGS``.
+* The Makefile no longer overrides ``LD_LIBRARY_PATH`` or ``DYLD_FALLBACK_LIBRARY_PATH``
+  environment variables, as the user may have installed Unicorn in a different
+  location than the default. The user is now responsible for setting these. This
+  shouldn't affect anyone, as those need to be set anyway to find Unicorn.
+
 
 2.2.1 (2024-05-10)
 ------------------

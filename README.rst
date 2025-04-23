@@ -30,7 +30,7 @@ the host operating systems, though:
       - Windows
       - macOS ≤13
       - macOS ≥14
-    * - 1.x
+    * - 1.x (Deprecated)
       - Yes
       - **No**
       - Yes
@@ -199,7 +199,7 @@ before using.
 
 * Lua 5.1 or higher, as well as the static library and headers. Lua 5.3 and above
   must *not* have been compiled with the ``LUA_32BITS`` option set.
-* A C++ compiler supporting the C++11 standard or later. Supported compilers include
+* A C compiler supporting the C99 standard or later. Supported compilers include
   GCC 4.1+ and GCC-compatible compilers like Clang.
 * The `Unicorn CPU Emulator`_ library must be installed in your system's standard
   library location. Versions 1 and 2 are supported.
