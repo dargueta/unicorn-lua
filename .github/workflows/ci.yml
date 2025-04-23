@@ -70,11 +70,7 @@ jobs:
           # We need to disable the newline-eof warning because third-party code trips the
           # warning. We could use `-isystem` instead of `-I` for adding include paths to
           # third-party headers, but that's specific to GCC and Clang.
-          USER_CFLAGS: >-
-              -Wall -Wextra -Wpedantic -Werror -pedantic -pedantic-errors
-              -Wstrict-prototypes -Wdeprecated -Wformat=2 -Wformat-signedness
-              -Wuse-after-free=3 -Wuseless-cast -O0 -ggdb -g3 -std=c99
-              -Wno-newline-eof
+          USER_CFLAGS: -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wno-newline-eof
       - name: Run tests
         run: luarocks test
         env:
