@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2024 by Diego Argueta
+-- Copyright (C) 2017-2025 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ local template = require "pl.template"
 local utils = require "pl.utils"
 
 
-local COPYRIGHT_NOTICE = [[Copyright (C) 2017-2024 by Diego Argueta
+local COPYRIGHT_NOTICE = [[Copyright (C) 2017-2025 by Diego Argueta
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

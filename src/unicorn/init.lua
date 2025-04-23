@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2024 by Diego Argueta
+-- Copyright (C) 2017-2025 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 --- The main module for the Unicorn CPU Emulator.
 ---
 --- @author Diego Argueta
---- @copyright 2017-2024 Diego Argueta
+--- @copyright 2017-2025 Diego Argueta
 --- @license GPL-2
 --- @release 2.3.0
 --- @module unicorn
