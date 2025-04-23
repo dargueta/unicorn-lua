@@ -155,7 +155,7 @@ function Engine:context_save(context)
 end
 
 
---- Start execution at the given location.
+--- Asynchronously start execution at the given location.
 ---
 --- @tparam[opt=0] int start_addr  The address to start execution at.
 --- @tparam[opt] int end_addr  The highest address in memory to execute instructions to;
@@ -304,6 +304,11 @@ function Engine:mem_unmap(address, size)
     uc_c.mem_unmap(self.handle_, address, size)
 end
 
+--- Set the contents of a mapped region of memory.
+---
+--- @tparam int address  The address of the beginning of the block of memory to write. It
+--- must have already been mapped in using @{mem_map}.
+--- @tparam string data  A byte string, the binary data to write to memory.
 function Engine:mem_write(address, data)
     uc_c.mem_write(self.handle_, address, data)
 end
