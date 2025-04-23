@@ -71,7 +71,7 @@ LIB_PATH_FLAGS = $(addprefix -L,$(LIBRARY_DIRECTORIES))
 REQUIRED_LIBS = unicorn pthread
 REQUIRED_LIBS_FLAGS = $(addprefix -l,$(REQUIRED_LIBS))
 
-DEBUG_CFLAGS=-Wall -Wextra -Wpedantic -Werror -pedantic -pedantic-errors -O0 -ggdb -g3
+DEBUG_CFLAGS=-Wall -Wextra -Wpedantic -Werror -pedantic -pedantic-errors -O0 -ggdb -g3 -std=c99
 DEBUG_LDFLAGS=
 
 C_CMD = $(CC) $(INCLUDE_PATH_FLAGS) $(CFLAGS) $(USER_CFLAGS)

@@ -22,10 +22,8 @@
 
 #pragma once
 
-#include <lauxlib.h>
 #include <lua.h>
 #include <stdarg.h>
-#include <stdnoreturn.h>
 #include <unicorn/unicorn.h>
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
@@ -36,24 +34,30 @@
 #    define GNU_ATTRIBUTE(x)
 #endif
 
+// FIXME(dargueta): UL_NORETURN_MARKER undefined on non-GCC, non-MSVC compilers before C23
+
 #if __STDC_VERSION__ >= 202311L
 #    define UL_FALLTHROUGH_MARKER [[fallthrough]]
 #    define UL_UNREACHABLE_MARKER unreachable()
+#    define UL_NORETURN_MARKER [[noreturn]]
 #elif defined(__GNUC__)
 // GCC, Clang, ICC
 #    define UL_FALLTHROUGH_MARKER GNU_ATTRIBUTE(fallthrough)
 #    define UL_UNREACHABLE_MARKER __builtin_unreachable()
+#    define UL_NORETURN_MARKER GNU_ATTRIBUTE(noreturn)
 #    define UL_PUBLIC_API GNU_ATTRIBUTE(visibility("default"))
 #    define UL_PRIVATE GNU_ATTRIBUTE(visibility("internal"))
 #elif defined(_MSC_VER)
 // Microsoft Visual Studio
 #    define UL_FALLTHROUGH_MARKER
 #    define UL_UNREACHABLE_MARKER __assume(false)
+#    define UL_NORETURN_MARKER __declspec(noreturn)
 #    define UL_PUBLIC_API __declspec(dllexport)
 #    define UL_PRIVATE
 #else
 #    define UL_FALLTHROUGH_MARKER
 #    define UL_UNREACHABLE_MARKER
+#    define UL_NORETURN_MARKER
 #endif
 
 #ifndef UL_PUBLIC_API
@@ -85,7 +89,7 @@ UL_PRIVATE void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *
  *
  * @param L  A pointer to the Lua state.
  */
-UL_PRIVATE _Noreturn int ulinternal_crash_not_implemented(lua_State *L);
+UL_PRIVATE UL_NORETURN_MARKER int ulinternal_crash_not_implemented(lua_State *L);
 
 /**
  * Crash Lua with an error message explaining the operation isn't supported by Unicorn.
@@ -95,7 +99,7 @@ UL_PRIVATE _Noreturn int ulinternal_crash_not_implemented(lua_State *L);
  *
  * @param L  A pointer to the Lua state.
  */
-UL_PRIVATE _Noreturn int ulinternal_crash_unsupported_operation(lua_State *L);
+UL_PRIVATE UL_NORETURN_MARKER int ulinternal_crash_unsupported_operation(lua_State *L);
 
 /**
  * Call `luaL_error` if and only if @a error is not @ref UC_ERR_OK.
@@ -123,4 +127,5 @@ UL_PRIVATE void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char
  * @param ...
  */
 GNU_ATTRIBUTE(format(printf, 2, 3))
-UL_PRIVATE _Noreturn void ulinternal_crash(lua_State *L, const char *format, ...);
+UL_PRIVATE UL_NORETURN_MARKER void ulinternal_crash(lua_State *L, const char *format,
+                                                    ...);

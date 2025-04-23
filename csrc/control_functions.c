@@ -2,6 +2,7 @@
 #include "unicornlua/utils.h"
 #include <errno.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdint.h>
 #include <stdlib.h>

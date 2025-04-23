@@ -15,6 +15,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "unicornlua/utils.h"
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -29,7 +30,7 @@ void ulinternal_vsnprintf(lua_State *L, size_t max_size, const char *format, va_
     free(message);
 }
 
-_Noreturn int ulinternal_crash_not_implemented(lua_State *L)
+UL_NORETURN_MARKER int ulinternal_crash_not_implemented(lua_State *L)
 {
     lua_pushstring(L, "BUG: This function isn't implemented in the Lua binding yet.");
     lua_error(L);
@@ -62,14 +63,14 @@ void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, .
     UL_UNREACHABLE_MARKER;
 }
 
-_Noreturn int ulinternal_crash_unsupported_operation(lua_State *L)
+UL_NORETURN_MARKER int ulinternal_crash_unsupported_operation(lua_State *L)
 {
     lua_pushstring(L, "The operation is not supported for this version of Unicorn.");
     lua_error(L);
     UL_UNREACHABLE_MARKER;
 }
 
-_Noreturn void ulinternal_crash(lua_State *L, const char *format, ...)
+UL_NORETURN_MARKER void ulinternal_crash(lua_State *L, const char *format, ...)
 {
     va_list argv;
     va_start(argv, format);
