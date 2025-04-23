@@ -126,8 +126,10 @@ $(LUA_SOURCE_DIR)/%_extracted_consts.txt: tools/process_header.lua
 %_const.lua: %_const_gen
 	$< > $@
 
+# Line escape is `#` (the original) because preprocessor directives start with `!`. Similarly,
+# we need to use ${} instead of $() because $() are valid replacements in the file's syntax.
 Makefile.win: templates/Makefile-win.template $(TEMPLATE_DATA_FILES)
-	$(LUA) tools/render_template.lua -o $@ $^
+	$(LUA) tools/render_template.lua -e '#' -i '$${}' -o $@ $^
 
 %_const.luadoc: templates/arch_const_ldoc.template \
                 %_extracted_consts.txt \

@@ -1,15 +1,15 @@
-! -- architectures = {"arm64", "arm", "m68k", "mips", "ppc", "riscv", "s390x", "sparc", "tricore", "x86"}
-! c_template_sources = dir.getfiles("csrc", "*.template")
-! h_template_sources = dir.getfiles("csrc/unicornlua", "*.template")
-! c_template_sources_string = stringx.join(" ", c_template_sources)
-! h_template_sources_string = stringx.join(" ", h_template_sources)
+# architectures = {"arm64", "arm", "m68k", "mips", "ppc", "riscv", "s390x", "sparc", "tricore", "x86"}
+# c_template_sources = dir.getfiles("csrc", "*.template")
+# h_template_sources = dir.getfiles("csrc/unicornlua", "*.template")
+# c_template_sources_string = stringx.join(" ", c_template_sources)
+# h_template_sources_string = stringx.join(" ", h_template_sources)
 
-! for _, h_file in ipairs(h_template_sources) do
-$(stringx.replace(h_file, ".template", ".h")): $(h_file) csrc\template_data\*.lua
-    $("$(LUA)") tools\render_template.lua -o $@ $**
-! end
+# for _, h_file in ipairs(h_template_sources) do
+${ stringx.replace(h_file, ".template", ".h") }: ${h_file} csrc\template_data\*.lua
+    $(LUA) tools\render_template.lua -o $@ $**
+# end
 
-! for _, c_file in ipairs(c_template_sources) do
-$(stringx.replace(c_file, ".template", ".c")): $(h_file) csrc\template_data\*.lua
-    $("$(LUA)") tools\render_template.lua -o $@ $**
-! end
+# for _, c_file in ipairs(c_template_sources) do
+${ stringx.replace(c_file, ".template", ".c") }: ${c_file} csrc\template_data\*.lua
+    $(LUA) tools\render_template.lua -o $@ $**
+# end
