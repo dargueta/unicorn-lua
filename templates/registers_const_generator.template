@@ -6,7 +6,7 @@ $(copyright_notice)
 #include <unicorn/unicorn.h>
 #include <stdio.h>
 
-int main() {
+int main(void) {
 ! for _, line in ipairs(copyright_notice:splitlines()) do
     printf("-- $(line)\n");
 ! end
