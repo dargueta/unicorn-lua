@@ -80,7 +80,7 @@ function Context:free()
         error("BUG: Engine was garbage collected before a context.")
     end
 
-    uc_c.context_free(self.engine_ref_.engine.handle, self.handle_)
+    uc_c.context_free(self.handle_)
     self.engine_ref_.engine = nil
     self.handle_ = nil
 end

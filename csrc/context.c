@@ -2,19 +2,20 @@
 #include <lua.h>
 #include <unicorn/unicorn.h>
 
-
 int ul_context_save(lua_State *L)
 {
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     uc_context *context;
 
     uc_err error = uc_context_alloc(engine, &context);
+    ulinternal_crash_if_failed(L, error, "Can't allocate memory to save engine state.");
+
+    error = uc_context_save(engine, context);
     ulinternal_crash_if_failed(L, error, "Can't save engine state.");
 
     lua_pushlightuserdata(L, context);
     return 1;
 }
-
 
 int ul_context_save_reuse_existing(lua_State *L)
 {

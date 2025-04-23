@@ -25,7 +25,7 @@ static size_t count_table_elements(lua_State *L, int table_index)
     for (count = 0; lua_next(L, table_index) != 0; ++count)
         lua_pop(L, 1);
 
-        // Count the number of keys in the aray portion of the table.
+    // Count the number of keys in the aray portion of the table.
 #if LUA_VERSION_NUM >= 502
     count += (size_t)luaL_len(L, table_index);
 #else

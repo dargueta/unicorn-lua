@@ -25,6 +25,12 @@ describe('Context tests', function ()
         -- and ensure it has the original value.
         local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
+        -- Map in a page and add one instruction, a jump that results in an infinite loop.
+        -- We don't care what the VM is actually doing, just that it's running.
+        uc:mem_map(0, 4096)
+        uc:mem_write(0, '\235\254')
+        uc:emu_start()
+
         uc:reg_write(x86.UC_X86_REG_EAX, 123456)
         assert.are.equals(123456, uc:reg_read(x86.UC_X86_REG_EAX))
 

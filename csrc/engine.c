@@ -79,10 +79,23 @@ int ul_mem_map(lua_State *L)
     uint32_t perms = (uint32_t)lua_tointeger(L, 4);
 
     uc_err error = uc_mem_map(engine, start, length, perms);
-    ulinternal_crash_if_failed(L, error,
-                               "Failed to map %zu bytes of memory at address 0x%08" PRIX64
-                               ", perm flags=0x%08" PRIX32,
-                               length, start, perms);
+    if (length < 4096)
+    {
+        ulinternal_crash_if_failed(
+            L, error,
+            "Failed to map %zu bytes of memory at address 0x%08" PRIX64 ", perm flags"
+            "=0x%02" PRIX32
+            ". This may be because the memory region is under 4096 bytes.",
+            length, start, perms);
+    }
+    else
+    {
+        ulinternal_crash_if_failed(
+            L, error,
+            "Failed to map %zu bytes of memory at address 0x%08" PRIX64
+            ", perm flags=0x%02" PRIX32,
+            length, start, perms);
+    }
     return 0;
 }
 
