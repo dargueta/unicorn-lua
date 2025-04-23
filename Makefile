@@ -126,6 +126,8 @@ $(LUA_SOURCE_DIR)/%_extracted_consts.txt: tools/process_header.lua
 %_const.lua: %_const_gen
 	$< > $@
 
+Makefile.win: templates/Makefile-win.template $(TEMPLATE_DATA_FILES)
+	$(LUA) tools/render_template.lua -o $@ $^
 
 %_const.luadoc: templates/arch_const_ldoc.template \
                 %_extracted_consts.txt \
