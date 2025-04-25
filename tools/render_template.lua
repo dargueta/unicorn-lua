@@ -16,6 +16,7 @@
 
 local dir = require "pl.dir"
 local lapp = require "pl.lapp"
+local path = require "pl.path"
 local stringx = require "pl.stringx"
 local tablex = require "pl.tablex"
 local template = require "pl.template"
@@ -53,6 +54,7 @@ Things to note:
       - `ipairs()'
       - `pairs()'
       - `dir` (Penlight package)
+      - `pl`
       - `string'
       - `stringx' (Penlight package)
       - `tablex' (Penlight package)
@@ -88,6 +90,7 @@ function main()
         ipairs = ipairs,
         pairs = pairs,
         dir = dir,
+        path = path,
         string = string,
         stringx = stringx,
         tablex = tablex,
