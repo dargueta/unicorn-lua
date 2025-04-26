@@ -10,3 +10,6 @@ trim_trailing_whitespace = true
 
 [{Makefile,*.mk}]
 indent_style = unset
+
+[Makefile.win]
+end_of_line = crlf
