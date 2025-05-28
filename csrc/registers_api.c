@@ -6,16 +6,25 @@
 #include <lua.h>
 #include <stdint.h>
 #include <string.h>
-#include <unicorn/arm.h>
-#include <unicorn/arm64.h>
 #include <unicorn/unicorn.h>
 #include <unicorn/x86.h>
+
+#if UC_API_MAJOR >= 2
+#include <unicorn/arm.h>
+#include <unicorn/arm64.h>
+
+#    define IS_ARM_COPROCESSOR_ID(n)   ((n) == UC_ARM_REG_CP_REG)
+#    define IS_ARM64_COPROCESSOR_ID(n)   ((n) == UC_ARM64_REG_CP_REG)
+#else
+// Unicorn 1.x doesn't support reading ARM/ARM64 coprocessor registers.
+#    define IS_ARM_COPROCESSOR_ID(n) (0)
+#    define IS_ARM64_COPROCESSOR_ID(n) (0)
+#endif
 
 /// @submodule unicorn_c_
 
 #define UL_IS_MSR_REGISTER_ID(n)                                                         \
-    (((n) == UC_X86_REG_MSR) || ((n) == UC_ARM_REG_CP_REG) ||                            \
-     ((n) == UC_ARM64_REG_CP_REG))
+    (((n) == UC_X86_REG_MSR) || IS_ARM_COPROCESSOR_ID(n) || IS_ARM64_COPROCESSOR_ID(n))
 
 /**
  * Get the total number of items in the table, both in the array and mapping parts.
@@ -106,12 +115,16 @@ int ul_reg_read(lua_State *L)
         case UC_X86_REG_MSR:
             ((uc_x86_msr *)value_buffer)->rid = luaL_checkinteger(L, 3);
             break;
+#ifdef UC_ARM_REG_CP_REG
         case UC_ARM_REG_CP_REG:
             ((uc_arm_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
             break;
+#endif
+#ifdef UC_ARM64_REG_CP_REG
         case UC_ARM64_REG_CP_REG:
             ((uc_arm64_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
             break;
+#endif
         default:
             UL_UNREACHABLE_MARKER;
         }
@@ -125,12 +138,16 @@ int ul_reg_read(lua_State *L)
     case UC_X86_REG_MSR:
         lua_pushinteger(L, (lua_Integer)((uc_x86_msr *)value_buffer)->value);
         break;
+#ifdef UC_ARM_REG_CP_REG
     case UC_ARM_REG_CP_REG:
         lua_pushinteger(L, (lua_Integer)((uc_arm_cp_reg *)value_buffer)->val);
         break;
+#endif
+#ifdef UC_ARM64_REG_CP_REG
     case UC_ARM64_REG_CP_REG:
         lua_pushinteger(L, (lua_Integer)((uc_arm64_cp_reg *)value_buffer)->val);
         break;
+#endif
     default:
         // FIXME (dargueta): This hack doesn't work on big-endian host machines.
         // The astute programmer will notice that reading a register smaller than
@@ -150,7 +167,7 @@ int ul_reg_read_as(lua_State *L)
     uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
     int register_id = (int)luaL_checkinteger(L, 2);
 
-    struct ULRegister reg;
+    struct ULRegister reg = {.data = {0}};
     reg.kind = (enum RegisterDataType)luaL_checkinteger(L, 3);
 
     if (UL_IS_MSR_REGISTER_ID(register_id))
@@ -160,8 +177,6 @@ int ul_reg_read_as(lua_State *L)
         lua_error(L);
         UL_UNREACHABLE_MARKER;
     }
-
-    memset(reg.data, 0, sizeof(reg.data));
 
     uc_err error = uc_reg_read(engine, register_id, reg.data);
     ulinternal_crash_if_failed(L, error, "Failed to read to register %d as type %s.",
