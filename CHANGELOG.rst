@@ -1,6 +1,21 @@
 Changes
 =======
 
+2.3.1
+-----
+
+Bugs
+~~~~
+
+* Fix broken coprocessor register access on ARM (`issue 47`_).
+* Fix broken coprocessor register access on ARM64 (`issue 48`_).
+* Crash deterministically when attempting to access an X86 MSR with
+  ``reg_read_batch()``, ``reg_read_batch_as()``, and ``reg_write_batch()``.
+
+.. _issue 47: https://github.com/dargueta/unicorn-lua/issues/47
+.. _issue 48: https://github.com/dargueta/unicorn-lua/issues/48
+
+
 2.3.0
 -----
 
