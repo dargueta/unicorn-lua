@@ -88,11 +88,19 @@ void register__push_to_lua(const struct ULRegister *reg, lua_State *L) {
             break;
 ! end
         case UL_REG_TYPE_FLOAT80:
+#if (UC_VERSION_MAJOR == 1) && (UC_VERSION_MINOR == 0) && (UC_VERSION_PATCH < 2)
+            luaL_error(
+                L,
+                "Error: The installed version of Unicorn doesn't support reading or"
+                " writing the x86 ST(n) registers. You must upgrade to 1.0.2 or higher."
+            );
+#else
             luaL_error(
                 L,
                 "Error: Writing 80-bit floating-point numbers is currently not supported."
                 " See <https://github.com/dargueta/unicorn-lua/issues/15>."
             );
+#endif
             UL_UNREACHABLE_MARKER;
             break;
 ! for _, conf in ipairs(int_arrays) do
@@ -165,11 +173,19 @@ void register__from_lua(struct ULRegister *reg, lua_State *L, int value_index, i
             break;
 ! end
         case UL_REG_TYPE_FLOAT80:
+#if (UC_VERSION_MAJOR == 1) && (UC_VERSION_MINOR == 0) && (UC_VERSION_PATCH < 2)
+            luaL_error(
+                L,
+                "Error: The installed version of Unicorn doesn't support reading or"
+                " writing the x86 ST(n) registers. You must upgrade to 1.0.2 or higher."
+            );
+#else
             luaL_error(
                 L,
                 "Error: Reading 80-bit floating-point numbers is currently not supported."
                 " See <https://github.com/dargueta/unicorn-lua/issues/15>."
             );
+#endif
             UL_UNREACHABLE_MARKER;
         case UL_REG_TYPE_UNKNOWN:
         default:
