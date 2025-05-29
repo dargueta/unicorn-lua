@@ -5,7 +5,6 @@
 *.a
 *.lib
 .git/
-tests/c/doctest.h
 .idea/
 .vscode/
 
@@ -14,8 +13,7 @@ src/unicorn/*_const.lua
 src/unicorn/*_const.luadoc
 src/unicorn/*_const_gen.c
 src/unicorn/*_const_gen
-src/unicorn/*_extracted_consts.txt
-csrc/cpp_test
+src/unicorn/*_extracted_consts.lua
 csrc/basic_control_functions.c
 csrc/registers.c
 csrc/registers_const.c
