@@ -10,21 +10,27 @@
 #include <unicorn/x86.h>
 
 #if UC_API_MAJOR >= 2
-#include <unicorn/arm.h>
-#include <unicorn/arm64.h>
+#    include <unicorn/arm.h>
+#    include <unicorn/arm64.h>
 
-#    define IS_ARM_COPROCESSOR_ID(n)   ((n) == UC_ARM_REG_CP_REG)
-#    define IS_ARM64_COPROCESSOR_ID(n)   ((n) == UC_ARM64_REG_CP_REG)
+#    define IS_ARM_COPROCESSOR_ID(n) ((n) == UC_ARM_REG_CP_REG)
+#    define IS_ARM64_COPROCESSOR_ID(n) ((n) == UC_ARM64_REG_CP_REG)
 #else
 // Unicorn 1.x doesn't support reading ARM/ARM64 coprocessor registers.
 #    define IS_ARM_COPROCESSOR_ID(n) (0)
 #    define IS_ARM64_COPROCESSOR_ID(n) (0)
 #endif
 
+#ifdef UC_X86_REG_MSR
+#    define IS_X86_MSR_ID(n) ((n) == UC_X86_REG_MSR)
+#else
+#    define IS_X86_MSR_ID(n) (0)
+#endif
+
 /// @submodule unicorn_c_
 
 #define UL_IS_MSR_REGISTER_ID(n)                                                         \
-    (((n) == UC_X86_REG_MSR) || IS_ARM_COPROCESSOR_ID(n) || IS_ARM64_COPROCESSOR_ID(n))
+    (IS_X86_MSR_ID(n) || IS_ARM_COPROCESSOR_ID(n) || IS_ARM64_COPROCESSOR_ID(n))
 
 /**
  * Get the total number of items in the table, both in the array and mapping parts.
@@ -65,7 +71,29 @@ int ul_reg_write(lua_State *L)
     int_least64_t value = (int_least64_t)luaL_checkinteger(L, 3);
 
     register_buffer_type buffer = {0};
-    *((int_least64_t *)buffer) = value;
+    switch (register_id)
+    {
+#ifdef UC_X86_REG_MSR
+    case UC_X86_REG_MSR:
+        ((uc_x86_msr *)buffer)->rid = luaL_checkinteger(L, 3);
+        ((uc_x86_msr *)buffer)->value = value;
+        break;
+#endif
+#ifdef UC_ARM_REG_CP_REG
+    case UC_ARM_REG_CP_REG:
+        ((uc_arm_cp_reg *)buffer)->crn = luaL_checkinteger(L, 3);
+        ((uc_arm_cp_reg *)buffer)->val = value;
+        break;
+#endif
+#ifdef UC_ARM64_REG_CP_REG
+    case UC_ARM64_REG_CP_REG:
+        ((uc_arm_cp_reg *)buffer)->crn = luaL_checkinteger(L, 3);
+        ((uc_arm_cp_reg *)buffer)->val = value;
+        break;
+#endif
+    default:
+        *((int_least64_t *)buffer) = value;
+    }
 
     uc_err error = uc_reg_write(engine, register_id, buffer);
     ulinternal_crash_if_failed(
@@ -112,9 +140,11 @@ int ul_reg_read(lua_State *L)
         }
         switch (register_id)
         {
+#ifdef UC_X86_REG_MSR
         case UC_X86_REG_MSR:
             ((uc_x86_msr *)value_buffer)->rid = luaL_checkinteger(L, 3);
             break;
+#endif
 #ifdef UC_ARM_REG_CP_REG
         case UC_ARM_REG_CP_REG:
             ((uc_arm_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
@@ -135,9 +165,11 @@ int ul_reg_read(lua_State *L)
 
     switch (register_id)
     {
+#ifdef UC_X86_REG_MSR
     case UC_X86_REG_MSR:
         lua_pushinteger(L, (lua_Integer)((uc_x86_msr *)value_buffer)->value);
         break;
+#endif
 #ifdef UC_ARM_REG_CP_REG
     case UC_ARM_REG_CP_REG:
         lua_pushinteger(L, (lua_Integer)((uc_arm_cp_reg *)value_buffer)->val);
