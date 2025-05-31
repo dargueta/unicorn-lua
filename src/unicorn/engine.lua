@@ -329,14 +329,14 @@ end
 --- always of the form `UC_<arch>_REG_<reg name>`. For example, @{ppc_const.UC_PPC_REG_CR5}
 --- would read the CR5 register from a PowerPC engine. Passing a constant from the wrong
 --- architecture has undefined behavior.
---- @tparam[opt] int x86_msr_id  If `register` is @{x86_const.UC_X86_REG_MSR}, this must
---- be the ID of the model-specific CPU register to read. Lists of these register IDs can
---- be found in "Intel 64 and IA-32 Software Developer's Manual", available on Intel's
---- website.
+--- @tparam[opt] int msr_id  If `register` denotes a model-specific register or
+--- coprocessor register, this must be the ID of that register to read. Lists of x86 MSR
+--- IDs can be found in "Intel 64 and IA-32 Software Developer's Manual", available on
+--- Intel's website.
 ---
 --- @treturn int  The register's value.
-function Engine:reg_read(register, x86_msr_id)
-    return uc_c.reg_read(self.handle_, register, x86_msr_id)
+function Engine:reg_read(register, msr_id)
+    return uc_c.reg_read(self.handle_, register, msr_id)
 end
 
 --- Read the current value of a CPU register as something other than an integer.
@@ -349,10 +349,13 @@ end
 --- @tparam int register  The ID of the register to read (same as @{Engine:reg_read}.
 --- @tparam int type_id  An enum value indicating how to reinterpret the register. These
 --- can be found in @{registers_const}.
+---
+--- @note This cannot be used to read an x86 MSR or ARM/ARM64 coprocessor register.
 function Engine:reg_read_as(register, type_id)
     return uc_c.reg_read_as(self.handle_, register, type_id)
 end
 
+--- Efficiently read more than one register at a time.
 function Engine:reg_read_batch(...)
     return uc_c.reg_read_batch(self.handle_, ...)
 end

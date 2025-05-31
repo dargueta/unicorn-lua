@@ -15,7 +15,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 /***
- * `unicorn_c_` is a very very thin wrapper around the C library.
+ * `unicorn_c_` is a very, very thin wrapper around the C library.
  *
  * Users are discouraged from using it directly, as it makes no provisions for garbage
  * collection or type safety. Instead, use the functions provided by the @{unicorn} module

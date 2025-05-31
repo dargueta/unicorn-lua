@@ -117,6 +117,14 @@ function extract_constants(source)
 end
 
 
+--- Extract the contents of a #define directive, if `text` contains one.
+---
+--- If `text` doesn't appear to define a Unicorn-specific preprocessor macro, this returns
+--- an empty table. Function macros are ignored as well.
+---
+--- @param string text  The text to scan.
+---
+--- @return table A table with one key, the macro name, mapped to the definition.
 function maybe_extract_preprocessor(text)
     if not text:startswith("#define UC_") then
         return {}
