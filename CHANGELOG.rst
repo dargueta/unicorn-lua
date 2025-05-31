@@ -9,7 +9,7 @@ Bugs
 
 * Fix broken coprocessor register access on ARM (`issue 47`_).
 * Fix broken coprocessor register access on ARM64 (`issue 48`_).
-* Fix broken MSR register write on x86.
+* Fix broken MSR register write on x86 (`issue 51`_).
 * Correct MSR register reading on x86. It only worked before because the
   register ID was the first member of the struct used for reading/writing.
 * Crash deterministically when attempting to access an X86 MSR with
@@ -17,6 +17,7 @@ Bugs
 
 .. _issue 47: https://github.com/dargueta/unicorn-lua/issues/47
 .. _issue 48: https://github.com/dargueta/unicorn-lua/issues/48
+.. _issue 51: https://github.com/dargueta/unicorn-lua/issues/51
 
 
 2.3.0
