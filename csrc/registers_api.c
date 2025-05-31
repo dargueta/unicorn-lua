@@ -27,10 +27,45 @@
 #    define IS_X86_MSR_ID(n) (0)
 #endif
 
-/// @submodule unicorn_c_
-
 #define UL_IS_MSR_REGISTER_ID(n)                                                         \
     (IS_X86_MSR_ID(n) || IS_ARM_COPROCESSOR_ID(n) || IS_ARM64_COPROCESSOR_ID(n))
+
+enum MSRActionType
+{
+    MSR_NONE,
+    MSR_X86,
+    MSR_ARM,
+    MSR_ARM64,
+};
+
+static enum MSRActionType is_special_reg_access_required(uc_engine *engine,
+                                                         int register_id)
+{
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG) || defined(UC_X86_REG_MSR)
+    size_t architecture;
+    error = uc_query(engine, UC_QUERY_ARCH, &architecture);
+    ulinternal_crash_if_failed(L, error, "Failed to query engine architecture.");
+
+    switch (architecture)
+    {
+    case UC_ARCH_X86:
+        if (IS_X86_MSR_ID(register_id))
+            return MSR_X86;
+    case UC_ARCH_ARM:
+        if (IS_ARM_COPROCESSOR_ID(register_id))
+            return MSR_ARM;
+    case UC_ARCH_ARM64:
+        if (IS_ARM64_COPROCESSOR_ID(register_id))
+            return MSR_ARM64;
+    default:
+        return MSR_NONE;
+    }
+#else
+    (void)engine;
+    (void)register_id;
+#endif
+    return MSR_NONE;
+}
 
 /**
  * Get the total number of items in the table, both in the array and mapping parts.
@@ -71,28 +106,23 @@ int ul_reg_write(lua_State *L)
     int_least64_t value = (int_least64_t)luaL_checkinteger(L, 3);
 
     register_buffer_type buffer = {0};
-    switch (register_id)
+
+    switch (is_special_reg_access_required(engine, register_id))
     {
-#ifdef UC_X86_REG_MSR
-    case UC_X86_REG_MSR:
+    case MSR_NONE:
+        *((int_least64_t *)buffer) = value;
+        break;
+    case MSR_X86:
         ((uc_x86_msr *)buffer)->rid = luaL_checkinteger(L, 3);
         ((uc_x86_msr *)buffer)->value = value;
         break;
-#endif
-#ifdef UC_ARM_REG_CP_REG
-    case UC_ARM_REG_CP_REG:
+    case MSR_ARM:
+    case MSR_ARM64:
         ((uc_arm_cp_reg *)buffer)->crn = luaL_checkinteger(L, 3);
         ((uc_arm_cp_reg *)buffer)->val = value;
         break;
-#endif
-#ifdef UC_ARM64_REG_CP_REG
-    case UC_ARM64_REG_CP_REG:
-        ((uc_arm_cp_reg *)buffer)->crn = luaL_checkinteger(L, 3);
-        ((uc_arm_cp_reg *)buffer)->val = value;
-        break;
-#endif
     default:
-        *((int_least64_t *)buffer) = value;
+        UL_UNREACHABLE_MARKER;
     }
 
     uc_err error = uc_reg_write(engine, register_id, buffer);
@@ -122,10 +152,9 @@ int ul_reg_read(lua_State *L)
     int register_id = (int)luaL_checkinteger(L, 2);
 
     register_buffer_type value_buffer = {0};
+    enum MSRActionType msr_action = is_special_reg_access_required(engine, register_id);
 
-    // When reading an MSR on an x86 processor, Unicorn requires the buffer to contain the
-    // ID of the register to read.
-    if (UL_IS_MSR_REGISTER_ID(register_id))
+    if (msr_action != MSR_NONE)
     {
         if (lua_gettop(L) < 3)
         {
@@ -138,57 +167,46 @@ int ul_reg_read(lua_State *L)
             lua_error(L);
             UL_UNREACHABLE_MARKER;
         }
-        switch (register_id)
-        {
-#ifdef UC_X86_REG_MSR
-        case UC_X86_REG_MSR:
-            ((uc_x86_msr *)value_buffer)->rid = luaL_checkinteger(L, 3);
-            break;
-#endif
-#ifdef UC_ARM_REG_CP_REG
-        case UC_ARM_REG_CP_REG:
-            ((uc_arm_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
-            break;
-#endif
-#ifdef UC_ARM64_REG_CP_REG
-        case UC_ARM64_REG_CP_REG:
-            ((uc_arm64_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
-            break;
-#endif
-        default:
-            UL_UNREACHABLE_MARKER;
-        }
+    }
+
+    switch (msr_action)
+    {
+    case MSR_X86:
+        ((uc_x86_msr *)value_buffer)->rid = luaL_checkinteger(L, 3);
+        break;
+    case MSR_ARM:
+    case MSR_ARM64:
+        ((uc_arm_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
+        break;
+    case MSR_NONE:
+        break;
+    default:
+        UL_UNREACHABLE_MARKER;
     }
 
     uc_err error = uc_reg_read(engine, register_id, value_buffer);
     ulinternal_crash_if_failed(L, error, "Failed to read register %d", register_id);
 
-    switch (register_id)
+    switch (msr_action)
     {
-#ifdef UC_X86_REG_MSR
-    case UC_X86_REG_MSR:
+    case MSR_X86:
         lua_pushinteger(L, (lua_Integer)((uc_x86_msr *)value_buffer)->value);
         break;
-#endif
-#ifdef UC_ARM_REG_CP_REG
-    case UC_ARM_REG_CP_REG:
+    case MSR_ARM:
+    case MSR_ARM64:
         lua_pushinteger(L, (lua_Integer)((uc_arm_cp_reg *)value_buffer)->val);
         break;
-#endif
-#ifdef UC_ARM64_REG_CP_REG
-    case UC_ARM64_REG_CP_REG:
-        lua_pushinteger(L, (lua_Integer)((uc_arm64_cp_reg *)value_buffer)->val);
-        break;
-#endif
-    default:
+    case MSR_NONE:
         // FIXME (dargueta): This hack doesn't work on big-endian host machines.
         // The astute programmer will notice that reading a register smaller than
-        // lua_Integer means that this cast will include memory that Unicorn didn't
-        // write to. Fortunately, we cleared `value_buffer` earlier, so that memory
-        // will be zeroed out, so the result is predictable. Unfortunately, this
-        // strategy only works on a little endian host.
+        // lua_Integer means that this cast will include memory that Unicorn didn't write
+        // to. Fortunately, we cleared `value_buffer` earlier, so that memory will be
+        // zeroed out, so the result is predictable. Unfortunately, this strategy only
+        // works on a little endian host.
         lua_pushinteger(L, *(lua_Integer *)value_buffer);
         break;
+    default:
+        UL_UNREACHABLE_MARKER;
     }
 
     return 1;
@@ -202,7 +220,7 @@ int ul_reg_read_as(lua_State *L)
     struct ULRegister reg = {.data = {0}};
     reg.kind = (enum RegisterDataType)luaL_checkinteger(L, 3);
 
-    if (UL_IS_MSR_REGISTER_ID(register_id))
+    if (is_special_reg_access_required(engine, register_id) != MSR_NONE)
     {
         lua_pushstring(L, "reg_read_as() doesn't support reading model-specific"
                           " registers, as they have a fixed interpretation.");
@@ -252,7 +270,7 @@ int ul_reg_write_batch(lua_State *L)
     for (size_t i = 0; lua_next(L, 2) != 0; ++i)
     {
         register_ids[i] = (int)luaL_checkinteger(L, -2);
-        if (UL_IS_MSR_REGISTER_ID(register_ids[i]))
+        if (is_special_reg_access_required(engine, register_ids[i]) != MSR_NONE)
         {
             free(arena);
             lua_pushstring(L, "reg_write_batch() doesn't support writing model-specific "
@@ -313,7 +331,7 @@ int ul_reg_read_batch(lua_State *L)
     {
         register_ids[i] = (int)lua_tointeger(L, (int)i + 2);
 
-        if (UL_IS_MSR_REGISTER_ID(register_ids[i]))
+        if (is_special_reg_access_required(engine, register_ids[i]) != MSR_NONE)
         {
             lua_pushstring(L, "reg_read_batch() doesn't support reading model-specific "
                               "registers. Use reg_read() instead.");
@@ -360,7 +378,7 @@ int ul_reg_read_batch_as(lua_State *L)
     for (size_t i = 0; lua_next(L, 2) != 0; ++i)
     {
         register_ids[i] = (int)luaL_checkinteger(L, -2);
-        if (UL_IS_MSR_REGISTER_ID(register_ids[i]))
+        if (is_special_reg_access_required(engine, register_ids[i]) != MSR_NONE)
         {
             lua_pushstring(L,
                            "reg_read_batch_as() doesn't support reading model-specific "
