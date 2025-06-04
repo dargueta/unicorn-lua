@@ -112,15 +112,15 @@ int ul_reg_write(lua_State *L)
     case MSR_NONE:
         *((int_least64_t *)buffer) = value;
         break;
-#ifdef UC_X86_REG_MSR
     case MSR_X86:
+#ifdef UC_X86_REG_MSR
         ((uc_x86_msr *)buffer)->rid = luaL_checkinteger(L, 3);
         ((uc_x86_msr *)buffer)->value = value;
         break;
 #endif
-#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
     case MSR_ARM:
     case MSR_ARM64:
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
         ((uc_arm_cp_reg *)buffer)->crn = luaL_checkinteger(L, 3);
         ((uc_arm_cp_reg *)buffer)->val = value;
         break;
@@ -175,19 +175,19 @@ int ul_reg_read(lua_State *L)
 
     switch (msr_action)
     {
-#ifdef UC_X86_REG_MSR
+    case MSR_NONE:
+        break;
     case MSR_X86:
+#ifdef UC_X86_REG_MSR
         ((uc_x86_msr *)value_buffer)->rid = luaL_checkinteger(L, 3);
         break;
 #endif
-#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
     case MSR_ARM:
     case MSR_ARM64:
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
         ((uc_arm_cp_reg *)value_buffer)->crn = luaL_checkinteger(L, 3);
         break;
 #endif
-    case MSR_NONE:
-        break;
     default:
         UL_UNREACHABLE_MARKER;
     }
@@ -197,13 +197,6 @@ int ul_reg_read(lua_State *L)
 
     switch (msr_action)
     {
-    case MSR_X86:
-        lua_pushinteger(L, (lua_Integer)((uc_x86_msr *)value_buffer)->value);
-        break;
-    case MSR_ARM:
-    case MSR_ARM64:
-        lua_pushinteger(L, (lua_Integer)((uc_arm_cp_reg *)value_buffer)->val);
-        break;
     case MSR_NONE:
         // FIXME (dargueta): This hack doesn't work on big-endian host machines.
         // The astute programmer will notice that reading a register smaller than
@@ -213,6 +206,17 @@ int ul_reg_read(lua_State *L)
         // works on a little endian host.
         lua_pushinteger(L, *(lua_Integer *)value_buffer);
         break;
+    case MSR_X86:
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
+        lua_pushinteger(L, (lua_Integer)((uc_x86_msr *)value_buffer)->value);
+        break;
+#endif
+    case MSR_ARM:
+    case MSR_ARM64:
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG)
+        lua_pushinteger(L, (lua_Integer)((uc_arm_cp_reg *)value_buffer)->val);
+        break;
+#endif
     default:
         UL_UNREACHABLE_MARKER;
     }
