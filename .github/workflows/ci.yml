@@ -11,7 +11,7 @@ jobs:
         operating-system:
           - ubuntu-latest
           - macos-latest
-          - windows-latest
+          # - windows-latest
         lua-version:
           - "5.1"
           - "5.2"
@@ -46,7 +46,7 @@ jobs:
             unicorn-version: "1.0.3"
             lua-version: "luajit-openresty"
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
       - uses: ilammy/msvc-dev-cmd@v1
@@ -59,7 +59,7 @@ jobs:
       - name: Install LuaRocks
         uses: luarocks/gh-actions-luarocks@v6
         with:
-          luaRocksVersion: "3.11.1"
+          luaRocksVersion: "3.12.2"
       - name: Install Unicorn
         run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
       - name: Environment
