@@ -38,10 +38,10 @@ enum MSRActionType
     MSR_ARM64,
 };
 
+#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG) || defined(UC_X86_REG_MSR)
 static enum MSRActionType is_special_reg_access_required(uc_engine *engine,
                                                          int register_id)
 {
-#if defined(UC_ARM_REG_CP_REG) || defined(UC_ARM64_REG_CP_REG) || defined(UC_X86_REG_MSR)
     size_t architecture;
     error = uc_query(engine, UC_QUERY_ARCH, &architecture);
     ulinternal_crash_if_failed(L, error, "Failed to query engine architecture.");
@@ -51,21 +51,22 @@ static enum MSRActionType is_special_reg_access_required(uc_engine *engine,
     case UC_ARCH_X86:
         if (IS_X86_MSR_ID(register_id))
             return MSR_X86;
+        return MSR_NONE;
     case UC_ARCH_ARM:
         if (IS_ARM_COPROCESSOR_ID(register_id))
             return MSR_ARM;
+        return MSR_NONE;
     case UC_ARCH_ARM64:
         if (IS_ARM64_COPROCESSOR_ID(register_id))
             return MSR_ARM64;
+        return MSR_NONE;
     default:
         return MSR_NONE;
     }
-#else
-    (void)engine;
-    (void)register_id;
-#endif
-    return MSR_NONE;
 }
+#else
+#    define is_special_reg_access_required(engine, reg_id) MSR_NONE
+#endif
 
 /**
  * Get the total number of items in the table, both in the array and mapping parts.
