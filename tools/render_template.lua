@@ -14,7 +14,9 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+local dir = require "pl.dir"
 local lapp = require "pl.lapp"
+local path = require "pl.path"
 local stringx = require "pl.stringx"
 local tablex = require "pl.tablex"
 local template = require "pl.template"
@@ -51,6 +53,8 @@ Things to note:
 
       - `ipairs()'
       - `pairs()'
+      - `dir` (Penlight package)
+      - `pl`
       - `string'
       - `stringx' (Penlight package)
       - `tablex' (Penlight package)
@@ -85,6 +89,8 @@ function main()
     local environment = {
         ipairs = ipairs,
         pairs = pairs,
+        dir = dir,
+        path = path,
         string = string,
         stringx = stringx,
         tablex = tablex,

@@ -41,8 +41,3 @@ install_unicorn__unix__2: $(UNICORN_DIRECTORY)
 	cmake -S $(UNICORN_DIRECTORY) -B $(UNICORN_DIRECTORY)/build -DCMAKE_BUILD_TYPE=Release
 	$(MAKE) -C $(UNICORN_DIRECTORY)/build
 	sudo $(MAKE) -C $(UNICORN_DIRECTORY)/build install
-
-
-.PHONY: install_unicorn__windows
-install_unicorn__windows:
-	python3 install-unicorn-windows.py $(UNICORN_VERSION)
