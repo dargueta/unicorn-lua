@@ -11,19 +11,17 @@ jobs:
         operating-system:
           - ubuntu-latest
           - macos-latest
+          # - windows-latest
         lua-version:
           - "5.1"
           - "5.2"
           - "5.3"
           - "5.4"
-          # We can't specifically select versions of LuaJIT as of August 2024. This may or
-          # may not be fixable.
-          # https://github.com/leafo/gh-actions-lua/issues/49
-          - "luajit-openresty"  # Judging from the docs, this is basically LuaJIT 2.1
+          - "luajit-2.1"
         unicorn-version:
           - "1.0.3"
           - "2.0.1.post1"
-          - "2.1.0"
+          - "2.1.3"
         exclude:
           # Unicorn 1.x breaks on macOS 14+
           - operating-system: macos-latest
@@ -43,23 +41,22 @@ jobs:
             lua-version: "5.4"
           - operating-system: macos-13
             unicorn-version: "1.0.3"
-            lua-version: "luajit-openresty"
+            lua-version: "luajit-2.1"
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v10.0.0
+        uses: luarocks/gh-actions-lua@v11
         with:
           luaVersion: ${{ matrix.lua-version }}
           # We need LUAJIT_ENABLE_GC64 on MacOS: https://github.com/moonjit/moonjit/issues/121
           luaCompileFlags: XCFLAGS="-DLUAJIT_ENABLE_GC64=1"
       - name: Install LuaRocks
-        # Note: This is a fork of the original by leafo. Switch back to that once
-        # https://github.com/leafo/gh-actions-luarocks/pull/14 has been merged.
-        uses: hishamhm/gh-actions-luarocks@5013277f6f115c27478f18c1f647f8de98390628
+        uses: luarocks/gh-actions-luarocks@v6
         with:
-          luaRocksVersion: "3.11.1"
+          luaRocksVersion: "3.12.2"
       - name: Install Unicorn
         run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
       - name: Environment

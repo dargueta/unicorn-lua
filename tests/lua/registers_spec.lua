@@ -217,4 +217,32 @@ describe('Register tests', function ()
       assert.are.equals(0x000001f4fffe1dc0, uc:reg_read(x86.UC_X86_REG_RCX))
     end)
   end)
+
+  describe('Read registers set by instructions', function()
+    --[[
+    it('[x86] CPUID', function()
+      local major_version = unicorn.version()
+      if major_version < 2 then
+        return
+      end
+
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_64)
+      uc:mem_map(0, 4096)
+
+      -- Execute CPUID to get information about the processor.
+      uc:mem_write(0, "\015\162\244")   -- CPUID followed by HLT
+      uc:reg_write(x86.UC_X86_REG_EAX, 0)
+      uc:emu_start(0, 0, 0, 2)
+
+      local eax, ebx, ecx, edx = uc:reg_read_batch(
+        x86.UC_X86_REG_EAX, x86.UC_X86_REG_EBX, x86.UC_X86_REG_ECX, x86.UC_X86_REG_EDX
+      )
+
+      -- EBX, EDX, ECX together contain "GenuineIntel"
+      assert.are.equals(0x756e6547, ebx)   -- EBX = "Genu"
+      assert.are.equals(0x49656e69, edx)   -- EDX = "ineI"
+      assert.are.equals(0x6c65746e, ecx)   -- ECX = "ntel
+      assert.not_equals(0, eax)
+    end)]]
+  end)
 end)
