@@ -50,11 +50,6 @@ int ul_create_arm64_sys_hook(lua_State *L)
     ulinternal_crash_not_implemented(L);
 }
 
-int ul_create_cpuid_hook(lua_State *L)
-{
-    ulinternal_crash_not_implemented(L);
-}
-
 int ul_create_edge_generated_hook(lua_State *L)
 {
 #ifndef UC_HOOK_EDGE_GENERATED

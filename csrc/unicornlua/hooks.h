@@ -31,7 +31,6 @@ int ul_hook_del(lua_State *L);
 int ul_create_invalid_mem_access_hook(lua_State *L);
 int ul_create_port_in_hook(lua_State *L);
 int ul_create_arm64_sys_hook(lua_State *L);
-int ul_create_cpuid_hook(lua_State *L);
 int ul_create_edge_generated_hook(lua_State *L);
 int ul_create_tcg_opcode_hook(lua_State *L);
 int ul_release_hook_callbacks(lua_State *L);
