@@ -1,3 +1,4 @@
+#include "unicornlua/config.h"
 #include "unicornlua/register_types.h"
 #include "unicornlua/registers.h"
 #include "unicornlua/utils.h"
@@ -7,20 +8,28 @@
 #include <stdint.h>
 #include <string.h>
 #include <unicorn/unicorn.h>
-#include <unicorn/x86.h>
 
-#if UC_API_MAJOR >= 2
+#if UL_HAVE_ARCH_HEADER_ARM
 #    include <unicorn/arm.h>
-#    include <unicorn/arm64.h>
-
+#endif
+#ifdef UC_ARM_REG_CP_REG
 #    define IS_ARM_COPROCESSOR_ID(n) ((n) == UC_ARM_REG_CP_REG)
+#else
+#    define IS_ARM_COPROCESSOR_ID(n) (0)
+#endif
+
+#if UL_HAVE_ARCH_HEADER_ARM64
+#    include <unicorn/arm64.h>
+#endif
+#ifdef UC_ARM64_REG_CP_REG
 #    define IS_ARM64_COPROCESSOR_ID(n) ((n) == UC_ARM64_REG_CP_REG)
 #else
-// Unicorn 1.x doesn't support reading ARM/ARM64 coprocessor registers.
-#    define IS_ARM_COPROCESSOR_ID(n) (0)
 #    define IS_ARM64_COPROCESSOR_ID(n) (0)
 #endif
 
+#if UL_HAVE_ARCH_HEADER_X86
+#    include <unicorn/x86.h>
+#endif
 #ifdef UC_X86_REG_MSR
 #    define IS_X86_MSR_ID(n) ((n) == UC_X86_REG_MSR)
 #else
@@ -48,18 +57,24 @@ static enum MSRActionType is_special_reg_access_required(uc_engine *engine,
 
     switch (architecture)
     {
+#    ifdef UC_ARCH_X86
     case UC_ARCH_X86:
         if (IS_X86_MSR_ID(register_id))
             return MSR_X86;
         return MSR_NONE;
+#    endif
+#    ifdef UC_ARCH_ARM
     case UC_ARCH_ARM:
         if (IS_ARM_COPROCESSOR_ID(register_id))
             return MSR_ARM;
         return MSR_NONE;
+#    endif
+#    ifdef UC_ARCH_ARM64
     case UC_ARCH_ARM64:
         if (IS_ARM64_COPROCESSOR_ID(register_id))
             return MSR_ARM64;
         return MSR_NONE;
+#    endif
     default:
         return MSR_NONE;
     }

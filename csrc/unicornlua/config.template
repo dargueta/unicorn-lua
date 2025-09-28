@@ -1,0 +1,13 @@
+/*
+$(copyright_notice)
+*/
+
+#pragma once
+
+! for arch_name, is_supported in pairs(supported_architectures) do
+!    if is_supported then
+#define UL_HAVE_ARCH_HEADER_$(arch_name:upper()) (1)
+!    else
+#define UL_HAVE_ARCH_HEADER_$(arch_name:upper()) (0)
+!    end
+! end
