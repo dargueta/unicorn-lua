@@ -39,6 +39,8 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
 static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
                                                   int size, void *userdata);
 
+static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata);
+
 /* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
  * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
  * that the compiler doesn't blow up. */
@@ -57,6 +59,13 @@ int ul_create_edge_generated_hook(lua_State *L)
 #else
     ulinternal_crash_not_implemented(L);
 #endif
+}
+
+int ul_create_cpuid_hook(lua_State *L)
+{
+    ulinternal_helper_create_code_hook(L, "cpuid",
+                                       (void *)ulinternal_hook_callback__cpuid);
+    return 1;
 }
 
 int ul_create_invalid_mem_access_hook(lua_State *L)
@@ -148,6 +157,33 @@ void ulinternal_helper_create_generic_hook(lua_State *L, const char *human_reada
         "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
         " through 0x%08" PRIX64 " (start > end means \"all of memory\")",
         (long)hook_type, human_readable, start_address, end_address);
+}
+
+void ulinternal_helper_create_code_hook(lua_State *L, const char *human_readable,
+                                        void *callback)
+{
+    uc_engine *engine;
+    uint64_t start_address, end_address;
+    uc_hook_type hook_type;
+
+#if LUA_VERSION_NUM >= 504
+    ULHookState *hook_state = (ULHookState *)lua_newuserdatauv(L, sizeof(*hook_state), 0);
+#else
+    ULHookState *hook_state = (ULHookState *)lua_newuserdata(L, sizeof(*hook_state));
+#endif
+    get_common_arguments(L, hook_state, &engine, &hook_type, &start_address,
+                         &end_address);
+
+    int instruction_id = (int)luaL_checkinteger(L, 6);
+
+    uc_err error = uc_hook_add(engine, &hook_state->hook_handle, hook_type, callback,
+                               hook_state, start_address, end_address, instruction_id);
+
+    ulinternal_crash_if_failed(
+        L, error,
+        "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
+        " through 0x%08" PRIX64 " (start > end means \"all of memory\") for instruction %d.",
+        (long)hook_type, human_readable, start_address, end_address, instruction_id);
 }
 
 int ul_hook_del(lua_State *L)
@@ -270,6 +306,19 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     lua_call(hook->L, 2, 1);
 
     uint32_t return_value = (uint32_t)luaL_checkinteger(hook->L, -1);
+    lua_pop(hook->L, 1);
+    return return_value;
+}
+
+static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
+{
+    (void)engine;
+    ULHookState *hook = (ULHookState *)userdata;
+
+    ulinternal_push_callback_to_lua(hook);
+    lua_call(hook->L, 2, 1);
+
+    bool return_value = (bool)luaL_checkinteger(hook->L, -1);
     lua_pop(hook->L, 1);
     return return_value;
 }

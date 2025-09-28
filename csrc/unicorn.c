@@ -117,6 +117,7 @@ static const luaL_Reg kFunctions[] = {
     {"close", ul_close},
     {"create_arm64_sys_hook", ul_create_arm64_sys_hook},
     {"create_code_hook", ul_create_code_hook},
+    {"create_cpuid_hook", ul_create_cpuid_hook},
     {"create_generic_no_arguments_hook", ul_create_generic_no_arguments_hook},
     {"create_interrupt_hook", ul_create_interrupt_hook},
     {"create_invalid_mem_access_hook", ul_create_invalid_mem_access_hook},

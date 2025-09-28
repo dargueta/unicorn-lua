@@ -204,4 +204,33 @@ describe('Hook tests', function ()
     assert.are.equals(0xf00d, uc:reg_read(info[1]), 'Register not written to')
     uc:close()
   end)
+
+  it('[x86] CPUID', function ()
+
+    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
+
+    local callback = function (...)
+      local argv = {...}
+      -- The only argument we should be getting is the engine.
+      assert_argument_count(argv, 1)
+      assert.are.equals(uc, argv[1])
+      uc:reg_write(x86.UC_X86_REG_EAX, 0x80000001)
+
+      -- Tell Unicorn we did something.
+      return true
+    end
+
+    uc:mem_map(0, 2^20)
+
+    -- xor eax, eax
+    -- cpuid
+    -- Opcodes: 31 c0 0f a2
+    uc:mem_write(0x7c000, '\049\192\015\162')
+    local handle = uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, nil,
+                               x86.UC_X86_INS_CPUID)
+    assert.not_nil(handle)
+
+    uc:emu_start(0x7c000, 0, 0, 2)
+    uc:emu_stop()
+  end)
 end)
