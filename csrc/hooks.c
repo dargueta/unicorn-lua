@@ -318,7 +318,7 @@ static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
     ulinternal_push_callback_to_lua(hook);
     lua_call(hook->L, 2, 1);
 
-    bool return_value = (bool)luaL_checkinteger(hook->L, -1);
+    int return_value = lua_toboolean(hook->L, -1);
     lua_pop(hook->L, 1);
-    return return_value;
+    return return_value != 0;
 }
