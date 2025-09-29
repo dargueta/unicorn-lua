@@ -72,7 +72,7 @@ local function create_code_hook_creator_by_name(name)
             hook_type,
             callback,
             start_addr or 0,
-            end_addr,
+            end_addr or 0,
             instruction_id
         )
     end
