@@ -15,10 +15,10 @@ src/unicorn/*_const_gen.c
 src/unicorn/*_const_gen
 src/unicorn/*_extracted_consts.lua
 csrc/basic_control_functions.c
-csrc/basic_hook_functions.c
 csrc/registers.c
 csrc/registers_const.c
 csrc/template_data/libconfig.lua
+csrc/basic_hook_functions.c
 csrc/unicornlua/basic_hook_functions.h
 csrc/unicornlua/config.h
 csrc/unicornlua/register_types.h

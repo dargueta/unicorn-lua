@@ -52,6 +52,13 @@ int ul_create_arm64_sys_hook(lua_State *L)
     ulinternal_crash_not_implemented(L);
 }
 
+int ul_create_cpuid_hook(lua_State *L)
+{
+    ulinternal_helper_create_code_hook(L, "cpuid",
+                                       (void *)ulinternal_hook_callback__cpuid);
+    return 1;
+}
+
 int ul_create_edge_generated_hook(lua_State *L)
 {
 #ifndef UC_HOOK_EDGE_GENERATED
@@ -59,13 +66,6 @@ int ul_create_edge_generated_hook(lua_State *L)
 #else
     ulinternal_crash_not_implemented(L);
 #endif
-}
-
-int ul_create_cpuid_hook(lua_State *L)
-{
-    ulinternal_helper_create_code_hook(L, "cpuid",
-                                       (void *)ulinternal_hook_callback__cpuid);
-    return 1;
 }
 
 int ul_create_invalid_mem_access_hook(lua_State *L)
