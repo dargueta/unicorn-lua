@@ -54,9 +54,15 @@ int ul_create_arm64_sys_hook(lua_State *L)
 
 int ul_create_cpuid_hook(lua_State *L)
 {
+    // Hooking the CPUID instruction is only supported on Unicorn 2.0+.
+#if UC_VERSION_MAJOR >= 2
     ulinternal_helper_create_code_hook(L, "cpuid",
                                        (void *)ulinternal_hook_callback__cpuid);
     return 1;
+#else
+    ulinternal_crash(
+        L, "Hooking the CPUID instruction isn't supported in your version of Unicorn.");
+#endif
 }
 
 int ul_create_edge_generated_hook(lua_State *L)
@@ -182,7 +188,8 @@ void ulinternal_helper_create_code_hook(lua_State *L, const char *human_readable
     ulinternal_crash_if_failed(
         L, error,
         "Failed to create hook of type %ld (called as `%s`) from address 0x%08" PRIX64
-        " through 0x%08" PRIX64 " (start > end means \"all of memory\") for instruction %d.",
+        " through 0x%08" PRIX64
+        " (start > end means \"all of memory\") for instruction %d.",
         (long)hook_type, human_readable, start_address, end_address, instruction_id);
 }
 

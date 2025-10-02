@@ -205,7 +205,7 @@ describe('Hook tests', function ()
     uc:close()
   end)
 
-  it('[x86] CPUID', function ()
+  it('[x86] CPUID  #unicorn2only', function ()
     local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
     local callback = function (...)
@@ -239,5 +239,23 @@ describe('Hook tests', function ()
     assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
     assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
     assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
+  end)
+
+  it('[x86] Hooking CPUID on Unicorn 1.x fails  #unicorn1only', function ()
+    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
+
+    uc:mem_map(0, 2^20)
+    uc:mem_write(0x7c000, '\049\192\015\162')
+    function try_to_create_hook()
+      local callback = function (...)
+        error("This should never have been called")
+      end
+      uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff", x86.UC_X86_INS_CPUID)
+    end
+
+    assert.has_error(
+      try_to_create_hook,
+      "Hooking the CPUID instruction isn't supported in your version of Unicorn."
+    )
   end)
 end)

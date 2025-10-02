@@ -1,3 +1,5 @@
+local unicorn = require "unicorn"
+
 local version_number = _VERSION:sub(5)
 local exclude = {}
 
@@ -6,6 +8,13 @@ if version_number == "5.1" or version_number == "5.2" then
     exclude = { "int64only" }
 end
 
+-- Exclude Unicorn 2.x tests on Unicorn 1.x, and vice versa.
+local unicorn_library_major_version = unicorn.version()
+if unicorn_library_major_version >= 2 then
+    table.insert(exclude, "unicorn1only")
+else
+    table.insert(exclude, "unicorn2only")
+end
 
 return {
     _all = {
