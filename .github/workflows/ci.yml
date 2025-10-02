@@ -9,7 +9,11 @@ jobs:
       fail-fast: false
       matrix:
         operating-system:
-          - ubuntu-latest
+          # Unicorn 2.0 doesn't build on 24.04 because its CMake files require
+          # compatibility with CMake 3.5. Ubuntu 24.04's installed version of
+          # CMake dropped support for these. (Unicorn 2.1 builds just fine on
+          # Ubuntu 24.04.)
+          - ubuntu-22.04
           - macos-latest
           # - windows-latest
         lua-version:
