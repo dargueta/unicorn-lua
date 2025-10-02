@@ -24,7 +24,7 @@
 #include <string.h>
 #include <unicorn/unicorn.h>
 
-/// @submodule unicorn_c_
+#define UL_IS_HOOKING_CPUID_SUPPORTED (UC_VERSION_MAJOR >= 2)
 
 static void get_common_arguments(lua_State *restrict L, ULHookState *restrict hook,
                                  uc_engine **engine, uc_hook_type *restrict hook_type,
@@ -39,7 +39,9 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
 static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
                                                   int size, void *userdata);
 
+#if UL_IS_HOOKING_CPUID_SUPPORTED
 static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata);
+#endif
 
 /* ISO C forbids casting a function pointer to an object pointer (void* in this case). As
  * Unicorn requires us to do this, we have to disable pedantic warnings temporarily so
@@ -55,7 +57,7 @@ int ul_create_arm64_sys_hook(lua_State *L)
 int ul_create_cpuid_hook(lua_State *L)
 {
     // Hooking the CPUID instruction is only supported on Unicorn 2.0+.
-#if UC_VERSION_MAJOR >= 2
+#if UL_IS_HOOKING_CPUID_SUPPORTED
     ulinternal_helper_create_code_hook(L, "cpuid",
                                        (void *)ulinternal_hook_callback__cpuid);
     return 1;
@@ -317,6 +319,7 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
     return return_value;
 }
 
+#if UL_IS_HOOKING_CPUID_SUPPORTED
 static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
 {
     (void)engine;
@@ -329,3 +332,4 @@ static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
     lua_pop(hook->L, 1);
     return return_value != 0;
 }
+#endif
