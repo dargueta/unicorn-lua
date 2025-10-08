@@ -28,41 +28,58 @@
 
 #define UL_MAX_ERROR_MESSAGE_LENGTH 1024
 
-#ifdef __GNUC__
-#    define GNU_ATTRIBUTE(x) __attribute__((x))
-#else
-#    define GNU_ATTRIBUTE(x)
-#endif
-
-// FIXME(dargueta): UL_NORETURN_MARKER undefined on non-GCC, non-MSVC compilers before C23
+// FIXME(dargueta): UL_NORETURN_MARKER undefined on non-GCC, non-MSVC compilers before C11
 
 #if __STDC_VERSION__ >= 202311L
 #    define UL_FALLTHROUGH_MARKER [[fallthrough]]
 #    define UL_UNREACHABLE_MARKER unreachable()
 #    define UL_NORETURN_MARKER [[noreturn]]
-#elif defined(__GNUC__)
+#elif __STDC_VERSION__ >= 201112L
+#    include <stdnoreturn.h>
+#    define UL_NORETURN_MARKER _Noreturn
+#endif
+
+#if defined(__GNUC__)
 // GCC, Clang, ICC
-#    define UL_FALLTHROUGH_MARKER GNU_ATTRIBUTE(fallthrough)
-#    define UL_UNREACHABLE_MARKER __builtin_unreachable()
-#    define UL_NORETURN_MARKER GNU_ATTRIBUTE(noreturn)
-#    define UL_PUBLIC_API GNU_ATTRIBUTE(visibility("default"))
-#    define UL_PRIVATE GNU_ATTRIBUTE(visibility("internal"))
+#    define UL_PUBLIC_API __attribute__((visibility("default")))
+#    define UL_PRIVATE __attribute__((visibility("internal")))
 #elif defined(_MSC_VER)
 // Microsoft Visual Studio
-#    define UL_FALLTHROUGH_MARKER
-#    define UL_UNREACHABLE_MARKER __assume(false)
-#    define UL_NORETURN_MARKER __declspec(noreturn)
 #    define UL_PUBLIC_API __declspec(dllexport)
 #    define UL_PRIVATE
 #else
-#    define UL_FALLTHROUGH_MARKER
-#    define UL_UNREACHABLE_MARKER
-#    define UL_NORETURN_MARKER
-#endif
-
-#ifndef UL_PUBLIC_API
 #    define UL_PUBLIC_API
 #    define UL_PRIVATE
+#endif
+
+#ifndef UL_UNREACHABLE_MARKER
+#    if defined(__GNUC__)
+// GCC, Clang, ICC
+#        define UL_UNREACHABLE_MARKER __builtin_unreachable()
+#    elif defined(_MSC_VER)
+// Microsoft Visual Studio
+#        define UL_UNREACHABLE_MARKER __assume(false)
+#    else
+#        define UL_UNREACHABLE_MARKER
+#    endif
+#endif
+
+#ifndef UL_FALLTHROUGH_MARKER
+#    if defined(__GNUC__)
+#        define UL_FALLTHROUGH_MARKER __attribute__((fallthrough))
+#    else
+#        define UL_FALLTHROUGH_MARKER
+#    endif
+#endif
+
+#ifndef UL_NORETURN_MARKER
+#    if defined(__GNUC__)
+#        define UL_NORETURN_MARKER __attribute__((noreturn))
+#    elif defined(_MSC_VER)
+#        define UL_NORETURN_MARKER __declspec(noreturn)
+#    else
+#        define UL_NORETURN_MARKER
+#    endif
 #endif
 
 /**
@@ -112,7 +129,9 @@ UL_PRIVATE UL_NORETURN_MARKER int ulinternal_crash_unsupported_operation(lua_Sta
  *      is truncated to @ref UL_MAX_ERROR_MESSAGE_LENGTH characters.
  * @param ...
  */
-GNU_ATTRIBUTE(format(printf, 3, 4))
+#ifdef __GNUC__
+__attribute__((format(printf, 3, 4)))
+#endif
 UL_PRIVATE void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format,
                                            ...);
 
@@ -126,6 +145,8 @@ UL_PRIVATE void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char
  *      is truncated to @ref UL_MAX_ERROR_MESSAGE_LENGTH characters.
  * @param ...
  */
-GNU_ATTRIBUTE(format(printf, 2, 3))
+#ifdef __GNUC__
+__attribute__((format(printf, 2, 3)))
+#endif
 UL_PRIVATE UL_NORETURN_MARKER void ulinternal_crash(lua_State *L, const char *format,
                                                     ...);
