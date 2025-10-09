@@ -38,7 +38,7 @@ install_unicorn__unix__1: $(UNICORN_DIRECTORY)
 .PHONY: install_unicorn__unix__2
 install_unicorn__unix__2: $(UNICORN_DIRECTORY)
 	@echo "Installing Unicorn $(UNICORN_MAJOR_VERSION)"
-	cmake -S $(UNICORN_DIRECTORY) -B $(UNICORN_DIRECTORY)/build -DCMAKE_BUILD_TYPE=Release
+	cmake -S $(UNICORN_DIRECTORY) -B $(UNICORN_DIRECTORY)/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 	$(MAKE) -C $(UNICORN_DIRECTORY)/build
 	sudo $(MAKE) -C $(UNICORN_DIRECTORY)/build install
 
