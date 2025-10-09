@@ -328,6 +328,16 @@ static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
     ulinternal_push_callback_to_lua(hook);
     lua_call(hook->L, 0, 1);
 
+    // The function *must* return a boolean.
+    if (lua_type(hook->L, -1) != LUA_TBOOLEAN)
+    {
+        luaL_error(hook->L,
+                   "Error: The handler for the CPUID instruction must return a"
+                   " boolean telling Unicorn whether to skip the default behavior (true)"
+                   " or not (false).");
+        UL_UNREACHABLE_MARKER;
+    }
+
     int return_value = lua_toboolean(hook->L, -1);
     lua_pop(hook->L, 1);
     return return_value != 0;

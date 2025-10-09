@@ -205,57 +205,117 @@ describe('Hook tests', function ()
     uc:close()
   end)
 
-  it('[x86] CPUID  #unicorn2only', function ()
-    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
+  describe('[x86] CPUID', function()
+    it('Intercepted  #unicorn2only', function ()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
 
-    local callback = function (...)
-      local argv = {...}
-      -- The only arguments we should be getting are the engine and the userdata.
-      assert_argument_count(argv, 2)
-      assert.are.equals(uc, argv[1])
-      assert.are.equals("stuff", argv[2])
-      uc:reg_write(x86.UC_X86_REG_EAX, 0x80000001)
-      uc:reg_write(x86.UC_X86_REG_EBX, 0)
-      uc:reg_write(x86.UC_X86_REG_ECX, 0)
-      uc:reg_write(x86.UC_X86_REG_EDX, 0)
-
-      -- Tell Unicorn we did something.
-      return true
-    end
-
-    uc:mem_map(0, 2^20)
-
-    -- xor eax, eax
-    -- cpuid
-    -- Opcodes: 31 c0 0f a2
-    uc:mem_write(0x7c000, '\049\192\015\162')
-    local handle = uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff",
-                               x86.UC_X86_INS_CPUID)
-    assert.not_nil(handle)
-
-    uc:emu_start(0x7c000, 0, 0, 2)
-    uc:emu_stop()
-    assert.are.equals(0x80000001, uc:reg_read(x86.UC_X86_REG_EAX))
-    assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
-    assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
-    assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
-  end)
-
-  it('[x86] Hooking CPUID on Unicorn 1.x fails  #unicorn1only', function ()
-    local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
-
-    uc:mem_map(0, 2^20)
-    uc:mem_write(0x7c000, '\049\192\015\162')
-    function try_to_create_hook()
       local callback = function (...)
-        error("This should never have been called")
-      end
-      uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff", x86.UC_X86_INS_CPUID)
-    end
+        local argv = {...}
+        -- The only arguments we should be getting are the engine and the userdata.
+        assert_argument_count(argv, 2)
+        assert.are.equals(uc, argv[1])
+        assert.are.equals("stuff", argv[2])
+        uc:reg_write(x86.UC_X86_REG_EAX, 0x80000001)
+        uc:reg_write(x86.UC_X86_REG_EBX, 0)
+        uc:reg_write(x86.UC_X86_REG_ECX, 0)
+        uc:reg_write(x86.UC_X86_REG_EDX, 0)
 
-    assert.has_error(
-      try_to_create_hook,
-      "Hooking the CPUID instruction isn't supported in your version of Unicorn."
-    )
+        -- Tell Unicorn we did something.
+        return true
+      end
+
+      uc:mem_map(0, 2^20)
+
+      -- xor eax, eax
+      -- cpuid
+      -- Opcodes: 31 c0 0f a2
+      uc:mem_write(0x7c000, '\049\192\015\162')
+      local handle = uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff",
+        x86.UC_X86_INS_CPUID)
+      assert.not_nil(handle)
+
+      uc:emu_start(0x7c000, 0, 0, 2)
+      uc:emu_stop()
+      assert.are.equals(0x80000001, uc:reg_read(x86.UC_X86_REG_EAX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
+    end)
+
+    it('Not intercepted  #unicorn2only', function ()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_64)
+      uc:ctl_set_cpu_model(x86.UC_CPU_X86_HASWELL)
+
+      local callback = function (...)
+        local argv = {...}
+        -- The only arguments we should be getting are the engine and the userdata.
+        assert_argument_count(argv, 2)
+        assert.are.equals(uc, argv[1])
+        assert.are.equals("stuff", argv[2])
+        -- Don't do anything, tell Unicorn to resume the default behavior.
+        return false
+      end
+
+      uc:mem_map(0, 2^20)
+
+      -- xor eax, eax
+      -- cpuid
+      -- Opcodes: 31 c0 0f a2
+      uc:mem_write(0x7c000, '\049\192\015\162')
+      local handle = uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff",
+        x86.UC_X86_INS_CPUID)
+      assert.not_nil(handle)
+
+      uc:emu_start(0x7c000, 0, 0, 2)
+      uc:emu_stop()
+
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EAX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
+      assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
+
+      uc:hook_del(handle)
+    end)
+
+    it('Returning non-bool crashes  #unicorn2only', function()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
+
+      uc:mem_map(0, 2^20)
+      uc:mem_write(0x7c000, '\049\192\015\162')
+      local handle = uc:hook_add(
+        uc_const.UC_HOOK_INSN,
+        function (...) end,  -- Returns nil by default
+        0,
+        2^20,
+        "stuff",
+        x86.UC_X86_INS_CPUID
+      )
+
+      assert.has_error(
+        function () uc:emu_start(0x7c000, 0, 0, 2) end,
+        'Error: The handler for the CPUID instruction must return a boolean telling' ..
+        ' Unicorn whether to skip the default behavior (true) or not (false).'
+      )
+      uc:emu_stop()
+      uc:hook_del(handle)
+    end)
+
+    it('[x86] Hooking CPUID on Unicorn 1.x fails  #unicorn1only', function ()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
+
+      uc:mem_map(0, 2^20)
+      uc:mem_write(0x7c000, '\049\192\015\162')
+      function try_to_create_hook()
+        local callback = function (...)
+          error("This should never have been called")
+        end
+        uc:hook_add(uc_const.UC_HOOK_INSN, callback, 0, 2^20, "stuff", x86.UC_X86_INS_CPUID)
+      end
+
+      assert.has_error(
+        try_to_create_hook,
+        "Hooking the CPUID instruction isn't supported in your version of Unicorn."
+      )
+    end)
   end)
 end)
