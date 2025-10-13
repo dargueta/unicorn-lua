@@ -277,16 +277,16 @@ describe('Hook tests', function ()
       if uc:reg_read(x86.UC_X86_REG_EAX) == 0 then
         -- Unicorn 2.1.3
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EAX))
-        assert.are.equals(0x47656e75, uc:reg_read(x86.UC_X86_REG_EBX))
+        assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
       else
         assert.are.equals(13, uc:reg_read(x86.UC_X86_REG_EAX))
         -- EBX, ECX, and EDX contain "GenuineIntel" as the manufacturer
         -- identifier string.
-        assert.are.equals(0x47656e75, uc:reg_read(x86.UC_X86_REG_EBX))
-        assert.are.equals(0x696e6549, uc:reg_read(x86.UC_X86_REG_ECX))
-        assert.are.equals(0x6e74656c, uc:reg_read(x86.UC_X86_REG_EDX))
+        assert.are.equals(0x756e6547, uc:reg_read(x86.UC_X86_REG_EBX))
+        assert.are.equals(0x49656e69, uc:reg_read(x86.UC_X86_REG_ECX))
+        assert.are.equals(0x6c65746e, uc:reg_read(x86.UC_X86_REG_EDX))
       end
 
       uc:hook_del(handle)
