@@ -280,21 +280,6 @@ describe('Hook tests', function ()
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
-     --[[ elseif string.unpack ~= nil then
-        -- Unicorn 2.1.4
-        assert.are.equals(13, uc:reg_read(x86.UC_X86_REG_EAX))
-        -- EBX, EDX, and ECX (in that order) contain "GenuineIntel" in ASCII.
-        -- Because I always get the endianness wrong, on 5.3 and 5.4 I'm packing
-        -- them into a string and testing that, rather than checking the
-        -- registers' values individually.
-        local identifier = string.pack(
-          "<I4I4I4",
-          uc:reg_read(x86.UC_X86_REG_EBX),
-          uc:reg_read(x86.UC_X86_REG_ECX),
-          uc:reg_read(x86.UC_X86_REG_EDX)
-        )
-        assert.are.equals("GenuineIntel", identifier)
-      ]]
       else
         -- EBX, EDX, and ECX (in that order) contain "GenuineIntel" in ASCII,
         -- with characters ordered in little endian (BL = 'G', BH = 'e', etc.)
