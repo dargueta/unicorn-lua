@@ -272,21 +272,39 @@ describe('Hook tests', function ()
       uc:emu_stop()
 
       -- CPUID is broken on Unicorn 2.1.3 or something. It's driving me nuts
-      -- that tests pass in CI but fail locally, so I'm supplying both cases
-      -- here.
+      -- that tests pass in CI on 2.1.4 but fail locally, so I'm supplying
+      -- both cases here.
       if uc:reg_read(x86.UC_X86_REG_EAX) == 0 then
         -- Unicorn 2.1.3
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EAX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EBX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
-      else
+     --[[ elseif string.unpack ~= nil then
+        -- Unicorn 2.1.4
         assert.are.equals(13, uc:reg_read(x86.UC_X86_REG_EAX))
-        -- EBX, ECX, and EDX contain "GenuineIntel" as the manufacturer
-        -- identifier string.
+        -- EBX, EDX, and ECX (in that order) contain "GenuineIntel" in ASCII.
+        -- Because I always get the endianness wrong, on 5.3 and 5.4 I'm packing
+        -- them into a string and testing that, rather than checking the
+        -- registers' values individually.
+        local identifier = string.pack(
+          "<I4I4I4",
+          uc:reg_read(x86.UC_X86_REG_EBX),
+          uc:reg_read(x86.UC_X86_REG_ECX),
+          uc:reg_read(x86.UC_X86_REG_EDX)
+        )
+        assert.are.equals("GenuineIntel", identifier)
+      ]]
+      else
+        -- EBX, EDX, and ECX (in that order) contain "GenuineIntel" in ASCII,
+        -- with characters ordered in little endian (BL = 'G', BH = 'e', etc.)
+        --    EBX = 'uneG'
+        --    EDX = 'Ieni'
+        --    ECX = 'letn
+        assert.are.equals(13, uc:reg_read(x86.UC_X86_REG_EAX))
         assert.are.equals(0x756e6547, uc:reg_read(x86.UC_X86_REG_EBX))
-        assert.are.equals(0x49656e69, uc:reg_read(x86.UC_X86_REG_ECX))
-        assert.are.equals(0x6c65746e, uc:reg_read(x86.UC_X86_REG_EDX))
+        assert.are.equals(0x49656e69, uc:reg_read(x86.UC_X86_REG_EDX))
+        assert.are.equals(0x6c65746e, uc:reg_read(x86.UC_X86_REG_ECX))
       end
 
       uc:hook_del(handle)
