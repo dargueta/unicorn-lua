@@ -49,7 +49,7 @@ static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
-int ul_create_arm64_sys_hook(lua_State *L)
+UL_NORETURN_MARKER int ul_create_arm64_sys_hook(lua_State *L)
 {
     ulinternal_crash_not_implemented(L);
 }
@@ -67,7 +67,7 @@ int ul_create_cpuid_hook(lua_State *L)
 #endif
 }
 
-int ul_create_edge_generated_hook(lua_State *L)
+UL_NORETURN_MARKER int ul_create_edge_generated_hook(lua_State *L)
 {
 #ifndef UC_HOOK_EDGE_GENERATED
     ulinternal_crash_unsupported_operation(L);
@@ -110,7 +110,7 @@ int ul_create_port_in_hook(lua_State *L)
     return 1;
 }
 
-int ul_create_tcg_opcode_hook(lua_State *L)
+UL_NORETURN_MARKER int ul_create_tcg_opcode_hook(lua_State *L)
 {
 #ifndef UC_HOOK_TCG_OPCODE
     ulinternal_crash_unsupported_operation(L);

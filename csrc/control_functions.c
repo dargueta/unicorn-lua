@@ -41,7 +41,7 @@ int ul_ctl_get_exits(lua_State *L)
     return 1;
 }
 
-int ul_ctl_set_exits(lua_State *L)
+UL_NORETURN_MARKER int ul_ctl_set_exits(lua_State *L)
 {
     ulinternal_crash_not_implemented(L);
 }
