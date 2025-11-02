@@ -16,6 +16,12 @@ else
     table.insert(exclude, "unicorn2only")
 end
 
+-- pcall, and by extension assert.has_error, appears to be broken on LuaJIT 2.1.
+-- It doesn't catch exceptions, and instead propagates them.
+if type(_G.jit) == "table" then
+    table.insert(exclude, "noluajit")
+end
+
 return {
     _all = {
         ["exclude-tags"] = exclude,
