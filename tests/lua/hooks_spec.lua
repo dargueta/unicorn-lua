@@ -309,11 +309,18 @@ describe('Hook tests', function ()
         x86.UC_X86_INS_CPUID
       )
 
-      -- assert.has_error appears to be broken on LuaJIT 2.1. It doesn't catch
-      -- the exception, and instead propagates it.
-      local succeeded = pcall(uc.emu_start, uc, 0x7c000, 0, 0, 2)
-      assert(not succeeded, 'The function should have crashed.')
-
+      if type(_G.jit) == "table" then
+        -- assert.has_error appears to be broken on LuaJIT 2.1. It doesn't catch
+        -- the exception, and instead propagates it.
+        local succeeded = pcall(uc.emu_start, uc, 0x7c000, 0, 0, 2)
+        assert(not succeeded, 'The function should have crashed.')
+      else
+        assert.has_error(
+          function () uc:emu_start(0x7c000, 0, 0, 2) end,
+          'Error: The handler for the CPUID instruction must return a boolean telling' ..
+            ' Unicorn whether to skip the default behavior (true) or not (false).'
+        )
+      end
       uc:emu_stop()
       uc:hook_del(handle)
     end)
