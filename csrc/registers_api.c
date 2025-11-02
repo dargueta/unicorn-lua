@@ -320,6 +320,21 @@ int ul_reg_write_batch(lua_State *L)
     return 0;
 }
 
+/**
+ * Create a set of buffers used to read or write @a n_registers registers.
+ *
+ * @a values and @a value_pointers must be pointers to uninitialized pointers. When this
+ * function returns, they will point to valid memory. This memory is controlled by Lua and
+ * *must not* be freed manually.
+ *
+ * @param L The Lua state.
+ * @param n_registers The number of registers to be read or written.
+ * @param[in,out] values A pointer to an uninitialized pointer that will be set to point
+ *                       to an array of @a n_registers @ref register_buffer_type buffers.
+ * @param[in,out] value_pointers A pointer to an uninitialized pointer that will be set to
+ *  point to an array of `void *`, where each pointer in this array will point to one of
+ *  the buffers in @a values.
+ */
 static void prepare_batch_buffers(lua_State *L, size_t n_registers,
                                   register_buffer_type **values, void ***value_pointers)
 {

@@ -121,6 +121,18 @@ UL_NORETURN_MARKER int ul_create_tcg_opcode_hook(lua_State *L)
 
 #pragma GCC diagnostic pop
 
+/**
+ * Get the values of arguments passed to all hook creation functions.
+ *
+ * @param L The Lua state.
+ * @param[out] hook A pointer to an uninitialized @ref ULHookState struct.
+ * @param[out] engine A pointer that will be initialized to the `uc_engine *`
+ * @param[out] hook_type
+ * @param[out] start_address A pointer to a uint64_t that will be set to the lowest
+ *  address the hook is effective for.
+ * @param[out] end_address A pointer to a uint64_t that will be set to the highest address
+ *  the hook is effective for.
+ */
 static void get_common_arguments(lua_State *restrict L, ULHookState *restrict hook,
                                  uc_engine **engine, uc_hook_type *restrict hook_type,
                                  uint64_t *restrict start_address,
@@ -142,6 +154,19 @@ static void get_common_arguments(lua_State *restrict L, ULHookState *restrict ho
     lua_settable(L, LUA_REGISTRYINDEX);
 }
 
+/**
+ * Create a non-instruction hook.
+ *
+ * The Lua stack must contain the five required arguments for creating a general hook at
+ * indexes 1-5. Use @ref ulinternal_helper_create_code_hook for creating a hook triggered
+ * when a certain instruction is executed.
+ *
+ * @param L The Lua state.
+ * @param human_readable A human-readable slug indicating what the hook is for.
+ * @param callback The callback function Unicorn will invoke when the hook is triggered.
+ *
+ * @see ulinternal_helper_create_code_hook
+ */
 void ulinternal_helper_create_generic_hook(lua_State *L, const char *human_readable,
                                            void *callback)
 {
@@ -167,6 +192,18 @@ void ulinternal_helper_create_generic_hook(lua_State *L, const char *human_reada
         (long)hook_type, human_readable, start_address, end_address);
 }
 
+/**
+ * Create a generic instruction hook based on arguments passed in on the Lua stack.
+ *
+ * The Lua stack must contain the six required arguments for creating a code hook, at
+ * indexes 1-6.
+ *
+ * @param L The Lua state.
+ * @param human_readable A short slug indicating what the code hook is for.
+ * @param callback The callback function Unicorn will invoke when the hook is triggered.
+ *
+ * @see ulinternal_helper_create_generic_hook
+ */
 void ulinternal_helper_create_code_hook(lua_State *L, const char *human_readable,
                                         void *callback)
 {
@@ -238,6 +275,14 @@ int ul_hook_del(lua_State *L)
     return 0;
 }
 
+/**
+ * Remove strong references for one or more callback functions used by hooks.
+ *
+ * Engine destructors use this to efficiently remove all hook callbacks at once.
+ *
+ * @param L The Lua state to get the callbacks for.
+ * @return This returns to Lua the number of callbacks that were possibly deallocated.
+ */
 int ul_release_hook_callbacks(lua_State *L)
 {
     int total_arguments = lua_gettop(L);
@@ -255,6 +300,11 @@ int ul_release_hook_callbacks(lua_State *L)
     return 1;
 }
 
+/**
+ * Push the Lua function handler for the given hook onto the Lua stack.
+ *
+ * @param hook The hook to get the callback function for.
+ */
 void ulinternal_push_callback_to_lua(const ULHookState *hook)
 {
     /* Retrieve the callback from the registry using this hook's metadata as the key. */
@@ -271,6 +321,19 @@ void ulinternal_push_callback_to_lua(const ULHookState *hook)
     }
 }
 
+/**
+ * A wrapper that will call the user's invalid memory access hook.
+ *
+ * @param engine The Unicorn engine this hook was triggered by.
+ * @param type The type of memory access.
+ * @param address The address an invalid access was attempted on.
+ * @param size The size of the memory operation.
+ * @param value For writes, the value attempted to write to memory.
+ * @param userdata A pointer to the @ref ULHookState for this hook.
+ *
+ * @return A boolean indicating whether this hook handled the exception (true) or whether
+ * to fall back to the default behavior (false).
+ */
 static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
                                                          uc_mem_type type,
                                                          uint64_t address, int size,
@@ -303,6 +366,16 @@ static bool ulinternal_hook_callback__invalid_mem_access(uc_engine *engine,
     return return_value != 0;
 }
 
+/**
+ * A wrapper that will call the user's port read instruction hook.
+ *
+ * @param engine The Unicorn engine that called the hook.
+ * @param port The number of the port the instruction attempted to read from.
+ * @param size The size in bytes of the attempted port read (1, 2, or 4).
+ * @param userdata A pointer to the @ref ULHookState for this hook.
+ *
+ * @return The simulated return value from the port read.
+ */
 static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t port,
                                                   int size, void *userdata)
 {
@@ -320,6 +393,13 @@ static uint32_t ulinternal_hook_callback__port_in(uc_engine *engine, uint32_t po
 }
 
 #if UL_IS_HOOKING_CPUID_SUPPORTED
+/**
+ *
+ * @param engine The Unicorn engine invoking the hook.
+ * @param userdata A pointer to the @ref ULHookState for this hook.
+ * @return A boolean indicating whether the hook handled the instruction (true) or if
+ *  Unicorn should fall back to the default behavior (false).
+ */
 static bool ulinternal_hook_callback__cpuid(uc_engine *engine, void *userdata)
 {
     (void)engine;
