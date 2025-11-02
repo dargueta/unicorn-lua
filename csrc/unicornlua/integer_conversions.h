@@ -88,7 +88,12 @@
 //
 // Of course, this assumes that whoever built Lua didn't change it to a type smaller than
 // ptrdiff_t.
-#if (LUA_VERSION_NUM == 501 || LUA_VERSION_NUM == 502) && (PTRDIFF_MAX >= UINT32_MAX)
+//
+// The bit shifting by the way is to avoid problems with comparisons between signed and
+// unsigned integers on preprocessors that use 32-bit integers internally (this has
+// actually bitten me in real life). Lua uses this tactic (see luaconf.h) so I repeat it
+// here.
+#if (LUA_VERSION_NUM < 503) && ((PTRDIFF_MAX >> 15) >= (UINT32_MAX >> 15))
 #    define ul_lua_uint32_t_equiv_type lua_Integer
 #    define ul_push_uint32_t_equiv(L, i) lua_pushinteger((L), ((lua_Integer)(i)))
 #    define ul_to_uint32_t_equiv(L, i) ((uint32_t)(lua_tointeger((L), (i))))

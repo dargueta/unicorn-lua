@@ -1,3 +1,5 @@
+local unicorn = require "unicorn"
+
 local version_number = _VERSION:sub(5)
 local exclude = {}
 
@@ -6,6 +8,19 @@ if version_number == "5.1" or version_number == "5.2" then
     exclude = { "int64only" }
 end
 
+-- Exclude Unicorn 2.x tests on Unicorn 1.x, and vice versa.
+local unicorn_library_major_version = unicorn.version()
+if unicorn_library_major_version >= 2 then
+    table.insert(exclude, "unicorn1only")
+else
+    table.insert(exclude, "unicorn2only")
+end
+
+-- pcall, and by extension assert.has_error, appears to be broken on LuaJIT 2.1.
+-- It doesn't catch exceptions, and instead propagates them.
+if type(_G.jit) == "table" then
+    table.insert(exclude, "noluajit")
+end
 
 return {
     _all = {

@@ -37,3 +37,6 @@ int ul_create_tcg_opcode_hook(lua_State *L);
 int ul_release_hook_callbacks(lua_State *L);
 void ulinternal_helper_create_generic_hook(lua_State *L, const char *human_readable,
                                            void *callback);
+
+void ulinternal_helper_create_code_hook(lua_State *L, const char *human_readable,
+                                        void *callback);

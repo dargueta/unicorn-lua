@@ -72,7 +72,7 @@ local function create_code_hook_creator_by_name(name)
             hook_type,
             callback,
             start_addr or 0,
-            end_addr,
+            end_addr or 0,
             instruction_id
         )
     end
@@ -116,7 +116,7 @@ local create_code_hook = create_code_hook_creator_by_name("create_code_hook")
 local create_port_in_hook = create_code_hook_creator_by_name("create_port_in_hook")
 local create_port_out_hook = create_code_hook_creator_by_name("create_port_out_hook")
 local create_arm64_sys_hook = create_hook_creator_by_name("create_arm64_sys_hook")
-local create_cpuid_hook = create_hook_creator_by_name("create_cpuid_hook")
+local create_cpuid_hook = create_code_hook_creator_by_name("create_cpuid_hook")
 local create_generic_no_arguments_hook = create_hook_creator_by_name("create_generic_no_arguments_hook")
 local create_edge_generated_hook = create_hook_creator_by_name("create_edge_generated_hook")
 
