@@ -85,12 +85,12 @@ end
 --- Read a register from an engine.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
---- @tparam arch_name string  The name of the engine's architecture, as returned by
+--- @tparam string arch_name  The name of the engine's architecture, as returned by
 ---         @{get_architecture_slug_}.
---- @tparam arch_module table  A module containing all declared constants for that
+--- @tparam table arch_module  A module containing all declared constants for that
 ---         architecture.
---- @tparam reg_name string  The name of the register to read.
---- @return integer|float The value of the register, either an integer or float.
+--- @tparam string reg_name  The name of the register to read.
+--- @treturn integer|float The value of the register, either an integer or float.
 function read_named_register_(handle, arch_name, arch_module, reg_name)
     local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
     local reg_id = arch_module[const_name]
@@ -111,12 +111,12 @@ end
 --- Read a register from an engine.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
---- @tparam arch_name string  The name of the engine's architecture, as returned by
+--- @tparam string arch_name  The name of the engine's architecture, as returned by
 ---         @{get_architecture_slug_}.
---- @tparam arch_module table  A module containing all declared constants for that
+--- @tparam table arch_module  A module containing all declared constants for that
 ---         architecture.
---- @tparam reg_name string  The name of the register to write.
---- @param value  The value of the register, either an integer or a float.
+--- @tparam string reg_name  The name of the register to write.
+--- @tparam integer|float value  The value of the register, either an integer or a float.
 function write_named_register_(handle, arch_name, arch_module, reg_name, value)
     local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
     local reg_id = arch_module[const_name]
@@ -594,8 +594,8 @@ end
 
 --- Set multiple addresses that will halt the engine if executed.
 ---
---- @tparam {int, ...}  An array of addresses that will cause emulation to stop if
---- executed.
+--- @tparam {int,...} addresses  An array of addresses that will cause emulation to stop
+--- if executed.
 ---
 --- @see Engine:ctl_exits_enable
 --- @see Engine:ctl_get_exits
