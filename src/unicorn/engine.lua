@@ -463,7 +463,7 @@ end
 --- @tparam int type_id  An enum value indicating how to reinterpret the register. These
 --- can be found in @{registers_const}.
 ---
---- @note This cannot be used to read an x86 MSR or ARM/ARM64 coprocessor register.
+--- NOTE: This cannot be used to read an x86 MSR or ARM/ARM64 coprocessor register.
 function Engine:reg_read_as(register, type_id)
     return uc_c.reg_read_as(self.handle_, register, type_id)
 end
