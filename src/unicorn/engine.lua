@@ -16,6 +16,7 @@
 
 --- @module engine
 
+local stringx = require("pl.stringx")
 local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
 local uc_hooks = require("unicorn.hooks")
@@ -55,11 +56,107 @@ local EngineMeta_ = {
 EngineMeta_.__gc = EngineMeta_.__close
 
 
+--- Get the architecture of the given engine as an uppercase slug.
+---
+--- @param handle A userdata handle to an open engine returned by the Unicorn C library.
+--- @treturn string The architecture of the engine, e.g. "ARM64" or "X86". If it couldn't
+--- be determined, throws an error.
+function get_architecture_slug_(handle)
+    local arch_id = uc_c.query(handle, unicorn_const.UC_QUERY_ARCH)
+    for const_name, const_value in pairs(unicorn_const) do
+        if stringx.startswith(const_name, "UC_ARCH_")
+            and const_value == arch_id
+        then
+            return const_name:sub(8)
+        end
+    end
+
+    error(
+        string.format(
+            "Couldn't derive the name of the engine's architecture from the ID" ..
+            " returned by uc_query(). This is most likely a bug in the binding. Please" ..
+            " file a bug report. (architecture ID: %q; mode flags: %q)",
+            arch_id,
+            uc_c.query(handle, unicorn_const.UC_QUERY_MODE)
+        )
+    )
+end
+
+--- Read a register from an engine.
+---
+--- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
+--- @tparam arch_name string  The name of the engine's architecture, as returned by
+---         @{get_architecture_slug_}.
+--- @tparam arch_module table  A module containing all declared constants for that
+---         architecture.
+--- @tparam reg_name string  The name of the register to read.
+--- @return integer|float The value of the register, either an integer or float.
+function read_named_register_(handle, arch_name, arch_module, reg_name)
+    local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
+    local reg_id = arch_module[const_name]
+    if reg_id == nil then
+        error(
+            string.format(
+                "No register named %q is defined for the %q architecture" ..
+                " (expected constant is %q).",
+                reg_name,
+                arch_name,
+                const_name
+            )
+        )
+    end
+    return uc_c.reg_read(handle, reg_id)
+end
+
+--- Read a register from an engine.
+---
+--- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
+--- @tparam arch_name string  The name of the engine's architecture, as returned by
+---         @{get_architecture_slug_}.
+--- @tparam arch_module table  A module containing all declared constants for that
+---         architecture.
+--- @tparam reg_name string  The name of the register to write.
+--- @param value  The value of the register, either an integer or a float.
+function write_named_register_(handle, arch_name, arch_module, reg_name, value)
+    local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
+    local reg_id = arch_module[const_name]
+    if reg_id == nil then
+        error(
+            string.format(
+                "No register named %q is defined for the %q architecture" ..
+                " (expected constant is %q).",
+                reg_name,
+                arch_name,
+                const_name
+            )
+        )
+    end
+    return uc_c.reg_write(handle, reg_id, value)
+end
+
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn Engine  A class instance wrapping the handle.
 function wrap_handle_(handle)
+    -- For registry access to work, we need to know the name of the architecture. We can
+    -- accomplish this by getting the ID of the engine's architecture, then iterating
+    -- through all UC_ARCH_* constants and finding the first that matches it.
+    local arch_name = get_architecture_slug_(handle)
+    local const_module_name = "unicorn." .. arch_name:lower() .. "_const"
+    local have_arch, arch_module_or_error = pcall(require, const_module_name)
+
+    if not have_arch then
+        error(
+            string.format(
+                "Failed to load module %q for architecture %q: %s",
+                const_module_name,
+                arch_name,
+                arch_module_or_error
+            )
+        )
+    end
+
     local instance = {
         is_running_ = false,
         handle_ = handle,
@@ -77,6 +174,22 @@ function wrap_handle_(handle)
         -- callbacks.
         -- TODO (dargueta): Keep strong references to callbacks here, not in C.
         hooks_ = {},
+
+        -- A proxy for accessing registers.
+        -- Allows:
+        --      engine.registers.eax = 0
+        -- instead of:
+        --      engine.reg_write(x86_const.UC_X86_REG_EAX, 0)
+        registers = {
+            __index = function (name)
+                return read_named_register_(handle, arch_name, arch_module_or_error, name)
+            end,
+            __setindex = function (name, value)
+                return write_named_register_(
+                    handle, arch_name, arch_module_or_error, name, value
+                )
+            end,
+        }
     }
 
     return setmetatable(instance, EngineMeta_)
