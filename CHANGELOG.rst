@@ -1,6 +1,14 @@
 Changes
 =======
 
+2.4.0
+-----
+
+Bugs
+~~~~
+
+``uc_query()`` was never exposed.
+
 2.3.1
 -----
 
