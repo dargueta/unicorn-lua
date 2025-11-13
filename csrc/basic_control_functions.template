@@ -83,7 +83,19 @@ int ul_ctl_$(name)(lua_State* L)
     , arg_$(i)
 ! end
     );
-    ulinternal_crash_if_failed(L, error, "Control function $(name) failed");
+    ulinternal_crash_if_failed(
+        L,
+        error,
+        "Control function $(name) failed, called as: $(name)("
+
+! for i = 1, #arguments, 1 do
+        " %" PRId64
+! end
+        " )."
+! for i = 1, #arguments, 1 do
+        , (uint64_t)arg_$(i)
+! end
+    );
     return 0;
 }
 ! end
