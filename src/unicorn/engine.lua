@@ -67,7 +67,7 @@ function get_architecture_slug_(handle)
         if stringx.startswith(const_name, "UC_ARCH_")
             and const_value == arch_id
         then
-            return const_name:sub(8)
+            return const_name:sub(9)
         end
     end
 
