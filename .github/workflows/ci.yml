@@ -17,6 +17,7 @@ jobs:
           - "5.2"
           - "5.3"
           - "5.4"
+          - "5.5"
           - "luajit-2.1"
         unicorn-version:
           - "1.0.3"
@@ -41,6 +42,9 @@ jobs:
             lua-version: "5.4"
           - operating-system: macos-13
             unicorn-version: "1.0.3"
+            lua-version: "5.5"
+          - operating-system: macos-13
+            unicorn-version: "1.0.3"
             lua-version: "luajit-2.1"
     steps:
       - uses: actions/checkout@v4.2.2
@@ -56,7 +60,7 @@ jobs:
       - name: Install LuaRocks
         uses: luarocks/gh-actions-luarocks@v6
         with:
-          luaRocksVersion: "3.12.2"
+          luaRocksVersion: "3.13.0"
       - name: Install Unicorn
         run: make -C tools/ci install_unicorn UNICORN_VERSION=${{ matrix.unicorn-version }}
       - name: Environment

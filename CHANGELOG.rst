@@ -4,6 +4,11 @@ Changes
 2.4.0
 -----
 
+New Features
+~~~~~~~~~~~~
+
+Added support for Lua 5.5.
+
 Bugs
 ~~~~
 
