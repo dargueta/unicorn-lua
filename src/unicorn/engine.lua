@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2025 by Diego Argueta
+-- Copyright (C) 2017-2026 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -184,7 +184,7 @@ function wrap_handle_(handle)
             __index = function (name)
                 return read_named_register_(handle, arch_name, arch_module_or_error, name)
             end,
-            __setindex = function (name, value)
+            __newindex = function (name, value)
                 return write_named_register_(
                     handle, arch_name, arch_module_or_error, name, value
                 )
