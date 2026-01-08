@@ -243,7 +243,7 @@ describe('Hook tests', function ()
     end)
 
     it('Not intercepted  #unicorn2only', function ()
-      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_64)
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
       uc:ctl_set_cpu_model(x86.UC_CPU_X86_HASWELL)
 
       local callback = function (...)
