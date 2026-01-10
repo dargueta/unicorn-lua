@@ -157,6 +157,17 @@ function wrap_handle_(handle)
         )
     end
 
+    local registers_metatable = {
+        __index = function (_self, name)
+            return read_named_register_(handle, arch_name, arch_module_or_error, name)
+        end,
+        __newindex = function (_self, name, value)
+            return write_named_register_(
+                handle, arch_name, arch_module_or_error, name, value
+            )
+        end,
+    }
+
     local instance = {
         is_running_ = false,
         handle_ = handle,
@@ -180,16 +191,7 @@ function wrap_handle_(handle)
         --      engine.registers.eax = 0
         -- instead of:
         --      engine.reg_write(x86_const.UC_X86_REG_EAX, 0)
-        registers = {
-            __index = function (name)
-                return read_named_register_(handle, arch_name, arch_module_or_error, name)
-            end,
-            __newindex = function (name, value)
-                return write_named_register_(
-                    handle, arch_name, arch_module_or_error, name, value
-                )
-            end,
-        }
+        registers = setmetatable({}, registers_metatable)
     }
 
     return setmetatable(instance, EngineMeta_)
