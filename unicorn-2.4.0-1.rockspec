@@ -71,5 +71,6 @@ build = {
 
 test_dependencies = {
     "busted",
+    "compat53",
     "penlight >=1.8.1, <2.0",
 }
