@@ -282,15 +282,15 @@ describe('Hook tests', function ()
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_ECX))
         assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
       else
-        -- EBX, EDX, and ECX (in that order) contain "GenuineIntel" in ASCII,
-        -- with characters ordered in little endian (BL = 'G', BH = 'e', etc.)
-        --    EBX = 'uneG'
-        --    EDX = 'Ieni'
-        --    ECX = 'letn
+        -- EBX, EDX, and ECX (in that order) contain "AuthenticAMD" in ASCII,
+        -- with characters ordered in little endian (BL = 'A', BH = 'u', etc.)
+        --    EBX = 'htuA'
+        --    EDX = 'itne'
+        --    ECX = 'DMAc'
         assert.are.equals(13, uc:reg_read(x86.UC_X86_REG_EAX))
-        assert.are.equals(0x756e6547, uc:reg_read(x86.UC_X86_REG_EBX))
-        assert.are.equals(0x49656e69, uc:reg_read(x86.UC_X86_REG_EDX))
-        assert.are.equals(0x6c65746e, uc:reg_read(x86.UC_X86_REG_ECX))
+        assert.are.equals(0x68747541, uc:reg_read(x86.UC_X86_REG_EBX))
+        assert.are.equals(0x69746e65, uc:reg_read(x86.UC_X86_REG_EDX))
+        assert.are.equals(0x444d4163, uc:reg_read(x86.UC_X86_REG_ECX))
       end
 
       uc:hook_del(handle)
