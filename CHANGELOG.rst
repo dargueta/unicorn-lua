@@ -7,6 +7,30 @@ Changes
 New Features
 ~~~~~~~~~~~~
 
+Access Registers by Name
+************************
+
+Registers can now be read and written using attribute access instead of having
+to use constants and `reg_read()`. You can use it like this:
+
+.. code-block:: lua
+
+    engine.registers.rax
+    engine.registers.RAX = 1234   -- It's case-insensitive
+
+instead of the old way:
+
+.. code-block:: lua
+
+    engine:reg_read(x86_const.UC_X86_REG_RAX)
+    engine:reg_write(x86_const.UC_X86_REG_RAX, 1234)
+
+Both methods are still available. Note though that the `registers` accessor
+can't be used to write non-numeric values; you still need to use `reg_read_as()`
+and `reg_write_as()`.
+
+Others
+******
 Added support for Lua 5.5.
 
 Bugs
