@@ -20,7 +20,6 @@ local x86 = require 'unicorn.x86_const'
 local pl_pretty = require "pl.pretty"
 local pl_tablex = require "pl.tablex"
 local pl_utils = require "pl.utils"
-require "compat53"
 
 
 function assert_argument_count(argv, expected_count)
@@ -243,7 +242,7 @@ describe('Hook tests', function ()
       assert.are.equals(0, uc:reg_read(x86.UC_X86_REG_EDX))
     end)
 
-    it('Not intercepted  #unicorn2only', function ()
+    it('Not intercepted  #unicorn2only  #requiresstringpack', function ()
       local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_32)
       -- This blows up with an "invalid argument" error and I have no idea why.
       -- uc:ctl_set_cpu_model(x86.UC_CPU_X86_HASWELL)

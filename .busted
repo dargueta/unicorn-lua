@@ -3,9 +3,10 @@ local unicorn = require "unicorn"
 local version_number = _VERSION:sub(5)
 local exclude = {}
 
--- Disable 64-bit integer tests for Lua <5.3
+-- Disable 64-bit integer tests for Lua <5.3, as well as anything requiring
+-- string.pack().
 if version_number == "5.1" or version_number == "5.2" then
-    exclude = { "int64only" }
+    exclude = { "int64only", "requiresstringpack" }
 end
 
 -- Exclude Unicorn 2.x tests on Unicorn 1.x, and vice versa.
