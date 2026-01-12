@@ -22,6 +22,8 @@ local uc_context = require("unicorn.context")
 local uc_hooks = require("unicorn.hooks")
 local unicorn_const = require("unicorn.unicorn_const")
 
+stringx.import()
+
 --- An object-oriented wrapper around an opened Unicorn engine.
 ---
 --- **Garbage Collection**
@@ -82,56 +84,49 @@ function get_architecture_slug_(handle)
     )
 end
 
---- Read a register from an engine.
----
---- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
---- @tparam string arch_name  The name of the engine's architecture, as returned by
----         @{get_architecture_slug_}.
---- @tparam table arch_module  A module containing all declared constants for that
----         architecture.
---- @tparam string reg_name  The name of the register to read.
---- @treturn integer|float The value of the register, either an integer or float.
-function read_named_register_(handle, arch_name, arch_module, reg_name)
+
+function resolve_register_id_(arch_name, reg_name, arch_module, cache)
     local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
     local reg_id = arch_module[const_name]
-    if reg_id == nil then
-        error(
-            string.format(
-                "No register named %q is defined for the %q architecture" ..
-                " (expected constant is %q).",
-                reg_name,
-                arch_name,
-                const_name
-            )
-        )
+
+    if reg_id ~= nil then
+        if cache ~= nil then
+            cache[reg_name] = reg_id
+        end
+        return reg_id
     end
-    return uc_c.reg_read(handle, reg_id)
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture" ..
+            " (expected constant is %q).",
+            reg_name,
+            arch_name,
+            const_name
+        )
+    )
 end
 
---- Read a register from an engine.
+--- Iterate through a module and build a mapping of register names to their access IDs.
 ---
---- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
---- @tparam string arch_name  The name of the engine's architecture, as returned by
----         @{get_architecture_slug_}.
---- @tparam table arch_module  A module containing all declared constants for that
----         architecture.
---- @tparam string reg_name  The name of the register to write.
---- @tparam integer|float value  The value of the register, either an integer or a float.
-function write_named_register_(handle, arch_name, arch_module, reg_name, value)
-    local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
-    local reg_id = arch_module[const_name]
-    if reg_id == nil then
-        error(
-            string.format(
-                "No register named %q is defined for the %q architecture" ..
-                " (expected constant is %q).",
-                reg_name,
-                arch_name,
-                const_name
-            )
-        )
+--- @tparam string arch_name  The name of the architecture. This must be the `*` part of
+--- one of the UC_ARCH_* constants defined in the @{unicorn_const} module.
+--- @tparam table arch_module  The module corresponding to the architecture. This will be
+--- one of the *_const submodules that ship with this library.
+---
+--- @treturn {string:int}  A mapping of uppercased register names to their Unicorn IDs.
+function extract_all_register_ids_(arch_name, arch_module)
+    local register_constant_prefix = "UC_" .. arch_name:upper() .. "_REG_"
+    local reg_name_to_id_map = {}
+
+    for const_name, id in pairs(arch_module) do
+        if const_name:startswith(register_constant_prefix) then
+            local reg_name = const_name:sub(#register_constant_prefix + 1)
+            reg_name_to_id_map[reg_name] = id
+        end
     end
-    return uc_c.reg_write(handle, reg_id, value)
+
+    return reg_name_to_id_map
 end
 
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
@@ -158,13 +153,11 @@ function wrap_handle_(handle)
     end
 
     local registers_metatable = {
-        __index = function (_self, name)
-            return read_named_register_(handle, arch_name, arch_module_or_error, name)
+        __index = function (self, name)
+            return self:reg_read_by_name(name, nil)
         end,
-        __newindex = function (_self, name, value)
-            return write_named_register_(
-                handle, arch_name, arch_module_or_error, name, value
-            )
+        __newindex = function (self, name, value)
+            return self:reg_write_by_name(name, value)
         end,
     }
 
@@ -185,6 +178,13 @@ function wrap_handle_(handle)
         -- callbacks.
         -- TODO (dargueta): Keep strong references to callbacks here, not in C.
         hooks_ = {},
+
+        -- The uppercase name of the architecture.
+        arch_name = arch_name,
+
+        -- A mapping of uppercase register names to their corresponding IDs, for use with
+        -- the `reg_read` and `reg_write` family of functions.
+        reg_name_to_id_map = extract_all_register_ids_(arch_name, arch_module_or_error),
 
         -- A proxy for accessing registers.
         -- Allows:
@@ -454,6 +454,26 @@ function Engine:reg_read(register, msr_id)
     return uc_c.reg_read(self.handle_, register, msr_id)
 end
 
+--- Read the current value of a CPU register, using its name instead of a constant ID.
+---
+--- @tparam string name  The case-insensitive name of the register.
+--- @tparam[opt] int msr_id  Optional. The ID of the model-specific register to read, if
+--- `name` references a model-specific register or coprocessor. Ignored otherwise.
+function Engine:reg_read_by_name(name, msr_id)
+    local reg_id = self.reg_name_to_id_map[name:upper()]
+    if reg_id ~= nil then
+        return self:reg_read(reg_id, msr_id)
+    end
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture.",
+            reg_name,
+            self.arch_name
+        )
+    )
+end
+
 --- Read the current value of a CPU register as something other than an integer.
 ---
 --- This is primarily useful for SIMD instructions, where a single register can be
@@ -486,6 +506,25 @@ end
 --- @tparam int value  The value to write to the register.
 function Engine:reg_write(register, value)
     return uc_c.reg_write(self.handle_, register, value)
+end
+
+--- Write to a CPU register, using its name instead of a constant ID.
+---
+--- @tparam string name  The case-insensitive name of the register to write to.
+--- @tparam number value  The value to write to the register.
+function Engine:reg_write_by_name(name, value)
+    local reg_id = self.reg_name_to_id_map[name:upper()]
+    if reg_id ~= nil then
+        return self:reg_write(reg_id, value)
+    end
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture.",
+            reg_name,
+            self.arch_name
+        )
+    )
 end
 
 --- Write a value to a register as anything other than a single integer.
