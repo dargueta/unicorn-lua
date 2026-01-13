@@ -152,15 +152,6 @@ function wrap_handle_(handle)
         )
     end
 
-    local registers_metatable = {
-        __index = function (self, name)
-            return self:reg_read_by_name(name, nil)
-        end,
-        __newindex = function (self, name, value)
-            return self:reg_write_by_name(name, value)
-        end,
-    }
-
     local instance = {
         is_running_ = false,
         handle_ = handle,
@@ -185,15 +176,18 @@ function wrap_handle_(handle)
         -- A mapping of uppercase register names to their corresponding IDs, for use with
         -- the `reg_read` and `reg_write` family of functions.
         reg_name_to_id_map = extract_all_register_ids_(arch_name, arch_module_or_error),
-
-        -- A proxy for accessing registers.
-        -- Allows:
-        --      engine.registers.eax = 0
-        -- instead of:
-        --      engine.reg_write(x86_const.UC_X86_REG_EAX, 0)
-        registers = setmetatable({}, registers_metatable)
     }
 
+    local registers_metatable = {
+        __index = function (_table, name)
+            return instance:reg_read_by_name(name, nil)
+        end,
+        __newindex = function (_table, name, value)
+            return instance:reg_write_by_name(name, value)
+        end,
+    }
+
+    instance.registers = setmetatable({}, registers_metatable)
     return setmetatable(instance, EngineMeta_)
 end
 
@@ -462,7 +456,7 @@ end
 function Engine:reg_read_by_name(name, msr_id)
     local reg_id = self.reg_name_to_id_map[name:upper()]
     if reg_id ~= nil then
-        return self:reg_read(reg_id, msr_id)
+        return uc_c.reg_read(self.handle_, reg_id, msr_id)
     end
 
     error(
@@ -515,7 +509,7 @@ end
 function Engine:reg_write_by_name(name, value)
     local reg_id = self.reg_name_to_id_map[name:upper()]
     if reg_id ~= nil then
-        return self:reg_write(reg_id, value)
+        return uc_c.reg_write(self.handle_, reg_id, value)
     end
 
     error(
