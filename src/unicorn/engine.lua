@@ -39,6 +39,7 @@ stringx.import()
 --- metamethod isn't called, see *Programming in Lua*, 4th Edition, page 233.
 ---
 --- @type Engine
+--- @field architecture_name  The architecture slug, as an uppercase string.
 local Engine = {}
 
 local EngineMeta_ = {
@@ -63,11 +64,11 @@ EngineMeta_.__gc = EngineMeta_.__close
 --- @param handle A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn string The architecture of the engine, e.g. "ARM64" or "X86". If it couldn't
 --- be determined, throws an error.
+--- @local
 function get_architecture_slug_(handle)
     local arch_id = uc_c.query(handle, unicorn_const.UC_QUERY_ARCH)
     for const_name, const_value in pairs(unicorn_const) do
-        if stringx.startswith(const_name, "UC_ARCH_")
-            and const_value == arch_id
+        if const_name:startswith("UC_ARCH_") and const_value == arch_id
         then
             return const_name:sub(9)
         end
@@ -84,7 +85,8 @@ function get_architecture_slug_(handle)
     )
 end
 
-
+--- Given the name of a register, find its architecture-specific ID number.
+--- @local
 function resolve_register_id_(arch_name, reg_name, arch_module, cache)
     local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
     local reg_id = arch_module[const_name]
@@ -114,7 +116,8 @@ end
 --- @tparam table arch_module  The module corresponding to the architecture. This will be
 --- one of the *_const submodules that ship with this library.
 ---
---- @treturn {string:int}  A mapping of uppercased register names to their Unicorn IDs.
+--- @treturn {string=int}  A mapping of uppercased register names to their Unicorn IDs.
+--- @local
 function extract_all_register_ids_(arch_name, arch_module)
     local register_constant_prefix = "UC_" .. arch_name:upper() .. "_REG_"
     local reg_name_to_id_map = {}
@@ -133,6 +136,7 @@ end
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn Engine  A class instance wrapping the handle.
+--- @local
 function wrap_handle_(handle)
     -- For registry access to work, we need to know the name of the architecture. We can
     -- accomplish this by getting the ID of the engine's architecture, then iterating
@@ -391,7 +395,7 @@ end
 
 --- Get an enumeration of all memory regions mapped into the engine.
 ---
---- @treturn {MemoryRegion, ...}  An array of each memory region. Order is not guaranteed.
+--- @treturn {MemoryRegion,...}  An array of each memory region. Order is not guaranteed.
 function Engine:mem_regions()
     local regions = uc_c.mem_regions(self.handle_)
     local meta = {__index = MemoryRegion}
@@ -545,7 +549,7 @@ end
 --- registers to non-integer values (e.g. setting ST0, or XMM0 as an array of 8-bit ints)
 --- you must call @{Engine:reg_write_as} individually.
 ---
---- @param registers A table mapping register IDs to the values to assign them.
+--- @tparam {int=number} registers  A table mapping register IDs to the values to assign.
 function Engine:reg_write_batch(registers)
     return uc_c.reg_write_batch(self.handle_, registers)
 end
@@ -578,13 +582,17 @@ end
 
 --- Get a list of all the addresses that halt the engine if executed.
 ---
---- @treturn {int, ...}  The addresses of all exit points.
+--- @treturn {int,...}  The addresses of all exit points.
 --- @see Engine:ctl_exits_enable
 --- @see Engine:ctl_set_exits
 function Engine:ctl_get_exits()
     return uc_c.ctl_get_exits(self.handle_)
 end
 
+--- Get the number of addresses that halt the engine if executed.
+---
+--- Equivalent to but more efficient than `#engine:ctl_get_exits()`.
+--- @see Engine:ctl_get_exits
 function Engine:ctl_get_exits_cnt()
     return uc_c.ctl_get_exits_cnt(self.handle_)
 end
