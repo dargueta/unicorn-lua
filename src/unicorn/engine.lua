@@ -59,6 +59,21 @@ local EngineMeta_ = {
 EngineMeta_.__gc = EngineMeta_.__close
 
 
+--- A proxy that allows accessing registers by name, as if they were keys in a table.
+---
+--- @type RegisterProxy
+local RegisterProxyMeta_ = {
+    __mode = "v",   -- Required to not hold a strong reference to the engine.
+
+    __index = function (self, name)
+        return self.engine_:reg_read_by_name(name, nil)
+    end,
+
+    __newindex = function (self, name, value)
+        return self.engine_:reg_write_by_name(name, value)
+    end
+}
+
 --- Get the architecture of the given engine as an uppercase slug.
 ---
 --- @param handle A userdata handle to an open engine returned by the Unicorn C library.
@@ -175,23 +190,14 @@ function wrap_handle_(handle)
         hooks_ = {},
 
         -- The uppercase name of the architecture.
-        arch_name = arch_name,
+        architecture_name = arch_name,
 
         -- A mapping of uppercase register names to their corresponding IDs, for use with
         -- the `reg_read` and `reg_write` family of functions.
-        reg_name_to_id_map = extract_all_register_ids_(arch_name, arch_module_or_error),
+        register_ids_by_name = extract_all_register_ids_(arch_name, arch_module_or_error),
     }
 
-    local registers_metatable = {
-        __index = function (_table, name)
-            return instance:reg_read_by_name(name, nil)
-        end,
-        __newindex = function (_table, name, value)
-            return instance:reg_write_by_name(name, value)
-        end,
-    }
-
-    instance.registers = setmetatable({}, registers_metatable)
+    instance.registers = setmetatable({engine_ = instance}, RegisterProxyMeta_)
     return setmetatable(instance, EngineMeta_)
 end
 
@@ -458,7 +464,7 @@ end
 --- @tparam[opt] int msr_id  Optional. The ID of the model-specific register to read, if
 --- `name` references a model-specific register or coprocessor. Ignored otherwise.
 function Engine:reg_read_by_name(name, msr_id)
-    local reg_id = self.reg_name_to_id_map[name:upper()]
+    local reg_id = self.register_ids_by_name[name:upper()]
     if reg_id ~= nil then
         return uc_c.reg_read(self.handle_, reg_id, msr_id)
     end
@@ -467,7 +473,7 @@ function Engine:reg_read_by_name(name, msr_id)
         string.format(
             "No register named %q is defined for the %q architecture.",
             reg_name,
-            self.arch_name
+            self.architecture_name
         )
     )
 end
@@ -511,7 +517,7 @@ end
 --- @tparam string name  The case-insensitive name of the register to write to.
 --- @tparam number value  The value to write to the register.
 function Engine:reg_write_by_name(name, value)
-    local reg_id = self.reg_name_to_id_map[name:upper()]
+    local reg_id = self.register_ids_by_name[name:upper()]
     if reg_id ~= nil then
         return uc_c.reg_write(self.handle_, reg_id, value)
     end
@@ -520,7 +526,7 @@ function Engine:reg_write_by_name(name, value)
         string.format(
             "No register named %q is defined for the %q architecture.",
             reg_name,
-            self.arch_name
+            self.architecture_name
         )
     )
 end
