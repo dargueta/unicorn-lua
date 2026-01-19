@@ -24,6 +24,23 @@ local unicorn_const = require("unicorn.unicorn_const")
 
 stringx.import()
 
+
+--- A proxy that allows accessing registers by name, as if they were keys in a table.
+---
+--- @type RegisterProxy
+local RegisterProxyMeta_ = {
+    __mode = "v",   -- Required to not hold a strong reference to the engine.
+
+    __index = function (self, name)
+        return self.engine_:reg_read_by_name(name, nil)
+    end,
+
+    __newindex = function (self, name, value)
+        return self.engine_:reg_write_by_name(name, value)
+    end
+}
+
+
 --- An object-oriented wrapper around an opened Unicorn engine.
 ---
 --- **Garbage Collection**
@@ -39,8 +56,29 @@ stringx.import()
 --- metamethod isn't called, see *Programming in Lua*, 4th Edition, page 233.
 ---
 --- @type Engine
---- @field architecture_name  The architecture slug, as an uppercase string.
-local Engine = {}
+local Engine = {
+    --- The engine's architecture as an uppercase string (e.g. "ARM" or "TRICORE").
+    --- @field architecture_name
+
+    --- A table-like proxy for accessing the CPU's registers by name.
+    ---
+    --- NOTE: This can't be iterated over, and disallows assigning arbitrary keys.
+    ---
+    --- @usage engine.registers.eax = 5
+    --- @field registers
+
+    --- A mapping of the engine's register names to their numeric codes used for access.
+    ---
+    --- Most users won't need this directly. The engine's @{RegisterProxy} uses it for
+    --- reading and writing registers by name instead of forcing users to use imported
+    --- codes with @{Engine.reg_read} etc.
+    ---
+    --- One potential usage is for enumerating all register names (this cannot be done
+    --- with @{Engine.registers}).
+    ---
+    --- @usage engine.register_ids_by_name["EAX"]
+    --- @field register_ids_by_name
+}
 
 local EngineMeta_ = {
     __index = Engine,
@@ -57,22 +95,6 @@ local EngineMeta_ = {
 -- The garbage collection process is exactly the same as closing the engine, so we might
 -- as well reuse that function.
 EngineMeta_.__gc = EngineMeta_.__close
-
-
---- A proxy that allows accessing registers by name, as if they were keys in a table.
----
---- @type RegisterProxy
-local RegisterProxyMeta_ = {
-    __mode = "v",   -- Required to not hold a strong reference to the engine.
-
-    __index = function (self, name)
-        return self.engine_:reg_read_by_name(name, nil)
-    end,
-
-    __newindex = function (self, name, value)
-        return self.engine_:reg_write_by_name(name, value)
-    end
-}
 
 --- Get the architecture of the given engine as an uppercase slug.
 ---
@@ -176,8 +198,8 @@ function wrap_handle_(handle)
         handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
         -- the state the context describes. Since there's no point to holding onto a
-        -- context the user can no longer use, we use a weak table to store them to allow
-        -- them to be garbage collected once the user can't use them anymore.
+        -- context the user can no longer use, we store them in a weak table to allow them
+        -- to be garbage collected.
         --
         -- We still need this table because if there are active contexts lying around when
         -- the engine is closed, we need to release those as well.
