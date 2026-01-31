@@ -373,7 +373,7 @@ end
 --- @tparam userdata hook  A hook handle returned from @{hook_add}.
 --- @see hook_add
 function Engine:hook_del(hook)
-    uc_c.hook_del(self.handle_, hook)
+    uc_c.hook_del(self.handle_, hook.hook_handle)
     self.hooks_[hook] = nil
 end
 
