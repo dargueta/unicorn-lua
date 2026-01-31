@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 by Diego Argueta
+// Copyright (C) 2017-2026 by Diego Argueta
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -108,6 +108,30 @@ int ul_strerror(lua_State *L)
     return 1;
 }
 
+/**
+ * Query engine properties.
+ *
+ * Because Lua's integers are signed, and query results are unsigned, the return value may
+ * overflow and become negative. This is unlikely, but possible.
+ *
+ * @tparam userdata engine  The engine to query the properties of.
+ * @tparam integer query_type  The ID of the property to query for, one of the
+ * `unicorn_const.UC_QUERY_*` constants.
+ * @treturn integer  The result of the query.
+ */
+int ul_query(lua_State *L)
+{
+    uc_engine *engine = (uc_engine *)lua_topointer(L, 1);
+    lua_Integer query_type = lua_tointeger(L, 2);
+    size_t result;
+
+    uc_err error = uc_query(engine, (uc_query_type)query_type, &result);
+    ulinternal_crash_if_failed(L, error, "Failed to query the engine's properties");
+
+    lua_pushinteger(L, (lua_Integer)result);
+    return 1;
+}
+
 static const luaL_Reg kFunctions[] = {
     {"bitwise_and", ul_bitwise_and},
     {"context_save", ul_context_save},
@@ -137,6 +161,7 @@ static const luaL_Reg kFunctions[] = {
     {"mem_unmap", ul_mem_unmap},
     {"mem_write", ul_mem_write},
     {"open", ul_open},
+    {"query", ul_query},
     {"reg_read", ul_reg_read},
     {"reg_read_batch", ul_reg_read_batch},
     {"reg_read_batch_as", ul_reg_read_batch_as},

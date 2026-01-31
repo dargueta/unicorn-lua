@@ -3,12 +3,14 @@ ifndef LUA_VERSION
 endif
 
 ifndef ROCKS
-    ROCKS = 3.12.2
+    ROCKS = 3.13.0
 endif
 
 # If only the major and minor version number was given, use the latest version
 # of Lua for that series.
-ifeq ($(LUA_VERSION),5.4)
+ifeq ($(LUA_VERSION),5.5)
+    LUA_FULL_VERSION = 5.5.0
+else ifeq ($(LUA_VERSION),5.4)
     LUA_FULL_VERSION = 5.4.8
 else ifeq ($(LUA_VERSION),5.3)
     LUA_FULL_VERSION = 5.3.6

@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2025 by Diego Argueta
+-- Copyright (C) 2017-2026 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,20 +17,20 @@
 --- The main module for the Unicorn CPU Emulator.
 ---
 --- @author Diego Argueta
---- @copyright 2017-2025 Diego Argueta
+--- @copyright 2017-2026 Diego Argueta
 --- @license GPL-2
---- @release 2.3.1
+--- @release 2.4.0
 --- @module unicorn
 
 local uc_c = require("unicorn_c_")
 local uc_engine = require("unicorn.engine")
 
 local M = {
-    --- The major, minor, and patch numbers of this Lua library's version.
-    ---
-    --- To get the version of the Unicorn C library this binding wraps around, see
-    --- @{unicorn.version}.
-    LUA_LIBRARY_VERSION = {2, 3, 1},
+    -- The major, minor, and patch numbers of this Lua library's version.
+    --
+    -- To get the version of the Unicorn C library this binding wraps around, see
+    -- @{unicorn.version}.
+    LUA_LIBRARY_VERSION = {2, 4, 0},
 
     --- Determine if `architecture` is supported by the underlying Unicorn library.
     ---
@@ -65,10 +65,10 @@ local M = {
 ---
 --- @tparam int architecture  An enum value indicating which architecture to emulate. The
 --- constants are available in @{unicorn_const} and all start with `UC_ARCH_`.
---- @tparam int mode_flags  Flags providing broad details of the CPU's operating mode.
---- For example, these can be used to choose between starting an x86 CPU in 16-, 32-, or
---- 64-bit mode, or selecting the endianness on bi-endian architectures. These flags are
---- available in @{unicorn_const} and all start with `UC_MODE_`.
+--- @tparam[opt=0] int mode_flags  Flags providing broad details of the CPU's operating.
+--- mode. For example, these can be used to choose between starting an x86 CPU in 16-,
+--- 32-, or 64-bit mode, or selecting the endianness on bi-endian architectures. These
+--- flags are available in @{unicorn_const} and all start with `UC_MODE_`.
 ---
 --- @treturn Engine  An initialized @{engine.Engine}.
 ---

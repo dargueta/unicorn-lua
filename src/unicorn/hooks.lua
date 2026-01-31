@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2025 by Diego Argueta
+-- Copyright (C) 2017-2026 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -31,43 +31,83 @@ local have_x86, x86_const = pcall(require, "unicorn.x86_const")
 if not have_arm64 then arm64_const = {} end
 if not have_x86 then x86_const = {} end
 
+local Hook = {}
 
+local HookMeta  = {
+    __index = Hook,
 
-local function wrap_hook_callback(callback, engine, userdata)
-    local unpacker = table.unpack or _G.unpack
+    __gc = function (self)
+        if self.handle == nil then
+            -- The handle was manually freed by the user, and the hook object is just now
+            -- being deallocated. This is fine; ignore it and return.
+            return
+        end
 
-    return function (...)
+        if self.engine ~= nil then
+            self:free()
+        end
+
+        error(
+            "BUG! The engine was freed before the hook was released. Please file a bug"
+            .. " report with an example to reproduce the issue."
+        )
+    end,
+
+    __call = function (...)
         local arguments = {...}
-        table.insert(arguments, 1, engine)
-        table.insert(arguments, userdata)
-        return callback(unpacker(arguments))
+        local unpacker = table.unpack or _G.unpack
+
+        -- Pass the engine as the first argument and the userdata as the last argument.
+        table.insert(arguments, 1, self.engine)
+        table.insert(arguments, self.userdata)
+        return self.callback(unpacker(arguments))
     end
+}
+
+HookMeta.__close = HookMeta.__gc
+
+local function create_hook_from_handle_(engine, hook_handle, callback, userdata)
+    local instance = {
+        callback = callback,
+        engine = engine,
+        hook_handle = hook_handle,
+        userdata = userdata,
+    }
+    return setmetatable(instance, HookMeta)
 end
 
+function Hook:free()
+    uc_c.hook_del(self.engine.handle_, self.hook_handle)
+    self.callback = nil
+    self.engine = nil
+    self.hook_handle = nil
+end
 
 local function create_hook_creator_by_name(name)
-    return function (engine, hook_type, callback, start_addr, end_addr)
-        return uc_c[name](
+    return function (engine, hook_type, callback, start_addr, end_addr, userdata)
+        local hook_handle = uc_c[name](
             engine.handle_,
             hook_type,
             callback,
             start_addr,
             end_addr
         )
+
+        return create_hook_from_handle_(engine, hook_handle, callback, userdata)
     end
 end
 
 
 local function create_code_hook_creator_by_name(name)
     return function (
-        engine, hook_type, callback, start_addr, end_addr, remaining_args
+        engine, hook_type, callback, start_addr, end_addr, userdata, remaining_args
     )
         local instruction_id = remaining_args[1]
         if instruction_id == nil then
             error("Can't create instruction hook: no opcode was passed to hook_add().")
         end
 
-        return uc_c[name](
+        local hook_handle = uc_c[name](
             engine.handle_,
             hook_type,
             callback,
@@ -75,6 +115,8 @@ local function create_code_hook_creator_by_name(name)
             end_addr or 0,
             instruction_id
         )
+
+        return create_hook_from_handle_(engine, hook_handle, callback, userdata)
     end
 end
 
@@ -86,6 +128,7 @@ local function create_tcg_opcode_hook(
     callback,
     start_addr,
     end_addr,
+    userdata,
     remaining_args
 )
     local opcode, flags = (table.unpack or _G.unpack)(remaining_args, 1, 2)
@@ -97,7 +140,7 @@ local function create_tcg_opcode_hook(
         error("Can't create TCG hook: no trap flags were passed to hook_add().")
     end
 
-    return uc_c.create_tcg_opcode_hook(
+    local hook_handle = uc_c.create_tcg_opcode_hook(
         engine.handle_,
         hook_type,
         callback,
@@ -106,19 +149,22 @@ local function create_tcg_opcode_hook(
         opcode,
         flags
     )
+
+    return create_hook_from_handle_(engine, hook_handle, callback, userdata)
 end
 
 
 local create_interrupt_hook = create_hook_creator_by_name("create_interrupt_hook")
 local create_memory_access_hook = create_hook_creator_by_name("create_memory_access_hook")
 local create_invalid_mem_access_hook = create_hook_creator_by_name("create_invalid_mem_access_hook")
+local create_arm64_sys_hook = create_hook_creator_by_name("create_arm64_sys_hook")
+local create_generic_no_arguments_hook = create_hook_creator_by_name("create_generic_no_arguments_hook")
+local create_edge_generated_hook = create_hook_creator_by_name("create_edge_generated_hook")
+
 local create_code_hook = create_code_hook_creator_by_name("create_code_hook")
 local create_port_in_hook = create_code_hook_creator_by_name("create_port_in_hook")
 local create_port_out_hook = create_code_hook_creator_by_name("create_port_out_hook")
-local create_arm64_sys_hook = create_hook_creator_by_name("create_arm64_sys_hook")
 local create_cpuid_hook = create_code_hook_creator_by_name("create_cpuid_hook")
-local create_generic_no_arguments_hook = create_hook_creator_by_name("create_generic_no_arguments_hook")
-local create_edge_generated_hook = create_hook_creator_by_name("create_edge_generated_hook")
 
 
 local DEFAULT_HOOK_WRAPPERS = {
@@ -219,8 +265,6 @@ function M.create_hook(
             or error(string.format("Unrecognized hook type: %q", hook_type))
     end
 
-    callback = wrap_hook_callback(callback, engine, user_extra)
-
     if end_addr == nil then
         if start_addr == nil then
             -- If neither a starting nor ending address is given, the caller wants this to
@@ -237,7 +281,7 @@ function M.create_hook(
     end
 
     return constructor(
-        engine, hook_type, callback, start_addr or 0, end_addr, extra_arguments)
+        engine, hook_type, callback, start_addr or 0, end_addr, user_extra, extra_arguments)
 end
 
 --- Information about the coprocessor, used by ARM64 instruction hooks.
