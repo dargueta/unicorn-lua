@@ -22,7 +22,7 @@ csrc/basic_hook_functions.c
 csrc/unicornlua/basic_hook_functions.h
 csrc/unicornlua/config.h
 csrc/unicornlua/register_types.h
-gendocs/
+docs/generated/
 
 # Other garbage
 core*
