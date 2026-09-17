@@ -11,7 +11,7 @@ Access Registers by Name
 ************************
 
 Registers can now be read and written using attribute access instead of having
-to use constants and `reg_read()`. You can use it like this:
+to use constants and ``reg_read()``. You can use it like this:
 
 .. code-block:: lua
 
