@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 by Diego Argueta
+// Copyright (C) 2017-2026 by Diego Argueta
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -132,8 +132,8 @@ UL_PRIVATE UL_NORETURN_MARKER int ulinternal_crash_unsupported_operation(lua_Sta
 #ifdef __GNUC__
 __attribute__((format(printf, 3, 4)))
 #endif
-UL_PRIVATE void
-ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
+UL_PRIVATE void ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format,
+                                           ...);
 
 /**
  * Call `luaL_error` with a string created using the C standard sprintf().
@@ -148,5 +148,5 @@ ulinternal_crash_if_failed(lua_State *L, uc_err code, const char *format, ...);
 #ifdef __GNUC__
 __attribute__((format(printf, 2, 3)))
 #endif
-UL_PRIVATE UL_NORETURN_MARKER void
-ulinternal_crash(lua_State *L, const char *format, ...);
+UL_PRIVATE UL_NORETURN_MARKER void ulinternal_crash(lua_State *L, const char *format,
+                                                    ...);

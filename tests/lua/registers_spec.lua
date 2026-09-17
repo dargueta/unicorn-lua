@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2025 by Diego Argueta
+-- Copyright (C) 2017-2026 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -215,6 +215,35 @@ describe('Register tests', function ()
         x86.UC_X86_REG_RCX, {-123456, 500}, regs_const.REG_TYPE_INT32_ARRAY_2
       )
       assert.are.equals(0x000001f4fffe1dc0, uc:reg_read(x86.UC_X86_REG_RCX))
+    end)
+  end)
+
+  describe('Register name proxy', function ()
+    it('[x86] Verify proxy is assigned', function ()
+      local uc = unicorn.open(uc_const.UC_ARCH_X86, uc_const.UC_MODE_64)
+      assert.not_equals(uc.registers, nil)
+
+      -- Verify case insensitivity
+      assert.not_equals(uc.registers.eax, nil)
+      assert.not_equals(uc.registers.Eax, nil)
+      assert.not_equals(uc.registers.EAX, nil)
+
+      -- Verify consistency
+      assert.are.equals(uc.registers.eax, uc.registers.EAX)
+      uc:close()
+    end)
+
+    it('[MIPS] Verify proxy is assigned', function ()
+      local uc = unicorn.open(uc_const.UC_ARCH_MIPS, uc_const.UC_MODE_32)
+      assert.not_equals(uc.registers, nil)
+
+      -- Verify case insensitivity
+      assert.not_equals(uc.registers.v0, nil)
+      assert.not_equals(uc.registers.V0, nil)
+
+      -- Verify consistency
+      assert.are.equals(uc.registers.v0, uc.registers.V0)
+      uc:close()
     end)
   end)
 end)

@@ -7,7 +7,7 @@ Unicorn CPU Emulator for Lua
    :alt: Build status
    :target: https://github.com/dargueta/unicorn-lua/actions/workflows/ci.yml
 
-.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT2.0%20%7C%20LuaJIT2.1-blue
+.. |lua-versions| image:: https://img.shields.io/badge/lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%7C%205.5%20%7C%20LuaJIT2.0%20%7C%20LuaJIT2.1-blue
    :alt: Lua versions
    :target: https://www.lua.org
 
@@ -19,7 +19,7 @@ Lua bindings for the `Unicorn CPU Emulator`_.
 Platform Support
 ----------------
 
-This works for PUC Lua 5.1 - 5.4 and LuaJIT. There are a few restrictions on
+This works for PUC Lua 5.1 - 5.5 and LuaJIT. There are a few restrictions on
 the host operating systems, though:
 
 .. list-table:: Host Platform Support

@@ -1,4 +1,4 @@
--- Copyright (C) 2017-2025 by Diego Argueta
+-- Copyright (C) 2017-2026 by Diego Argueta
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -16,10 +16,30 @@
 
 --- @module engine
 
+local stringx = require("pl.stringx")
 local uc_c = require("unicorn_c_")
 local uc_context = require("unicorn.context")
 local uc_hooks = require("unicorn.hooks")
 local unicorn_const = require("unicorn.unicorn_const")
+
+stringx.import()
+
+
+--- A proxy that allows accessing registers by name, as if they were keys in a table.
+---
+--- @type RegisterProxy
+local RegisterProxyMeta_ = {
+    __mode = "v",   -- Required to not hold a strong reference to the engine.
+
+    __index = function (self, name)
+        return self.engine_:reg_read_by_name(name, nil)
+    end,
+
+    __newindex = function (self, name, value)
+        return self.engine_:reg_write_by_name(name, value)
+    end
+}
+
 
 --- An object-oriented wrapper around an opened Unicorn engine.
 ---
@@ -36,7 +56,29 @@ local unicorn_const = require("unicorn.unicorn_const")
 --- metamethod isn't called, see *Programming in Lua*, 4th Edition, page 233.
 ---
 --- @type Engine
-local Engine = {}
+local Engine = {
+    --- The engine's architecture as an uppercase string (e.g. "ARM" or "TRICORE").
+    --- @field architecture_name
+
+    --- A table-like proxy for accessing the CPU's registers by name.
+    ---
+    --- NOTE: This can't be iterated over, and disallows assigning arbitrary keys.
+    ---
+    --- @usage engine.registers.eax = 5
+    --- @field registers
+
+    --- A mapping of the engine's register names to their numeric codes used for access.
+    ---
+    --- Most users won't need this directly. The engine's @{RegisterProxy} uses it for
+    --- reading and writing registers by name instead of forcing users to use imported
+    --- codes with @{Engine.reg_read} etc.
+    ---
+    --- One potential usage is for enumerating all register names (this cannot be done
+    --- with @{Engine.registers}).
+    ---
+    --- @usage engine.register_ids_by_name["EAX"]
+    --- @field register_ids_by_name
+}
 
 local EngineMeta_ = {
     __index = Engine,
@@ -54,19 +96,110 @@ local EngineMeta_ = {
 -- as well reuse that function.
 EngineMeta_.__gc = EngineMeta_.__close
 
+--- Get the architecture of the given engine as an uppercase slug.
+---
+--- @param handle A userdata handle to an open engine returned by the Unicorn C library.
+--- @treturn string The architecture of the engine, e.g. "ARM64" or "X86". If it couldn't
+--- be determined, throws an error.
+--- @local
+function get_architecture_slug_(handle)
+    local arch_id = uc_c.query(handle, unicorn_const.UC_QUERY_ARCH)
+    for const_name, const_value in pairs(unicorn_const) do
+        if const_name:startswith("UC_ARCH_") and const_value == arch_id
+        then
+            return const_name:sub(9)
+        end
+    end
+
+    error(
+        string.format(
+            "Couldn't derive the name of the engine's architecture from the ID" ..
+            " returned by uc_query(). This is most likely a bug in the binding. Please" ..
+            " file a bug report. (architecture ID: %q; mode flags: %q)",
+            arch_id,
+            uc_c.query(handle, unicorn_const.UC_QUERY_MODE)
+        )
+    )
+end
+
+--- Given the name of a register, find its architecture-specific ID number.
+--- @local
+function resolve_register_id_(arch_name, reg_name, arch_module, cache)
+    local const_name = "UC_" .. arch_name .. "_REG_" .. reg_name:upper()
+    local reg_id = arch_module[const_name]
+
+    if reg_id ~= nil then
+        if cache ~= nil then
+            cache[reg_name] = reg_id
+        end
+        return reg_id
+    end
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture" ..
+            " (expected constant is %q).",
+            reg_name,
+            arch_name,
+            const_name
+        )
+    )
+end
+
+--- Iterate through a module and build a mapping of register names to their access IDs.
+---
+--- @tparam string arch_name  The name of the architecture. This must be the `*` part of
+--- one of the UC_ARCH_* constants defined in the @{unicorn_const} module.
+--- @tparam table arch_module  The module corresponding to the architecture. This will be
+--- one of the *_const submodules that ship with this library.
+---
+--- @treturn {string=int}  A mapping of uppercased register names to their Unicorn IDs.
+--- @local
+function extract_all_register_ids_(arch_name, arch_module)
+    local register_constant_prefix = "UC_" .. arch_name:upper() .. "_REG_"
+    local reg_name_to_id_map = {}
+
+    for const_name, id in pairs(arch_module) do
+        if const_name:startswith(register_constant_prefix) then
+            local reg_name = const_name:sub(#register_constant_prefix + 1)
+            reg_name_to_id_map[reg_name] = id
+        end
+    end
+
+    return reg_name_to_id_map
+end
 
 --- Create a new @{Engine} that wraps a raw engine handle from the C library.
 ---
 --- @param handle  A userdata handle to an open engine returned by the Unicorn C library.
 --- @treturn Engine  A class instance wrapping the handle.
+--- @local
 function wrap_handle_(handle)
+    -- For registry access to work, we need to know the name of the architecture. We can
+    -- accomplish this by getting the ID of the engine's architecture, then iterating
+    -- through all UC_ARCH_* constants and finding the first that matches it.
+    local arch_name = get_architecture_slug_(handle)
+    local const_module_name = "unicorn." .. arch_name:lower() .. "_const"
+    local have_arch, arch_module_or_error = pcall(require, const_module_name)
+
+    if not have_arch then
+        error(
+            string.format(
+                "Failed to load module %q for architecture %q: %s",
+                const_module_name,
+                arch_name,
+                arch_module_or_error
+            )
+        )
+    end
+
     local instance = {
         is_running_ = false,
         handle_ = handle,
         -- Once a context object is unreachable, it can't be used to restore the engine to
         -- the state the context describes. Since there's no point to holding onto a
-        -- context the user can no longer use, we use a weak table to store them to allow
-        -- them to be garbage collected once the user can't use them anymore.
+        -- context the user can no longer use, we store them in a weak table to allow them
+        -- to be garbage collected.
         --
         -- We still need this table because if there are active contexts lying around when
         -- the engine is closed, we need to release those as well.
@@ -77,8 +210,16 @@ function wrap_handle_(handle)
         -- callbacks.
         -- TODO (dargueta): Keep strong references to callbacks here, not in C.
         hooks_ = {},
+
+        -- The uppercase name of the architecture.
+        architecture_name = arch_name,
+
+        -- A mapping of uppercase register names to their corresponding IDs, for use with
+        -- the `reg_read` and `reg_write` family of functions.
+        register_ids_by_name = extract_all_register_ids_(arch_name, arch_module_or_error),
     }
 
+    instance.registers = setmetatable({engine_ = instance}, RegisterProxyMeta_)
     return setmetatable(instance, EngineMeta_)
 end
 
@@ -232,7 +373,7 @@ end
 --- @tparam userdata hook  A hook handle returned from @{hook_add}.
 --- @see hook_add
 function Engine:hook_del(hook)
-    uc_c.hook_del(self.handle_, hook)
+    uc_c.hook_del(self.handle_, hook.hook_handle)
     self.hooks_[hook] = nil
 end
 
@@ -282,7 +423,7 @@ end
 
 --- Get an enumeration of all memory regions mapped into the engine.
 ---
---- @treturn {MemoryRegion, ...}  An array of each memory region. Order is not guaranteed.
+--- @treturn {MemoryRegion,...}  An array of each memory region. Order is not guaranteed.
 function Engine:mem_regions()
     local regions = uc_c.mem_regions(self.handle_)
     local meta = {__index = MemoryRegion}
@@ -339,6 +480,26 @@ function Engine:reg_read(register, msr_id)
     return uc_c.reg_read(self.handle_, register, msr_id)
 end
 
+--- Read the current value of a CPU register, using its name instead of a constant ID.
+---
+--- @tparam string name  The case-insensitive name of the register.
+--- @tparam[opt] int msr_id  Optional. The ID of the model-specific register to read, if
+--- `name` references a model-specific register or coprocessor. Ignored otherwise.
+function Engine:reg_read_by_name(name, msr_id)
+    local reg_id = self.register_ids_by_name[name:upper()]
+    if reg_id ~= nil then
+        return uc_c.reg_read(self.handle_, reg_id, msr_id)
+    end
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture.",
+            reg_name,
+            self.architecture_name
+        )
+    )
+end
+
 --- Read the current value of a CPU register as something other than an integer.
 ---
 --- This is primarily useful for SIMD instructions, where a single register can be
@@ -350,7 +511,7 @@ end
 --- @tparam int type_id  An enum value indicating how to reinterpret the register. These
 --- can be found in @{registers_const}.
 ---
---- @note This cannot be used to read an x86 MSR or ARM/ARM64 coprocessor register.
+--- NOTE: This cannot be used to read an x86 MSR or ARM/ARM64 coprocessor register.
 function Engine:reg_read_as(register, type_id)
     return uc_c.reg_read_as(self.handle_, register, type_id)
 end
@@ -371,6 +532,25 @@ end
 --- @tparam int value  The value to write to the register.
 function Engine:reg_write(register, value)
     return uc_c.reg_write(self.handle_, register, value)
+end
+
+--- Write to a CPU register, using its name instead of a constant ID.
+---
+--- @tparam string name  The case-insensitive name of the register to write to.
+--- @tparam number value  The value to write to the register.
+function Engine:reg_write_by_name(name, value)
+    local reg_id = self.register_ids_by_name[name:upper()]
+    if reg_id ~= nil then
+        return uc_c.reg_write(self.handle_, reg_id, value)
+    end
+
+    error(
+        string.format(
+            "No register named %q is defined for the %q architecture.",
+            reg_name,
+            self.architecture_name
+        )
+    )
 end
 
 --- Write a value to a register as anything other than a single integer.
@@ -397,7 +577,7 @@ end
 --- registers to non-integer values (e.g. setting ST0, or XMM0 as an array of 8-bit ints)
 --- you must call @{Engine:reg_write_as} individually.
 ---
---- @param registers A table mapping register IDs to the values to assign them.
+--- @tparam {int=number} registers  A table mapping register IDs to the values to assign.
 function Engine:reg_write_batch(registers)
     return uc_c.reg_write_batch(self.handle_, registers)
 end
@@ -430,13 +610,17 @@ end
 
 --- Get a list of all the addresses that halt the engine if executed.
 ---
---- @treturn {int, ...}  The addresses of all exit points.
+--- @treturn {int,...}  The addresses of all exit points.
 --- @see Engine:ctl_exits_enable
 --- @see Engine:ctl_set_exits
 function Engine:ctl_get_exits()
     return uc_c.ctl_get_exits(self.handle_)
 end
 
+--- Get the number of addresses that halt the engine if executed.
+---
+--- Equivalent to but more efficient than `#engine:ctl_get_exits()`.
+--- @see Engine:ctl_get_exits
 function Engine:ctl_get_exits_cnt()
     return uc_c.ctl_get_exits_cnt(self.handle_)
 end
@@ -481,8 +665,8 @@ end
 
 --- Set multiple addresses that will halt the engine if executed.
 ---
---- @tparam {int, ...}  An array of addresses that will cause emulation to stop if
---- executed.
+--- @tparam {int,...} addresses  An array of addresses that will cause emulation to stop
+--- if executed.
 ---
 --- @see Engine:ctl_exits_enable
 --- @see Engine:ctl_get_exits

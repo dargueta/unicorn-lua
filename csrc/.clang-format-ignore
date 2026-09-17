@@ -1,0 +1,7 @@
+basic_control_functions.c
+basic_hook_functions.c
+registers.c
+
+unicornlua/basic_hook_functions.h
+unicornlua/config.h
+unicornlua/register_types.h
